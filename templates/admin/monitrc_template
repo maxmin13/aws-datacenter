@@ -1,0 +1,77 @@
+###############################################################################
+## Monit control file
+###############################################################################
+
+set daemon  30
+
+set logfile syslog
+
+set mmonit http://monit:monit@127.0.0.1:SEDmmonit_collector_portSED/collector
+     with timeout 30 seconds              # Default timeout is 5 seconds
+     # and register without credentials     # Don't register credentials
+
+# Apache
+## use: 
+## md5sum /usr/sbin/httpd
+## and copy the checksum number in the expect below.
+##
+check file apache_bin with path /usr/sbin/httpd
+  if failed checksum and
+     expect the sum df439582ba0039278aa0e3b4c6c14df6 then unmonitor
+  if failed permission 755 then unmonitor
+  if failed uid "root" then unmonitor
+  if failed gid "root" then unmonitor
+  alert minardi.massimiliano@libero.it on {
+         checksum, permission, uid, gid
+      } with the mail-format { subject: Alarm! }
+  group server
+  
+# Apache
+check process apache with pidfile SEDapache_install_dirSED/logs/httpd.pid
+  start program = "/usr/bin/systemctl start httpd" with timeout 60 seconds
+  stop program  = "/usr/bin/systemctl stop httpd"
+  if cpu > 60% for 2 cycles then alert
+  if cpu > 80% for 5 cycles then restart
+  if totalmem > 500.0 MB for 5 cycles then restart
+  if children > 250 then restart
+  if disk read > 500 kb/s for 10 cycles then alert
+  if disk write > 500 kb/s for 10 cycles then alert
+  if failed host 127.0.0.1 port SEDapache_http_portSED protocol http and request "/monit" then restart
+  depends on apache_bin
+  group server
+
+# php-fpm
+check process php-fpm with pidfile /var/run/php-fpm/php-fpm.pid
+   start program = "/usr/bin/systemctl start php-fpm" as uid root and gid root
+   stop program = "/usr/bin/systemctl stop php-fpm" as uid root and gid root
+   
+# M/Monit
+check process mmonit with pidfile SEDmmonit_install_dirSED/logs/mmonit.pid
+   start program = "/usr/bin/systemctl start mmonit" as uid root and gid root
+   stop program = "/usr/bin/systemctl stop mmonit" as uid root and gid root
+     
+# Chrony (manages NTP, Network Time Protocol)
+check process chronyd with pidfile /run/chrony/chronyd.pid
+   start program = "/usr/bin/systemctl start chronyd" as uid root and gid root
+   stop program = "/usr/bin/systemctl stop chronyd" as uid root and gid root  
+     
+# ssh
+check process sshd with pidfile /var/run/sshd.pid
+   start program = "/usr/bin/systemctl start sshd" as uid root and gid root
+   stop program = "/usr/bin/systemctl stop sshd" as uid root and gid root      
+   
+# javaMail
+#  check process javaMail with pidfile /java/javamail/javaMail.pid
+#	start = "/java/javamail/launch_javaMail.sh start"
+#	stop = "/java/javamail/launch_javaMail.sh stop"
+
+# system resources
+check system SEDhostnameSED
+    if loadavg (1min) > 4 then alert
+    if loadavg (5min) > 2 then alert
+    if memory usage > 75% then alert
+    if swap usage > 25% then alert
+    if cpu usage (user) > 70% then alert
+    if cpu usage (system) > 30% then alert
+    if cpu usage (wait) > 20% then alert
+    

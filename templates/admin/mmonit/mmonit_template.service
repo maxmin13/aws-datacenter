@@ -1,0 +1,15 @@
+[Unit]
+Description = Easy, proactive monitoring of Unix systems, network and cloud services
+After = network.target
+Documentation= https://mmonit.com/documentation/ 
+
+[Service]
+Type=simple
+KillMode=process
+ExecStart = SEDmmonit_install_dirSED/bin/mmonit -i
+ExecStop = SEDmmonit_install_dirSED/bin/mmonit stop
+PIDFile = SEDmmonit_install_dirSED/logs/mmonit.pid
+Restart = on-abnormal
+
+[Install]
+WantedBy = multi-user.targe

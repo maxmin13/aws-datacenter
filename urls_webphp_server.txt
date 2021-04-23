@@ -1,0 +1,27 @@
+
+enable ports: 38142, 2812, 8090
+
+----------------------
+Establish SSH Session:
+----------------------
+
+rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-webphp1-kp.pem' -p 38142 ec2-user@54.195.182.66  
+rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-webphp2-kp.pem' -p 38142 ec2-user@34.250.145.216
+
+------
+Monit:
+------
+
+http://54.195.182.66:2812 
+http://34.250.145.216:2812 
+(monit/monit)
+
+-------
+Apache:
+-------
+
+http://54.195.182.66:8090/monit 
+http://34.250.145.216:8090/monit 
+
+http://54.195.182.66:8090/webphp
+http://34.250.145.216:8090/webphp
