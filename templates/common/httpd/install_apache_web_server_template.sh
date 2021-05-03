@@ -12,9 +12,7 @@ set +o xtrace
 ## 2) httpd-mpm.conf 
 
 APACHE_INSTALL_DIR='SEDapache_install_dirSED'
-APACHE_DOC_ROOT_DIR='SEDapache_doc_root_dirSED'
-APACHE_JAIL_DIR='SEDapache_jail_dirSED'
-## APACHE_USR='SEDapache_usrSED'
+APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
 
@@ -36,7 +34,6 @@ echo 'Apache Web Server installed'
 cd /var/www || exit
 rm -f -R cgi-bin error icons
 mkdir -p "${APACHE_SITES_AVAILABLE_DIR}" "${APACHE_SITES_ENABLED_DIR}"
-mkdir "${APACHE_JAIL_DIR}"
 
 # Configuration files 
 cd /home/ec2-user || exit
@@ -46,7 +43,6 @@ cp /etc/mime.types "${APACHE_INSTALL_DIR}"/conf
 cp httpd-mpm.conf "${APACHE_INSTALL_DIR}"/conf.d
 
 # Files and directories permissions
-chown root:root "${APACHE_JAIL_DIR}"
 find "${APACHE_INSTALL_DIR}"/conf -type d -exec chown root:root {} +
 find "${APACHE_INSTALL_DIR}"/conf -type d -exec chmod 500 {} +
 find "${APACHE_INSTALL_DIR}"/conf -type f -exec chown root:root {} +
@@ -63,10 +59,10 @@ find "${APACHE_INSTALL_DIR}"/conf.modules.d -type f -exec chmod 400 {} +
 ## Set webroot permissions, each application will be run underneeth this level,
 ## eg: /var/www/html/admin.maxmin.it/public_html/admin/
 # TODO see how to run apache with suexec unique user
-find "${APACHE_DOC_ROOT_DIR}" -type d -exec chown root:root {} +
-find "${APACHE_DOC_ROOT_DIR}" -type d -exec chmod 755 {} +
-find "${APACHE_DOC_ROOT_DIR}" -type f -exec chown root:root {} +
-find "${APACHE_DOC_ROOT_DIR}" -type f -exec chmod 400 {} +
+find "${APACHE_DOCROOT_DIR}" -type d -exec chown root:root {} +
+find "${APACHE_DOCROOT_DIR}" -type d -exec chmod 755 {} +
+find "${APACHE_DOCROOT_DIR}" -type f -exec chown root:root {} +
+find "${APACHE_DOCROOT_DIR}" -type f -exec chmod 400 {} +
 
 # Check the syntax
 httpd -t

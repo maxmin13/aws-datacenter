@@ -36,7 +36,7 @@ check process apache with pidfile SEDapache_install_dirSED/logs/httpd.pid
   if children > 250 then restart
   if disk read > 500 kb/s for 10 cycles then alert
   if disk write > 500 kb/s for 10 cycles then alert
-  if failed host 127.0.0.1 port SEDapache_http_portSED protocol http and request "/monit" then restart
+  if failed host 127.0.0.1 port SEDapache_monit_portSED protocol http and request "/monit" then restart
   depends on apache_bin
   group server
 

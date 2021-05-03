@@ -1,5 +1,10 @@
 
-#############################
+
+uncomment istall mod security in webphp make
+owasp rules
+
+###############################
+
 get DNS name and support from AWS, use:
 https://letsencrypt.org/getting-started/
 to generate the certificate.

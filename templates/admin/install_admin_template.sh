@@ -7,15 +7,19 @@ set +o xtrace
 
 ENV='SEDenvironmentSED'
 SERVER_ADMIN_HOSTNAME='SEDserver_admin_hostnameSED'
-APACHE_DOC_ROOT_DIR='SEDapache_doc_root_dirSED'
-LOGANALYZER_ARCHIVE='SEDlog_analyzer_archiveSED'
-MMONIT_ARCHIVE='SEDmmonit_archiveSED'
-MMONIT_DIR='SEDmmonit_install_dirSED'
+APACHE_DOC_ROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
-SERVER_ADMIN_PHPMYADMIN_DOMAIN_NM='SEDphpmyadmin_domain_nameSED'
-SERVER_ADMIN_LOGANALYZER_DOMAIN_NM='SEDloganalyzer_domain_nameSED'
-SERVER_ADMIN_MONIT_HEARTBEAT_DOMAIN_NM='SEDmonit_domain_nameSED'
+MMONIT_ARCHIVE='SEDmmonit_archiveSED'
+MMONIT_DIR='SEDmmonit_install_dirSED'
+MONIT_DOCROOT_ID='SEDmonit_docroot_idSED'
+MONIT_VIRTUALHOST_CONFIG_FILE='SEDmonit_virtualhost_fileSED'
+PHPMYADMIN_DOCROOT_ID='SEDphpmyadmin_docroot_idSED'
+PHPMYADMIN_VIRTUALHOST_CONFIG_FILE='SEDphpmyadmin_virtualhost_fileSED'
+LOGANALYZER_ARCHIVE='SEDloganalyzer_archiveSED'
+LOGANALYZER_DOCROOT_ID='SEDloganalyzer_docroot_idSED'
+LOGANALYZER_VIRTUALHOST_CONFIG_FILE='SEDloganalyzer_virtualhost_fileSED'
+
 admin_log_file='/var/log/admin_install.log'
 
 amazon-linux-extras install epel -y >> "${admin_log_file}" 2>&1
@@ -115,8 +119,8 @@ echo 'Apache Web Server extended with FastCGI'
 
 echo 'Configuring Apache Web Server SSL'
 cd /home/ec2-user || exit
-chmod +x install_apache_web_server_ssl.sh 
-./install_apache_web_server_ssl.sh >> "${admin_log_file}" 2>&1 
+chmod +x extend_apache_web_server_with_SSL_module_template.sh 
+./extend_apache_web_server_with_SSL_module_template.sh >> "${admin_log_file}" 2>&1 
 echo 'Apache Web Server SSL configured'
 
 ## ********** ##
@@ -128,7 +132,7 @@ yum install -y phpmyadmin >> "${admin_log_file}" 2>&1
 echo 'PHPMyAdmin installed'
 
 cd /home/ec2-user || exit
-phpMyAdmin_doc_root="${APACHE_DOC_ROOT_DIR}"/"${SERVER_ADMIN_PHPMYADMIN_DOMAIN_NM}"/public_html
+phpMyAdmin_doc_root="${APACHE_DOC_ROOT_DIR}"/"${PHPMYADMIN_DOCROOT_ID}"/public_html
 mkdir --parents "${phpMyAdmin_doc_root}"
 mv /usr/share/phpMyAdmin "${phpMyAdmin_doc_root}"/phpmyadmin
 rm -f /etc/httpd/conf.d/phpMyAdmin.conf
@@ -145,7 +149,13 @@ find "${phpMyAdmin_doc_root}"/phpmyadmin -type d -exec chmod 755 {} +
 find "${phpMyAdmin_doc_root}"/phpmyadmin -type f -exec chown root:root {} +
 find "${phpMyAdmin_doc_root}"/phpmyadmin -type f -exec chmod 644 {} +
 
-echo 'PHPMyAdmin configured'
+# Enable the and phpmyadmin site.
+cd /home/ec2-user || exit
+cp "${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
+ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"
+echo 'phpmyadmin site enabled'
+
+echo 'phpmyadmin installed'
 
 ## *********** ##
 ## Loganalyzer ##
@@ -156,7 +166,7 @@ echo 'Installing LogAnalyzer ...'
 cd /home/ec2-user || exit
 mkdir loganalyzer
 tar -xvf "${LOGANALYZER_ARCHIVE}" --directory loganalyzer --strip-components 1 >> "${admin_log_file}" 2>&1 && cd loganalyzer || exit  
-loganalyzer_doc_root="${APACHE_DOC_ROOT_DIR}"/"${SERVER_ADMIN_LOGANALYZER_DOMAIN_NM}"/public_html
+loganalyzer_doc_root="${APACHE_DOC_ROOT_DIR}"/"${LOGANALYZER_DOCROOT_ID}"/public_html
 mkdir --parents "${loganalyzer_doc_root}"
 mv src "${loganalyzer_doc_root}"/loganalyzer
 cd /home/ec2-user || exit
@@ -168,7 +178,13 @@ find "${loganalyzer_doc_root}"/loganalyzer -type d -exec chmod 755 {} +
 find "${loganalyzer_doc_root}"/loganalyzer -type f -exec chown root:root {} +
 find "${loganalyzer_doc_root}"/loganalyzer -type f -exec chmod 644 {} +
 
-echo 'LogAnalyzer installed'
+# Enable the and loganalyzer site.
+cd /home/ec2-user || exit
+cp "${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
+ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"
+echo 'loganalyzer site enabled'
+
+echo 'loganalyzer installed'
 
 ## ******* ##
 ## M/Monit ##
@@ -219,28 +235,16 @@ cp -f monitrc /etc/monitrc
 
 rm -f /etc/monit.d/logging
 
-##/usr/bin/ssh-keygen -A
-
 # Create an Apache Web Server heartbeat endpoint, see monitrc configuration file.
-monit_doc_root="${APACHE_DOC_ROOT_DIR}"/"${SERVER_ADMIN_MONIT_HEARTBEAT_DOMAIN_NM}"/public_html
+monit_doc_root="${APACHE_DOC_ROOT_DIR}"/"${MONIT_DOCROOT_ID}"/public_html
 mkdir --parents "${monit_doc_root}"
 touch "${monit_doc_root}"/monit
 echo ok > "${monit_doc_root}"/monit
 
-## ************* ##
-## Virtual Hosts ##
-## ************* ##
-
-cd /home/ec2-user || exit
-
-# Enable the phpmyadmin and loganalyzer sites.
-cp public.virtualhost.maxmin.it.conf "${APACHE_SITES_AVAILABLE_DIR}"
-ln -s "${APACHE_SITES_AVAILABLE_DIR}"/public.virtualhost.maxmin.it.conf "${APACHE_SITES_ENABLED_DIR}"/public.virtualhost.maxmin.it.conf
-echo 'phpmyadmin and loganalyzer sites enabled'
-
 # Enable the Monit site (Apache Web Server heartbeat).
-cp monit.virtualhost.maxmin.it.conf "${APACHE_SITES_AVAILABLE_DIR}" 
-ln -s "${APACHE_SITES_AVAILABLE_DIR}"/monit.virtualhost.maxmin.it.conf "${APACHE_SITES_ENABLED_DIR}"/monit.virtualhost.maxmin.it.conf 
+cd /home/ec2-user || exit
+cp "${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
+ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" 
 echo 'Monit heartbeat endpoint enabled'
 
 ## *************** ##

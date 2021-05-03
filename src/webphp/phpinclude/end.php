@@ -11,8 +11,6 @@
 <?php } ?>
 
 &nbsp;&nbsp;&nbsp;
-&copy; 2014 C S Cerri
-&nbsp;&nbsp;&nbsp;
 <a href="/public/terms.php">Terms</a>
 &nbsp;&nbsp;&nbsp;
 Server: <?php echo $global_serverid;?>

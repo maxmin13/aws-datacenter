@@ -9,13 +9,13 @@ set +o xtrace
 
 ENV='SEDenvironmentSED'
 SERVER_WEBPHP_HOSTNAME='SEDserver_webphp_hostnameSED'
-APACHE_DOC_ROOT_DIR='SEDapache_doc_root_dirSED'
+APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
-APACHE_JAIL_DIR='SEDapache_jail_dirSED'
-PUBLIC_VIRTUALHOST_CONFIG_FILE='SEDvirtual_host_configSED'
-SERVER_WEBPHP_MONIT_HEARTBEAT_DOMAIN_NM='SEDmonit_domain_nameSED'
-SERVER_WEBPHP_LOADBALANCER_HEARTBEAT_DOMAIN_NM='SEDloadbalancer_domain_nameSED'
+LOADBALANCER_VIRTUALHOST_CONFIG_FILE='SEDloadbalancer_virtualhost_configSED'
+LOADBALANCER_DOCROOT_ID='SEDloadbalancer_docroot_idSED'
+MONIT_VIRTUALHOST_CONFIG_FILE='SEDmonit_virtualhost_configSED'
+MONIT_DOCROOT_ID='SEDmonit_docroot_idSED'
 webphp_log_file=/var/log/webphp_install.log
 
 amazon-linux-extras install epel -y >> "${webphp_log_file}" 2>&1
@@ -93,12 +93,13 @@ echo 'Apache Web Server installed'
 ## Security Module ##
 ## *************** ##
 
-echo 'Installing Apache Web Server Security module ...'
+#echo 'Installing Apache Web Server Security module ...'
 
-cd /home/ec2-user || exit
-chmod +x install_apache_web_server_security_module.sh 
-./install_apache_web_server_security_module.sh >> "${webphp_log_file}" 2>&1
-echo 'Apache Web Server Security module installed'
+### TODO
+###cd /home/ec2-user || exit
+###chmod +x extend_apache_web_server_with_security_module_template.sh 
+###./extend_apache_web_server_with_security_module_template.sh >> "${webphp_log_file}" 2>&1
+###echo 'Apache Web Server Security module installed'
 
 ## *** ##
 ## PHP ##
@@ -141,10 +142,8 @@ cp -f monitrc /etc/monitrc
 
 rm -f /etc/monit.d/logging
 
-##/usr/bin/ssh-keygen -A
-
 # Create an heartbeat endpoint targeted by Monit, see monitrc configuration file.
-monit_doc_root="${APACHE_JAIL_DIR}"/"${APACHE_DOC_ROOT_DIR}"/"${SERVER_WEBPHP_MONIT_HEARTBEAT_DOMAIN_NM}"/public_html
+monit_doc_root="${APACHE_DOCROOT_DIR}"/"${MONIT_DOCROOT_ID}"/public_html
 mkdir --parents "${monit_doc_root}"
 touch "${monit_doc_root}"/monit
 echo ok > "${monit_doc_root}"/monit
@@ -152,8 +151,8 @@ echo ok > "${monit_doc_root}"/monit
 cd /home/ec2-user || exit
 
 # Enable the Monit site (Apache Web Server hearttbeat).
-cp monit.virtualhost.maxmin.it.conf "${APACHE_SITES_AVAILABLE_DIR}" 
-ln -s "${APACHE_SITES_AVAILABLE_DIR}"/monit.virtualhost.maxmin.it.conf "${APACHE_SITES_ENABLED_DIR}"/monit.virtualhost.maxmin.it.conf 
+cp "${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
+ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" 
 echo 'Monit heartbeat endpoint enabled'
 echo 'Monit installed'
 
@@ -164,14 +163,14 @@ echo 'Monit installed'
 cd /home/ec2-user || exit
 
 # Create an heart-beat endpoint targeted by the Load Balancer.
-loadbalancer_doc_root="${APACHE_JAIL_DIR}"/"${APACHE_DOC_ROOT_DIR}"/"${SERVER_WEBPHP_LOADBALANCER_HEARTBEAT_DOMAIN_NM}"/public_html
+loadbalancer_doc_root="${APACHE_DOCROOT_DIR}"/"${LOADBALANCER_DOCROOT_ID}"/public_html
 mkdir --parents "${loadbalancer_doc_root}"
 touch "${loadbalancer_doc_root}"/elb.htm
 echo ok > "${loadbalancer_doc_root}"/elb.htm
 
 # Enable the Load Balancer endopoint.
-cp "${PUBLIC_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
-ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${PUBLIC_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${PUBLIC_VIRTUALHOST_CONFIG_FILE}" 
+cp "${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
+ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" 
 echo 'Load Balancer healt-check endpoint enabled'
 
 ## ********

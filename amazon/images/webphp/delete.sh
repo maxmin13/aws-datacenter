@@ -113,12 +113,12 @@ else
    	echo 'Access to Admin server rsyslog not found'
    fi
    
-   # Check if the Admin Security Group grants access to the WebPhp application to M/Monit
-   mmonit_granted="$(check_access_from_group_is_granted "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_HTTP_PORT}" "${webphp_sg_id}")"
+   # Check if the Admin Security Group grants access to WebPhp site for M/Monit
+   mmonit_granted="$(check_access_from_group_is_granted "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_COLLECTOR_PORT}" "${webphp_sg_id}")"
    
    if [[ -n "${mmonit_granted}" ]]
    then
-   	revoke_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_HTTP_PORT}" "${webphp_sg_id}"
+   	revoke_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_COLLECTOR_PORT}" "${webphp_sg_id}"
    	echo "Revoked access to Admin server MMonit"
    else
    	echo 'Access to Admin server MMonit not found'
@@ -157,7 +157,7 @@ fi
 ## ******** ##
 
 # Removing old files
-rm -rf "${TMP_DIR}"/webphp
+rm -rf "${TMP_DIR:?}"/webphp
 
 echo 'WebPhp box deleted'
 echo

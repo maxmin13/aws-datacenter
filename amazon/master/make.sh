@@ -37,6 +37,7 @@ fi
 
 echo ''
 
+
 # Create the server instances.
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh
 . "${PROJECT_DIR}"/amazon/images/database/make.sh
@@ -44,13 +45,13 @@ echo ''
 . "${PROJECT_DIR}"/amazon/images/loadbalancer/make.sh
 . "${PROJECT_DIR}"/amazon/images/admin/make.sh
 . "${PROJECT_DIR}"/amazon/images/webphp/make.sh 1
-. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 2
+#. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 2
 
 # Deploy Database, Admin site, public WebPhp sites.
-. "${PROJECT_DIR}"/amazon/application/database/make.sh
-. "${PROJECT_DIR}"/amazon/application/admin/make.sh
-. "${PROJECT_DIR}"/amazon/application/webphp/make.sh 1
-. "${PROJECT_DIR}"/amazon/application/webphp/make.sh 2
+. "${PROJECT_DIR}"/amazon/deploy/database/make.sh
+. "${PROJECT_DIR}"/amazon/deploy/admin/make.sh
+. "${PROJECT_DIR}"/amazon/deploy/webphp/make.sh 1
+#. "${PROJECT_DIR}"/amazon/deploy/webphp/make.sh 2
 
 echo 'Data Center up and running'
 echo

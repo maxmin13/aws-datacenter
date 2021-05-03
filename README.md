@@ -7,10 +7,13 @@ Scripts to deploy on Amazon Web Services a datacenter, composed of:
 - Admin web site
 - one or more public accessible web sites
 
-The scripts need the AWS Command Line Interface (AWS CLI) installed:
+Env: Linux Fedora distribution.
+
+## Install:
+```
+sudo dnf install expect openssl
 
 ## Install the AWS CLI:
-```
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install

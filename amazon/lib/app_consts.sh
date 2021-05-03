@@ -52,7 +52,7 @@ DB_MMDATA_BACKUP_RET_PERIOD='0'
 # The db main user is set when the db is created, see: rds.sh
 DB_MMDATA_MAIN_USER_NM='maxmin'
 DB_MMDATA_ADMIN_USER_NM='adminrw'
-DB_MMDATA_WEBPHP_USER_NM='webphprw<ID>'
+DB_MMDATA_WEBPHP_USER_NM='webphprw'
 DB_MMDATA_JAVAMAIL_USER_NM='javamail'
 
 ## ***************** ##
@@ -62,7 +62,7 @@ DB_MMDATA_JAVAMAIL_USER_NM='javamail'
 ## Amazon Linux 2 image
 BASE_AMI_ID='ami-0bb3fad3c0286ebd5'
 SHARED_BASE_INSTANCE_NM='maxmin-base-instance'
-SHARED_BASE_INSTANCE_PRIVATE_IP='10.0.0.9'
+SHARED_BASE_INSTANCE_PRIVATE_IP='10.0.0.8'
 SHARED_BASE_INSTANCE_SSH_PORT='38142'
 SHARED_BASE_INSTANCE_ROOT_DEV_NM='/dev/xvda'
 SHARED_BASE_INSTANCE_KEY_PAIR_NM='maxmin-base-kp'
@@ -97,13 +97,16 @@ LBAL_SEC_GRP_NM='maxmin-elb-sgp'
 ## Admin box ##
 ## ********* ##
 
-SERVER_ADMIN_NM='maxmin-admin-instance'
+SERVER_ADMIN_NM='maxmin-admin-instance3'
 SERVER_ADMIN_PRIVATE_IP='10.0.0.10'
-SERVER_ADMIN_APACHE_HTTPS_PORT='443'
-SERVER_ADMIN_APACHE_HTTP_PORT='8090'
-SERVER_ADMIN_MMONIT_HTTPS_PORT='8443'
-SERVER_ADMIN_MMONIT_HTTP_PORT='8080'
-SERVER_ADMIN_MONIT_HTTP_PORT='2812'
+# In dev, ip-base virtual hosting, in prod name-base virtual hosting with only one ip and port for
+# website, phpmyadmin and loganalyzer.
+SERVER_ADMIN_APACHE_WEBSITE_PORT='443'
+SERVER_ADMIN_APACHE_PHPMYADMIN_PORT='7443'
+SERVER_ADMIN_APACHE_LOGANALYZER_PORT='9443'
+SERVER_ADMIN_APACHE_MONIT_PORT='8090'
+SERVER_ADMIN_MMONIT_PUBLIC_PORT='8443'
+SERVER_ADMIN_MMONIT_COLLECTOR_PORT='8080'
 SERVER_ADMIN_RSYSLOG_PORT='514'
 SERVER_ADMIN_EMAIL='minardi.massimiliano@libero.it'
 SERVER_ADMIN_ROOT_DEV_NM='/dev/xvda'
@@ -111,6 +114,8 @@ SERVER_ADMIN_KEY_PAIR_NM='maxmin-admin-kp'
 SERVER_ADMIN_SEC_GRP_NM='maxmin-admin-instance-sgp'
 SERVER_ADMIN_TYPE='t2.micro'
 SERVER_ADMIN_EBS_VOL_SIZE='10' ## in GB, subsequent servers can be larger, but not smaller
+SERVER_ADMIN_CRT_FILE_NM='admin.maxmin.it.crt'
+SERVER_ADMIN_CRT_CHAIN_FILE_NM='admin.maxmin.it.chain.crt'
 SERVER_ADMIN_CRT_COUNTRY_NM='IE'
 SERVER_ADMIN_CRT_PROVINCE_NM='Dublin'
 SERVER_ADMIN_CRT_CITY_NM='Dublin'
@@ -118,16 +123,18 @@ SERVER_ADMIN_CRT_COMPANY_NM='maxmin13'
 SERVER_ADMIN_CRT_ORGANIZATION_NM='WWW'
 SERVER_ADMIN_CRT_UNIT_NM='UN'
 SERVER_ADMIN_HOSTNAME='admin.maxmin.it'
-SERVER_ADMIN_PHPMYADMIN_DOMAIN_NM='phpmyadmin.maxmin.it'
-SERVER_ADMIN_LOGANALYZER_DOMAIN_NM='loganalyzer.maxmin.it'
-SERVER_ADMIN_MONIT_HEARTBEAT_DOMAIN_NM='monit.maxmin.it'
 
 ## ********** ##
 ## WebPhp box ##
 ## ********** ##
 
 SERVER_WEBPHP_NM='maxmin-webphp<ID>-instance'
-SERVER_WEBPHP_APACHE_HTTP_PORT='8090'
+
+# In dev, ip-base virtual hosting, in prod name-base virtual hosting with only one ip and port for
+# website, loadbalancer (instance healt heart-bit) and monit (httpd healt heart-bit).
+SERVER_WEBPHP_APACHE_LOADBALANCER_PORT='8090'
+SERVER_WEBPHP_APACHE_WEBSITE_PORT='8070'
+SERVER_WEBPHP_APACHE_MONIT_PORT='8060'
 SERVER_WEBPHP_RSYSLOG_PORT='514'
 SERVER_WEBPHP_SEC_GRP_NM='maxmin-webphp<ID>-instance-sgp'
 SERVER_WEBPHP_KEY_PAIR_NM='maxmin-webphp<ID>-kp'
@@ -137,6 +144,5 @@ SERVER_WEBPHP_EBS_VOL_SIZE='10'
 SERVER_WEBPHP_PRIVATE_IP='10.0.0.2<ID>'
 SERVER_WEBPHP_EMAIL='minardi.massimiliano@libero.it'
 SERVER_WEBPHP_HOSTNAME='webphp<ID>.maxmin.it'
-SERVER_WEBPHP_MONIT_HEARTBEAT_DOMAIN_NM='monit.maxmin.it'
-SERVER_WEBPHP_LOADBALANCER_HEARTBEAT_DOMAIN_NM='elb.maxmin.it'
+
 

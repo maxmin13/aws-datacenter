@@ -1,12 +1,12 @@
 <?php
 
 	// when we upload to Production Environment, this is replaced with 0
-	$global_is_dev="SEDis_devSED";
+	$global_is_dev="0";
 	
 	// when we upload to Production Environment,
 	// this is replaced with emailsendfrom from aws/master/vars.sh
 	// which must be verified SES email
-	$global_sendemailfrom="SEDsend_email_fromSED";
+	$global_sendemailfrom="SEDsendemailfromSED";
 	
 	$global_webprefix="/admin/";
 
@@ -47,16 +47,22 @@
 				$dbpass=$_SERVER['DBPASS_adminrw'];
 				}
 		}
-		
+
+/*
+		echo nl2br ("$dbhost \n");
+  	        echo nl2br ("$dbname \n");
+		echo nl2br ("$dbuser \n");
+		echo nl2br ("$dbpass \n");
+ */
 		$db = new mysqli($dbhost, $dbuser, $dbpass, $dbname);
 		if (mysqli_connect_errno()) {
 			trigger_error("Unable to connect to database.");
 			exit;
 			}
 		$db->set_charset('UTF-8');
+
 	}
 	
-
 	// runs a parametrised sql query
 	// if query has no parameters:
 	//  if query returns no data, return 1 (success) 0 (error)
@@ -119,8 +125,8 @@
 			}
 	}
 
-	if (!isset($signin)) {
-			
+        // If the user is not logged in, redirect to the signin page.
+	if (!isset($signin)) {  
 		if (!isset($_COOKIE['ADMIN'])) {
 			header("Location: {$global_webprefix}signin.php");
 			exit;
@@ -133,6 +139,7 @@
 		
 	}
 	
+	// Test the db connection.
 	dbconnect(0);
 
 ?>

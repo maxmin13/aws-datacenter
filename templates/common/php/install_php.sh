@@ -6,7 +6,7 @@ set -o nounset
 set +o xtrace
 
 echo 'Installing PHP ...'
-yum install -y php php-pear
+yum install -y php php-pear php-mysql
 php -v
 echo 'PHP installed'
 

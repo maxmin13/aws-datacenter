@@ -19,13 +19,15 @@ set +o xtrace
 # GLOBAL: webphp_id, required
 ###############################################
 
-APACHE_DOC_ROOT_DIR='/var/www/html'
+APACHE_DOCROOT_DIR='/var/www/html'
 APACHE_INSTALL_DIR='/etc/httpd'
 APACHE_SITES_AVAILABLE_DIR='/etc/httpd/sites-available'
 APACHE_SITES_ENABLED_DIR='/etc/httpd/sites-enabled'
-PUBLIC_VIRTUALHOST_CONFIG_FILE='public.virtualhost.maxmin.it.conf'
-APACHE_JAIL_DIR='/jail'
-PUBLIC_VIRTUALHOST_CONFIG_FILE='public.virtualhost.maxmin.it.conf' 
+APACHE_USER='apache'
+LOADBALANCER_VIRTUALHOST_CONFIG_FILE='loadbalancer.virtualhost.maxmin.it.conf' 
+LOADBALANCER_DOCROOT_ID='loadbalancer.maxmin.it'
+MONIT_VIRTUALHOST_CONFIG_FILE='monit.virtualhost.maxmin.it.conf'
+MONIT_DOCROOT_ID='monit.maxmin.it'
 
 echo '**********'
 echo 'WebPhp box'
@@ -38,12 +40,14 @@ then
    exit 1
 else
    export webphp_id="${1}"
-   webphp_nm="${SERVER_WEBPHP_NM/<ID>/${webphp_id}}"
-   webphp_hostname=${SERVER_WEBPHP_HOSTNAME/<ID>/${webphp_id}}
-   key_pair_nm="${SERVER_WEBPHP_KEY_PAIR_NM/<ID>/${webphp_id}}"
-   webphp_sgp_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
-   db_webphp_user_nm=${DB_MMDATA_WEBPHP_USER_NM/<ID>/${webphp_id}}
-   webphp_dir=webphp"${webphp_id}"
+   webphp_nm="${SERVER_WEBPHP_NM/<ID>/"${webphp_id}"}"
+   webphp_hostname="${SERVER_WEBPHP_HOSTNAME/<ID>/"${webphp_id}"}"
+   webphp_sgp_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/"${webphp_id}"}"
+   webphp_db_user_nm="${DB_MMDATA_WEBPHP_USER_NM}"
+   webphp_dir=webphp"${webphp_id}"   
+   loadbalancer_request_domain="${webphp_hostname}"
+   monit_request_domain="${webphp_hostname}"
+   key_pair_nm="${SERVER_WEBPHP_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
 fi
 
 webphp_instance_id="$(get_instance_id "${webphp_nm}")"
@@ -155,7 +159,7 @@ fi
 
 # Removing old files
 # shellcheck disable=SC2115
-rm -rf  "${TMP_DIR}"/"${webphp_dir}"
+rm -rf  "${TMP_DIR:?}"/"${webphp_dir}"
 mkdir "${TMP_DIR}"/"${webphp_dir}"
 
 echo
@@ -202,7 +206,7 @@ echo 'Granted SSH to development machine'
 
 # Allow access to the database.
 allow_access_from_security_group "${db_sgp_id}" "${DB_MMDATA_PORT}" "${webphp_sgp_id}"
-echo 'Authorized Database access from the WebPhp box'
+echo 'Granted access to Database'
 
 ## ********* ##
 ## Admin box ##
@@ -249,16 +253,18 @@ echo "The '${webphp_eip}' public IP address has been associated with the WebPhp 
 
 # Prepare the scripts to run on the server.
 
-sed -e "s/SEDapache_doc_root_dirSED/$(escape ${APACHE_DOC_ROOT_DIR})/g" \
+sed -e "s/SEDenvironmentSED/${ENV}/g" \
+    -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
-    -e "s/SEDapache_jail_dirSED/$(escape ${APACHE_JAIL_DIR})/g" \
-    -e "s/SEDenvironmentSED/${ENV}/g" \
-    -e "s/SEDvirtual_host_configSED/${PUBLIC_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDserver_webphp_hostnameSED/${webphp_hostname}/g" \
-    -e "s/SEDmonit_domain_nameSED/${SERVER_WEBPHP_MONIT_HEARTBEAT_DOMAIN_NM}/g" \
-    -e "s/SEDloadbalancer_domain_nameSED/${SERVER_WEBPHP_LOADBALANCER_HEARTBEAT_DOMAIN_NM}/g" \
+    -e "s/SEDloadbalancer_virtualhost_configSED/${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}/g" \
+     -e "s/SEDloadbalancer_docroot_idSED/${LOADBALANCER_DOCROOT_ID}/g" \
+    -e "s/SEDmonit_virtualhost_configSED/${MONIT_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDmonit_docroot_idSED/${MONIT_DOCROOT_ID}/g" \
        "${TEMPLATE_DIR}"/webphp/install_webphp_template.sh > "${TMP_DIR}"/"${webphp_dir}"/install_webphp.sh
+    
+echo 'install_webphp.sh ready'    
     
 # Get the account number.
 aws_account="$(get_account_number)"
@@ -274,17 +280,16 @@ aes3="$(echo "${aes2}" | tr '[:upper:]' '[:lower:]')"
 aes4="${aes3:0:64}"
 
 # Apache Web Server main configuration file.
-sed -e "s/SEDapache_http_portSED/${SERVER_WEBPHP_APACHE_HTTP_PORT}/g" \
+sed -e "s/SEDapache_loadbalancer_portSED/${SERVER_APACHE_WEBPHP_LOADBALANCER_PORT}/g" \
+    -e "s/SEDapache_website_portSED/${SERVER_APACHE_WEBPHP_WEBSITE_PORT}/g" \
+    -e "s/SEDapache_monit_portSED/${SERVER_WEBPHP_APACHE_MONIT_PORT}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-    -e "s/SEDapache_doc_root_dirSED/$(escape ${APACHE_DOC_ROOT_DIR})/g" \
-    -e "s/SEDapache_jail_dirSED/$(escape ${APACHE_JAIL_DIR})/g" \
-    -e "s/SEDserver_webphp_hostnameSED/${webphp_hostname}/g" \
-    -e "s/SEDapache_usrSED/apache/g" \
+    -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
     -e "s/SEDwebphp_emailSED/${SERVER_WEBPHP_EMAIL}/g" \
     -e "s/SEDdbhostSED/${db_endpoint}/g" \
     -e "s/SEDdbnameSED/${DB_MMDATA_NM}/g" \
     -e "s/SEDdbportSED/${DB_MMDATA_PORT}/g" \
-    -e "s/SEDdbuser_webphprwSED/${db_webphp_user_nm}/g" \
+    -e "s/SEDdbuser_webphprwSED/${webphp_db_user_nm}/g" \
     -e "s/SEDdbpass_webphprwSED/${DB_MMDATA_WEBPHP_USER_PWD}/g" \
     -e "s/SEDaws_accountSED/${aws_account}/g" \
     -e "s/SEDaws_deployregionSED/${DEPLOY_REGION}/g" \
@@ -294,74 +299,93 @@ sed -e "s/SEDapache_http_portSED/${SERVER_WEBPHP_APACHE_HTTP_PORT}/g" \
     -e "s/SEDserveridSED/${webphp_id}/g" \
        "${TEMPLATE_DIR}"/webphp/httpd/httpd_template.conf > "${TMP_DIR}"/"${webphp_dir}"/httpd.conf
        
+echo 'httpd.conf ready'       
+       
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-    -e "s/SEDapache_usrSED/apache/g" \
-    -e "s/SEDapache_doc_root_dirSED/$(escape ${APACHE_DOC_ROOT_DIR})/g" \
+    -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
+    -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
-    -e "s/SEDapache_jail_dirSED/$(escape ${APACHE_JAIL_DIR})/g" \
        "${TEMPLATE_DIR}"/common/httpd/install_apache_web_server_template.sh > \
        "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server.sh 
  
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
        "${TEMPLATE_DIR}"/common/httpd/extend_apache_web_server_with_FCGI_template.sh > \
-       "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_FCGI.sh  
+       "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_FCGI.sh 
+       
+echo 'extend_apache_web_server_with_FCGI.sh ready' 
 
 # Apache Web Server Security module
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
        -e "s/SEDowasp_archiveSED/${OWASP_ARCHIVE}/g" \
-       "${TEMPLATE_DIR}"/common/httpd/install_apache_web_server_security_module_template.sh > \
-       "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server_security_module.sh     
+       "${TEMPLATE_DIR}"/common/httpd/extend_apache_web_server_with_security_module_template.sh > \
+       "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_security_module_template.sh     
+
+echo 'extend_apache_web_server_with_security_module_template.sh ready'
 
 # Script that sets a password for 'ec2-user' user.
 sed -e "s/SEDuser_nameSED/ec2-user/g" \
     -e "s/SEDuser_pwdSED/${SERVER_WEBPHP_EC2_USER_PWD}/g" \
        "${TEMPLATE_DIR}"/users/chp_user_template.exp > "${TMP_DIR}"/"${webphp_dir}"/chp_ec2-user.sh
 
+echo 'chp_ec2-user.sh ready'
+
 # Script that sets a password for 'root' user.
 sed -e "s/SEDuser_nameSED/root/g" \
     -e "s/SEDuser_pwdSED/${SERVER_WEBPHP_ROOT_PWD}/g" \
        "${TEMPLATE_DIR}"/users/chp_user_template.exp > "${TMP_DIR}"/"${webphp_dir}"/chp_root.sh
   
+echo 'chp_root.sh ready'  
+  
 # Monit demon configuration file (runs on all servers).
-sed -e "s/SEDhostnameSED/${SERVER_WEBPHP_NM}/g" \
+sed -e "s/SEDhostnameSED/${webphp_nm}/g" \
     -e "s/SEDserver_admin_private_ipSED/${SERVER_ADMIN_PRIVATE_IP}/g" \
     -e "s/SEDmmonit_collector_portSED/${SERVER_ADMIN_MMONIT_HTTP_PORT}/g" \
-    -e "s/SEDapache_http_portSED/${SERVER_WEBPHP_APACHE_HTTP_PORT}/g" \
+    -e "s/SEDapache_http_portSED/${SERVER_WEBPHP_APACHE_MONIT_PORT}/g" \
     -e "s/SEDadmin_emailSED/${SERVER_ADMIN_EMAIL}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
        "${TEMPLATE_DIR}"/webphp/monitrc_template > "${TMP_DIR}"/"${webphp_dir}"/monitrc        
+
+echo 'monitrc ready'
     
 # Create Monit heartbeat virtualhost to check Apache Web Server.   
-create_virtual_host_configuration_file '127.0.0.1' \
-   "${SERVER_WEBPHP_APACHE_HTTP_PORT}" \
-   "${webphp_hostname}" \
-   "${TMP_DIR}"/"${webphp_dir}"/monit.virtualhost.maxmin.it.conf
+create_virtualhost_configuration_file '127.0.0.1' \
+                                       "${SERVER_WEBPHP_APACHE_MONIT_PORT}" \
+                                       "${monit_request_domain}" \
+                                       "${APACHE_DOCROOT_DIR}" \
+                                       "${MONIT_DOCROOT_ID}" \
+                                       "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"     
  
 # Enable Apache Web Server Monit heartbeat endpoint.                                       
-add_alias_to_virtual_host 'monit' \
-   "${APACHE_DOC_ROOT_DIR}" \
-   "${SERVER_WEBPHP_MONIT_HEARTBEAT_DOMAIN_NM}" \
-   "${TMP_DIR}"/"${webphp_dir}"/monit.virtualhost.maxmin.it.conf 
+add_alias_to_virtualhost 'monit' \
+   "${APACHE_DOCROOT_DIR}" \
+   "${MONIT_DOCROOT_ID}" \
+   "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"
+   
+echo "${MONIT_VIRTUALHOST_CONFIG_FILE} ready"   
        
-# Create a Load Balancer healt-check virtualhost.
-# TODO instead of '*' it would be better to use the DNS name of the loadbalancer but
-# it doesn't work.   
-create_virtual_host_configuration_file "*" \
-   "${SERVER_WEBPHP_APACHE_HTTP_PORT}" \
-   "${webphp_hostname}" \
-   "${TMP_DIR}"/"${webphp_dir}"/"${PUBLIC_VIRTUALHOST_CONFIG_FILE}"
+# Create a Load Balancer healt-check virtualhost. 
+create_virtualhost_configuration_file '*' \
+                                       "${SERVER_WEBPHP_APACHE_LOADBALANCER_PORT}" \
+                                       "${loadbalancer_request_domain}" \
+                                       "${APACHE_DOCROOT_DIR}" \
+                                       "${LOADBALANCER_DOCROOT_ID}" \
+                                       "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}"   
  
 # Enable the Load Balancer virtualhost.                                       
-add_loadbalancer_rule_to_virtual_host 'elb.htm' \
-   "${APACHE_DOC_ROOT_DIR}" \
-   "${SERVER_WEBPHP_LOADBALANCER_HEARTBEAT_DOMAIN_NM}" \
-   "${TMP_DIR}"/"${webphp_dir}"/"${PUBLIC_VIRTUALHOST_CONFIG_FILE}" 
+add_loadbalancer_rule_to_virtualhost 'elb.htm' \
+   "${APACHE_DOCROOT_DIR}" \
+   "${LOADBALANCER_DOCROOT_ID}" \
+   "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" 
+
+echo "${LOADBALANCER_VIRTUALHOST_CONFIG_FILE} ready" 
                 
 # Rsyslog configuration file.    
 sed -e "s/SEDserver_admin_rsyslog_portSED/${SERVER_ADMIN_RSYSLOG_PORT}/g" \
     -e "s/SEDserver_admin_private_ip_addressSED/${SERVER_ADMIN_PRIVATE_IP}/g" \
        "${TEMPLATE_DIR}"/webphp/rsyslog_template.conf > "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf    
+
+echo 'rsyslog.conf ready'
       
 echo 'Waiting for SSH to start'
 wait_ssh_started "${private_key}" "${webphp_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
@@ -370,14 +394,14 @@ echo 'Uploading files ...'
 scp_upload_files "${private_key}" "${webphp_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" \
                  "${TMP_DIR}"/"${webphp_dir}"/install_webphp.sh \
                  "${TMP_DIR}"/"${webphp_dir}"/monitrc \
-                 "${TMP_DIR}"/"${webphp_dir}"/monit.virtualhost.maxmin.it.conf \
-                 "${TMP_DIR}"/"${webphp_dir}"/"${PUBLIC_VIRTUALHOST_CONFIG_FILE}" \
+                 "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" \
+                 "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" \
                  "${TMP_DIR}"/"${webphp_dir}"/chp_root.sh \
                  "${TMP_DIR}"/"${webphp_dir}"/chp_ec2-user.sh \
                  "${TMP_DIR}"/"${webphp_dir}"/httpd.conf \
                  "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server.sh \
                  "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_FCGI.sh  \
-                 "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server_security_module.sh \
+                 "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_security_module_template.sh \
                  "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf  \
                  "${TEMPLATE_DIR}"/common/php/install_php.sh \
                  "${TEMPLATE_DIR}"/common/httpd/09-fcgid.conf \
@@ -439,7 +463,7 @@ fi
 register_instance_with_loadbalancer "${LBAL_NM}" "${webphp_instance_id}"
 echo 'Instance registered with Load Balancer'
 
-allow_access_from_security_group "${webphp_sgp_id}" "${SERVER_WEBPHP_APACHE_HTTP_PORT}" "${loadbalancer_sgp_id}"
+allow_access_from_security_group "${webphp_sgp_id}" "${SERVER_WEBPHP_APACHE_LOADBALANCER_PORT}" "${loadbalancer_sgp_id}"
 echo 'Granted Load Balancer access to the instance'
        
 ## *** ##
@@ -460,7 +484,7 @@ fi
        
 # Removing local temp files
 # shellcheck disable=SC2115
-rm -rf "${TMP_DIR}"/"${webphp_dir}"
+rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
 
 echo "WebPhp box set up completed, IP address: '${webphp_eip}'" 
 echo

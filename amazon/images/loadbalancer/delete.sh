@@ -23,7 +23,7 @@ echo
 
 echo 'Deleting Load Balancer ...'
 
-if [[ 1 -eq "${LBAL_SELF_SIGNED}" ]]
+if [[ 'development' == "${ENV}" ]]
 then
 (
    # Clear local Keys and Certificates 

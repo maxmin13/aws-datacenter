@@ -6,15 +6,20 @@
 	// when we upload to Production Environment,
 	// this is replaced with emailsendfrom from aws/master/vars.sh
 	// which must be a verified SES email
-	$global_sendemailfrom="SEDsend_email_fromSED";
+	$global_sendemailfrom="SEDsendemailfromSED";
+	
+	// 0=don't require ssl 1=require ssl
+	// if required, non-ssl requests will be redirected to ssl in init.php
+	$global_require_ssl=0;
 
 	// whether to use development or minified js and css	
 	$global_minifyjscss=0;
-	if (strlen($global_is_dev)==1)
+	if (strlen($global_is_dev)==1) {
 		// minify if in an AWS environment
 		$global_minifyjscss=1;
 	// you can override $global_minifyjscss (set to 1)
 	// to test minified code on the dev system
+	}
 	
 	// set UTC as the default time zone
 	date_default_timezone_set('UTC');
@@ -24,10 +29,6 @@
 	
 	// these usernames are denied for signing up
 	$global_reserved_usernames=array("administrator", "support", "admin", "security", "website", "site", "company", "error", "warning", "moderator", "moderate", "staff", "employee");
-
-	// 0=don't require ssl 1=require ssl
-	// if required, non-ssl requests will be redirected to ssl in init.php
-	$global_require_ssl="SEDrequire_sslSED";
 	
 	// session times out after x seconds, eg 30 minutes = 1800 seconds
 	$global_sessionexpiry=1800;

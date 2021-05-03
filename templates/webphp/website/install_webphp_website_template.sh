@@ -6,42 +6,45 @@ set -o nounset
 set +o xtrace
 
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
-PUBLIC_VIRTUALHOST_CONFIG_FILE='SEDvirtual_host_configSED'
-APACHE_DOC_ROOT_DIR='SEDapache_doc_root_dirSED'
-APACHE_JAIL_DIR='SEDapache_jail_dirSED'
-SERVER_WEBPHP_SITE_DOMAIN_NM='SEDwebphp_domain_nameSED'
-PHPINCLUDE_ARCHIVE='SEDphpinclude_achiveSED'
-HTDOCS_ARCHIVE='SEDhtdocs_archiveSED'
+APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
+APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
+WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
+WEBSITE_ARCHIVE='SEDwebsite_archiveSED'
+WEBSITE_VIRTUALHOST_CONFIG_FILE='SEDwebphp_virtual_host_configSED'
 webphp_log_file='/var/log/webphp_install_website.log'
 
 cd /home/ec2-user || exit
 mkdir webphp
-unzip "${HTDOCS_ARCHIVE}" -d webphp
-webphp_doc_root="${APACHE_JAIL_DIR}"/"${APACHE_DOC_ROOT_DIR}"/"${SERVER_WEBPHP_SITE_DOMAIN_NM}"/public_html
-mkdir --parents "${webphp_doc_root}"
-mv webphp "${webphp_doc_root}"
+unzip "${WEBSITE_ARCHIVE}" -d webphp >> "${webphp_log_file}"
+webphp_docroot="${APACHE_DOCROOT_DIR}"/"${WEBSITE_DOCROOT_ID}"/public_html
+mkdir --parents "${webphp_docroot}"
+mv webphp/* "${webphp_docroot}"
 
-mkdir phpinclude
-unzip "${PHPINCLUDE_ARCHIVE}" -d phpinclude
-# Move the files outside of the public area
-webphp_domain_dir="${APACHE_JAIL_DIR}"/"${APACHE_DOC_ROOT_DIR}"/"${SERVER_WEBPHP_SITE_DOMAIN_NM}"
-mv phpinclude "${webphp_domain_dir}"
+## Move phpinclude directory outside of the public area
+cd "${webphp_docroot}"
+mv phpinclude ../
+
+## Update the paths in the pages
+sed -i "s/\/phpinclude/..\/phpinclude/g" index.php
+cd account
+find . -type f  -print0 | xargs -0 sed -i "s/..\/phpinclude/..\/..\/phpinclude/g"
+cd ../public
+find . -type f  -print0 | xargs -0 sed -i "s/..\/phpinclude/..\/..\/phpinclude/g"
+cd ../sns
+find . -type f  -print0 | xargs -0 sed -i "s/..\/phpinclude/..\/..\/phpinclude/g"
 
 echo 'WebPhp site installed'
 
 # TODO see how to run apache with suexec unique user
-find "${webphp_doc_root}"/webphp -type d -exec chown root:root {} +
-find "${webphp_doc_root}"/webphp -type d -exec chmod 755 {} +
-find "${webphp_doc_root}"/webphp -type f -exec chown root:root {} +
-find "${webphp_doc_root}"/webphp -type f -exec chmod 644 {} +
-find "${webphp_domain_dir}"/phpinclude -type d -exec chown root:root {} +
-find "${webphp_domain_dir}"/phpinclude -type d -exec chmod 755 {} +
-find "${webphp_domain_dir}"/phpinclude -type f -exec chown root:root {} +
-find "${webphp_domain_dir}"/phpinclude -type f -exec chmod 644 {} +
+find "${webphp_docroot}" -type d -exec chown root:root {} +
+find "${webphp_docroot}" -type d -exec chmod 755 {} +
+find "${webphp_docroot}" -type f -exec chown root:root {} +
+find "${webphp_docroot}" -type f -exec chmod 644 {} +
 
 # Enable the WebPhp site.
 cd /home/ec2-user || exit
-cp -f "${PUBLIC_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
+cp -f "${WEBSITE_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
+ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" 
 echo 'WebPhp site enabled'
 
 echo 'Reboot the server'

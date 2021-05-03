@@ -91,7 +91,7 @@ fi
 ## ******** ##
 
 # Removing old files
-rm -rf "${TMP_DIR}"/admin
+rm -rf "${TMP_DIR:?}"/admin
 
 echo 'Admin box deleted'
 echo

@@ -52,9 +52,9 @@ if [[ -z "${are_sockets_used}" ]]
 then
    ## add:     listen = /var/run/php-fpm/www.sock
    ## comment: listen = 127.0.0.1:9000
-   echo 'PHP-FPM configured to use UNIX sockets instead of TCP'
+   echo 'TODO: PHP-FPM configured to use UNIX sockets instead of TCP'
 else 
-   echo 'PHP-FPM already configured to use UNIX sockets instead of TCP'
+   echo 'TODO: PHP-FPM already configured to use UNIX sockets instead of TCP'
 fi
 
 ## FastCGI module’s configuration
