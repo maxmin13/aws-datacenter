@@ -215,7 +215,7 @@ echo 'Granted access to Database'
 allow_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_RSYSLOG_PORT}" "${webphp_sgp_id}"
 echo 'Granted access to Admin server rsyslog'
 
-allow_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_HTTP_PORT}" "${webphp_sgp_id}"
+allow_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_COLLECTOR_PORT}" "${webphp_sgp_id}"
 echo 'Granted access to Admin server MMonit collector'
 
 ## *************** ##
@@ -280,8 +280,8 @@ aes3="$(echo "${aes2}" | tr '[:upper:]' '[:lower:]')"
 aes4="${aes3:0:64}"
 
 # Apache Web Server main configuration file.
-sed -e "s/SEDapache_loadbalancer_portSED/${SERVER_APACHE_WEBPHP_LOADBALANCER_PORT}/g" \
-    -e "s/SEDapache_website_portSED/${SERVER_APACHE_WEBPHP_WEBSITE_PORT}/g" \
+sed -e "s/SEDapache_loadbalancer_portSED/${SERVER_WEBPHP_APACHE_LOADBALANCER_PORT}/g" \
+    -e "s/SEDapache_website_portSED/${SERVER_WEBPHP_APACHE_WEBSITE_PORT}/g" \
     -e "s/SEDapache_monit_portSED/${SERVER_WEBPHP_APACHE_MONIT_PORT}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
@@ -340,7 +340,7 @@ echo 'chp_root.sh ready'
 # Monit demon configuration file (runs on all servers).
 sed -e "s/SEDhostnameSED/${webphp_nm}/g" \
     -e "s/SEDserver_admin_private_ipSED/${SERVER_ADMIN_PRIVATE_IP}/g" \
-    -e "s/SEDmmonit_collector_portSED/${SERVER_ADMIN_MMONIT_HTTP_PORT}/g" \
+    -e "s/SEDmmonit_collector_portSED/${SERVER_ADMIN_MMONIT_COLLECTOR_PORT}/g" \
     -e "s/SEDapache_http_portSED/${SERVER_WEBPHP_APACHE_MONIT_PORT}/g" \
     -e "s/SEDadmin_emailSED/${SERVER_ADMIN_EMAIL}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \

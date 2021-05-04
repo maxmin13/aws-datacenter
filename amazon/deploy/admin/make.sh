@@ -116,13 +116,7 @@ create_virtualhost_configuration_file '*' \
 add_alias_to_virtualhost 'admin' \
                          "${APACHE_DOCROOT_DIR}" \
                          "${WEBSITE_DOCROOT_ID}" \
-                         "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"
-                         
-add_alias_to_virtualhost 'admin' \
-                         "${APACHE_DOCROOT_DIR}" \
-                         "${WEBSITE_DOCROOT_ID}" \
-                         "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
-                         'index.php'                         
+                         "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"                        
                             
 echo "${WEBSITE_VIRTUALHOST_CONFIG_FILE} ready"                                          
  

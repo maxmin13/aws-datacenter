@@ -369,13 +369,7 @@ create_virtualhost_configuration_file '*' \
 add_alias_to_virtualhost 'phpmyadmin' \
                             "${APACHE_DOCROOT_DIR}" \
                             "${PHPMYADMIN_DOCROOT_ID}" \
-                            "${TMP_DIR}"/admin/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" 
-                            
-add_alias_to_virtualhost 'phpmyadmin' \
-                            "${APACHE_DOCROOT_DIR}" \
-                            "${PHPMYADMIN_DOCROOT_ID}" \
-                            "${TMP_DIR}"/admin/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" \
-                            'index.php'                            
+                            "${TMP_DIR}"/admin/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"                       
 
 echo "PhpMyAdmin ${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE} ready"                             
                             
@@ -390,13 +384,7 @@ create_virtualhost_configuration_file '*' \
 add_alias_to_virtualhost 'loganalyzer' \
                             "${APACHE_DOCROOT_DIR}" \
                             "${LOGANALYZER_DOCROOT_ID}" \
-                            "${TMP_DIR}"/admin/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" 
-  
-add_alias_to_virtualhost 'loganalyzer' \
-                            "${APACHE_DOCROOT_DIR}" \
-                            "${LOGANALYZER_DOCROOT_ID}" \
-                            "${TMP_DIR}"/admin/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" \
-                            'index.php'  
+                            "${TMP_DIR}"/admin/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"  
                             
 echo "Loganalyzer ${LOGANALYZER_VIRTUALHOST_CONFIG_FILE} ready"                                    
   

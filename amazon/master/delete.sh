@@ -37,6 +37,9 @@ fi
 
 echo ''
 
+. "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 3
+exit
+
 . "${PROJECT_DIR}"/amazon/images/database/delete.sh
 . "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 1
 . "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 2

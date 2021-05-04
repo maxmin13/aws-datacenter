@@ -136,7 +136,7 @@ echo "${WEBSITE_ARCHIVE} ready"
          
 # Create the website virtualhost file.   
 create_virtualhost_configuration_file '*' \
-                                       "${SERVER_WEBPHP_WEBSITE_PORT}" \
+                                       "${SERVER_WEBPHP_APACHE_WEBSITE_PORT}" \
                                        "${website_request_domain}" \
                                        "${APACHE_DOCROOT_DIR}" \
                                        "${website_docroot_id}" \
