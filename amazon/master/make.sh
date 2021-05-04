@@ -37,8 +37,8 @@ fi
 
 echo ''
 
-. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 4
-. "${PROJECT_DIR}"/amazon/deploy/webphp/make.sh 4
+. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 5
+. "${PROJECT_DIR}"/amazon/deploy/webphp/make.sh 5
 exit
 
 # Create the server instances.

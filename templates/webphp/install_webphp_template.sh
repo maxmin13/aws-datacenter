@@ -93,13 +93,11 @@ echo 'Apache Web Server installed'
 ## Security Module ##
 ## *************** ##
 
-#echo 'Installing Apache Web Server Security module ...'
-
-### TODO
-###cd /home/ec2-user || exit
-###chmod +x extend_apache_web_server_with_security_module_template.sh 
-###./extend_apache_web_server_with_security_module_template.sh >> "${webphp_log_file}" 2>&1
-###echo 'Apache Web Server Security module installed'
+echo 'Installing Apache Web Server Security module ...'
+cd /home/ec2-user || exit
+chmod +x extend_apache_web_server_with_security_module_template.sh 
+./extend_apache_web_server_with_security_module_template.sh >> "${webphp_log_file}" 2>&1
+echo 'Apache Web Server Security module installed'
 
 ## *** ##
 ## PHP ##

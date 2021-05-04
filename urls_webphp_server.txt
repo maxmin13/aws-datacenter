@@ -6,14 +6,14 @@ Establish SSH Session:
 ----------------------
 
 rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-webphp1-kp.pem' -p 38142 ec2-user@54.73.236.240
-rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-webphp2-kp.pem' -p 38142 ec2-user@52.48.56.118
+rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-webphp2-kp.pem' -p 38142 ec2-user@54.74.240.100
 
 ------
 Monit:
 ------
 
 http://54.73.236.240:2812 
-http://52.48.56.118:2812 
+http://54.74.240.100:2812 
 (monit/monit)
 
 ---------------
@@ -21,4 +21,4 @@ WebPhp website:
 ---------------
 
 http://54.73.236.240:8070/webphp
-http://52.48.56.118:8070/webphp
+http://54.74.240.100:8070/webphp
