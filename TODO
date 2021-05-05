@@ -1,5 +1,6 @@
 
 
+
 check scripts in aws lib, 
 redirect standard output and standard error, both to log dir,
 not only standard output
