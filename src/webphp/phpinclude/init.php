@@ -6,7 +6,7 @@
 	// redirect to ssl if:
 	//  global_require_ssl is set
 	//  we are on an aws environment
-	if (	(strlen($global_is_dev)==1)&&($global_require_ssl==1)) {
+	if ((strlen($global_is_dev)==1)&&($global_require_ssl==1)) {
 		if ($_SERVER['HTTP_X_FORWARDED_PROTO']!="https") {
 			$redirect= "https://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 			header("Location:$redirect");

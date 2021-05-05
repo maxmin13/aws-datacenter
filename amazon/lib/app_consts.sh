@@ -78,7 +78,6 @@ SHARED_BASE_AMI_DESC='Maxmin Linux secured Image'
 
 LBAL_NM='elbmaxmin'
 LBAL_PORT='443'
-LBAL_INSTANCE_PORT='8090'
 LBAL_CRT_NM='maxmin-dev-elb-cert'
 LBAL_CRT_FILE='maxmin-dev-elb-cert.pem'
 LBAL_KEY_FILE='maxmin-dev-elb-key.pem'
@@ -97,7 +96,7 @@ LBAL_SEC_GRP_NM='maxmin-elb-sgp'
 ## Admin box ##
 ## ********* ##
 
-SERVER_ADMIN_NM='maxmin-admin-instance3'
+SERVER_ADMIN_NM='maxmin-admin-instance'
 SERVER_ADMIN_PRIVATE_IP='10.0.0.10'
 # In dev, ip-base virtual hosting, in prod name-base virtual hosting with only one ip and port for
 # website, phpmyadmin and loganalyzer.
@@ -132,7 +131,7 @@ SERVER_WEBPHP_NM='maxmin-webphp<ID>-instance'
 
 # In dev, ip-base virtual hosting, in prod name-base virtual hosting with only one ip and port for
 # website, loadbalancer (instance healt heart-bit) and monit (httpd healt heart-bit).
-SERVER_WEBPHP_APACHE_LOADBALANCER_PORT='8090'
+SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT='8090'
 SERVER_WEBPHP_APACHE_WEBSITE_PORT='8070'
 SERVER_WEBPHP_APACHE_MONIT_PORT='8060'
 SERVER_WEBPHP_RSYSLOG_PORT='514'

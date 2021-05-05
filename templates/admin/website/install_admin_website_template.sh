@@ -11,14 +11,15 @@ APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 WEBSITE_VIRTUALHOST_CONFIG_FILE='SEDwebsite_virtualhost_fileSED' 
 WEBSITE_ARCHIVE='SEDwebsite_archiveSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
+admin_log_file='/var/log/admin_install.log'
 
 cd /home/ec2-user || exit
 mkdir admin
-unzip "${WEBSITE_ARCHIVE}" -d admin
+unzip "${WEBSITE_ARCHIVE}" -d admin  >> "${admin_log_file}"
 website_doc_root="${APACHE_DOCROOT_DIR}"/"${WEBSITE_DOCROOT_ID}"/public_html
 mkdir --parents "${website_doc_root}"
 mv admin "${website_doc_root}"
-echo 'Admin site installed'
+echo 'Admin site installed' >> "${admin_log_file}"
 
 find "${website_doc_root}"/admin -type d -exec chown root:root {} +
 find "${website_doc_root}"/admin -type d -exec chmod 755 {} +
@@ -29,9 +30,9 @@ find "${website_doc_root}"/admin -type f -exec chmod 644 {} +
 cd /home/ec2-user || exit
 cp -f "${WEBSITE_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"
-echo 'Admin site enabled'
+echo 'Admin site enabled' >> "${admin_log_file}"
 
-echo 'Reboot the server'
+echo 'Reboot the server' >> "${admin_log_file}"
 
 exit 194
 

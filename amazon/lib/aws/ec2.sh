@@ -567,7 +567,7 @@ function allow_access_from_cidr()
 # Arguments:
 # +sg_id           -- The Security Group identifier.
 # +port            -- The TCP port.
-# +src_sg_id       -- The Security Group identifier from which incoming traffic 
+# +from_sg_id      -- The Security Group identifier from which incoming traffic 
 #                     is allowed.
 # Returns:      
 #  None
@@ -582,13 +582,13 @@ function allow_access_from_security_group()
 
    local sg_id="${1}"
    local port="${2}"
-   local src_sg_id="${3}" 
+   local from_sg_id="${3}" 
 
    aws ec2 authorize-security-group-ingress \
                         --group-id "${sg_id}" \
                         --protocol tcp \
                         --port "${port}" \
-                        --source-group "${src_sg_id}" 
+                        --source-group "${from_sg_id}" 
 
    return 0
 }
@@ -601,7 +601,7 @@ function allow_access_from_security_group()
 # Arguments:
 # +sg_id           -- The Security Group identifier.
 # +port            -- The TCP port.
-# +src_sg_id       -- The Security Group identifier from which incoming traffic 
+# +from_sg_id      -- The Security Group identifier from which incoming traffic 
 #                     is revoked.
 # Returns:      
 #  None
@@ -616,13 +616,13 @@ function revoke_access_from_security_group()
 
    local sg_id="${1}"
    local port="${2}"
-   local src_sg_id="${3}" 
+   local from_sg_id="${3}" 
 
    aws ec2 revoke-security-group-ingress \
                       --group-id "${sg_id}" \
                       --protocol tcp \
                       --port "${port}" \
-                      --source-group "${src_sg_id}"
+                      --source-group "${from_sg_id}"
 
    return 0
 }
@@ -670,7 +670,7 @@ function revoke_access_from_cidr()
 # Arguments:
 # +sg_id           -- The Security Group identifier.
 # +port            -- The TCP port.
-# +src_sg_id       -- The Security Group identifier from which incoming traffic 
+# +from_sg_id      -- The Security Group identifier from which incoming traffic 
 #                     is allowed.
 # Returns:      
 #  The group identifier if the access is granted, blanc otherwise.
@@ -685,13 +685,13 @@ function check_access_from_group_is_granted()
 
    local sg_id="${1}"
    local port="${2}"
-   local src_sg_id="${3}" 
+   local from_sg_id="${3}" 
    local id
 
    id="$(aws ec2 describe-security-groups \
              --group-ids="${sg_id}" \
              --filters Name=ip-permission.to-port,Values="${port}" \
-             --query "SecurityGroups[?IpPermissions[?contains(UserIdGroupPairs[].GroupId, '${src_sg_id}')]].{GroupId: GroupId}" \
+             --query "SecurityGroups[?IpPermissions[?contains(UserIdGroupPairs[].GroupId, '${from_sg_id}')]].{GroupId: GroupId}" \
              --output text)"                     
             
    echo "${id}"

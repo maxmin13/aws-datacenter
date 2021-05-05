@@ -46,10 +46,9 @@ function get_loadbalancer_dns_name()
 
 #===============================================================================
 # Creates a Classic Load Balancer. 
-# Elastic Load Balancers support sticky 
-# sessions. 
+# Elastic Load Balancers support sticky sessions. 
 # The Load Balander listens on 443 and forwards the requests to the
-# clients on port 80. 
+# clients on port 8070. 
 #
 # Globals:
 #  None
@@ -80,7 +79,7 @@ function create_loadbalancer()
                     --security-groups "${sg_id}" \
                     --subnets "${subnet_id}" \
                     --region "${DEPLOY_REGION}" \
-                    --listener LoadBalancerPort="${LBAL_PORT}",InstancePort="${LBAL_INSTANCE_PORT}",Protocol=https,InstanceProtocol=http,SSLCertificateId="${cert_arn}" >> "${LOG_DIR}/loadbalancer.log"
+                    --listener LoadBalancerPort="${LBAL_PORT}",InstancePort="${SERVER_WEBPHP_APACHE_WEBSITE_PORT}",Protocol=https,InstanceProtocol=http,SSLCertificateId="${cert_arn}" >> "${LOG_DIR}/loadbalancer.log"
  
    return 0
 }
@@ -90,6 +89,8 @@ function create_loadbalancer()
 # your EC2 instances. Each monitored instance is expected to provide a 
 # endpoint receable by the Load Balancer, ex: HTTP:8090/elb.htm.
 # The endpoint must return 'ok' response.
+# Each registered instance must allow access to the load balancer ping in the 
+# Security Group.
 #
 # Globals:
 #  None
@@ -110,7 +111,7 @@ function configure_loadbalancer_health_check()
  
    aws elb configure-health-check \
                     --load-balancer-name "${loadbalancer_nm}" \
-                    --health-check Target=HTTP:"${LBAL_INSTANCE_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 >> "${LOG_DIR}/loadbalancer.log"
+                    --health-check Target=HTTP:"${SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 >> "${LOG_DIR}/loadbalancer.log"
  
    return 0
 }

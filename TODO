@@ -1,7 +1,8 @@
 
 
-uncomment istall mod security in webphp make
-owasp rules
+check scripts in aws lib, 
+redirect standard output and standard error, both to log dir,
+not only standard output
 
 ###############################
 
@@ -19,6 +20,11 @@ Adding reCAPTHA to your site
 http://acmeextension.com/integrate-google-recaptcha-with-php/
 
 ############################
+
+try to jail the webphp site
+see install.sh
+
+###########################
 
 add tag or desc to security group in/out rules
 

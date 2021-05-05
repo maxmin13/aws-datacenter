@@ -35,22 +35,21 @@ else
    webphp_sgp_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
    website_docroot_id="${WEBSITE_DOCROOT_ID/<ID>/${webphp_id}}"
    webphp_dir=webphp"${webphp_id}"
+   webphp_instance_id="$(get_instance_id "${webphp_nm}")"
 fi
-
-webphp_instance_id="$(get_instance_id "${webphp_nm}")"
 
 if [[ -z "${webphp_instance_id}" ]]
 then
-   echo "Error: Instance '${webphp_nm}' not found"
-   exit 1
+   echo "Instance '${webphp_nm}' not found"
+else
+   echo "* Admin instance ID: '${webphp_instance_id}'"
 fi
 
 webphp_sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
 
 if [[ -z "${webphp_sgp_id}" ]]
 then
-   echo 'ERROR: The WebPhp security group not found'
-   exit 1
+   echo 'The WebPhp security group not found'
 else
    echo "* WebPhp Security Group ID: '${webphp_sgp_id}'"
 fi
@@ -60,7 +59,6 @@ webphp_eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"
 if [[ -z "${webphp_eip}" ]]
 then
    echo 'ERROR: WebPhp public IP address not found'
-   exit 1
 else
    echo "* WebPhp public IP address: '${webphp_eip}'"
 fi
@@ -72,28 +70,41 @@ echo 'Deleting the WebPhp website ...'
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
 mkdir "${TMP_DIR}"/"${webphp_dir}"
 
+loadbalancer_sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
+
+if [[ -n "${loadbalancer_sgp_id}" && -n "${webphp_sgp_id}" ]]
+then
+   granted="$(check_access_from_group_is_granted "${webphp_sgp_id}" "${SERVER_WEBPHP_APACHE_WEBSITE_PORT}" "${loadbalancer_sgp_id}")"
+   if [[ -n "${granted}" ]]
+   then
+      # Revoke Load Balancer access to the website
+      revoke_access_from_security_group "${webphp_sgp_id}" "${SERVER_WEBPHP_APACHE_WEBSITE_PORT}" "${loadbalancer_sgp_id}"
+      echo 'Load Balancer access to the website revoked'
+   fi
+fi
+
 if [[ -n "${webphp_eip}" && -n "${webphp_instance_id}" && -n "${webphp_sgp_id}" ]]
 then
    ## *** ##
    ## SSH ##
    ## *** ##
-   
-   # Check if the WebPhp Security Group grants access from the development machine through SSH port
+
+   # Grant access from development machine.
    my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
    access_granted="$(check_access_from_cidr_is_granted "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
-   
+
    if [[ -z "${access_granted}" ]]
    then
       allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
       echo "Granted SSH access to development machine" 
    else
-      echo 'SSH access already granted to development machine'    
+      echo 'SSH access already granted to development machine' 
    fi
    
    echo 'Waiting for SSH to start'
    private_key="$(get_private_key_path "${webphp_keypair_nm}" "${WEBPHP_CREDENTIALS_DIR}")"
    wait_ssh_started "${private_key}" "${webphp_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
-   
+
    ## ******* ##
    ## Website ##
    ## ******* ##
@@ -102,70 +113,70 @@ then
        -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
        -e "s/SEDvirtualhost_configSED/${WEBSITE_VIRTUALHOST_CONFIG_FILE}/g" \
        -e "s/SEDwebsite_docroot_idSED/${website_docroot_id}/g" \
-          "${TEMPLATE_DIR}"/webphp/website/delete_webphp_website_template.sh > "${TMP_DIR}"/"${webphp_dir}"/delete_webphp_website.sh    
-          
+          "${TEMPLATE_DIR}"/webphp/website/delete_webphp_website_template.sh > "${TMP_DIR}"/"${webphp_dir}"/delete_webphp_website.sh 
+ 
    echo 'delete_webphp_website.sh ready'
-          
+ 
    scp_upload_files "${private_key}" "${webphp_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" \
-                  "${TMP_DIR}"/"${webphp_dir}"/delete_webphp_website.sh           
+               "${TMP_DIR}"/"${webphp_dir}"/delete_webphp_website.sh
           
           
    
    # Delete the WebPhp website
    ssh_run_remote_command 'chmod +x delete_webphp_website.sh' \
-                   "${private_key}" \
-                   "${webphp_eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" \
-                   "${SERVER_WEBPHP_EC2_USER_PWD}" 
+                "${private_key}" \
+                "${webphp_eip}" \
+                "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                "${DEFAUT_AWS_USER}" \
+                "${SERVER_WEBPHP_EC2_USER_PWD}" 
              
-   set +e              
+   set +e  
    ssh_run_remote_command './delete_webphp_website.sh' \
-                   "${private_key}" \
-                   "${webphp_eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" \
-                   "${SERVER_WEBPHP_EC2_USER_PWD}" 
+                "${private_key}" \
+                "${webphp_eip}" \
+                "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                "${DEFAUT_AWS_USER}" \
+                "${SERVER_WEBPHP_EC2_USER_PWD}" 
    exit_code=$?
    set -e
-   
+
    # shellcheck disable=SC2181
    if [ 194 -eq "${exit_code}" ]
    then 
       # Clear home directory    
       ssh_run_remote_command 'rm -f -R /home/ec2-user/*' \
-                   "${private_key}" \
-                   "${webphp_eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" \
-                   "${SERVER_WEBPHP_EC2_USER_PWD}"   
+                "${private_key}" \
+                "${webphp_eip}" \
+                "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                "${DEFAUT_AWS_USER}" \
+                "${SERVER_WEBPHP_EC2_USER_PWD}"   
                    
       echo 'Rebooting instance ...'    
       set +e 
       ssh_run_remote_command 'reboot' \
-                   "${private_key}" \
-                   "${webphp_eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" \
-                   "${SERVER_WEBPHP_EC2_USER_PWD}"
+                "${private_key}" \
+                "${webphp_eip}" \
+                "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                "${DEFAUT_AWS_USER}" \
+                "${SERVER_WEBPHP_EC2_USER_PWD}"
       set -e
    else
       echo 'Error running delete_webphp_website.sh'
       exit 1
-   fi                
+   fi     
+fi           
 
-   ## *** ##
-   ## SSH ##
-   ## *** ##
+## *** ##
+## SSH ##
+## *** ##
 
-   if [[ -z "${webphp_sgp_nm}" ]]
-   then
-      echo "'${webphp_sgp_nm}' WebPhp Security Group not found"
-   else
-      revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
-      echo 'Revoked SSH access' 
-   fi   
-fi
+if [[ -z "${webphp_sgp_nm}" ]]
+then
+   echo "'${webphp_sgp_nm}' WebPhp Security Group not found"
+else
+   revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+   echo 'Revoked SSH access' 
+fi   
 
 # Clearing local files
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"

@@ -19,7 +19,6 @@ PHPMYADMIN_VIRTUALHOST_CONFIG_FILE='SEDphpmyadmin_virtualhost_fileSED'
 LOGANALYZER_ARCHIVE='SEDloganalyzer_archiveSED'
 LOGANALYZER_DOCROOT_ID='SEDloganalyzer_docroot_idSED'
 LOGANALYZER_VIRTUALHOST_CONFIG_FILE='SEDloganalyzer_virtualhost_fileSED'
-
 admin_log_file='/var/log/admin_install.log'
 
 amazon-linux-extras install epel -y >> "${admin_log_file}" 2>&1

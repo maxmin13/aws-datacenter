@@ -20,6 +20,8 @@ fi
 
 webphp_nm="${SERVER_WEBPHP_NM/<ID>/${webphp_id}}"
 webphp_instance_id="$(get_instance_id "${webphp_nm}")"
+webphp_sg_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
+webphp_sg_id="$(get_security_group_id "${webphp_sg_nm}")"
 
 echo 'Deleting Webphp box ...'
 
@@ -68,19 +70,17 @@ key_pair_nm="${SERVER_WEBPHP_KEY_PAIR_NM/<ID>/${webphp_id}}"
 delete_key_pair "${key_pair_nm}" "${WEBPHP_CREDENTIALS_DIR}" 
 echo "The '${key_pair_nm}' Key Pair has been deleted" 
 
-## ******** ##
-## Database ##
-## ******** ##
+## ******************** ##
+## Grants from Database ##
+## ******************** ##
 
 db_sg_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
-webphp_sg_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
-webphp_sg_id="$(get_security_group_id "${webphp_sg_nm}")"
 
 if [[ -z "${db_sg_id}" ]]
 then
    echo "'${DB_MMDATA_SEC_GRP_NM}' Database Security Group not found"
 else
-   # Check if the Database Security Group grants access to WebPhp application through the Database port
+   # Check if Database access is granted
    granted="$(check_access_from_group_is_granted "${db_sg_id}" "${DB_MMDATA_PORT}" "${webphp_sg_id}")"
    
    if [[ -n "${granted}" ]]
@@ -88,13 +88,15 @@ else
    	revoke_access_from_security_group "${db_sg_id}" "${DB_MMDATA_PORT}" "${webphp_sg_id}"
    	echo 'Revoked access to Database'
    else
-   	echo 'Access to Database not found'
+   	echo 'Access to Database not granted'
    fi
 fi
 
-## ********* ##
-## Admin box ##
-## ********* ##
+## ***************** ##
+## Grants from Admin ##
+## ***************** ##
+
+echo 'Removing grants from Admin instance ...'
 
 adm_sgp_id="$(get_security_group_id "${SERVER_ADMIN_SEC_GRP_NM}")"
 
@@ -102,7 +104,7 @@ if [[ -z "${adm_sgp_id}" ]]
 then
    echo "'${SERVER_ADMIN_SEC_GRP_NM}' Admin Security Group not found"
 else
-   # Check if the Admin Security Group grants access to the WebPhp application to Rsyslog
+   # Check if access to Admin Rsyslog is granted.
    rsyslog_granted="$(check_access_from_group_is_granted "${adm_sgp_id}" "${SERVER_ADMIN_RSYSLOG_PORT}" "${webphp_sg_id}")"
    
    if [[ -n "${rsyslog_granted}" ]]
@@ -110,10 +112,10 @@ else
    	revoke_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_RSYSLOG_PORT}" "${webphp_sg_id}"
    	echo "Revoked access to Admin server rsyslog"
    else
-   	echo 'Access to Admin server rsyslog not found'
+   	echo 'Access to Admin server rsyslog not granted'
    fi
-   
-   # Check if the Admin Security Group grants access to WebPhp site for M/Monit
+
+   # Check if WebPhp instance is granted access to Admin instance M/Monit
    mmonit_granted="$(check_access_from_group_is_granted "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_COLLECTOR_PORT}" "${webphp_sg_id}")"
    
    if [[ -n "${mmonit_granted}" ]]

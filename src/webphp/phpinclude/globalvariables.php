@@ -6,11 +6,11 @@
 	// when we upload to Production Environment,
 	// this is replaced with emailsendfrom from aws/master/vars.sh
 	// which must be a verified SES email
-	$global_sendemailfrom="SEDsendemailfromSED";
+	$global_sendemailfrom="SEDsend_email_fromSED";
 	
 	// 0=don't require ssl 1=require ssl
 	// if required, non-ssl requests will be redirected to ssl in init.php
-	$global_require_ssl=0;
+	$global_require_ssl="SEDrequire_sslSED";
 
 	// whether to use development or minified js and css	
 	$global_minifyjscss=0;
@@ -38,8 +38,7 @@
 	
 	// set variables based on environment
 	if (strlen($global_is_dev)==1) {
-		// we are on aws, get from httpd.conf
-		// the id of this server
+		// we are on aws, get from httpd.conf the id of this server
 		$global_serverid=$_SERVER['SERVERID'];
 		// the aeskey for session cookie encryption
 		$global_aeskey=$_SERVER['AESKEY'];

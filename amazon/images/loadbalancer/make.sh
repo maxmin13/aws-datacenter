@@ -159,7 +159,7 @@ then
    mv 'server.crt' "${LBAL_CRT_FILE}"
    
    # Print the certificate to the console
-   openssl x509 -in "${LBAL_CRT_FILE}" -text -noout
+   openssl x509 -in "${LBAL_CRT_FILE}" -text -noout  >> "${LOG_DIR}/loadbalancer.log"
    
    # Upload to IAM
    echo "Uploading '${LBAL_CRT_NM}' self-signed Load Balancer Certificate ..."
@@ -176,17 +176,20 @@ then
 elif [[ 'production' == "${ENV}" ]]
 then
 (
+   ## TODO
+   exit
+   
    # Upload Server Certificate 
    cd "${LBAL_CREDENTIALS_DIR}"
 
    echo "Uploading '${LBAL_CRT_NM}' Load Balancer Certificate ..."
 
    # Upload to IAM
-   upload_server_certificate "${LBAL_CRT_NM}" \
-                             "${LBAL_CRT_FILE}" \
-                             "${LBAL_KEY_FILE}" \
-                             "${LBAL_CREDENTIALS_DIR}" \
-                             "${LBAL_CHAIN_FILE}" 
+   #upload_server_certificate "${LBAL_CRT_NM}" \
+   #                          "${LBAL_CRT_FILE}" \
+   #                          "${LBAL_KEY_FILE}" \
+   #                          "${LBAL_CREDENTIALS_DIR}" \
+   #                          "${LBAL_CHAIN_FILE}" 
    __wait
    echo "'${LBAL_CRT_NM}' Load Balancer Certificate uploaded"
 )

@@ -16,7 +16,7 @@ LOADBALANCER_VIRTUALHOST_CONFIG_FILE='SEDloadbalancer_virtualhost_configSED'
 LOADBALANCER_DOCROOT_ID='SEDloadbalancer_docroot_idSED'
 MONIT_VIRTUALHOST_CONFIG_FILE='SEDmonit_virtualhost_configSED'
 MONIT_DOCROOT_ID='SEDmonit_docroot_idSED'
-webphp_log_file=/var/log/webphp_install.log
+webphp_log_file='/var/log/website_install.log'
 
 amazon-linux-extras install epel -y >> "${webphp_log_file}" 2>&1
 

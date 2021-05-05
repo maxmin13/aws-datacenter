@@ -196,21 +196,20 @@ webphp_sgp_id="$(create_security_group "${vpc_id}" "${webphp_sgp_nm}" \
                     "${webphp_sgp_nm} security group")"
 
 echo "Created ${webphp_sgp_nm} Security Group"
-
 allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
 echo 'Granted SSH to development machine'
 
-## ******** ##
-## Database ##
-## ******** ##
+## ******************** ##
+## Grants from Database ##
+## ******************** ##
 
 # Allow access to the database.
 allow_access_from_security_group "${db_sgp_id}" "${DB_MMDATA_PORT}" "${webphp_sgp_id}"
 echo 'Granted access to Database'
 
-## ********* ##
-## Admin box ##
-## ********* ##
+## ***************** ##
+## Grants from Admin ##
+## ***************** ##
 
 allow_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_RSYSLOG_PORT}" "${webphp_sgp_id}"
 echo 'Granted access to Admin server rsyslog'
@@ -280,7 +279,7 @@ aes3="$(echo "${aes2}" | tr '[:upper:]' '[:lower:]')"
 aes4="${aes3:0:64}"
 
 # Apache Web Server main configuration file.
-sed -e "s/SEDapache_loadbalancer_portSED/${SERVER_WEBPHP_APACHE_LOADBALANCER_PORT}/g" \
+sed -e "s/SEDapache_loadbalancer_portSED/${SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}/g" \
     -e "s/SEDapache_website_portSED/${SERVER_WEBPHP_APACHE_WEBSITE_PORT}/g" \
     -e "s/SEDapache_monit_portSED/${SERVER_WEBPHP_APACHE_MONIT_PORT}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
@@ -366,7 +365,7 @@ echo "${MONIT_VIRTUALHOST_CONFIG_FILE} ready"
        
 # Create a Load Balancer healt-check virtualhost. 
 create_virtualhost_configuration_file '*' \
-                                       "${SERVER_WEBPHP_APACHE_LOADBALANCER_PORT}" \
+                                       "${SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}" \
                                        "${loadbalancer_request_domain}" \
                                        "${APACHE_DOCROOT_DIR}" \
                                        "${LOADBALANCER_DOCROOT_ID}" \
@@ -463,7 +462,8 @@ fi
 register_instance_with_loadbalancer "${LBAL_NM}" "${webphp_instance_id}"
 echo 'Instance registered with Load Balancer'
 
-allow_access_from_security_group "${webphp_sgp_id}" "${SERVER_WEBPHP_APACHE_LOADBALANCER_PORT}" "${loadbalancer_sgp_id}"
+# Grant Load Balancer access for healt-check
+allow_access_from_security_group "${webphp_sgp_id}" "${SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}" "${loadbalancer_sgp_id}"
 echo 'Granted Load Balancer access to the instance'
        
 ## *** ##

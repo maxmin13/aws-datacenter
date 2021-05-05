@@ -68,6 +68,16 @@ else
    echo "* WebPhp public IP address: '${webphp_eip}'"
 fi
 
+loadbalancer_sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
+
+if [[ -z "${loadbalancer_sgp_id}" ]]
+then
+   echo 'ERROR: Load Balancer Security Group not found'
+   exit 1
+else
+   echo "* Load Balancer Security Group ID: '${loadbalancer_sgp_id}'"
+fi
+
 echo
 echo 'Deploying the WebPhp website ...'
 
@@ -207,6 +217,21 @@ then
 else
    echo 'Error running install_webphp_website.sh'
    exit 1
+fi
+
+## *********************** ##
+## Grants to Load Balancer ##
+## *********************** ##
+
+loadbalancer_sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
+
+if [[ -n "${loadbalancer_sgp_id}" ]]
+then
+   # Allow Load Balancer access to the website
+   allow_access_from_security_group "${webphp_sgp_id}" "${SERVER_WEBPHP_APACHE_WEBSITE_PORT}" "${loadbalancer_sgp_id}"
+   echo 'Granted Load Balancer access to the website'
+else
+   echo 'Load Balancer group not found, access not granted'
 fi
                                    
 ## *** ##
