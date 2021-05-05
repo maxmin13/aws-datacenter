@@ -2,24 +2,28 @@
 
 <html>
 <head>
-	<meta charset="utf-8">	<title>Secure PHP Site Demo</title>	<meta name="description" content="Secure PHP Site Demo" />	<meta name="keywords" content="Secure PHP Site Demo" />
+	<meta charset="utf-8">
+	<title>Secure PHP Site Demo</title>
+	<meta name="description" content="Secure PHP Site Demo" />
+	<meta name="keywords" content="Secure PHP Site Demo" />
 	<meta name="viewport" content="width=device-height" />
 	<link rel="shortcut icon" href="/favicon.ico">
+	<link rel="stylesheet" type="text/css" href="/jscss/style.css" />
 	
-	<?php if ($global_minifyjscss==0) { ?>
+        <?php if ($global_minifyjscss==0) { ?>
 
-		<link rel="stylesheet" type="text/css" href="/jscss/dev/css/style.css" />
+		<link rel="stylesheet" type="text/css" href="/jscss/style.css" />
 
-		<script type="text/javascript" src="/jscss/dev/js/jq/jquery.js"></script>
-		<script type="text/javascript" src="/jscss/dev/js/jq/jquery.base64.min.js"></script>
-		<script type="text/javascript" src="/jscss/dev/js/site/signup.js"></script>
+		<script type="text/javascript" src="/jscss/jquery.js"></script>
+		<script type="text/javascript" src="/jscss/jquery.base64.min.js"></script>
+		<script type="text/javascript" src="/jscss/signup.js"></script>
 	
 	<?php } else { ?>
 
-		<link rel="stylesheet" type="text/css" href="/jscss/prod/style.css" />
+		<link rel="stylesheet" type="text/css" href="/jscss/style.css" />
 
-		<script type="text/javascript" src="/jscss/prod/jquery.min.js"></script>
-		<script type="text/javascript" src="/jscss/prod/general.min.js"></script>
+		<script type="text/javascript" src="/jscss/jquery.min.js"></script>
+		<script type="text/javascript" src="/jscss/general.min.js"></script>
 
 	<?php } ?>
 

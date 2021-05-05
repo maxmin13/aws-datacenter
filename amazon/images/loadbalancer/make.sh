@@ -106,7 +106,8 @@ then
    echo "'${LBAL_CRT_NM}' Load Balancer Certificate deleted"
 fi
 
-if [[ 'development' == "${ENV}" ]]
+#if [[ 'development' == "${ENV}" ]]
+if 'true'
 then
 (
    # Create and upload self-signed Server Certificate 
@@ -173,25 +174,17 @@ then
    rm -f "${LBAL_KEY_FILE}"
    rm -f "${LBAL_CRT_FILE}"
 )
-elif [[ 'production' == "${ENV}" ]]
-then
+#elif [[ 'production' == "${ENV}" ]]
+#then
+else
 (
-   ## TODO
-   exit
+   # TODO
+   # TODO Use a certificate authenticated by a Certificate Authority.
+   # TODO Enable SSLCertificateChainFile in ssl.conf
+   # TODO  
    
-   # Upload Server Certificate 
-   cd "${LBAL_CREDENTIALS_DIR}"
-
-   echo "Uploading '${LBAL_CRT_NM}' Load Balancer Certificate ..."
-
-   # Upload to IAM
-   #upload_server_certificate "${LBAL_CRT_NM}" \
-   #                          "${LBAL_CRT_FILE}" \
-   #                          "${LBAL_KEY_FILE}" \
-   #                          "${LBAL_CREDENTIALS_DIR}" \
-   #                          "${LBAL_CHAIN_FILE}" 
-   __wait
-   echo "'${LBAL_CRT_NM}' Load Balancer Certificate uploaded"
+   echo 'Error: a production certificate is not available, use a developement self-signed one'
+   exit 1
 )
 fi
 

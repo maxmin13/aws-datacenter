@@ -79,7 +79,7 @@ else
 fi
 
 echo
-echo 'Deploying the WebPhp website ...'
+echo "Deploying website ${webphp_id} ..."
 
 # Clear old files
 # shellcheck disable=SC2115
@@ -116,24 +116,32 @@ cp -R "${WEBPHP_SRC_DIR}" './'
 
 if [[ 'development' == "${ENV}" ]]
 then
-   ## Configuration files.
    cd "${TMP_DIR}"/"${webphp_dir}"/webphp/phpinclude || exit
-   
-   # Set: 
-   # - development environment
-   # - email address
-   # - no redirect from HTTP to HTTPS
    sed -i -e "s/SEDis_devSED/0/g" \
           -e "s/SEDsend_email_fromSED/${SERVER_WEBPHP_EMAIL}/g" \
           -e "s/SEDrequire_sslSED/0/g" \
               globalvariables.php 
 
 elif [[ 'production' == "${ENV}" ]]
-then
+then 
+   cd "${TMP_DIR}"/"${webphp_dir}"/webphp/phpinclude || exit
    sed -i -e "s/SEDis_devSED/1/g" \
           -e "s/SEDsend_email_fromSED/${SERVER_WEBPHP_EMAIL}/g" \
           -e "s/SEDrequire_sslSED/0/g" \
               globalvariables.php 
+              
+    # Minify javascript files.
+    cd "${TMP_DIR}"/"${webphp_dir}/webphp/jscss" || exit
+
+    # create a concatenation of all javascript files
+    cat signup.js > general.js && rm -f signup.sh
+    cat jquery.base64.min.js >> general.js && rm -f jquery.base64.min.js
+      
+    java -jar "${JAR_DIR}"/yuicompressor-2.4.8.jar general.js -o general.min.js
+    echo 'Javascript files minified'
+    
+    # remove the unminified files
+    rm -f general.js jquery.js signup.js      
 fi 
 
 ## Prepare the archives.
@@ -252,7 +260,6 @@ fi
 
 # Clear local files
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
-
-echo "WebPhp website deployed at: '${webphp_eip}'" 
+echo "Website ${webphp_id} deployed at: '${webphp_eip}'" 
 echo
 

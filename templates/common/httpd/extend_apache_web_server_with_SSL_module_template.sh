@@ -22,7 +22,8 @@ cp 00-ssl.conf "${APACHE_INSTALL_DIR}"/conf.modules.d
 
 cd /home/ec2-user || exit
 
-if [[ 'development' == "${ENV}" ]]
+#if [[ 'development' == "${ENV}" ]]
+if 'true'
 then
    chmod +x gen-rsa.sh \
             remove-passphase.sh \
@@ -39,13 +40,15 @@ then
    cp server.crt "${APACHE_INSTALL_DIR}"/ssl/server.crt
    cp server.key "${APACHE_INSTALL_DIR}"/ssl/server.key
 
-elif [[ 'production' == "${ENV}" ]]
-then
-   # 1) run the script to get a certificate from a CA
-
-   # 2) mv key, certificate and chain in ssl folder
-
-   echo 'Error: TODO production configuration'
+#elif [[ 'production' == "${ENV}" ]]
+#then
+else
+   # TODO
+   # TODO Create a script to automate to get a production certificate from a CA
+   # TODO put key, certificate and chain in ssl folder
+   # TODO  
+   
+   echo 'Error: a production certificate is not available, use a developement self-signed one'
    exit 1
 fi
 

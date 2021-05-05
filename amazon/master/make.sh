@@ -25,9 +25,9 @@ echo ''
 
 if [[ 'production' == "${ENV}" ]]
 then
-   echo '***************'
-   echo 'Env: production'
-   echo '***************'
+   echo '*********************'
+   echo 'Env: production (AWS)'
+   echo '*********************'
 elif [[ 'development' == "${ENV}" ]]
 then
    echo '****************'
@@ -37,7 +37,6 @@ fi
 
 echo ''
 
-. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 2
 . "${PROJECT_DIR}"/amazon/deploy/webphp/make.sh 2
 exit
 

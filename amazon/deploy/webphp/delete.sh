@@ -64,7 +64,7 @@ else
 fi
 
 echo
-echo 'Deleting the WebPhp website ...'
+echo "Deleting website ${webphp_id} ..." 
 
 # Clearing local files
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
@@ -181,6 +181,6 @@ fi
 # Clearing local files
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
 
-echo 'WebPhp website deleted'
+echo "Website ${webphp_id} delete" 
 echo
 

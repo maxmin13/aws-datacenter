@@ -2,8 +2,8 @@
 
 # shellcheck disable=SC2034
 
-ENV='development'
-# ENV='production'
+#ENV='development'
+ENV='production'
 
 AMAZON_CHECK_IP_URL='http://checkip.amazonaws.com'
 DEFAUT_AWS_USER='ec2-user'

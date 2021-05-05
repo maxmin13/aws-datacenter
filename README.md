@@ -11,13 +11,18 @@ Env: Linux Fedora distribution.
 
 ## Install:
 ```
+## Install Inspect: 
+
 sudo dnf install expect openssl
+
+## Install Java and add it in path.
 
 ## Install the AWS CLI:
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
 aws --version
+
 ```
 
 ## Configure the AWS CLI with the details of your account:

@@ -230,7 +230,8 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
 
 echo 'extend_apache_web_server_with_SSL_module_template.sh ready'
 
-if [[ 'development' == "${ENV}" ]]
+#if [[ 'development' == "${ENV}" ]]
+if 'true'
 then
    # Apache Web Server SSL key generation script.
    sed -e "s/SEDkey_fileSED/server.key/g" \
@@ -271,24 +272,17 @@ then
           
    echo 'Apache ssl.conf ready'
                    
-elif [[ 'production' == "${ENV}" ]]
-then
-   # TODO Create a certificate authenticated by a Certificate Authority.
+#elif [[ 'production' == "${ENV}" ]]
+#then
+else
    # TODO
-   # TODO
-   echo 'Error: production configuration missing'
-   exit 1
+   # TODO Use a certificate authenticated by a Certificate Authority.
+   # TODO Enable SSLCertificateChainFile in ssl.conf
+   # TODO        
+   # TODO  sudo awk -i inplace '{if($1 == "#SSLCertificateChainFile"){$1="SSLCertificateChainFile"; print $0} else {print $0}}' "${TMP_DIR}"/admin/ssl.conf 
    
-   # Apache Web Server SSL configuration file.
-   # sed -e "s/SEDapache_portSED/${SERVER_ADMIN_APACHE_PORT}/g" \
-   #     -e "s/SEDssl_certificate_key_fileSED/${SERVER_ADMIN_KEY_PAIR_NM}/g" \
-   #     -e "s/SEDssl_certificate_fileSED/${SERVER_ADMIN_CRT_FILE_NM}/g" \
-   #     -e "s/SEDssl_certificate_chain_fileSED/${SERVER_ADMIN_CRT_CHAIN_FILE_NM}/g" \
-   #        "${TEMPLATE_DIR}"/common/httpd/ssl_template.conf > "${TMP_DIR}"/admin/ssl.conf
-          
-   # echo 'Apache ssl.conf ready'
-          
-   # sudo awk -i inplace '{if($1 == "#SSLCertificateChainFile"){$1="SSLCertificateChainFile"; print $0} else {print $0}}' "${TMP_DIR}"/admin/ssl.conf       
+   echo 'Error: a production certificate is not available, use a developement self-signed one'
+   exit 1        
 fi
 
 # Script that sets a password for 'ec2-user' user.

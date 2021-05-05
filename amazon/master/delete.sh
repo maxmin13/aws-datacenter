@@ -25,9 +25,9 @@ echo ''
 
 if [[ 'production' == "${ENV}" ]]
 then
-   echo '***************'
-   echo 'Env: production'
-   echo '***************'
+   echo '*********************'
+   echo 'Env: production (AWS)'
+   echo '*********************'
 elif [[ 'development' == "${ENV}" ]]
 then
    echo '****************'
@@ -37,8 +37,8 @@ fi
 
 echo ''
 
+. "${PROJECT_DIR}"/amazon/deploy/webphp/delete.sh 2
 exit
-
 
 . "${PROJECT_DIR}"/amazon/images/database/delete.sh
 . "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 1
