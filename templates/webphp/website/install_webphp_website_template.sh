@@ -25,13 +25,8 @@ cd "${webphp_docroot}"
 mv phpinclude ../
 
 ## Update the paths in the pages
-sed -i "s/\/phpinclude/..\/phpinclude/g" index.php
-cd account
-find . -type f  -print0 | xargs -0 sed -i "s/..\/phpinclude/..\/..\/phpinclude/g"
-cd ../public
-find . -type f  -print0 | xargs -0 sed -i "s/..\/phpinclude/..\/..\/phpinclude/g"
-cd ../sns
-find . -type f  -print0 | xargs -0 sed -i "s/..\/phpinclude/..\/..\/phpinclude/g"
+find . -type f  -print0 | xargs -0 sed -i 's/\.\.\/phpinclude/\.\.\/\.\.\/phpinclude/g'
+sed -i "s/phpinclude/..\/phpinclude/g" index.php
 
 echo 'WebPhp site installed' >> "${webphp_log_file}" 2>&1
 

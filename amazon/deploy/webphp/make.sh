@@ -117,17 +117,15 @@ cp -R "${WEBPHP_SRC_DIR}" './'
 if [[ 'development' == "${ENV}" ]]
 then
    cd "${TMP_DIR}"/"${webphp_dir}"/webphp/phpinclude || exit
-   sed -i -e "s/SEDis_devSED/0/g" \
-          -e "s/SEDsend_email_fromSED/${SERVER_WEBPHP_EMAIL}/g" \
-          -e "s/SEDrequire_sslSED/0/g" \
+   sed -i -e "s/SEDsend_email_fromSED/${SERVER_WEBPHP_EMAIL}/g" \
+          -e "s/SEDminifed_jscssSED/0/g" \
               globalvariables.php 
 
 elif [[ 'production' == "${ENV}" ]]
 then 
    cd "${TMP_DIR}"/"${webphp_dir}"/webphp/phpinclude || exit
-   sed -i -e "s/SEDis_devSED/1/g" \
-          -e "s/SEDsend_email_fromSED/${SERVER_WEBPHP_EMAIL}/g" \
-          -e "s/SEDrequire_sslSED/0/g" \
+   sed -i -e "s/SEDsend_email_fromSED/${SERVER_WEBPHP_EMAIL}/g" \
+          -e "s/SEDminifed_jscssSED/1/g" \
               globalvariables.php 
               
     # Minify javascript files.

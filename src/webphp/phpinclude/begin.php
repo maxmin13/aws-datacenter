@@ -2,56 +2,63 @@
 
 <html>
 <head>
-	<meta charset="utf-8">
-	<title>Secure PHP Site Demo</title>
-	<meta name="description" content="Secure PHP Site Demo" />
-	<meta name="keywords" content="Secure PHP Site Demo" />
-	<meta name="viewport" content="width=device-height" />
-	<link rel="shortcut icon" href="/favicon.ico">
+<meta charset="utf-8">
+<title>Secure PHP Site Demo</title>
+<meta name="description" content="Secure PHP Site Demo" />
+<meta name="keywords" content="Secure PHP Site Demo" />
+<meta name="viewport" content="width=device-height" />
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" type="text/css" href="/jscss/style.css" />
+
+<?php if ($global_minifyjscss==1) { ?>
+
 	<link rel="stylesheet" type="text/css" href="/jscss/style.css" />
-	
-        <?php if ($global_minifyjscss==0) { ?>
 
-		<link rel="stylesheet" type="text/css" href="/jscss/style.css" />
+	<script type="text/javascript" src="/jscss/jquery.min.js"></script>
+	<script type="text/javascript" src="/jscss/general.min.js"></script>
 
-		<script type="text/javascript" src="/jscss/jquery.js"></script>
-		<script type="text/javascript" src="/jscss/jquery.base64.min.js"></script>
-		<script type="text/javascript" src="/jscss/signup.js"></script>
-	
-	<?php } else { ?>
+<?php } else { ?>
 
-		<link rel="stylesheet" type="text/css" href="/jscss/style.css" />
+	<link rel="stylesheet" type="text/css" href="/jscss/style.css" />
 
-		<script type="text/javascript" src="/jscss/jquery.min.js"></script>
-		<script type="text/javascript" src="/jscss/general.min.js"></script>
+	<script type="text/javascript" src="/jscss/jquery.js"></script>
+	<script type="text/javascript" src="/jscss/jquery.base64.min.js"></script>
+	<script type="text/javascript" src="/jscss/signup.js"></script>
 
-	<?php } ?>
+<?php } ?>
 
 </head>
 <body>
 
-<!--- If using Google Analytics, paste code here --->
+	<!--- If using Google Analytics, paste code here --->
 
-<div align="center"><br>
+	<div align="center">
+		<br>
 
-<?php if (!isset($S['email'])) { ?>
+		<?php if (!isset($S['email'])) { ?>
 
-	<map name="navbar">
-		<area shape="rect" coords="140,0,250,40" href="/public/" alt="Home">
-		<area shape="rect" coords="251,0,380,40" href="/public/signin.php" alt="Sign In">
-		<area shape="rect" coords="381,0,500,40" href="/public/signup.php" alt="Sign Up">
-	</map>
-	<img src="/img/navbar.png" height="40" width="640" border="0" usemap="#navbar"/>
+		<map name="navbar">
+			<area shape="rect" coords="140,0,250,40" href="/public/" alt="Home">
+			<area shape="rect" coords="251,0,380,40" href="/public/signin.php"
+				alt="Sign In">
+			<area shape="rect" coords="381,0,500,40" href="/public/signup.php"
+				alt="Sign Up">
+		</map>
+		<img src="/img/navbar.png" height="40" width="640" border="0"
+			usemap="#navbar" />
 
-<?php } else { ?>
+			<?php } else { ?>
 
-	<map name="navbar2">
-		<area shape="rect" coords="140,0,250,40" href="/public/" alt="Home">
-		<area shape="rect" coords="251,0,380,40" href="/account/" alt="Account">
-		<area shape="rect" coords="381,0,500,40" href="/public/signout.php" alt="Sign Out">
-	</map>
-	<img src="/img/navbar2.png" height="40" width="640" border="0" usemap="#navbar2"/>
+		<map name="navbar2">
+			<area shape="rect" coords="140,0,250,40" href="/public/" alt="Home">
+			<area shape="rect" coords="251,0,380,40" href="/account/"
+				alt="Account">
+			<area shape="rect" coords="381,0,500,40" href="/public/signout.php"
+				alt="Sign Out">
+		</map>
+		<img src="/img/navbar2.png" height="40" width="640" border="0"
+			usemap="#navbar2" />
 
-<?php } ?>
+			<?php } ?>
 
-<br><br>
+		<br> <br>
