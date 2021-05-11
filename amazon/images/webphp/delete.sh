@@ -67,7 +67,7 @@ fi
 key_pair_nm="${SERVER_WEBPHP_KEY_PAIR_NM/<ID>/${webphp_id}}"
  
 # Delete the local private-key and the remote public-key.
-delete_key_pair "${key_pair_nm}" "${WEBPHP_CREDENTIALS_DIR}" 
+delete_key_pair "${key_pair_nm}" "${WEBPHP_ACCESS_DIR}" 
 echo "The '${key_pair_nm}' Key Pair has been deleted" 
 
 ## ******************** ##

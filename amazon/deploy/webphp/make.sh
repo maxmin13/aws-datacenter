@@ -103,7 +103,7 @@ else
 fi
 
 echo 'Waiting for SSH to start'
-private_key="$(get_private_key_path "${webphp_keypair_nm}" "${WEBPHP_CREDENTIALS_DIR}")"
+private_key="$(get_private_key_path "${webphp_keypair_nm}" "${WEBPHP_ACCESS_DIR}")"
 wait_ssh_started "${private_key}" "${webphp_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
 
 ## ******* ##

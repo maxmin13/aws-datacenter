@@ -5,7 +5,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-ENV='SEDenvironmentSED'
 SERVER_ADMIN_HOSTNAME='SEDserver_admin_hostnameSED'
 APACHE_DOC_ROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
@@ -27,18 +26,18 @@ amazon-linux-extras install epel -y >> "${admin_log_file}" 2>&1
 ## System hostname ##
 ## *************** ##
 
-if [[ 'development' == "${ENV}" ]]
-then
-   hostnamectl set-hostname "${SERVER_ADMIN_HOSTNAME}"
-   awk -v domain="${SERVER_ADMIN_HOSTNAME}" '{if($1 == "127.0.0.1"){$2=domain;$3=domain".localdomain"; print $0} else {print $0}}' /etc/hosts > tmp
-   mv tmp /etc/hosts
-   echo 'System hostname modified'
-elif [[ 'production' == "${ENV}" ]]
-then
+#if [[ 'development' == "${ENV}" ]]
+#then
+#   hostnamectl set-hostname "${SERVER_ADMIN_HOSTNAME}"
+#   awk -v domain="${SERVER_ADMIN_HOSTNAME}" '{if($1 == "127.0.0.1"){$2=domain;$3=domain".localdomain"; print $0} else {print $0}}' /etc/hosts > tmp
+#   mv tmp /etc/hosts
+#   echo 'System hostname modified'
+#elif [[ 'production' == "${ENV}" ]]
+#then
    hostnamectl set-hostname "${SERVER_ADMIN_HOSTNAME}"
    hostname
    echo 'System hostname modified'
-fi
+#fi
 
 ## ********************* ##
 ## 'root' and 'ec2-user' ##

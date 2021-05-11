@@ -58,13 +58,13 @@ echo
 ## ************
 
 # Delete the local private-key and the remote public-key.
-delete_key_pair "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_CREDENTIALS_DIR}"
+delete_key_pair "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_ACCESS_DIR}"
 
 # Create a key pair to SSH into the instance.
-create_key_pair "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_CREDENTIALS_DIR}"
+create_key_pair "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_ACCESS_DIR}"
 echo 'Created a temporary Key Pair to connect to the Instance, the Private Key is saved in the credentias directory'
 
-private_key="$(get_private_key_path "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_CREDENTIALS_DIR}")"
+private_key="$(get_private_key_path "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_ACCESS_DIR}")"
 
 ## **************
 ## Security Group
@@ -231,7 +231,7 @@ if [[ -z "${keypair_id}" ]]
 then
    echo "The '${SHARED_BASE_INSTANCE_KEY_PAIR_NM}' Key Pair was not found"
 else
-   delete_key_pair "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_CREDENTIALS_DIR}"
+   delete_key_pair "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_ACCESS_DIR}"
    echo "The '${SHARED_BASE_INSTANCE_KEY_PAIR_NM}' Key Pair has been deleted" 
 fi
 

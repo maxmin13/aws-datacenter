@@ -14,16 +14,16 @@
 
 	<link rel="stylesheet" type="text/css" href="/jscss/style.css" />
 
-	<script type="text/javascript" src="/jscss/jquery.min.js"></script>
-	<script type="text/javascript" src="/jscss/general.min.js"></script>
+<script type="text/javascript" src="/jscss/jquery.min.js"></script>
+<script type="text/javascript" src="/jscss/general.min.js"></script>
 
 <?php } else { ?>
 
 	<link rel="stylesheet" type="text/css" href="/jscss/style.css" />
 
-	<script type="text/javascript" src="/jscss/jquery.js"></script>
-	<script type="text/javascript" src="/jscss/jquery.base64.min.js"></script>
-	<script type="text/javascript" src="/jscss/signup.js"></script>
+<script type="text/javascript" src="/jscss/jquery.js"></script>
+<script type="text/javascript" src="/jscss/jquery.base64.min.js"></script>
+<script type="text/javascript" src="/jscss/signup.js"></script>
 
 <?php } ?>
 

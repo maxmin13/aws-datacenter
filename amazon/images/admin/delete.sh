@@ -34,7 +34,7 @@ fi
 ## *** ##
 
 # Delete the local private-key and the remote public-key.
-delete_key_pair "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_CREDENTIALS_DIR}" 
+delete_key_pair "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}" 
 echo "The '${SERVER_ADMIN_KEY_PAIR_NM}' Key Pair has been deleted" 
 
 ## ******** ##

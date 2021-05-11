@@ -35,19 +35,17 @@ function do_check_signup(is_submit) {
 
 function do_check_rc() {
 	$('#msgrc').html('Working...');
-	var rcc=$.base64.encode(Recaptcha.get_challenge());
-	var rcr=$.base64.encode(Recaptcha.get_response());
+	var rcr=$.base64.encode(grecaptcha.getResponse());
 	$.ajax({
 		type: 'POST',
 		url: 'checkrecaptcha.php',
-		data: { recaptcha_challenge_field: rcc, recaptcha_response_field: rcr },
+		data: { recaptcha_response_field: rcr },
 		success: function(ndata) {
 			data=ndata.trim();
 			if (data=='ERR')
 				$('#msgrc').html('The reCAPTCHA was wrong');
 			else {
 				$('#msgrc').html('reCAPTCHA confirmed');
-				$('#rcc').val(rcc);
 				$('#rcr').val(rcr);
 				$('#rch').val(data);
 				$('#signupform').submit();

@@ -53,13 +53,12 @@ if (is_array($result)) {
 }
 
 // check recaptcha
-$rcc=$_POST["rcc"];
+//$rcc=$_POST["rcc"];
 $rcr=$_POST["rcr"];
 $rch=base64_decode($_POST["rch"]);
-$rcstr=$_SERVER["REMOTE_ADDR"]."836429".$rcc."7364528".$rcr;
-
+$rcstr=$_SERVER["REMOTE_ADDR"]."7364528".$rcr;
 if (!(crypt($rcstr, $rch) === $rch)) {
-	do_err($erraddrrc, "The reCAPTCHA was wrong ".$rcerr);
+    do_err($erraddrrc, "The reCAPTCHA was wrong ".$rcerr);
 }
 
 // hash password

@@ -59,7 +59,7 @@ fi
 
 echo
 
-private_key="$(get_private_key_path "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_CREDENTIALS_DIR}")"
+private_key="$(get_private_key_path "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}")"
 
 ## Retrieve database scripts
 sed "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \

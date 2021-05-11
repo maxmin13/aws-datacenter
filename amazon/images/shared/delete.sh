@@ -62,7 +62,7 @@ fi
 ## ***************
 
 # Delete the local private-key and the remote public-key.
-delete_key_pair "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_CREDENTIALS_DIR}"
+delete_key_pair "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_ACCESS_DIR}"
 
 ## *********************
 ## Delete Security Group

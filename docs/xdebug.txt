@@ -1,0 +1,28 @@
+
+XDEBUG: enable Step Debugging (see: https://xdebug.org/docs/step_debug)
+
+dnf install http://rpms.remirepo.net/fedora/remi-release-33.rpm  
+sudo dnf install php74-php-xdebug
+
+[php.ini]
+
+xdebug.mode = debug
+xdebug.start_with_request = yes
+xdebug.remote_enable = 1
+zend_extension = /usr/lib64/php/modules/xdebug.so
+
+[eclipse]
+
+create a debug configuration:
+Debug As, Debug Configurations, click on PHP Web Application, 
+select Debugger, click on Configure, set Port to 9003
+select Server, click on Configure, set Document Root to /var/www/html/webphp.maxmin.it/public_html
+
+[chrome]
+
+install xdbug helper extension
+enable debug to trigger the debugger from the browser.
+
+
+
+

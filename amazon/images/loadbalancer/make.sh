@@ -60,22 +60,11 @@ fi
 
 echo
 
-## ******** ##
-## Clearing ##
-## ******** ##
+# Removing old files
+rm -rf "${TMP_DIR:?}"/loadbalancer
+mkdir "${TMP_DIR}"/loadbalancer
 
-(
-   cd "${LBAL_CREDENTIALS_DIR}"
-   rm -f 'server.key' 
-   rm -f "${LBAL_KEY_FILE}" 
-   rm -f 'server.crt' 
-   rm -f "${LBAL_CRT_FILE}" 
-   rm -f gen-rsa.sh
-   rm -f remove-passphase.sh
-   rm -f gen-selfsign-cert.sh
-)
-
-## ************** ##
+## ************** ##amazon/images/loadbalancer/make.sh
 ## Security Group ##
 ## ************** ##
 
@@ -112,7 +101,7 @@ then
 (
    # Create and upload self-signed Server Certificate 
    
-   cd "${LBAL_CREDENTIALS_DIR}"
+   cd "${TMP_DIR}"/loadbalancer
    echo 'Creating self-signed Load Balancer Certificate ...'
 
    # Generate RSA encrypted private key, protected with a passphrase.
@@ -167,7 +156,7 @@ then
    upload_server_certificate "${LBAL_CRT_NM}" \
                              "${LBAL_CRT_FILE}" \
                              "${LBAL_KEY_FILE}" \
-                             "${LBAL_CREDENTIALS_DIR}"
+                             "${TMP_DIR}"/loadbalancer
    __wait
    echo "'${LBAL_CRT_NM}' self-signed Load Balancer Certificate uploaded"
 
@@ -200,5 +189,8 @@ configure_loadbalancer_health_check "${LBAL_NM}"
 loadbalancer_dns_nm="$(get_loadbalancer_dns_name "${LBAL_NM}")"
 
 echo "Load Balancer created and available at: ${loadbalancer_dns_nm}"
+
+# Removing old files
+rm -rf "${TMP_DIR:?}"/loadbalancer
 
 echo

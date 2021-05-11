@@ -1,9 +1,10 @@
 <?php include '../phpinclude/init.php';?>
 
 <?php
-	// cancel session
-	if (isset($S['userID']))
-		$S=sessionend($S['userID']);
+// cancel session
+if (isset($S['userID'])) {
+    $S = sessionend($S['userID']);
+}
 ?>
 
 <?php include '../phpinclude/begin.php';?>

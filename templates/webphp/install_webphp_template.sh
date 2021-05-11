@@ -7,7 +7,6 @@ set +o xtrace
 
 # Install a Linux Apache PHP server (LAP).
 
-ENV='SEDenvironmentSED'
 SERVER_WEBPHP_HOSTNAME='SEDserver_webphp_hostnameSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
@@ -24,18 +23,18 @@ amazon-linux-extras install epel -y >> "${webphp_log_file}" 2>&1
 ## System hostname ##
 ## *************** ##
 
-if [[ 'development' == "${ENV}" ]]
-then
-   hostnamectl set-hostname "${SERVER_WEBPHP_HOSTNAME}"
-   awk -v domain="${SERVER_WEBPHP_HOSTNAME}" '{if($1 == "127.0.0.1"){$2=domain;$3=domain".localdomain"; print $0} else {print $0}}' /etc/hosts > tmp
-   mv tmp /etc/hosts
-   echo 'System hostname modified'
-elif [[ 'production' == "${ENV}" ]]
-then
+#if [[ 'development' == "${ENV}" ]]
+#then
+#   hostnamectl set-hostname "${SERVER_WEBPHP_HOSTNAME}"
+#   awk -v domain="${SERVER_WEBPHP_HOSTNAME}" '{if($1 == "127.0.0.1"){$2=domain;$3=domain".localdomain"; print $0} else {print $0}}' /etc/hosts > tmp
+#   mv tmp /etc/hosts
+#   echo 'System hostname modified'
+#elif [[ 'production' == "${ENV}" ]]
+#then
    hostnamectl set-hostname "${SERVER_WEBPHP_HOSTNAME}"
    hostname
    echo 'System hostname modified'
-fi
+#fi
 
 ## ********************* ##
 ## 'root' and 'ec2-user' ##

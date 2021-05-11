@@ -107,13 +107,13 @@ mkdir "${TMP_DIR}"/admin
 ## ************ ##
 
 # Delete the local private-key and the remote public-key.
-delete_key_pair "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_CREDENTIALS_DIR}"
+delete_key_pair "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}"
 
 # Create a key pair to SSH into the instance.
-create_key_pair "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_CREDENTIALS_DIR}"
+create_key_pair "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}"
 echo 'Created Admin Key Pair to SSH into the Instance, the Private Key is saved in the credentials directory'
 
-private_key="$(get_private_key_path "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_CREDENTIALS_DIR}")"
+private_key="$(get_private_key_path "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}")"
 
 ## ************** ##
 ## Security Group ##
@@ -176,8 +176,7 @@ echo "The '${eip}' public IP address has been associated with the Admin instance
 
 echo 'Preparing the scripts to run on the server'
 
-sed -e "s/SEDenvironmentSED/${ENV}/g" \
-    -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
+sed -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
     -e "s/SEDserver_admin_hostnameSED/${SERVER_ADMIN_HOSTNAME}/g" \

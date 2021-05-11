@@ -23,22 +23,9 @@ echo
 
 echo 'Deleting Load Balancer ...'
 
-if [[ 'development' == "${ENV}" ]]
-then
-(
-   # Clear local Keys and Certificates 
-   cd "${LBAL_CREDENTIALS_DIR}"
-   rm -f 'server.key' 
-   rm -f "${LBAL_KEY_FILE}" 
-   rm -f 'server.crt' 
-   rm -f "${LBAL_CRT_FILE}" 
-   rm -f gen-rsa.sh
-   rm -f remove-passphase.sh
-   rm -f gen-selfsign-cert.sh
-
-   echo 'Local Keys and Certificates deleted'  
-)
-fi
+# Removing old files
+rm -rf "${TMP_DIR:?}"/loadbalancer
+mkdir "${TMP_DIR}"/loadbalancer
 
 elb_dns="$(get_loadbalancer_dns_name "${LBAL_NM}")"
   
@@ -86,3 +73,9 @@ fi
 
 echo 'Load Balancer components deleted'
 echo
+
+# Removing old files
+rm -rf "${TMP_DIR:?}"/loadbalancer
+mkdir "${TMP_DIR}"/loadbalancer
+
+
