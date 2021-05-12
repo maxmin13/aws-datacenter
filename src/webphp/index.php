@@ -1,4 +1,4 @@
 <?php
-	include "phpinclude/init.php";
-	header("Location: /public/");
+include "phpinclude/init.php";
+header("Location: /public/");
 ?>

@@ -46,7 +46,9 @@ echo ''
 . "${PROJECT_DIR}"/amazon/datacenter/delete.sh
 . "${PROJECT_DIR}"/amazon/account/delete.sh
 
-#. "${PROJECT_DIR}"/amazon/deploy/admin/delete.sh 
-#. "${PROJECT_DIR}"/amazon/deploy/webphp/delete.sh 1
+#. "${PROJECT_DIR}"/amazon/website/admin/delete.sh 
+#. "${PROJECT_DIR}"/amazon/website/webphp/delete.sh 1
+
+
 
 echo 'Data Center deleted'

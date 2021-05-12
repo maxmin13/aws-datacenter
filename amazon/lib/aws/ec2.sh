@@ -1315,7 +1315,12 @@ function get_key_pair_id()
 # Creates a 2048-bit RSA Key Pair with the specified name. The Public Key is
 # stored by Amazon EC2 and the Private Key is saved in a local directory. 
 # The Private Key is saved as an unencrypted PEM encoded PKCS#1 
-# Private Key. If a key with the specified name already exists, it is deleted.
+# Private Key. If a key with the specified name already exists, throws an error.
+#
+# You must provide the key pair to Amazon EC2 when you create the instance, 
+# and then use that key pair to authenticate when you connect to the instance.
+# Amazon EC2 doesn't keep a copy of your private key, there is no way to recover 
+# a private key if you lose it.
 #
 # Globals:
 #  None
@@ -1336,6 +1341,15 @@ function create_key_pair()
    local keypair_nm="${1}"
    local keypair_dir="${2}"
    local private_key
+   local exist
+   
+   exist="$(get_key_pair_id "${keypair_nm}")"
+   
+   if [[ -n "${exist}" ]]
+   then
+      echo "Error: ${keypair_nm} already exists"
+      exit 1
+   fi
    
    private_key="$(get_private_key_path "${keypair_nm}" "${keypair_dir}")"
 
@@ -1379,6 +1393,12 @@ function get_private_key_path()
 
 #===============================================================================
 # Deletes the Key Pair on AWS EC2 and the Private Key in the local directory.
+#
+# You must provide the key pair to Amazon EC2 when you create the instance, 
+# and then use that key pair to authenticate when you connect to the instance.
+# Amazon EC2 doesn't keep a copy of your private key, there is no way to recover 
+# a private key if you lose it.
+#
 #
 # Globals:
 #  None

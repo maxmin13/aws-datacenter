@@ -47,9 +47,9 @@ loadbalancer_request_domain="${webphp_hostname}"
 monit_request_domain="${webphp_hostname}"
 key_pair_nm="${SERVER_WEBPHP_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
 
-echo '***********'
+echo '************'
 echo "WebPhp box ${webphp_id}" 
-echo '***********'
+echo '************'
 echo
 
 webphp_instance_id="$(get_instance_id "${webphp_nm}")"
@@ -171,9 +171,6 @@ echo "Creating WebPhp box: ${webphp_nm} ..."
 ## *** ##
 ## SSH ##
 ## *** ##
-
-# Delete the local private-key and the remote public-key.
-delete_key_pair "${key_pair_nm}" "${WEBPHP_ACCESS_DIR}"
 
 # Create a key pair to SSH into the instance.
 create_key_pair "${key_pair_nm}" "${WEBPHP_ACCESS_DIR}"

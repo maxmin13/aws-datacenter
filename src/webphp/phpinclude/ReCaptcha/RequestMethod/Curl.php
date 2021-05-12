@@ -31,7 +31,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 namespace ReCaptcha\RequestMethod;
 
 /**
@@ -41,6 +40,7 @@ class Curl
 {
 
     /**
+     *
      * @see http://php.net/curl_init
      * @param string $url
      * @return resource cURL handle
@@ -51,6 +51,7 @@ class Curl
     }
 
     /**
+     *
      * @see http://php.net/curl_setopt_array
      * @param resource $ch
      * @param array $options
@@ -62,6 +63,7 @@ class Curl
     }
 
     /**
+     *
      * @see http://php.net/curl_exec
      * @param resource $ch
      * @return mixed
@@ -72,6 +74,7 @@ class Curl
     }
 
     /**
+     *
      * @see http://php.net/curl_close
      * @param resource $ch
      */

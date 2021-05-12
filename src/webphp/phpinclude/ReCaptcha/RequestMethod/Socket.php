@@ -31,7 +31,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 namespace ReCaptcha\RequestMethod;
 
 /**
@@ -40,6 +39,7 @@ namespace ReCaptcha\RequestMethod;
  */
 class Socket
 {
+
     private $handle = null;
 
     /**
@@ -53,7 +53,7 @@ class Socket
      * @param float $timeout
      * @return resource
      */
-    public function fsockopen($hostname, $port = -1, &$errno = 0, &$errstr = '', $timeout = null)
+    public function fsockopen($hostname, $port = - 1, &$errno = 0, &$errstr = '', $timeout = null)
     {
         $this->handle = fsockopen($hostname, $port, $errno, $errstr, (is_null($timeout) ? ini_get("default_socket_timeout") : $timeout));
 

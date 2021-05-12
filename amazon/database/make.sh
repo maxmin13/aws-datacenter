@@ -63,7 +63,7 @@ private_key="$(get_private_key_path "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCES
 
 ## Retrieve database scripts
 sed "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
-    "${TEMPLATE_DIR}"/database/dbs_template.sql > "${TMP_DIR}"/database/dbs.sql
+    "${TEMPLATE_DIR}"/database/sql/dbs_template.sql > "${TMP_DIR}"/database/dbs.sql
 
 sed -e "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
     -e "s/SEDDBUSR_adminrwSED/${DB_MMDATA_ADMIN_USER_NM}/g" \
@@ -72,20 +72,13 @@ sed -e "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
     -e "s/SEDDBPASS_webphprwSED/${DB_MMDATA_WEBPHP_USER_PWD}/g" \
     -e "s/SEDDBUSR_javamailSED/${DB_MMDATA_JAVAMAIL_USER_NM}/g" \
     -e "s/SEDDBPASS_javamailSED/${DB_MMDATA_JAVAMAIL_USER_PWD}/g" \
-       "${TEMPLATE_DIR}"/database/dbusers_template.sql > "${TMP_DIR}"/database/dbusers.sql
+       "${TEMPLATE_DIR}"/database/sql/dbusers_template.sql > "${TMP_DIR}"/database/dbusers.sql
     
 sed -e "s/SEDdatabase_hostSED/${db_endpoint}/g" \
     -e "s/SEDdatabase_main_userSED/${DB_MMDATA_MAIN_USER_NM}/g" \
     -e "s/SEDdatabase_main_user_passwordSED/${DB_MMDATA_MAIN_USER_PWD}/g" \
     -e "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
-       "${TEMPLATE_DIR}"/database/install_database_template.sh > "${TMP_DIR}"/database/install_database.sh
-
-# Create a local expect script to run the remote script install_database.sh  
-sed -e "s/SEDadmin_private_keySED/$(escape ${private_key})/g" \
-    -e "s/SEDadmin_eipSED/${admin_eip}/g" \
-    -e "s/SEDuser_pwdSED/${SERVER_ADMIN_EC2_USER_PWD}/g" \
-    -e "s/SEDscript_nameSED/install_database.sh/g" \
-       "${TEMPLATE_DIR}"/database/run_template.exp > "${TMP_DIR}"/database/ssh_install_database.exp    
+       "${TEMPLATE_DIR}"/database/install_database_template.sh > "${TMP_DIR}"/database/install_database.sh  
 
 ## ************
 ## SSH from dev

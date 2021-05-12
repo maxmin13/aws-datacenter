@@ -13,25 +13,21 @@
 function docurlgetnv($nrequest)
 {
     echo "do curl GET NOVERIFY(" . $nrequest . ")<br>";
-    
-    $curlOptions = array(
-        CURLOPT_URL => $nrequest,
-        CURLOPT_VERBOSE => 1,
-        CURLOPT_RETURNTRANSFER => 1,
-        CURLOPT_SSL_VERIFYPEER => FALSE
-    );
-    
+
+    $curlOptions = array(CURLOPT_URL => $nrequest,CURLOPT_VERBOSE => 1,CURLOPT_RETURNTRANSFER => 1,CURLOPT_SSL_VERIFYPEER => FALSE);
+
     $ch = curl_init();
     curl_setopt_array($ch, $curlOptions);
     $response = curl_exec($ch);
-    
+
     $err = curl_errno($ch);
     if ($err) {
         $errors = curl_error($ch);
         curl_close($ch);
         echo "error " . $err . "<br>";
         echo $errors . "<br><br>";
-    } else {
+    }
+    else {
         curl_close($ch);
         echo "success [ " . $response . " ]<br><br>";
     }
@@ -42,26 +38,21 @@ function docurlgetnv($nrequest)
 function docurlgetv($nrequest)
 {
     echo "do curl GET VERIFY(" . $nrequest . ")<br>";
-    
-    $curlOptions = array(
-        CURLOPT_URL => $nrequest,
-        CURLOPT_VERBOSE => 1,
-        CURLOPT_RETURNTRANSFER => 1,
-        CURLOPT_SSL_VERIFYPEER => TRUE,
-        CURLOPT_SSL_VERIFYHOST => 2
-    );
-    
+
+    $curlOptions = array(CURLOPT_URL => $nrequest,CURLOPT_VERBOSE => 1,CURLOPT_RETURNTRANSFER => 1,CURLOPT_SSL_VERIFYPEER => TRUE,CURLOPT_SSL_VERIFYHOST => 2);
+
     $ch = curl_init();
     curl_setopt_array($ch, $curlOptions);
     $response = curl_exec($ch);
-    
+
     $err = curl_errno($ch);
     if ($err) {
         $errors = curl_error($ch);
         curl_close($ch);
         echo "error " . $err . "<br>";
         echo $errors . "<br><br>";
-    } else {
+    }
+    else {
         curl_close($ch);
         echo "success [ " . $response . " ]<br><br>";
     }

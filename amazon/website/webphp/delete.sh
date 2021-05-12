@@ -19,24 +19,26 @@ APACHE_DOCROOT_DIR='/var/www/html'
 APACHE_SITES_ENABLED_DIR='/etc/httpd/sites-enabled'
 WEBSITE_DOCROOT_ID='webphp<ID>.maxmin.it'
 
-echo '**************'
-echo 'WebPhp website'
-echo '**************'
-echo
-
 if [[ $# -lt 1 ]]
 then
    echo 'Error: Missing mandatory arguments'
    exit 1
 else
+   webphp_id="${1}"
    export webphp_id="${1}"
-   webphp_nm="${SERVER_WEBPHP_NM/<ID>/${webphp_id}}"
-   webphp_keypair_nm="${SERVER_WEBPHP_KEY_PAIR_NM/<ID>/${webphp_id}}"
-   webphp_sgp_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
-   website_docroot_id="${WEBSITE_DOCROOT_ID/<ID>/${webphp_id}}"
-   webphp_dir=webphp"${webphp_id}"
-   webphp_instance_id="$(get_instance_id "${webphp_nm}")"
 fi
+
+webphp_nm="${SERVER_WEBPHP_NM/<ID>/${webphp_id}}"
+webphp_keypair_nm="${SERVER_WEBPHP_KEY_PAIR_NM/<ID>/${webphp_id}}"
+webphp_sgp_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
+website_docroot_id="${WEBSITE_DOCROOT_ID/<ID>/${webphp_id}}"
+webphp_dir=webphp"${webphp_id}"
+webphp_instance_id="$(get_instance_id "${webphp_nm}")"
+
+echo '************'
+echo "WebPhp box ${webphp_id}" 
+echo '************'
+echo
 
 if [[ -z "${webphp_instance_id}" ]]
 then

@@ -5,17 +5,14 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-# Uploads database files to the admin server
-# then runs the delete script on the server
+# Uploads database files to the admin server,
+# then runs the dump script on the server, enventually
+# download the result of the dump from the server in the Download directory.
 
-echo '********************'
-echo 'Database data delete'
-echo '********************'
+echo '*************'
+echo 'Database dump'
+echo '*************'
 echo
-
-# Clear old files
-rm -rf "${TMP_DIR:?}"/database
-mkdir "${TMP_DIR}"/database
 
 admin_instance_id="$(get_instance_id "${SERVER_ADMIN_NM}")"
 
@@ -44,40 +41,43 @@ then
    echo 'ERROR: Admin public IP address not found'
    exit 1
 else
-   echo "* Admin IP address: '${admin_eip}'"
+   echo "* Admin public IP address: '${admin_eip}'"
 fi
 
 db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
 
 if [[ -z "${db_endpoint}" ]]
 then
-   echo 'Database endopoint not found'
-   exit 0
+   echo 'ERROR: Database endopoint not found'
+   exit 1
 else
    echo "* Database endpoint: '${db_endpoint}'"
 fi
 
 echo
 
+# Clear old files
+rm -rf "${TMP_DIR:?}"/database
+mkdir "${TMP_DIR}"/database
+
+dump_dir="${DOWNLOAD_DIR}"/database/"$(date +"%d-%m-%Y")"
+dump_file=dump-database-"$(date +"%d-%m-%Y-%H.%M"."%S")"
+
+if [[ ! -d "${dump_dir}" ]]
+then
+   mkdir -p "${dump_dir}"
+fi
+
 private_key="$(get_private_key_path "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}")"
-
-## Retrieve database scripts
-sed "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
-    "${TEMPLATE_DIR}"/database/delete_dbs_template.sql > "${TMP_DIR}"/database/delete_dbs.sql
-
-sed -e "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
-    -e "s/SEDDBUSR_adminrwSED/${DB_MMDATA_ADMIN_USER_NM}/g" \
-    -e "s/SEDDBPASS_adminrwSED/${DB_MMDATA_ADMIN_USER_PWD}/g" \
-    -e "s/SEDDBUSR_webphprwSED/${DB_MMDATA_WEBPHP_USER_NM}/g" \
-    -e "s/SEDDBPASS_webphprwSED/${DB_MMDATA_WEBPHP_USER_PWD}/g" \
-    -e "s/SEDDBUSR_javamailSED/${DB_MMDATA_JAVAMAIL_USER_NM}/g" \
-    -e "s/SEDDBPASS_javamailSED/${DB_MMDATA_JAVAMAIL_USER_PWD}/g" \
-    "${TEMPLATE_DIR}"/database/delete_dbusers_template.sql > "${TMP_DIR}"/database/delete_dbusers.sql
-    
+   
 sed -e "s/SEDdatabase_hostSED/${db_endpoint}/g" \
     -e "s/SEDdatabase_main_userSED/${DB_MMDATA_MAIN_USER_NM}/g" \
     -e "s/SEDdatabase_main_user_passwordSED/${DB_MMDATA_MAIN_USER_PWD}/g" \
-    "${TEMPLATE_DIR}"/database/delete_database_template.sh > "${TMP_DIR}"/database/delete_database.sh
+    -e "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
+    -e "s/SEDdump_fileSED/${dump_file}/g" \
+       "${TEMPLATE_DIR}"/database/dump_database_template.sh > "${TMP_DIR}"/database/dump_database.sh  
+
+echo 'dump_database.sh ready'
 
 ## ************
 ## SSH from dev
@@ -96,42 +96,47 @@ else
 fi
 
 echo 'Waiting for SSH to start'
-wait_ssh_started "${private_key}" "${admin_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"  
+wait_ssh_started "${private_key}" "${admin_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
 
 ## **************
 ## Upload scripts
 ## **************
 
-echo "Transferring Database scripts ..."
+echo "Uploading Database scripts ..."    
 scp_upload_files "${private_key}" "${admin_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" \
-                 "${TMP_DIR}"/database/delete_dbs.sql \
-                 "${TMP_DIR}"/database/delete_dbusers.sql \
-                 "${TMP_DIR}"/database/delete_database.sh
+                 "${TMP_DIR}"/database/dump_database.sh             
 
-echo "Deleting Database data ..."
+echo "Dumpmping Database ..."
  
-# Run the delete Database scripts uploaded in the Admin server. 
-ssh_run_remote_command 'chmod +x delete_database.sh' \
+# Run the install Database script uploaded in the Admin server. 
+ssh_run_remote_command 'chmod +x dump_database.sh' \
                    "${private_key}" \
                    "${admin_eip}" \
                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                    "${DEFAUT_AWS_USER}" \
                    "${SERVER_ADMIN_EC2_USER_PWD}" 
-              
-ssh_run_remote_command './delete_database.sh' \
-                  "${private_key}" \
-                  "${admin_eip}" \
-                  "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                  "${DEFAUT_AWS_USER}" \
-                   "${SERVER_ADMIN_EC2_USER_PWD}"
 
-# Clear Admin home directory
-ssh_run_remote_command 'rm -f -R /home/ec2-user/*' \
-                  "${private_key}" \
+ssh_run_remote_command './dump_database.sh' \
+                   "${private_key}" \
+                   "${admin_eip}" \
+                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                   "${DEFAUT_AWS_USER}" \
+                   "${SERVER_ADMIN_EC2_USER_PWD}"
+                   
+scp_download_file "${private_key}" \
                   "${admin_eip}" \
                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                   "${DEFAUT_AWS_USER}" \
-                  "${SERVER_ADMIN_EC2_USER_PWD}"    
+                  "${dump_file}" \
+                  "${dump_dir}"    
+
+# Clear remote home directory
+ssh_run_remote_command "rm -f /home/ec2-user/${dump_file} /home/ec2-user/dump_database.sh" \
+                    "${private_key}" \
+                    "${admin_eip}" \
+                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                    "${DEFAUT_AWS_USER}" \
+                    "${SERVER_ADMIN_EC2_USER_PWD}"                
 
 ## *****************
 ## Remove SSH access
@@ -145,9 +150,10 @@ else
    echo 'Revoked SSH access' 
 fi
 
+# Clear local files
 rm -rf "${TMP_DIR:?}"/database
 
-echo "Database data deleted"
+echo "Database dumped"
 
 echo
 

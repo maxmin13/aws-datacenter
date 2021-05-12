@@ -19,9 +19,9 @@ webphp_instance_id="$(get_instance_id "${webphp_nm}")"
 webphp_sg_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
 webphp_sg_id="$(get_security_group_id "${webphp_sg_nm}")"
 
-echo '***********'
+echo '************'
 echo "WebPhp box ${webphp_id}" 
-echo '***********'
+echo '************'
 echo
 echo 'Deleting Webphp box ...'
 

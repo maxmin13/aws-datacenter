@@ -1,0 +1,120 @@
+-- MySQL dump 10.14  Distrib 5.5.68-MariaDB, for Linux (x86_64)
+--
+-- Host: mmdatainstance.cwjojoz4t7ua.eu-west-1.rds.amazonaws.com    Database: mmdata
+-- ------------------------------------------------------
+-- Server version	5.7.26-log
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `sendemails`
+--
+
+DROP TABLE IF EXISTS `sendemails`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `sendemails` (
+  `sendemailID` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `dateSQL` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `userID` int(11) unsigned NOT NULL,
+  `sendto` varchar(255) NOT NULL DEFAULT '',
+  `sendfrom` varchar(255) NOT NULL DEFAULT '',
+  `sendsubject` varchar(255) NOT NULL DEFAULT '',
+  `sendmessage` varchar(8192) NOT NULL DEFAULT '',
+  `sendfailures` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `sent` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`sendemailID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `sendemails`
+--
+
+LOCK TABLES `sendemails` WRITE;
+/*!40000 ALTER TABLE `sendemails` DISABLE KEYS */;
+/*!40000 ALTER TABLE `sendemails` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `snsnotifications`
+--
+
+DROP TABLE IF EXISTS `snsnotifications`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `snsnotifications` (
+  `snsnotificationID` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `dateSQL` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `messageid` varchar(255) DEFAULT '',
+  `subject` varchar(255) DEFAULT '',
+  `message` varchar(2048) DEFAULT '',
+  `email` varchar(255) DEFAULT '',
+  PRIMARY KEY (`snsnotificationID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `snsnotifications`
+--
+
+LOCK TABLES `snsnotifications` WRITE;
+/*!40000 ALTER TABLE `snsnotifications` DISABLE KEYS */;
+/*!40000 ALTER TABLE `snsnotifications` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `users` (
+  `userID` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `dateSQL` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `username` varchar(16) NOT NULL,
+  `password` varchar(128) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `emailbounce` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '0=ok >0=bounced holds snsnotifiationID',
+  `emailcomplaint` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '0=ok >0=complained holds snsnotifiationID',
+  `sessiontoken1` varchar(16) DEFAULT NULL,
+  `sessiontoken2` varchar(16) DEFAULT NULL,
+  `sessionipaddress` varchar(64) DEFAULT NULL,
+  `sessionuseragent` varchar(64) DEFAULT NULL,
+  `sessionlastdateSQL` datetime DEFAULT NULL,
+  PRIMARY KEY (`userID`),
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=12974 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `users`
+--
+
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES (12973,'2021-05-12 14:47:36','maxmin','$2y$10$cad8b656776b307ea562eu6NbzzWY4DMT4dk72ps/mwM.ADmZJEN.','max2@gam.com',0,0,'','','','','2021-05-12 14:47:39');
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2021-05-12 15:05:41

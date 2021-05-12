@@ -21,24 +21,26 @@ WEBSITE_VIRTUALHOST_CONFIG_FILE='webphp.virtualhost.maxmin.it.conf'
 WEBSITE_DOCROOT_ID='webphp<ID>.maxmin.it'
 WEBSITE_ARCHIVE='webphp.zip'
 
-echo '**************'
-echo 'WebPhp website'
-echo '**************'
-echo
-
 if [[ $# -lt 1 ]]
 then
    echo 'Error: Missing mandatory arguments'
    exit 1
 else
+   webphp_id="${1}"
    export webphp_id="${1}"
-   webphp_nm="${SERVER_WEBPHP_NM/<ID>/${webphp_id}}"
-   webphp_keypair_nm="${SERVER_WEBPHP_KEY_PAIR_NM/<ID>/${webphp_id}}"
-   webphp_sgp_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
-   webphp_dir=webphp"${webphp_id}"
-   website_request_domain="${SERVER_WEBPHP_HOSTNAME/<ID>/${webphp_id}}"
-   website_docroot_id="${WEBSITE_DOCROOT_ID/<ID>/${webphp_id}}"
 fi
+
+webphp_nm="${SERVER_WEBPHP_NM/<ID>/${webphp_id}}"
+webphp_keypair_nm="${SERVER_WEBPHP_KEY_PAIR_NM/<ID>/${webphp_id}}"
+webphp_sgp_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
+webphp_dir=webphp"${webphp_id}"
+website_request_domain="${SERVER_WEBPHP_HOSTNAME/<ID>/${webphp_id}}"
+website_docroot_id="${WEBSITE_DOCROOT_ID/<ID>/${webphp_id}}"
+
+echo '************'
+echo "WebPhp box ${webphp_id}" 
+echo '************'
+echo
 
 webphp_instance_id="$(get_instance_id "${webphp_nm}")"
 

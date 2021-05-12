@@ -1,13 +1,15 @@
-<br><br>
+<br>
+<br>
 
 <?php if (!isset($S['userID'])) { ?>
 	Not signed in
 	&nbsp;&nbsp;&nbsp;
-	<a href="/public/signin.php">Sign In</a>
-	&nbsp;&nbsp;&nbsp;
-	<a href="/public/signup.php">Sign Up</a>
+<a href="/public/signin.php">Sign In</a>
+&nbsp;&nbsp;&nbsp;
+<a href="/public/signup.php">Sign Up</a>
 <?php } else { ?>
-	Signed in as <?php echo $S['email'];?>&nbsp;&nbsp;&nbsp;<a href="/public/signout.php">Sign Out</a>
+	Signed in as <?php echo $S['email'];?>&nbsp;&nbsp;&nbsp;
+<a href="/public/signout.php">Sign Out</a>
 <?php } ?>
 
 &nbsp;&nbsp;&nbsp;

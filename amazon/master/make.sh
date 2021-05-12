@@ -35,15 +35,6 @@ then
    echo '****************' 
 fi
 
-echo ''
-
-. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 2
-
-# Deploy Database, Admin site, public WebPhp sites.
-. "${PROJECT_DIR}"/amazon/deploy/database/make.sh
-. "${PROJECT_DIR}"/amazon/deploy/admin/make.sh
-. "${PROJECT_DIR}"/amazon/deploy/webphp/make.sh 2
-exit
 
 # Create the server instances.
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh
@@ -54,11 +45,16 @@ exit
 . "${PROJECT_DIR}"/amazon/images/webphp/make.sh 1
 #. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 2
 
-# Deploy Database, Admin site, public WebPhp sites.
-. "${PROJECT_DIR}"/amazon/deploy/database/make.sh
-. "${PROJECT_DIR}"/amazon/deploy/admin/make.sh
-. "${PROJECT_DIR}"/amazon/deploy/webphp/make.sh 1
-#. "${PROJECT_DIR}"/amazon/deploy/webphp/make.sh 2
+# Create database objects
+. "${PROJECT_DIR}"/amazon/database/make.sh
+
+# Deploy Admin site and public WebPhp sites.
+. "${PROJECT_DIR}"/amazon/website/admin/make.sh
+. "${PROJECT_DIR}"/amazon/website/webphp/make.sh 1
+#. "${PROJECT_DIR}"/amazon/website/webphp/make.sh 2
+
+# Make a backup of the database.
+#. "${PROJECT_DIR}"/amazon/dump/database/make.sh
 
 echo 'Data Center up and running'
 echo

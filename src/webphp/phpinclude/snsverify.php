@@ -34,13 +34,7 @@ function verify_sns($message, $region, $account, $topics)
 
     // Load certificate and extract public key from it
     $surl = $msg->SigningCertURL;
-    $curlOptions = array(
-        CURLOPT_URL => $surl,
-        CURLOPT_VERBOSE => 1,
-        CURLOPT_RETURNTRANSFER => 1,
-        CURLOPT_SSL_VERIFYPEER => TRUE,
-        CURLOPT_SSL_VERIFYHOST => 2
-    );
+    $curlOptions = array(CURLOPT_URL => $surl,CURLOPT_VERBOSE => 1,CURLOPT_RETURNTRANSFER => 1,CURLOPT_SSL_VERIFYPEER => TRUE,CURLOPT_SSL_VERIFYHOST => 2);
     $ch = curl_init();
     curl_setopt_array($ch, $curlOptions);
     $cert = curl_exec($ch);
@@ -68,7 +62,8 @@ function verify_sns($message, $region, $account, $topics)
         $text .= $msg->TopicArn . "\n";
         $text .= "Type\n";
         $text .= $msg->Type . "\n";
-    } elseif ($msg->Type == 'SubscriptionConfirmation') {
+    }
+    elseif ($msg->Type == 'SubscriptionConfirmation') {
         $text .= "Message\n";
         $text .= $msg->Message . "\n";
         $text .= "MessageId\n";
@@ -83,7 +78,8 @@ function verify_sns($message, $region, $account, $topics)
         $text .= $msg->TopicArn . "\n";
         $text .= "Type\n";
         $text .= $msg->Type . "\n";
-    } else {
+    }
+    else {
         return false;
     }
 
@@ -124,13 +120,15 @@ function get_domain_from_url($url, $max_node_count = 0)
                 $current_node = array_pop($host_parts);
                 if (is_string($current_node) && $current_node !== '') {
                     $return_parts[] = $current_node;
-                } else {
+                }
+                else {
                     break;
                 }
             }
             if (count($return_parts) > 0) {
                 $return_value = implode('.', array_reverse($return_parts));
-            } else {
+            }
+            else {
                 $return_value = '';
             }
         }

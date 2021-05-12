@@ -107,9 +107,6 @@ mkdir "${TMP_DIR}"/admin
 ## SSH Key Pair ##
 ## ************ ##
 
-# Delete the local private-key and the remote public-key.
-delete_key_pair "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}"
-
 # Create a key pair to SSH into the instance.
 create_key_pair "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}"
 echo 'Created Admin Key Pair to SSH into the Instance, the Private Key is saved in the credentials directory'

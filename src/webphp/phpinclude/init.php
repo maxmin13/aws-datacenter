@@ -4,14 +4,14 @@
 include 'globalvariables.php';
 
 // redirect to ssl if:
-//  global_require_ssl is set
-//  we are on an aws environment
-if (($global_require_ssl==1)) {
-	if ($_SERVER['HTTP_X_FORWARDED_PROTO']!="https") {
-		$redirect= "https://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-		header("Location:$redirect");
-		exit;
-	}
+// global_require_ssl is set
+// we are on an aws environment
+if (($global_require_ssl == 1)) {
+    if ($_SERVER['HTTP_X_FORWARDED_PROTO'] != "https") {
+        $redirect = "https://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+        header("Location:$redirect");
+        exit();
+    }
 }
 
 // include database functionality
@@ -29,6 +29,6 @@ include 'sessions.php';
 dbconnect(0);
 
 // set up the session (if it exists)
-$S=sessionuse();
+$S = sessionuse();
 
 ?>

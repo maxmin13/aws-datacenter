@@ -3,18 +3,26 @@
 
 <div class="titletext">Home</div>
 
-<br><br>
+<br>
+<br>
 
 This is the Home Page
 
-<br><br>
+<br>
+<br>
 
 <a href="curl.php">Test Curl</a>
 
-<br><br>
+<br>
+<br>
 
 <a href="email.php">Test Email</a>
 
-<br><br><br><br><br><br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
 
 <?php include '../phpinclude/end.php';?>

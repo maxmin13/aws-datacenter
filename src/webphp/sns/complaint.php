@@ -9,9 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST') {
 $post = file_get_contents('php://input');
 
 require_once ('../phpinclude/snsverify.php');
-if (! verify_sns($post, $_SERVER['AWS_DEPLOYREGION'], $_SERVER['AWS_ACCOUNT'], array(
-    'EmailComplaint'
-))) {
+if (! verify_sns($post, $_SERVER['AWS_DEPLOYREGION'], $_SERVER['AWS_ACCOUNT'], array('EmailComplaint'))) {
     exit();
 }
 
@@ -20,13 +18,7 @@ $msg = json_decode($post, true);
 if ($msg['Type'] == 'SubscriptionConfirmation') {
     // need to visit SubscribeURL
     $surl = $msg['SubscribeURL'];
-    $curlOptions = array(
-        CURLOPT_URL => $surl,
-        CURLOPT_VERBOSE => 1,
-        CURLOPT_RETURNTRANSFER => 1,
-        CURLOPT_SSL_VERIFYPEER => TRUE,
-        CURLOPT_SSL_VERIFYHOST => 2
-    );
+    $curlOptions = array(CURLOPT_URL => $surl,CURLOPT_VERBOSE => 1,CURLOPT_RETURNTRANSFER => 1,CURLOPT_SSL_VERIFYPEER => TRUE,CURLOPT_SSL_VERIFYHOST => 2);
     $ch = curl_init();
     curl_setopt_array($ch, $curlOptions);
     $response = curl_exec($ch);
@@ -34,12 +26,14 @@ if ($msg['Type'] == 'SubscriptionConfirmation') {
         $errors = curl_error($ch);
         curl_close($ch);
         echo $errors;
-    } else {
+    }
+    else {
         curl_close($ch);
         echo $response;
     }
     exit();
-} elseif ($msg['Type'] == 'Notification') {
+}
+elseif ($msg['Type'] == 'Notification') {
     include '../phpinclude/db.php';
     // check if resend and data already stored
     dbconnect(0);
@@ -48,7 +42,8 @@ if ($msg['Type'] == 'SubscriptionConfirmation') {
     $tot = 0;
     if (! is_array($sql)) {
         $tot = 0;
-    } else {
+    }
+    else {
         $tot = $sql[0]['tot'];
         $tot = ($tot == "") ? 0 : $tot;
     }

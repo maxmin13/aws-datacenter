@@ -100,7 +100,7 @@ function sessionuse()
         header("Location: /public/expired.php");
         return;
     }
-    
+
     if (! ($useragent = substr($_SERVER['HTTP_USER_AGENT'], 0, 64))) {
         header("Location: /public/expired.php");
         return;

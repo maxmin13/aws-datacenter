@@ -5,26 +5,26 @@ enable ports: 8443, 443, 9443, 7443, 38142
 SSH Session:
 ------------
 
-rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-admin-kp.pem' -p 38142 ec2-user@54.73.13.172
+rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-admin-kp.pem' -p 38142 ec2-user@34.241.110.26
 
 ------------------
 Admin LogAnalizer:
 ------------------
 
-https://54.73.13.172:9443/loganalyzer/index.php
+https://34.241.110.26:9443/loganalyzer/index.php
 
 -----------
 PHPMyAdmin:
 -----------
 
-https://54.73.13.172:7443/phpmyadmin/index.php
+https://34.241.110.26:7443/phpmyadmin/index.php
 (maxmin/fognamarcia11)
 
 -----------------
 Monit (DISABLED):
 -----------------
 
-http://54.73.13.172:2812 
+http://34.241.110.26:2812 
 (admin/monit)
 
 disabled, use M/Monit.
@@ -33,14 +33,14 @@ disabled, use M/Monit.
 M/Monit:
 --------
 
-https://54.73.13.172:8443/admin/general 
-http://54.73.13.172:8080/admin/general 
+https://34.241.110.26:8443/admin/general 
+http://34.241.110.26:8080/admin/general 
 (admin/swordfish)
 
 --------------
 Admin website:
 --------------
 
-https://54.73.13.172/admin/index.php
+https://34.241.110.26/admin/index.php
 (password is admin)
 

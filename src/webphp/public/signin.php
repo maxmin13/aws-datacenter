@@ -26,8 +26,7 @@ if (! isset($S)) {
 		</tr>
 		<tr>
 			<td>&nbsp;</td>
-			<td><br>
-			<input value="SIGN IN" type="submit"></td>
+			<td><br> <input value="SIGN IN" type="submit"></td>
 		</tr>
 	</table>
 

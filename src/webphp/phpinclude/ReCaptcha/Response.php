@@ -31,7 +31,6 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 namespace ReCaptcha;
 
 /**
@@ -39,44 +38,52 @@ namespace ReCaptcha;
  */
 class Response
 {
+
     /**
      * Success or failure.
+     *
      * @var boolean
      */
     private $success = false;
 
     /**
      * Error code strings.
+     *
      * @var array
      */
     private $errorCodes = array();
 
     /**
      * The hostname of the site where the reCAPTCHA was solved.
+     *
      * @var string
      */
     private $hostname;
 
     /**
      * Timestamp of the challenge load (ISO format yyyy-MM-dd'T'HH:mm:ssZZ)
+     *
      * @var string
      */
     private $challengeTs;
 
     /**
      * APK package name
+     *
      * @var string
      */
     private $apkPackageName;
 
     /**
      * Score assigned to the request
+     *
      * @var float
      */
     private $score;
 
     /**
      * Action as specified by the page
+     *
      * @var string
      */
     private $action;
@@ -91,7 +98,7 @@ class Response
     {
         $responseData = json_decode($json, true);
 
-        if (!$responseData) {
+        if (! $responseData) {
             return new Response(false, array(ReCaptcha::E_INVALID_JSON));
         }
 
@@ -183,6 +190,7 @@ class Response
     {
         return $this->apkPackageName;
     }
+
     /**
      * Get score
      *
@@ -205,14 +213,6 @@ class Response
 
     public function toArray()
     {
-        return array(
-            'success' => $this->isSuccess(),
-            'hostname' => $this->getHostname(),
-            'challenge_ts' => $this->getChallengeTs(),
-            'apk_package_name' => $this->getApkPackageName(),
-            'score' => $this->getScore(),
-            'action' => $this->getAction(),
-            'error-codes' => $this->getErrorCodes(),
-        );
+        return array('success' => $this->isSuccess(),'hostname' => $this->getHostname(),'challenge_ts' => $this->getChallengeTs(),'apk_package_name' => $this->getApkPackageName(),'score' => $this->getScore(),'action' => $this->getAction(),'error-codes' => $this->getErrorCodes());
     }
 }
