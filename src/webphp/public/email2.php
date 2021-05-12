@@ -7,21 +7,24 @@
 
 <?php
 
-	// send test email
-	$to=$_GET['predef'];
-	if (isset($_GET['dyn'])) {
-		if (!($_GET['dyn']==""))
-			$to=$_GET['dyn'];
-		}
-	sendemail($S['userID'], $to, "Test Email", "Testing 123...");
+// send test email
+$to = $_GET['predef'];
+if (isset($_GET['dyn'])) {
+    if (! ($_GET['dyn'] == "")) {
+        $to = $_GET['dyn'];
+    }
+}
+sendemail($S['userID'], $to, "Test Email", "Testing 123...");
 ?>
 
 Sent to <?php echo $to;?>
 
-<br><br>
+<br>
+<br>
 
 Check the sendemails database table.
 
-<br><br>
+<br>
+<br>
 
 <?php include '../phpinclude/end.php';?>

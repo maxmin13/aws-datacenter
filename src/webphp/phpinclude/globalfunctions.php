@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * All _GET and _POST variables into your PHP application should be whitelist verified. 
+ * This means you only allow certain characters for any input. Do not use blacklisting 
+ * (how can you be sure you have listed all the 'bad' characters, especially with UTF-8?).
+ * */
+
 // an error occurred
 function do_err($naddr, $nmsg)
 {
@@ -109,82 +115,12 @@ function check_text_input_in_array($var, $arr, $errname, $erraddr)
 // returns original string if legal, or "Illegal Input" if not
 function check_legal_chars($ns)
 {
-    $legal = array(
-        "q",
-        "w",
-        "e",
-        "r",
-        "t",
-        "y",
-        "u",
-        "i",
-        "o",
-        "p",
-        "a",
-        "s",
-        "d",
-        "f",
-        "g",
-        "h",
-        "j",
-        "k",
-        "l",
-        "z",
-        "x",
-        "c",
-        "v",
-        "b",
-        "n",
-        "m",
-        "Q",
-        "W",
-        "E",
-        "R",
-        "T",
-        "Y",
-        "U",
-        "I",
-        "O",
-        "P",
-        "A",
-        "S",
-        "D",
-        "F",
-        "G",
-        "H",
-        "J",
-        "K",
-        "L",
-        "Z",
-        "X",
-        "C",
-        "V",
-        "B",
-        "N",
-        "M",
-        " ",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "0",
-        "!",
-        "@",
-        "$",
-        "*",
-        "(",
-        ")",
-        ":",
-        ";",
-        "+",
-        "-",
-        "?"
-    );
+    $legal=array("q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", 
+        "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m", "Q", "W", "E", "R", 
+        "T", "Y", "U", "I", "O", "P", "A", "S", "D", "F", "G", "H", "J", "K", "L", "Z", 
+        "X", "C", "V", "B", "N", "M", " ", 
+        "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", 
+        "!", "@", "$", "*", "(", ")", ":", ";", "+", "-", "?" );
     
     $s = $ns;
     
@@ -210,70 +146,12 @@ function makerandseed()
 // return a password of length $nlength from the $legal array
 function makepassword($nlength)
 {
-    $legal = array(
-        "q",
-        "w",
-        "e",
-        "r",
-        "t",
-        "y",
-        "u",
-        "i",
-        "o",
-        "p",
-        "a",
-        "s",
-        "d",
-        "f",
-        "g",
-        "h",
-        "j",
-        "k",
-        "l",
-        "z",
-        "x",
-        "c",
-        "v",
-        "b",
-        "n",
-        "m",
-        "Q",
-        "W",
-        "E",
-        "R",
-        "T",
-        "Y",
-        "U",
-        "I",
-        "O",
-        "P",
-        "A",
-        "S",
-        "D",
-        "F",
-        "G",
-        "H",
-        "J",
-        "K",
-        "L",
-        "Z",
-        "X",
-        "C",
-        "V",
-        "B",
-        "N",
-        "M",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "0"
-    );
+    $legal=array("q", "w", "e", "r", "t", "y", "u", "i", "o", "p", "a", "s", "d", "f", 
+        "g", "h", "j", "k", "l", "z", "x", "c", "v", "b", "n", "m", "Q", "W", "E", "R", 
+        "T", "Y", "U", "I", "O", "P", "A", "S", "D", "F", "G", "H", "J", "K", "L", "Z", 
+        "X", "C", "V", "B", "N", "M", 
+        "1", "2", "3", "4", "5", "6", "7", "8", "9", "0");
+    
     $ret = "";
     srand(makerandseed());
     
