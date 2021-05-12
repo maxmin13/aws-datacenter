@@ -29,26 +29,28 @@ LOADBALANCER_DOCROOT_ID='loadbalancer.maxmin.it'
 MONIT_VIRTUALHOST_CONFIG_FILE='monit.virtualhost.maxmin.it.conf'
 MONIT_DOCROOT_ID='monit.maxmin.it'
 
-echo '**********'
-echo 'WebPhp box'
-echo '**********'
-echo
-
 if [[ $# -lt 1 ]]
 then
    echo 'Error: Missing mandatory arguments'
    exit 1
 else
+   webphp_id="${1}"
    export webphp_id="${1}"
-   webphp_nm="${SERVER_WEBPHP_NM/<ID>/"${webphp_id}"}"
-   webphp_hostname="${SERVER_WEBPHP_HOSTNAME/<ID>/"${webphp_id}"}"
-   webphp_sgp_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/"${webphp_id}"}"
-   webphp_db_user_nm="${DB_MMDATA_WEBPHP_USER_NM}"
-   webphp_dir=webphp"${webphp_id}"   
-   loadbalancer_request_domain="${webphp_hostname}"
-   monit_request_domain="${webphp_hostname}"
-   key_pair_nm="${SERVER_WEBPHP_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
 fi
+   
+webphp_nm="${SERVER_WEBPHP_NM/<ID>/"${webphp_id}"}"
+webphp_hostname="${SERVER_WEBPHP_HOSTNAME/<ID>/"${webphp_id}"}"
+webphp_sgp_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/"${webphp_id}"}"
+webphp_db_user_nm="${DB_MMDATA_WEBPHP_USER_NM}"
+webphp_dir=webphp"${webphp_id}"   
+loadbalancer_request_domain="${webphp_hostname}"
+monit_request_domain="${webphp_hostname}"
+key_pair_nm="${SERVER_WEBPHP_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
+
+echo '***********'
+echo "WebPhp box ${webphp_id}" 
+echo '***********'
+echo
 
 webphp_instance_id="$(get_instance_id "${webphp_nm}")"
 
@@ -321,6 +323,14 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
 
 echo 'extend_apache_web_server_with_security_module_template.sh ready'
 
+# 'allow_url_fopen = On' allows you to access remote files that are opened.
+# 'allow_url_include = On' allows you to access remote file by require or include statements. 
+sed -e "s/SEDallow_url_fopenSED/On/g" \
+    -e "s/SEDallow_url_includeSED/On/g" \
+       "${TEMPLATE_DIR}"/common/php/php.ini > "${TMP_DIR}"/"${webphp_dir}"/php.ini
+
+echo 'php.ini ready'
+
 # Script that sets a password for 'ec2-user' user.
 sed -e "s/SEDuser_nameSED/ec2-user/g" \
     -e "s/SEDuser_pwdSED/${SERVER_WEBPHP_EC2_USER_PWD}/g" \
@@ -406,7 +416,7 @@ scp_upload_files "${private_key}" "${webphp_eip}" "${SHARED_BASE_INSTANCE_SSH_PO
                  "${TEMPLATE_DIR}"/common/httpd/10-fcgid.conf \
                  "${TEMPLATE_DIR}"/common/httpd/httpd-mpm.conf \
                  "${TEMPLATE_DIR}"/common/httpd/owasp_mod_security.conf \
-                 "${TEMPLATE_DIR}"/common/php/php.ini \
+                 "${TMP_DIR}"/"${webphp_dir}"/php.ini \
                  "${TEMPLATE_DIR}"/webphp/httpd/modsecurity_overrides.conf \
                  "${JAR_DIR}"/"${OWASP_ARCHIVE}"
 #

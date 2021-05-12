@@ -37,7 +37,12 @@ fi
 
 echo ''
 
-. "${PROJECT_DIR}"/amazon/deploy/webphp/make.sh 1
+. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 2
+
+# Deploy Database, Admin site, public WebPhp sites.
+. "${PROJECT_DIR}"/amazon/deploy/database/make.sh
+. "${PROJECT_DIR}"/amazon/deploy/admin/make.sh
+. "${PROJECT_DIR}"/amazon/deploy/webphp/make.sh 2
 exit
 
 # Create the server instances.

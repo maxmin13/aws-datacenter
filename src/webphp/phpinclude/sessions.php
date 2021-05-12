@@ -1,5 +1,23 @@
 <?php
 
+/**
+ * PHP built in session management is not used:
+ * to recognize a client between requests, PHP sends a tonken, PHPSESSID,
+ * which the client sends back with every request.
+ * PHP allows to place PHPSESSID variable in the url:
+ * https://www.yoursite.com?SESSID=123
+ * 
+ * For security, when you start a session for the user we send 2 cookies which encapsulate 2 secure random tokens, 
+ * the user's ID, the remote IP address and the remote User Agent. We encrypt the cookie contents with AES-256. 
+ * When we receive the cookies, we unpack all the data, check it against current HTTP values and check against the 
+ * database.
+ * 
+ * To protect against stolen cookies, if the IP changes, we disallow access to that session. 
+ * This means that a hacker trying to use your token from a different IP would fail. Now, it is possible to spoof 
+ * IP addresses, however, replies to a spoofed IP address are not received (because they are sent to the spoofed ip!).
+ * And many routers and firewalls prevent IP Spoofing.
+ * */
+
 // setup a session just after signin
 // we use our own session system, not php sessions
 // you can call this function to reset the session credentials if necessary

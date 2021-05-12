@@ -32,6 +32,7 @@ LOGANALYZER_VIRTUALHOST_CONFIG_FILE='loganalyzer.virtualhost.maxmin.it.conf'
 MONIT_DOCROOT_ID='monit.maxmin.it'
 MONIT_VIRTUALHOST_CONFIG_FILE='monit.virtualhost.maxmin.it.conf'
 MMONIT_INSTALL_DIR='/opt/mmonit'
+webphp_dir=admin
 
 echo '*********'
 echo 'Admin box'
@@ -189,7 +190,7 @@ sed -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDloganalyzer_archiveSED/${LOGANALYZER_ARCHIVE}/g" \
     -e "s/SEDloganalyzer_docroot_idSED/${LOGANALYZER_DOCROOT_ID}/g" \
     -e "s/SEDloganalyzer_virtualhost_fileSED/${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}/g" \
-       "${TEMPLATE_DIR}"/admin/install_admin_template.sh > "${TMP_DIR}"/admin/install_admin.sh
+       "${TEMPLATE_DIR}"/"${webphp_dir}"/install_admin_template.sh > "${TMP_DIR}"/"${webphp_dir}"/install_admin.sh
 
 echo 'install_admin.sh ready'
 
@@ -198,12 +199,12 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
-       "${TEMPLATE_DIR}"/common/httpd/install_apache_web_server_template.sh > "${TMP_DIR}"/admin/install_apache_web_server.sh 
+       "${TEMPLATE_DIR}"/common/httpd/install_apache_web_server_template.sh > "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server.sh 
  
 echo 'install_apache_web_server.sh ready' 
  
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-       "${TEMPLATE_DIR}"/common/httpd/extend_apache_web_server_with_FCGI_template.sh > "${TMP_DIR}"/admin/extend_apache_web_server_with_FCGI.sh    
+       "${TEMPLATE_DIR}"/common/httpd/extend_apache_web_server_with_FCGI_template.sh > "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_FCGI.sh    
 
 echo 'extend_apache_web_server_with_FCGI.sh ready'
  
@@ -218,16 +219,24 @@ sed -e "s/SEDserver_admin_hostnameSED/${SERVER_ADMIN_HOSTNAME}/g" \
     -e "s/SEDdatabase_portSED/${DB_MMDATA_PORT}/g" \
     -e "s/SEDdatabase_user_adminrwSED/${DB_MMDATA_ADMIN_USER_NM}/g" \
     -e "s/SEDdatabase_password_adminrwSED/${DB_MMDATA_ADMIN_USER_PWD}/g" \
-       "${TEMPLATE_DIR}"/admin/httpd/httpd_template.conf > "${TMP_DIR}"/admin/httpd.conf
+       "${TEMPLATE_DIR}"/"${webphp_dir}"/httpd/httpd_template.conf > "${TMP_DIR}"/"${webphp_dir}"/httpd.conf
 
 echo 'Apache httpd.conf ready'
    
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
        -e "s/SEDenvironmentSED/${ENV}/g" \
        -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
-       "${TEMPLATE_DIR}"/common/httpd/extend_apache_web_server_with_SSL_module_template.sh > "${TMP_DIR}"/admin/extend_apache_web_server_with_SSL_module_template.sh       
+       "${TEMPLATE_DIR}"/common/httpd/extend_apache_web_server_with_SSL_module_template.sh > "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_SSL_module_template.sh       
 
 echo 'extend_apache_web_server_with_SSL_module_template.sh ready'
+
+# 'allow_url_fopen = Off' prevent you to access remote files that are opened.
+# 'allow_url_include = Off' prevent you to access remote file by require or include statements. 
+sed -e "s/SEDallow_url_fopenSED/Off/g" \
+    -e "s/SEDallow_url_includeSED/Off/g" \
+       "${TEMPLATE_DIR}"/common/php/php.ini > "${TMP_DIR}"/"${webphp_dir}"/php.ini
+
+echo 'php.ini ready'
 
 #if [[ 'development' == "${ENV}" ]]
 if 'true'
@@ -235,7 +244,7 @@ then
    # Apache Web Server SSL key generation script.
    sed -e "s/SEDkey_fileSED/server.key/g" \
        -e "s/SEDkey_pwdSED/${SERVER_ADMIN_PRIV_KEY_PWD}/g" \
-          "${TEMPLATE_DIR}"/ssl/gen-rsa_template.exp > "${TMP_DIR}"/admin/gen-rsa.sh
+          "${TEMPLATE_DIR}"/ssl/gen-rsa_template.exp > "${TMP_DIR}"/"${webphp_dir}"/gen-rsa.sh
 
    echo 'Apache SSL gen-rsa.sh ready'
 
@@ -243,7 +252,7 @@ then
    sed -e "s/SEDkey_fileSED/server.key/g" \
        -e "s/SEDnew_key_fileSED/server.key.org/g" \
        -e "s/SEDkey_pwdSED/${SERVER_ADMIN_PRIV_KEY_PWD}/g" \
-          "${TEMPLATE_DIR}"/ssl/remove-passphase_template.exp > "${TMP_DIR}"/admin/remove-passphase.sh   
+          "${TEMPLATE_DIR}"/ssl/remove-passphase_template.exp > "${TMP_DIR}"/"${webphp_dir}"/remove-passphase.sh   
 
    echo 'Apache SSL remove-passphase.sh ready'
 
@@ -257,7 +266,7 @@ then
        -e "s/SEDunit_nameSED/${SERVER_ADMIN_CRT_UNIT_NM}/g" \
        -e "s/SEDcommon_nameSED/${SERVER_ADMIN_HOSTNAME}/g" \
        -e "s/SEDemail_addressSED/${SERVER_ADMIN_EMAIL}/g" \
-          "${TEMPLATE_DIR}"/ssl/gen-selfsign-cert_template.exp > "${TMP_DIR}"/admin/gen-selfsign-cert.sh
+          "${TEMPLATE_DIR}"/ssl/gen-selfsign-cert_template.exp > "${TMP_DIR}"/"${webphp_dir}"/gen-selfsign-cert.sh
 
    echo 'gen-selfsign-cert.sh ready'
    
@@ -267,7 +276,7 @@ then
        -e "s/SEDloganalyzer_portSED/${SERVER_ADMIN_APACHE_LOGANALYZER_PORT}/g" \
        -e "s/SEDssl_certificate_key_fileSED/server.key/g" \
        -e "s/SEDssl_certificate_fileSED/server.crt/g" \
-          "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/admin/ssl.conf 
+          "${TEMPLATE_DIR}"/"${webphp_dir}"/httpd/ssl_template.conf > "${TMP_DIR}"/"${webphp_dir}"/ssl.conf 
           
    echo 'Apache ssl.conf ready'
                    
@@ -278,7 +287,7 @@ else
    # TODO Use a certificate authenticated by a Certificate Authority.
    # TODO Enable SSLCertificateChainFile in ssl.conf
    # TODO        
-   # TODO  sudo awk -i inplace '{if($1 == "#SSLCertificateChainFile"){$1="SSLCertificateChainFile"; print $0} else {print $0}}' "${TMP_DIR}"/admin/ssl.conf 
+   # TODO  sudo awk -i inplace '{if($1 == "#SSLCertificateChainFile"){$1="SSLCertificateChainFile"; print $0} else {print $0}}' "${TMP_DIR}"/"${webphp_dir}"/ssl.conf 
    
    echo 'Error: a production certificate is not available, use a developement self-signed one'
    exit 1        
@@ -287,20 +296,20 @@ fi
 # Script that sets a password for 'ec2-user' user.
 sed -e "s/SEDuser_nameSED/ec2-user/g" \
     -e "s/SEDuser_pwdSED/${SERVER_ADMIN_EC2_USER_PWD}/g" \
-       "${TEMPLATE_DIR}"/users/chp_user_template.exp > "${TMP_DIR}"/admin/chp_ec2-user.sh
+       "${TEMPLATE_DIR}"/users/chp_user_template.exp > "${TMP_DIR}"/"${webphp_dir}"/chp_ec2-user.sh
   
 echo 'Change ec2-user password chp_ec2-user.sh ready'
 
 # Script that sets a password for 'root' user.
 sed -e "s/SEDuser_nameSED/root/g" \
     -e "s/SEDuser_pwdSED/${SERVER_ADMIN_ROOT_PWD}/g" \
-       "${TEMPLATE_DIR}"/users/chp_user_template.exp > "${TMP_DIR}"/admin/chp_root.sh
+       "${TEMPLATE_DIR}"/users/chp_user_template.exp > "${TMP_DIR}"/"${webphp_dir}"/chp_root.sh
        
 echo 'Change root password chp_root.sh ready'
 
 # M/Monit systemctl service file
 sed -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
-       "${TEMPLATE_DIR}"/admin/mmonit/mmonit_template.service > "${TMP_DIR}"/admin/mmonit.service 
+       "${TEMPLATE_DIR}"/"${webphp_dir}"/mmonit/mmonit_template.service > "${TMP_DIR}"/"${webphp_dir}"/mmonit.service 
        
 echo 'M/Monit mmonit.service ready'
      
@@ -309,7 +318,7 @@ sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
     -e "s/SEDserver_admin_private_ipSED/${SERVER_ADMIN_PRIVATE_IP}/g" \
     -e "s/SEDcollector_portSED/${SERVER_ADMIN_MMONIT_COLLECTOR_PORT}/g" \
     -e "s/SEDpublic_portSED/${SERVER_ADMIN_MMONIT_PUBLIC_PORT}/g" \
-       "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/admin/server.xml
+       "${TEMPLATE_DIR}"/"${webphp_dir}"/mmonit/server_template.xml > "${TMP_DIR}"/"${webphp_dir}"/server.xml
        
 echo 'M/Monit server.xml ready'  
 
@@ -320,19 +329,19 @@ sed -e "s/SEDhostnameSED/${SERVER_ADMIN_NM}/g" \
     -e "s/SEDadmin_emailSED/${SERVER_ADMIN_EMAIL}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
-       "${TEMPLATE_DIR}"/admin/monitrc_template > "${TMP_DIR}"/admin/monitrc 
+       "${TEMPLATE_DIR}"/"${webphp_dir}"/monitrc_template > "${TMP_DIR}"/"${webphp_dir}"/monitrc 
        
 echo 'Monit monitrc ready'  
 
 # PhpMyAdmin configuration file.    
 sed -e "s/SEDdatabase_hostSED/${db_endpoint}/g" \
-       "${TEMPLATE_DIR}"/admin/config_inc_template.php > "${TMP_DIR}"/admin/config.inc.php
+       "${TEMPLATE_DIR}"/"${webphp_dir}"/config_inc_template.php > "${TMP_DIR}"/"${webphp_dir}"/config.inc.php
        
 echo 'PhpMyAdmin config.inc.php ready'
                             
 # Rsyslog configuration file.    
 sed -e "s/SEDadmin_rsyslog_portSED/${SERVER_ADMIN_RSYSLOG_PORT}/g" \
-       "${TEMPLATE_DIR}"/admin/rsyslog_template.conf > "${TMP_DIR}"/admin/rsyslog.conf   
+       "${TEMPLATE_DIR}"/"${webphp_dir}"/rsyslog_template.conf > "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf   
        
 echo 'Rsyslog rsyslog.conf ready'
        
@@ -342,12 +351,12 @@ create_virtualhost_configuration_file '127.0.0.1' \
                                        "${SERVER_ADMIN_HOSTNAME}" \
                                        "${APACHE_DOCROOT_DIR}" \
                                        "${MONIT_DOCROOT_ID}" \
-                                       "${TMP_DIR}"/admin/"${MONIT_VIRTUALHOST_CONFIG_FILE}"                                      
+                                       "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"                                      
                                        
 add_alias_to_virtualhost 'monit' \
                             "${APACHE_DOCROOT_DIR}" \
                             "${MONIT_DOCROOT_ID}" \
-                            "${TMP_DIR}"/admin/"${MONIT_VIRTUALHOST_CONFIG_FILE}"
+                            "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"
                             
 echo "Monit ${MONIT_VIRTUALHOST_CONFIG_FILE} ready"                                                                                        
 
@@ -357,12 +366,12 @@ create_virtualhost_configuration_file '*' \
                                        "${SERVER_ADMIN_HOSTNAME}" \
                                        "${APACHE_DOCROOT_DIR}" \
                                        "${PHPMYADMIN_DOCROOT_ID}" \
-                                       "${TMP_DIR}"/admin/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"      
+                                       "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"      
                                      
 add_alias_to_virtualhost 'phpmyadmin' \
                             "${APACHE_DOCROOT_DIR}" \
                             "${PHPMYADMIN_DOCROOT_ID}" \
-                            "${TMP_DIR}"/admin/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"                       
+                            "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"                       
 
 echo "PhpMyAdmin ${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE} ready"                             
                             
@@ -372,12 +381,12 @@ create_virtualhost_configuration_file '*' \
                                        "${SERVER_ADMIN_HOSTNAME}" \
                                        "${APACHE_DOCROOT_DIR}" \
                                        "${LOGANALYZER_DOCROOT_ID}" \
-                                       "${TMP_DIR}"/admin/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"                              
+                                       "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"                              
                             
 add_alias_to_virtualhost 'loganalyzer' \
                             "${APACHE_DOCROOT_DIR}" \
                             "${LOGANALYZER_DOCROOT_ID}" \
-                            "${TMP_DIR}"/admin/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"  
+                            "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"  
                             
 echo "Loganalyzer ${LOGANALYZER_VIRTUALHOST_CONFIG_FILE} ready"                                    
   
@@ -387,35 +396,35 @@ wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "$
 echo 'Uploading files ...'
 scp_upload_files "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" \
                  "${TEMPLATE_DIR}"/common/php/install_php.sh \
-                 "${TEMPLATE_DIR}"/common/php/php.ini \
-                 "${TMP_DIR}"/admin/install_admin.sh \
-                 "${TMP_DIR}"/admin/install_apache_web_server.sh \
-                 "${TMP_DIR}"/admin/extend_apache_web_server_with_FCGI.sh \
-                 "${TMP_DIR}"/admin/extend_apache_web_server_with_SSL_module_template.sh \
-                 "${TMP_DIR}"/admin/ssl.conf \
-                 "${TMP_DIR}"/admin/httpd.conf \
+                 "${TMP_DIR}"/"${webphp_dir}"/php.ini \
+                 "${TMP_DIR}"/"${webphp_dir}"/install_admin.sh \
+                 "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server.sh \
+                 "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_FCGI.sh \
+                 "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_SSL_module_template.sh \
+                 "${TMP_DIR}"/"${webphp_dir}"/ssl.conf \
+                 "${TMP_DIR}"/"${webphp_dir}"/httpd.conf \
                  "${TEMPLATE_DIR}"/common/httpd/httpd-mpm.conf \
                  "${TEMPLATE_DIR}"/common/httpd/00-ssl.conf \
                  "${TEMPLATE_DIR}"/common/httpd/09-fcgid.conf \
                  "${TEMPLATE_DIR}"/common/httpd/10-fcgid.conf \
                  "${JAR_DIR}"/"${LOGANALYZER_ARCHIVE}" \
-                 "${TMP_DIR}"/admin/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" \
-                 "${TEMPLATE_DIR}"/admin/config.php \
+                 "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" \
+                 "${TEMPLATE_DIR}"/"${webphp_dir}"/config.php \
                  "${JAR_DIR}"/"${MMONIT_ARCHIVE}" \
-                 "${TMP_DIR}"/admin/monitrc \
-                 "${TMP_DIR}"/admin/"${MONIT_VIRTUALHOST_CONFIG_FILE}" \
-                 "${TMP_DIR}"/admin/mmonit.service \
-                 "${TMP_DIR}"/admin/server.xml \
-                 "${TMP_DIR}"/admin/chp_root.sh \
-                 "${TMP_DIR}"/admin/chp_ec2-user.sh \
-                 "${TMP_DIR}"/admin/gen-selfsign-cert.sh \
-                 "${TMP_DIR}"/admin/remove-passphase.sh \
-                 "${TMP_DIR}"/admin/gen-rsa.sh \
-                 "${TMP_DIR}"/admin/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" \
-                 "${TMP_DIR}"/admin/config.inc.php \
-                 "${TMP_DIR}"/admin/rsyslog.conf \
+                 "${TMP_DIR}"/"${webphp_dir}"/monitrc \
+                 "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" \
+                 "${TMP_DIR}"/"${webphp_dir}"/mmonit.service \
+                 "${TMP_DIR}"/"${webphp_dir}"/server.xml \
+                 "${TMP_DIR}"/"${webphp_dir}"/chp_root.sh \
+                 "${TMP_DIR}"/"${webphp_dir}"/chp_ec2-user.sh \
+                 "${TMP_DIR}"/"${webphp_dir}"/gen-selfsign-cert.sh \
+                 "${TMP_DIR}"/"${webphp_dir}"/remove-passphase.sh \
+                 "${TMP_DIR}"/"${webphp_dir}"/gen-rsa.sh \
+                 "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" \
+                 "${TMP_DIR}"/"${webphp_dir}"/config.inc.php \
+                 "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf \
                  "${TEMPLATE_DIR}"/common/launch_javaMail.sh \
-                 "${TEMPLATE_DIR}"/admin/logrotatehttp
+                 "${TEMPLATE_DIR}"/"${webphp_dir}"/logrotatehttp
                 
 echo 'Files uploaded'
                             

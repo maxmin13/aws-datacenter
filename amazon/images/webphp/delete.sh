@@ -5,17 +5,13 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-echo '**********'
-echo 'WebPhp box'
-echo '**********'
-echo
-
 if [[ $# -lt 1 ]]
 then
    echo 'Error: Missing mandatory arguments'
    exit 1
 else
    webphp_id="${1}"
+   export webphp_id="${1}"
 fi
 
 webphp_nm="${SERVER_WEBPHP_NM/<ID>/${webphp_id}}"
@@ -23,6 +19,10 @@ webphp_instance_id="$(get_instance_id "${webphp_nm}")"
 webphp_sg_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
 webphp_sg_id="$(get_security_group_id "${webphp_sg_nm}")"
 
+echo '***********'
+echo "WebPhp box ${webphp_id}" 
+echo '***********'
+echo
 echo 'Deleting Webphp box ...'
 
 ## ************* ##
