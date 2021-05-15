@@ -1,7 +1,4 @@
 
-credentials/
-temp/
-download/
 
 *.log
 *.pem
