@@ -21,6 +21,8 @@ source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
 source "${PROJECT_DIR}"/amazon/credential/recaptcha.sh
 source "${PROJECT_DIR}"/amazon/credential/passwords.sh
 
+log_file="${LOG_DIR}"/make-$(date +"%d-%m-%Y-%H.%M"."%S")
+
 echo ''
 
 if [[ 'production' == "${ENV}" ]]
@@ -35,26 +37,27 @@ then
    echo '****************' 
 fi
 
+echo
 
 # Create the server instances.
-. "${PROJECT_DIR}"/amazon/datacenter/make.sh
-. "${PROJECT_DIR}"/amazon/images/database/make.sh
-. "${PROJECT_DIR}"/amazon/images/shared/make.sh
-. "${PROJECT_DIR}"/amazon/images/loadbalancer/make.sh
-. "${PROJECT_DIR}"/amazon/images/admin/make.sh
-. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 1
-#. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 2
+. "${PROJECT_DIR}"/amazon/datacenter/make.sh          >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/images/database/make.sh     >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/images/shared/make.sh       >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/images/loadbalancer/make.sh >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/images/admin/make.sh        >> "${log_file}" 2>&1
+#. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 1    >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/images/webphp/make.sh 2     >> "${log_file}" 2>&1
 
-# Create database objects
+# Deploy database objects
 . "${PROJECT_DIR}"/amazon/database/make.sh
 
 # Deploy Admin site and public WebPhp sites.
-. "${PROJECT_DIR}"/amazon/website/admin/make.sh
-. "${PROJECT_DIR}"/amazon/website/webphp/make.sh 1
-#. "${PROJECT_DIR}"/amazon/website/webphp/make.sh 2
+. "${PROJECT_DIR}"/amazon/website/admin/make.sh       >> "${log_file}" 2>&1
+#. "${PROJECT_DIR}"/amazon/website/webphp/make.sh 1   >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/website/webphp/make.sh 2    >> "${log_file}" 2>&1
 
 # Make a backup of the database.
-#. "${PROJECT_DIR}"/amazon/dump/database/make.sh
+. "${PROJECT_DIR}"/amazon/dump/database/make.sh      >> "${log_file}" 2>&1
 
 echo 'Data Center up and running'
 echo

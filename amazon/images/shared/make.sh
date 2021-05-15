@@ -1,11 +1,11 @@
 #!/usr/bin/bash
 
 ##########################################
-# makes a secure linux box image, hardened
-# and move ssh on 38142
-# XGB EBS root volume.
-# 'root', 'ec2-user', 'sudo' command are
-# without password.
+# makes a secure linux box image:
+# hardened, ssh on 38142.
+# no root access.
+# ec2-user sudo command doesn't have 
+# password.
 ##########################################
 
 set -o errexit
@@ -18,9 +18,6 @@ echo 'Shared Base image'
 echo '*****************'
 echo
 
-# 'ec2-user' and 'root' users and 'sudo' command 
-# on the Shared image have no password.
-# SSH port is 22, after the istance has been secured is 38142.
 
 # Check if the shared image has already been created
 ami_id="$(get_image_id "${SHARED_BASE_AMI_NM}")"
@@ -35,7 +32,7 @@ vpc_id="$(get_vpc_id "${VPC_NM}")"
   
 if [[ -z "${vpc_id}" ]]
 then
-   echo 'Error:  VPC not found.'
+   echo 'ERROR:  VPC not found.'
    exit 1
 else
    echo "* VPC ID: '${vpc_id}'"
@@ -45,7 +42,7 @@ subnet_id="$(get_subnet_id "${SUBNET_MAIN_NM}")"
 
 if [[ -z "${subnet_id}" ]]
 then
-   echo 'Error:  Subnet not found.'
+   echo 'ERROR:  Subnet not found.'
    exit 1
 else
    echo "* Subnet ID: '${subnet_id}'"
@@ -57,11 +54,8 @@ echo
 ## SSH Key Pair
 ## ************
 
-# Delete the local private-key and the remote public-key.
-delete_key_pair "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_ACCESS_DIR}"
-
 # Create a key pair to SSH into the instance.
-create_key_pair "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_ACCESS_DIR}"
+  create_key_pair "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_ACCESS_DIR}"
 echo 'Created a temporary Key Pair to connect to the Instance, the Private Key is saved in the credentias directory'
 
 private_key="$(get_private_key_path "${SHARED_BASE_INSTANCE_KEY_PAIR_NM}" "${SHARED_BASE_INSTANCE_ACCESS_DIR}")"
@@ -82,7 +76,9 @@ fi
 sg_id="$(create_security_group "${vpc_id}" "${SHARED_BASE_INSTANCE_SEC_GRP_NM}" \
                         'Shared base instance security group')"
 
-allow_access_from_cidr "${sg_id}" 22 "${my_ip}/32"
+##### TODO REMOVE THIS
+allow_access_from_cidr "${sg_id}" 22 "0.0.0.0/0"
+##### allow_access_from_cidr "${sg_id}" 22 "${my_ip}/32"
 echo 'Created instance Security Group'
 
 ## ********************
@@ -93,7 +89,7 @@ instance_id="$(get_instance_id "${SHARED_BASE_INSTANCE_NM}")"
 
 if [[ -n "${instance_id}" ]]; 
 then
-   echo "Error: Instance '${SHARED_BASE_INSTANCE_NM}' already created"
+   echo "ERROR: Instance '${SHARED_BASE_INSTANCE_NM}' already created"
    exit 1
 fi
 
@@ -112,9 +108,21 @@ wait_ssh_started "${private_key}" "${eip}" 22 "${DEFAUT_AWS_USER}"
 
 # Send the security scripts to the instance
 
-echo 'Uploading security scripts ...'
+echo 'Uploading files ...'
+remote_dir=/home/ec2-user/script
 
-scp_upload_files "${private_key}" "${eip}" 22 "${DEFAUT_AWS_USER}" \
+## 
+## Remote commands that have to be executed as priviledged user are run with sudo.
+## By AWS default, sudo has not password.
+##  
+
+ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
+                 "${private_key}" \
+                 "${eip}" \
+                 22 \
+                 "${DEFAUT_AWS_USER}"  
+
+scp_upload_files "${private_key}" "${eip}" 22 "${DEFAUT_AWS_USER}" "${remote_dir}" \
                  "${TEMPLATE_DIR}"/linux/secure-linux.sh \
                  "${TEMPLATE_DIR}"/linux/check-linux.sh \
                  "${TEMPLATE_DIR}"/linux/sshd_config \
@@ -122,18 +130,19 @@ scp_upload_files "${private_key}" "${eip}" 22 "${DEFAUT_AWS_USER}" \
 
 echo 'Securing the Shared Base instance ...'
 
-ssh_run_remote_command 'chmod +x secure-linux.sh' \
-                   "${private_key}" \
-                   "${eip}" \
-                   22 \
-                   "${DEFAUT_AWS_USER}" 
-
+ssh_run_remote_command_as_root "chmod +x ${remote_dir}/secure-linux.sh" \
+                 "${private_key}" \
+                 "${eip}" \
+                 22 \
+                 "${DEFAUT_AWS_USER}" \
+                 
 set +e
-ssh_run_remote_command './secure-linux.sh' \
-                   "${private_key}" \
-                   "${eip}" \
-                   22 \
-                   "${DEFAUT_AWS_USER}"   
+ssh_run_remote_command_as_root "${remote_dir}/secure-linux.sh" \
+                 "${private_key}" \
+                 "${eip}" \
+                 22 \
+                 "${DEFAUT_AWS_USER}" 
+                   
 exit_code=$?
 set -e
 
@@ -142,23 +151,24 @@ if [ 194 -eq "${exit_code}" ]
 then
    echo 'Rebooting instance ...'
    set +e
-   ssh_run_remote_command 'reboot' \
-                   "${private_key}" \
-                   "${eip}" \
-                   22 \
-                   "${DEFAUT_AWS_USER}"
+   ssh_run_remote_command_as_root 'reboot' \
+                 "${private_key}" \
+                 "${eip}" \
+                 22 \
+                 "${DEFAUT_AWS_USER}"
    set -e 
 else
    echo 'Error: securing Linux instance'
    exit 1
 fi
 
-
 echo 'Shared Base instance successfully secured'
 echo "SSH runs on '${SHARED_BASE_INSTANCE_SSH_PORT}' port"
 
-revoke_access_from_cidr "${sg_id}" 22 "${my_ip}/32"
-allow_access_from_cidr "${sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+##### TODO REMOVE THIS
+##### revoke_access_from_cidr "${sg_id}" 22 "${my_ip}/32"
+#####allow_access_from_cidr "${sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+allow_access_from_cidr "${sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
 echo "Security Group updated to allow access through '${SHARED_BASE_INSTANCE_SSH_PORT}' port"
 
 eip="$(get_public_ip_address_associated_with_instance "${SHARED_BASE_INSTANCE_NM}")"
@@ -169,23 +179,22 @@ wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "$
 
 # Now SSH is on 38142
 
-echo
-
-ssh_run_remote_command 'chmod +x check-linux.sh' \
+ssh_run_remote_command_as_root "chmod +x ${remote_dir}/check-linux.sh" \
                    "${private_key}" \
                    "${eip}" \
                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" 
+                   "${DEFAUT_AWS_USER}"
 
 echo 'Running security checks ...'
 
-ssh_run_remote_command './check-linux.sh' \
+ssh_run_remote_command_as_root "${remote_dir}/check-linux.sh" \
                    "${private_key}" \
                    "${eip}" \
                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                    "${DEFAUT_AWS_USER}"  
    
-ssh_run_remote_command 'rm -f -R /home/ec2-user/*' \
+# Clear remote directory.
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
                    "${private_key}" \
                    "${eip}" \
                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \

@@ -9,11 +9,14 @@ APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 WEBSITE_VIRTUALHOST_CONFIG_FILE='SEDvirtualhost_configSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 webphp_log_file='/var/log/website_install.log'
 
+cd "${script_dir}" || exit
+
 # Disable the WebPhp site.
-cd /home/ec2-user || exit
-rm -f "${APACHE_SITES_ENABLED_DIR}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" 
+rm -f "${APACHE_SITES_ENABLED_DIR:?}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE:?}" 
 echo 'WebPhp Web Site virtualhost disabled' >> "${webphp_log_file}" 2>&1
 
 # Delete WebPhp website

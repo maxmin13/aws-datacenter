@@ -195,7 +195,10 @@ webphp_sgp_id="$(create_security_group "${vpc_id}" "${webphp_sgp_nm}" \
                     "${webphp_sgp_nm} security group")"
 
 echo "Created ${webphp_sgp_nm} Security Group"
-allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+
+##### TODO REMOVE THIS
+allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
+#####allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
 echo 'Granted SSH to development machine'
 
 ## ******************** ##
@@ -231,19 +234,19 @@ echo "WebPhp instance running"
 ## ********* ##
 
 echo 'Checking if there is any public IP avaiable in the account'
-webphp_eip="$(get_public_ip_address_unused)"
+eip="$(get_public_ip_address_unused)"
 
-if [[ -n "${webphp_eip}" ]]
+if [[ -n "${eip}" ]]
 then
-   echo "Found '${webphp_eip}' unused public IP address"
+   echo "Found '${eip}' unused public IP address"
 else
    echo 'Not found any unused public IP address, a new one must be allocated'
-   webphp_eip="$(allocate_public_ip_address)" 
-   echo "The '${webphp_eip}' public IP address has been allocated to the account"
+   eip="$(allocate_public_ip_address)" 
+   echo "The '${eip}' public IP address has been allocated to the account"
 fi
 
-associate_public_ip_address_to_instance "${webphp_eip}" "${webphp_instance_id}"
-echo "The '${webphp_eip}' public IP address has been associated with the WebPhp instance"
+associate_public_ip_address_to_instance "${eip}" "${webphp_instance_id}"
+echo "The '${eip}' public IP address has been associated with the WebPhp instance"
 
 ## ******* ##
 ## Modules ## 
@@ -256,7 +259,7 @@ sed -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
     -e "s/SEDserver_webphp_hostnameSED/${webphp_hostname}/g" \
     -e "s/SEDloadbalancer_virtualhost_configSED/${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}/g" \
-     -e "s/SEDloadbalancer_docroot_idSED/${LOADBALANCER_DOCROOT_ID}/g" \
+    -e "s/SEDloadbalancer_docroot_idSED/${LOADBALANCER_DOCROOT_ID}/g" \
     -e "s/SEDmonit_virtualhost_configSED/${MONIT_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDmonit_docroot_idSED/${MONIT_DOCROOT_ID}/g" \
        "${TEMPLATE_DIR}"/webphp/install_webphp_template.sh > "${TMP_DIR}"/"${webphp_dir}"/install_webphp.sh
@@ -314,7 +317,7 @@ echo 'extend_apache_web_server_with_FCGI.sh ready'
 
 # Apache Web Server Security module
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-       -e "s/SEDowasp_archiveSED/${OWASP_ARCHIVE}/g" \
+    -e "s/SEDowasp_archiveSED/${OWASP_ARCHIVE}/g" \
        "${TEMPLATE_DIR}"/common/httpd/extend_apache_web_server_with_security_module_template.sh > \
        "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_security_module_template.sh     
 
@@ -333,14 +336,7 @@ sed -e "s/SEDuser_nameSED/ec2-user/g" \
     -e "s/SEDuser_pwdSED/${SERVER_WEBPHP_EC2_USER_PWD}/g" \
        "${TEMPLATE_DIR}"/users/chp_user_template.exp > "${TMP_DIR}"/"${webphp_dir}"/chp_ec2-user.sh
 
-echo 'chp_ec2-user.sh ready'
-
-# Script that sets a password for 'root' user.
-sed -e "s/SEDuser_nameSED/root/g" \
-    -e "s/SEDuser_pwdSED/${SERVER_WEBPHP_ROOT_PWD}/g" \
-       "${TEMPLATE_DIR}"/users/chp_user_template.exp > "${TMP_DIR}"/"${webphp_dir}"/chp_root.sh
-  
-echo 'chp_root.sh ready'  
+echo 'chp_ec2-user.sh ready' 
   
 # Monit demon configuration file (runs on all servers).
 sed -e "s/SEDhostnameSED/${webphp_nm}/g" \
@@ -355,33 +351,33 @@ echo 'monitrc ready'
     
 # Create Monit heartbeat virtualhost to check Apache Web Server.   
 create_virtualhost_configuration_file '127.0.0.1' \
-                                       "${SERVER_WEBPHP_APACHE_MONIT_PORT}" \
-                                       "${monit_request_domain}" \
-                                       "${APACHE_DOCROOT_DIR}" \
-                                       "${MONIT_DOCROOT_ID}" \
-                                       "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"     
+                    "${SERVER_WEBPHP_APACHE_MONIT_PORT}" \
+                    "${monit_request_domain}" \
+                    "${APACHE_DOCROOT_DIR}" \
+                    "${MONIT_DOCROOT_ID}" \
+                    "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"     
  
 # Enable Apache Web Server Monit heartbeat endpoint.                                       
 add_alias_to_virtualhost 'monit' \
-   "${APACHE_DOCROOT_DIR}" \
-   "${MONIT_DOCROOT_ID}" \
-   "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"
+                    "${APACHE_DOCROOT_DIR}" \
+                    "${MONIT_DOCROOT_ID}" \
+                    "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"
    
 echo "${MONIT_VIRTUALHOST_CONFIG_FILE} ready"   
        
 # Create a Load Balancer healt-check virtualhost. 
 create_virtualhost_configuration_file '*' \
-                                       "${SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}" \
-                                       "${loadbalancer_request_domain}" \
-                                       "${APACHE_DOCROOT_DIR}" \
-                                       "${LOADBALANCER_DOCROOT_ID}" \
-                                       "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}"   
+                    "${SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}" \
+                    "${loadbalancer_request_domain}" \
+                    "${APACHE_DOCROOT_DIR}" \
+                    "${LOADBALANCER_DOCROOT_ID}" \
+                    "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}"   
  
 # Enable the Load Balancer virtualhost.                                       
 add_loadbalancer_rule_to_virtualhost 'elb.htm' \
-   "${APACHE_DOCROOT_DIR}" \
-   "${LOADBALANCER_DOCROOT_ID}" \
-   "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" 
+                    "${APACHE_DOCROOT_DIR}" \
+                    "${LOADBALANCER_DOCROOT_ID}" \
+                    "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" 
 
 echo "${LOADBALANCER_VIRTUALHOST_CONFIG_FILE} ready" 
                 
@@ -393,68 +389,76 @@ sed -e "s/SEDserver_admin_rsyslog_portSED/${SERVER_ADMIN_RSYSLOG_PORT}/g" \
 echo 'rsyslog.conf ready'
       
 echo 'Waiting for SSH to start'
-wait_ssh_started "${private_key}" "${webphp_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
+wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
 
 echo 'Uploading files ...'
-scp_upload_files "${private_key}" "${webphp_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" \
-                 "${TMP_DIR}"/"${webphp_dir}"/install_webphp.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/monitrc \
-                 "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" \
-                 "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" \
-                 "${TMP_DIR}"/"${webphp_dir}"/chp_root.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/chp_ec2-user.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/httpd.conf \
-                 "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_FCGI.sh  \
-                 "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_security_module_template.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf  \
-                 "${TEMPLATE_DIR}"/common/php/install_php.sh \
-                 "${TEMPLATE_DIR}"/common/httpd/09-fcgid.conf \
-                 "${TEMPLATE_DIR}"/common/httpd/10-fcgid.conf \
-                 "${TEMPLATE_DIR}"/common/httpd/httpd-mpm.conf \
-                 "${TEMPLATE_DIR}"/common/httpd/owasp_mod_security.conf \
-                 "${TMP_DIR}"/"${webphp_dir}"/php.ini \
-                 "${TEMPLATE_DIR}"/webphp/httpd/modsecurity_overrides.conf \
-                 "${JAR_DIR}"/"${OWASP_ARCHIVE}"
-#
-# Run the install script
-#
+remote_dir=/home/ec2-user/script
+
+## 
+## Remote commands that have to be executed as priviledged user are run with sudo.
+## By AWS default, sudo has not password.
+## 
+
+ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
+                    "${private_key}" \
+                    "${eip}" \
+                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                    "${DEFAUT_AWS_USER}"  
+
+scp_upload_files    "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" "${remote_dir}" \
+                    "${TMP_DIR}"/"${webphp_dir}"/install_webphp.sh \
+                    "${TMP_DIR}"/"${webphp_dir}"/monitrc \
+                    "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" \
+                    "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" \
+                    "${TMP_DIR}"/"${webphp_dir}"/chp_ec2-user.sh \
+                    "${TMP_DIR}"/"${webphp_dir}"/httpd.conf \
+                    "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server.sh \
+                    "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_FCGI.sh  \
+                    "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_security_module_template.sh \
+                    "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf  \
+                    "${TEMPLATE_DIR}"/common/php/install_php.sh \
+                    "${TEMPLATE_DIR}"/common/httpd/09-fcgid.conf \
+                    "${TEMPLATE_DIR}"/common/httpd/10-fcgid.conf \
+                    "${TEMPLATE_DIR}"/common/httpd/httpd-mpm.conf \
+                    "${TEMPLATE_DIR}"/common/httpd/owasp_mod_security.conf \
+                    "${TMP_DIR}"/"${webphp_dir}"/php.ini \
+                    "${TEMPLATE_DIR}"/webphp/httpd/modsecurity_overrides.conf \
+                    "${JAR_DIR}"/"${OWASP_ARCHIVE}"
 
 echo 'Installing WebPhp modules ...'
-ssh_run_remote_command 'chmod +x install_webphp.sh' \
-                   "${private_key}" \
-                   "${webphp_eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" 
+ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_webphp.sh" \
+                    "${private_key}" \
+                    "${eip}" \
+                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                    "${DEFAUT_AWS_USER}" 
 
 set +e                
-ssh_run_remote_command './install_webphp.sh' \
-                   "${private_key}" \
-                   "${webphp_eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}"                          
+ssh_run_remote_command_as_root "${remote_dir}/install_webphp.sh" \
+                    "${private_key}" \
+                    "${eip}" \
+                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                    "${DEFAUT_AWS_USER}"                          
 exit_code=$?
 set -e
 
 # shellcheck disable=SC2181
 if [ 194 -eq "${exit_code}" ]
 then 
-   # Clear home directory    
-   ssh_run_remote_command 'rm -f -R /home/ec2-user/*' \
+   # Clear remote directory    
+   ssh_run_remote_command "rm -rf ${remote_dir:?}" \
                     "${private_key}" \
-                    "${webphp_eip}" \
+                    "${eip}" \
                     "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                    "${DEFAUT_AWS_USER}" \
-                    "${SERVER_WEBPHP_EC2_USER_PWD}" 
+                    "${DEFAUT_AWS_USER}"
                  
    echo 'Rebooting instance ...'     
    set +e
-   ssh_run_remote_command 'reboot' \
-                   "${private_key}" \
-                   "${webphp_eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" \
-                   "${SERVER_WEBPHP_EC2_USER_PWD}"
+   ssh_run_remote_command_as_root 'reboot' \
+                    "${private_key}" \
+                    "${eip}" \
+                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                    "${DEFAUT_AWS_USER}"  \
+                    "${SERVER_WEBPHP_EC2_USER_PWD}"
    set -e
 else
    echo 'Error running install_webphp.sh'
@@ -480,7 +484,9 @@ if [[ -z "${webphp_sgp_id}" ]]
 then
    echo "'${webphp_sgp_nm}' WebPhp Security Group not found"
 else
-   revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+   ##### TODO REMOVE THIS
+   revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
+   #revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
    echo 'Revoked SSH access' 
 fi
  
@@ -492,5 +498,5 @@ fi
 # shellcheck disable=SC2115
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
 
-echo "WebPhp box set up completed, IP address: '${webphp_eip}'" 
+echo "WebPhp box set up completed, IP address: '${eip}'" 
 echo

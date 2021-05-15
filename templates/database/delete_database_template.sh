@@ -7,9 +7,12 @@ set +o xtrace
 
 # Delete Database from Admin server
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 database_log_file=/var/log/database_delete.log
 
 echo "Deleting Database ..." >> "${database_log_file}" 2>&1
+
+cd "${script_dir}"
 
 mysql --host=SEDdatabase_hostSED \
       --user=SEDdatabase_main_userSED \

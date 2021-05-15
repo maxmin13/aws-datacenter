@@ -7,11 +7,14 @@ set +o xtrace
 
 # Install Database from Admin server 
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 database_log_file=/var/log/database_install.log
 
 echo 'Installing Database ...' >> "${database_log_file}" 2>&1
 
-sudo yum install -y mysql
+yum install -y mysql
+
+cd "${script_dir}"
 
 mysql --host=SEDdatabase_hostSED \
       --user=SEDdatabase_main_userSED \

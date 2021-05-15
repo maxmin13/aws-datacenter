@@ -10,6 +10,17 @@ set +o xtrace
 #   DESCRIPTION: The script contains general Bash functions.
 #       GLOBALS: None
 #        AUTHOR: MaxMin, minardi.massimiliano@libero.it
+#
+# AWS doesn't grant root access by default to EC2 instances. 
+# This is an important security best practise. 
+# Users are supposed to open a ssh connection using the secure key/pair to login 
+# as ec2-user. 
+# Users are supposed to use the sudo command as ec2-user to obtain 
+# elevated privileges.
+# Enabling direct root access to EC2 systems is a bad security practise which AWS 
+# doesn't recommend. It creates vulnerabilities especially for systems which are 
+# facing the Internet (see AWS documentation).
+#
 #===============================================================================
 
 #===============================================================================
@@ -18,18 +29,19 @@ set +o xtrace
 # Globals:
 #  None
 # Arguments:
-# +file          -- The file to upload.
 # +private_key   -- Local private key.
 # +server_ip     -- Server IP address.
 # +ssh_port      -- Server SSH port.
-# +server_user   -- Name of the user to log with into the server, must be the 
+# +user          -- Name of the user to log with into the server, must be the 
 #                   one with the corresponding public key.
+# +remote_dir    -- The remote directory where to upload the file.
+# +file          -- The file to upload.
 # Returns:      
 #  None  
 #===============================================================================
 function scp_upload_file()
 {
-   if [[ $# -lt 5 ]]
+   if [[ $# -lt 6 ]]
    then
       echo 'Error: missing mandatory arguments'
       exit 1
@@ -38,16 +50,17 @@ function scp_upload_file()
    local private_key="${1}"
    local server_ip="${2}"
    local ssh_port="${3}"
-   local server_user="${4}"
-   local file="${5}"
-   
+   local user="${4}"
+   local remote_dir="${5}"
+   local file="${6}"
+
    scp -q \
        -o StrictHostKeyChecking=no \
        -o UserKnownHostsFile=/dev/null \
        -i "${private_key}" \
        -P "${ssh_port}" \
        "${file}" \
-       "${server_user}@${server_ip}":
+       "${user}@${server_ip}:${remote_dir}"
  
    return 0
 }
@@ -61,15 +74,16 @@ function scp_upload_file()
 # +private_key   -- Local private key.
 # +server_ip     -- Server IP address.
 # +ssh_port      -- Server SSH port.
-# +server_user   -- Name of the user to log with into the server, must be the 
+# +user          -- Name of the user to log with into the server, must be the 
 #                   one with the corresponding public key.
+# +remote_dir    -- The remote directory where to upload the file.
 # +files         -- A list of files to upload.
 # Returns:      
 #  None  
 #===============================================================================
 function scp_upload_files()
 {
-   if [[ $# -lt 5 ]]
+   if [[ $# -lt 6 ]]
    then
       echo 'Error: missing mandatory arguments'
       exit 1
@@ -78,16 +92,19 @@ function scp_upload_files()
    local private_key="${1}"
    local server_ip="${2}"
    local ssh_port="${3}"
-   local server_user="${4}"
-   local files=("${@:5:$#-4}")
-   
+   local user="${4}"
+   local remote_dir="${5}"
+   local files=("${@:6:$#-5}")
+
    for file in "${files[@]}"
    do
       scp_upload_file "${private_key}" \
                       "${server_ip}" \
                       "${ssh_port}" \
-                      "${server_user}" \
+                      "${user}" \
+                      "${remote_dir}" \
                       "${file}"
+                      
       local file_name
       file_name="$(echo "${file}" | awk -F "/" '{print $NF}')"
       echo "${file_name} uploaded"
@@ -102,19 +119,21 @@ function scp_upload_files()
 # Globals:
 #  None
 # Arguments:
-# +file          -- The file to download.
 # +private_key   -- Local private key.
 # +server_ip     -- Server IP address.
 # +ssh_port      -- Server SSH port.
-# +server_user   -- Name of the user to log with into the server, must be the 
+# +user          -- Name of the user to log with into the server, must be the 
 #                   one with the corresponding public key.
-# +download_dir  -- The local directory where to download the file.
+# +remote_dir    -- The remote directory where the file is.
+# +file          -- The file to download.
+# +local_dir     -- The local directory where to download the file.
+
 # Returns:      
 #  None  
 #===============================================================================
 function scp_download_file()
 {
-   if [[ $# -lt 6 ]]
+   if [[ $# -lt 7 ]]
    then
       echo 'Error: missing mandatory arguments'
       exit 1
@@ -123,43 +142,38 @@ function scp_download_file()
    local private_key="${1}"
    local server_ip="${2}"
    local ssh_port="${3}"
-   local server_user="${4}"
-   local file="${5}"
-   local download_dir="${6}"
-
+   local user="${4}"
+   local remote_dir="${5}"
+   local file="${6}"
+   local local_dir="${7}"
+   
    scp -q \
        -o StrictHostKeyChecking=no \
        -o UserKnownHostsFile=/dev/null \
        -i "${private_key}" \
        -P "${ssh_port}" \
-       "${server_user}@${server_ip}:${file}" \
-       "${download_dir}"
+       "${user}@${server_ip}:${remote_dir}/${file}" \
+       "${local_dir}"
  
    return 0
 }
 
 #===============================================================================
-# Runs a command on a server as a priviledged user using SSH.
-# The program 'expect' has to be installed in the local system.
-# If the parameter 'server_pwd' is not passed, the remote user is supposed 
-# without password and the user's 'sudo' command is supposed without 
-# password.
-# The function returns the return code of the remote commomand.
+# Runs a command on a server as non priviledged user using SSH.
+# The function returns the remote command's return code.
 #
 # Globals:
 #  None
 # Arguments:
-# +server_cmd    -- The command to execute on the server.
+# +cmd           -- The command to execute on the server.
 # +private_key   -- Local private key.
 # +server_ip     -- Server IP address.
 # +ssh_port      -- Server SSH port.
-# +server_user   -- Name of the user to log with into the server, must be the 
-#                   one with the corresponding public key.
-# +server_pwd    -- The user's password.
+# +user          -- Name of the remote user that holds the access public-key. 
 # Returns:      
 #  None  
 #===============================================================================
-function ssh_run_remote_command()
+function ssh_run_remote_command() 
 {
    if [[ $# -lt 5 ]]
    then
@@ -167,53 +181,106 @@ function ssh_run_remote_command()
       exit 1
    fi
 
-   local server_cmd="${1}"
+   local cmd="${1}"
    local private_key="${2}"
    local server_ip="${3}"
    local ssh_port="${4}"
-   local server_user="${5}"
-   local server_pwd='-'
+   local user="${5}"
+      
+   if [[ "${cmd}" == *sudo* ]]
+   then
+     echo 'ERROR: command not allowed'
+     exit 1
+   fi     
+
+   ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 -o BatchMode=yes -i "${private_key}" -p "${ssh_port}" -t "${user}"@"${server_ip}" "${cmd}"
+
+   return $?   
+}
+
+#===============================================================================
+# Runs a command on a server as a root using SSH.
+# The program 'expect' has to be installed in the local system.
+# The function returns the remote command's return code.
+#
+# AWS doesn't grant root access by default to EC2 instances. 
+# This is an important security best practise. 
+# Users are supposed to open a ssh connection using the secure key/pair to login 
+# as ec2-user. 
+# Users are supposed to use the sudo command as ec2-user to obtain 
+# elevated privileges.
+# Enabling direct root access to EC2 systems is a bad security practise which AWS 
+# doesn't recommend. It creates vulnerabilities especially for systems which are 
+# facing the Internet (see AWS documentation).
+#
+# Globals:
+#  None
+# Arguments:
+# +cmd             -- The command to execute on the server.
+# +private_key     -- Local private key.
+# +server_ip       -- Server IP address.
+# +ssh_port        -- Server SSH port.
+# +user            -- Name of the remote user that holds the access public-key
+#                     (ec2-user). 
+# +password        -- The remote user's sudo pwd.
+# Returns:      
+#  None  
+#===============================================================================
+function ssh_run_remote_command_as_root()
+{
+   if [[ $# -lt 5 ]]
+   then
+      echo 'Error' 'Missing mandatory arguments'
+      exit 1
+   fi
+
+   local cmd="${1}"
+   
+   if [[ "${cmd}" == *rm* ]]
+   then
+     echo 'ERROR: command not allowed as root'
+     exit 1
+   fi     
+   
+   local private_key="${2}"
+   local server_ip="${3}"
+   local ssh_port="${4}"
+   local user="${5}"
+   local password='-'
    
    if [[ "$#" -eq 6 ]]
    then
-      server_pwd="${6}"
+      password="${6}"
    fi  
   
-   if [[ "${server_pwd}" == '-' ]]
+   if [[ "${password}" == '-' ]]
    then 
-      # The remote user has no password and the sudo command doesn't have password: 
-      # the command is run with sudo prepended.
-      ssh -q \
-          -o StrictHostKeyChecking=no \
-          -o UserKnownHostsFile=/dev/null \
-          -o ConnectTimeout=60 \
-          -o BatchMode=yes \
-          -i "${private_key}" \
-          -p "${ssh_port}" \
-          -t "${server_user}@${server_ip}" \
-             "sudo ${server_cmd}"
+      ## sudo without password.
+      ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 -o BatchMode=yes -i "${private_key}" -p "${ssh_port}" -t "${user}"@"${server_ip}" "sudo ${cmd}" 
+      
       exit_code=$?   
-   else
-      # The remote user has a password and the sudo command needs a password:
-      # establish a SSH session, switch to root, run the command.     
+   else 
+      ## sudo with password.
+      ## Create a temporary authomated script in temp directory that handles the password without
+      ## prompting for it.
       local expect_script="${TMP_DIR}"/ssh_run_remote_command.exp
       
-      {    
+      if [[ -f "${expect_script}" ]]
+      then
+         rm "${expect_script}"
+      fi
+      
+      {  
          printf '%s\n' "#!/usr/bin/expect -f" 
          printf '%s\n' "set timeout -1" 
          printf '%s\n' "log_user 0"
-         printf '%s\n' "spawn ssh -i ${private_key} -p ${ssh_port} -o ConnectTimeout=60 -o BatchMode=yes -o StrictHostKeyChecking=no ${server_user}@${server_ip}" 
-         printf '%s\n' "sleep 3" 
-         printf '%s\n' "send \"sudo su\r\"" 
-         printf '%s\n' "expect -exact \":\"" 
-         printf '%s\n' "send \"${server_pwd}\r\""      
-         printf '%s\n' "expect -exact \"]#\"" 
-         printf '%s\n' "send \"${server_cmd}\r\"" 
-         printf '%s\n' "send \"exit\r\""
-         printf '%s\n' "send \"exit\r\""
-         printf '%s\n' "expect eof" 
+         printf '%s\n' "spawn ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 -o BatchMode=yes -i ${private_key} -p ${ssh_port} -t ${user}@${server_ip} sudo ${cmd}"  
+         printf '%s\n' "match_max 100000"
+         printf '%s\n' "expect -exact \"\: \""
+         printf '%s\n' "send -- \"${password}\r\""
+         printf '%s\n' "expect eof"
          printf '%s\n' "lassign [wait] pid spawnid os_error_flag value"
-         printf '%s\n' "send_user \${value}"                 
+         printf '%s\n' "send_user \${value}"    
       } >> "${expect_script}"     
    
       chmod +x "${expect_script}"
@@ -233,7 +300,7 @@ function ssh_run_remote_command()
 # +private_key   -- Local private key.
 # +server_ip     -- Server IP address.
 # +ssh_port      -- Server SSH port.
-# +server_user   -- Name of the user to log with into the server, must be the 
+# +user   -- Name of the user to log with into the server, must be the 
 #                   one with the corresponding public key.
 # Returns:      
 #  None  
@@ -249,7 +316,7 @@ function wait_ssh_started()
    local private_key="${1}"
    local server_ip="${2}"
    local ssh_port="${3}"
-   local server_user="${4}"
+   local user="${4}"
 
    while ! ssh -q \
                -o StrictHostKeyChecking=no \
@@ -258,7 +325,7 @@ function wait_ssh_started()
                -o BatchMode=yes \
                -i "${private_key}" \
                -p "${ssh_port}" \
-                  "${server_user}@${server_ip}" true; do
+                  "${user}@${server_ip}" true; do
       echo -n . 
       sleep 3
    done;

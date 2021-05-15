@@ -6,18 +6,22 @@ set -o nounset
 set +o xtrace
 
 ###############################################
-# Makes an Admin box, from a Linux hardened 
-# image.
-# SSH is on 38142
-# The Admin server includes: 
+# Makes and run an Admin box instance, 
+# The instance is built from the shared base 
+# Linux hardened image.
+# SSH is on 38142.
+# No root access by default.
+# Changed ec2-user password.
+# Set ec2-user sudo with password.
+# 
+# Program installed: 
 # rsyslog receiver for all logs; 
 # Admin website; 
 # Loganalyzer; 
 # M/Monit; 
 # javaMail;
 # phpMyAdmin;
-# 'root', 'ec2-user' and 'sudo' command have a 
-# password after the install script is run.
+#
 ###############################################
 
 APACHE_INSTALL_DIR='/etc/httpd'
@@ -32,7 +36,7 @@ LOGANALYZER_VIRTUALHOST_CONFIG_FILE='loganalyzer.virtualhost.maxmin.it.conf'
 MONIT_DOCROOT_ID='monit.maxmin.it'
 MONIT_VIRTUALHOST_CONFIG_FILE='monit.virtualhost.maxmin.it.conf'
 MMONIT_INSTALL_DIR='/opt/mmonit'
-webphp_dir=admin
+webphp_dir='admin'
 
 echo '*********'
 echo 'Admin box'
@@ -129,7 +133,9 @@ fi
 adm_sg_id="$(create_security_group "${vpc_id}" "${SERVER_ADMIN_SEC_GRP_NM}" \
                     'Admin security group')"
 
-allow_access_from_cidr "${adm_sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+##### TODO REMOVE THIS
+allow_access_from_cidr "${adm_sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
+#####allow_access_from_cidr "${adm_sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
 echo 'Created Admin Security Group'
 
 ## *************** ##
@@ -221,8 +227,8 @@ sed -e "s/SEDserver_admin_hostnameSED/${SERVER_ADMIN_HOSTNAME}/g" \
 echo 'Apache httpd.conf ready'
    
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-       -e "s/SEDenvironmentSED/${ENV}/g" \
-       -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
+    -e "s/SEDenvironmentSED/${ENV}/g" \
+    -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
        "${TEMPLATE_DIR}"/common/httpd/extend_apache_web_server_with_SSL_module_template.sh > "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_SSL_module_template.sh       
 
 echo 'extend_apache_web_server_with_SSL_module_template.sh ready'
@@ -297,13 +303,6 @@ sed -e "s/SEDuser_nameSED/ec2-user/g" \
   
 echo 'Change ec2-user password chp_ec2-user.sh ready'
 
-# Script that sets a password for 'root' user.
-sed -e "s/SEDuser_nameSED/root/g" \
-    -e "s/SEDuser_pwdSED/${SERVER_ADMIN_ROOT_PWD}/g" \
-       "${TEMPLATE_DIR}"/users/chp_user_template.exp > "${TMP_DIR}"/"${webphp_dir}"/chp_root.sh
-       
-echo 'Change root password chp_root.sh ready'
-
 # M/Monit systemctl service file
 sed -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
        "${TEMPLATE_DIR}"/"${webphp_dir}"/mmonit/mmonit_template.service > "${TMP_DIR}"/"${webphp_dir}"/mmonit.service 
@@ -344,84 +343,97 @@ echo 'Rsyslog rsyslog.conf ready'
        
 # Monit Apache heartbeat virtualhost.                                     
 create_virtualhost_configuration_file '127.0.0.1' \
-                                       "${SERVER_ADMIN_APACHE_MONIT_PORT}" \
-                                       "${SERVER_ADMIN_HOSTNAME}" \
-                                       "${APACHE_DOCROOT_DIR}" \
-                                       "${MONIT_DOCROOT_ID}" \
-                                       "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"                                      
+                           "${SERVER_ADMIN_APACHE_MONIT_PORT}" \
+                           "${SERVER_ADMIN_HOSTNAME}" \
+                           "${APACHE_DOCROOT_DIR}" \
+                           "${MONIT_DOCROOT_ID}" \
+                           "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"                                      
                                        
 add_alias_to_virtualhost 'monit' \
-                            "${APACHE_DOCROOT_DIR}" \
-                            "${MONIT_DOCROOT_ID}" \
-                            "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"
+                           "${APACHE_DOCROOT_DIR}" \
+                           "${MONIT_DOCROOT_ID}" \
+                           "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"
                             
 echo "Monit ${MONIT_VIRTUALHOST_CONFIG_FILE} ready"                                                                                        
 
 # phpmyadmin Virtual Host file.
 create_virtualhost_configuration_file '*' \
-                                       "${SERVER_ADMIN_APACHE_PHPMYADMIN_PORT}" \
-                                       "${SERVER_ADMIN_HOSTNAME}" \
-                                       "${APACHE_DOCROOT_DIR}" \
-                                       "${PHPMYADMIN_DOCROOT_ID}" \
-                                       "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"      
+                           "${SERVER_ADMIN_APACHE_PHPMYADMIN_PORT}" \
+                           "${SERVER_ADMIN_HOSTNAME}" \
+                           "${APACHE_DOCROOT_DIR}" \
+                           "${PHPMYADMIN_DOCROOT_ID}" \
+                           "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"      
                                      
 add_alias_to_virtualhost 'phpmyadmin' \
-                            "${APACHE_DOCROOT_DIR}" \
-                            "${PHPMYADMIN_DOCROOT_ID}" \
-                            "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"                       
+                           "${APACHE_DOCROOT_DIR}" \
+                           "${PHPMYADMIN_DOCROOT_ID}" \
+                           "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"                       
 
 echo "PhpMyAdmin ${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE} ready"                             
                             
 # loganalyzer Virtual Host file.
 create_virtualhost_configuration_file '*' \
-                                       "${SERVER_ADMIN_APACHE_LOGANALYZER_PORT}" \
-                                       "${SERVER_ADMIN_HOSTNAME}" \
-                                       "${APACHE_DOCROOT_DIR}" \
-                                       "${LOGANALYZER_DOCROOT_ID}" \
-                                       "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"                              
+                           "${SERVER_ADMIN_APACHE_LOGANALYZER_PORT}" \
+                           "${SERVER_ADMIN_HOSTNAME}" \
+                           "${APACHE_DOCROOT_DIR}" \
+                           "${LOGANALYZER_DOCROOT_ID}" \
+                           "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"                              
                             
 add_alias_to_virtualhost 'loganalyzer' \
-                            "${APACHE_DOCROOT_DIR}" \
-                            "${LOGANALYZER_DOCROOT_ID}" \
-                            "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"  
+                           "${APACHE_DOCROOT_DIR}" \
+                           "${LOGANALYZER_DOCROOT_ID}" \
+                           "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"  
                             
 echo "Loganalyzer ${LOGANALYZER_VIRTUALHOST_CONFIG_FILE} ready"                                    
   
 echo 'Waiting for SSH to start'
 wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
 
+
+## 
+## Remote commands that have to be executed as priviledged user are run with sudo.
+## By AWS default, sudo has not password.
+## 
+
 echo 'Uploading files ...'
-scp_upload_files "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" \
-                 "${TEMPLATE_DIR}"/common/php/install_php.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/php.ini \
-                 "${TMP_DIR}"/"${webphp_dir}"/install_admin.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_FCGI.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_SSL_module_template.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/ssl.conf \
-                 "${TMP_DIR}"/"${webphp_dir}"/httpd.conf \
-                 "${TEMPLATE_DIR}"/common/httpd/httpd-mpm.conf \
-                 "${TEMPLATE_DIR}"/common/httpd/00-ssl.conf \
-                 "${TEMPLATE_DIR}"/common/httpd/09-fcgid.conf \
-                 "${TEMPLATE_DIR}"/common/httpd/10-fcgid.conf \
-                 "${JAR_DIR}"/"${LOGANALYZER_ARCHIVE}" \
-                 "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" \
-                 "${TEMPLATE_DIR}"/"${webphp_dir}"/config.php \
-                 "${JAR_DIR}"/"${MMONIT_ARCHIVE}" \
-                 "${TMP_DIR}"/"${webphp_dir}"/monitrc \
-                 "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" \
-                 "${TMP_DIR}"/"${webphp_dir}"/mmonit.service \
-                 "${TMP_DIR}"/"${webphp_dir}"/server.xml \
-                 "${TMP_DIR}"/"${webphp_dir}"/chp_root.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/chp_ec2-user.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/gen-selfsign-cert.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/remove-passphase.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/gen-rsa.sh \
-                 "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" \
-                 "${TMP_DIR}"/"${webphp_dir}"/config.inc.php \
-                 "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf \
-                 "${TEMPLATE_DIR}"/common/launch_javaMail.sh \
-                 "${TEMPLATE_DIR}"/"${webphp_dir}"/logrotatehttp
+remote_dir=/home/ec2-user/script
+
+ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
+                           "${private_key}" \
+                           "${eip}" \
+                           "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                           "${DEFAUT_AWS_USER}"  
+
+scp_upload_files "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" "${remote_dir}" \
+                           "${TEMPLATE_DIR}"/common/php/install_php.sh \
+                           "${TMP_DIR}"/"${webphp_dir}"/php.ini \
+                           "${TMP_DIR}"/"${webphp_dir}"/install_admin.sh \
+                           "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server.sh \
+                           "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_FCGI.sh \
+                           "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_SSL_module_template.sh \
+                           "${TMP_DIR}"/"${webphp_dir}"/ssl.conf \
+                           "${TMP_DIR}"/"${webphp_dir}"/httpd.conf \
+                           "${TEMPLATE_DIR}"/common/httpd/httpd-mpm.conf \
+                           "${TEMPLATE_DIR}"/common/httpd/00-ssl.conf \
+                           "${TEMPLATE_DIR}"/common/httpd/09-fcgid.conf \
+                           "${TEMPLATE_DIR}"/common/httpd/10-fcgid.conf \
+                           "${JAR_DIR}"/"${LOGANALYZER_ARCHIVE}" \
+                           "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" \
+                           "${TEMPLATE_DIR}"/"${webphp_dir}"/config.php \
+                           "${JAR_DIR}"/"${MMONIT_ARCHIVE}" \
+                           "${TMP_DIR}"/"${webphp_dir}"/monitrc \
+                           "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" \
+                           "${TMP_DIR}"/"${webphp_dir}"/mmonit.service \
+                           "${TMP_DIR}"/"${webphp_dir}"/server.xml \
+                           "${TMP_DIR}"/"${webphp_dir}"/chp_ec2-user.sh \
+                           "${TMP_DIR}"/"${webphp_dir}"/gen-selfsign-cert.sh \
+                           "${TMP_DIR}"/"${webphp_dir}"/remove-passphase.sh \
+                           "${TMP_DIR}"/"${webphp_dir}"/gen-rsa.sh \
+                           "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" \
+                           "${TMP_DIR}"/"${webphp_dir}"/config.inc.php \
+                           "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf \
+                           "${TEMPLATE_DIR}"/common/launch_javaMail.sh \
+                           "${TEMPLATE_DIR}"/"${webphp_dir}"/logrotatehttp
                 
 echo 'Files uploaded'
                             
@@ -431,48 +443,41 @@ echo 'Files uploaded'
 # PHPMyAdmin (MySQL remote database administration)
 # TODO
 
-#
-# Run the install script on the server.
-#
-
 echo 'Installing Admin modules ...'
 
-# Set 'ec2-user' and 'root' password, set 'ec2-user' sudo with password.  
-# The install script set a password for them.
-ssh_run_remote_command 'chmod +x install_admin.sh' \
-                   "${private_key}" \
-                   "${eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" 
+ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin.sh" \
+                           "${private_key}" \
+                           "${eip}" \
+                           "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                           "${DEFAUT_AWS_USER}"
 
 set +e                
-ssh_run_remote_command './install_admin.sh' \
-                   "${private_key}" \
-                   "${eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}"                          
+ssh_run_remote_command_as_root "${remote_dir}/install_admin.sh" \
+                           "${private_key}" \
+                           "${eip}" \
+                           "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                           "${DEFAUT_AWS_USER}"                          
 exit_code=$?
 set -e
 
 # shellcheck disable=SC2181
 if [ 194 -eq "${exit_code}" ]
 then 
-   # Clear home directory    
-   ssh_run_remote_command 'rm -f -R /home/ec2-user/*' \
-                   "${private_key}" \
-                   "${eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" \
-                   "${SERVER_ADMIN_EC2_USER_PWD}"   
+   # Clear remote directory    
+   ssh_run_remote_command "rm -rf ${remote_dir:?}" \
+                           "${private_key}" \
+                           "${eip}" \
+                           "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                           "${DEFAUT_AWS_USER}"   
                    
    echo 'Rebooting instance ...'   
    set +e  
-   ssh_run_remote_command 'reboot' \
-                   "${private_key}" \
-                   "${eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" \
-                   "${SERVER_ADMIN_EC2_USER_PWD}"
+   ssh_run_remote_command_as_root 'reboot' \
+                           "${private_key}" \
+                           "${eip}" \
+                           "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                           "${DEFAUT_AWS_USER}" \
+                           "${SERVER_ADMIN_EC2_USER_PWD}"
    set -e
 else
    echo 'Error running install_admin.sh'
@@ -487,7 +492,9 @@ if [[ -z "${adm_sg_id}" ]]
 then
    echo "'${SERVER_ADMIN_SEC_GRP_NM}' Admin Security Group not found"
 else
-   revoke_access_from_cidr "${adm_sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+   ##### TODO REMOVE THIS
+   ##### revoke_access_from_cidr "${adm_sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+   revoke_access_from_cidr "${adm_sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
    echo 'Revoked SSH access' 
 fi
        

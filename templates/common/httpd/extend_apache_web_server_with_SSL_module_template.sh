@@ -8,6 +8,8 @@ set +o xtrace
 ## Install Apache Web Server SSL module and generate a primary-key and a certificate,
 ## Listen on 80 port, no SSL.
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 ENV='SEDenvironmentSED'
 APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 APACHE_USR='SEDapache_usrSED'
@@ -16,11 +18,10 @@ yum install -y mod_ssl
 
 mkdir -p "${APACHE_INSTALL_DIR}"/ssl
 
-cd /home/ec2-user || exit
+cd "${script_dir}" || exit
+
 cp ssl.conf "${APACHE_INSTALL_DIR}"/conf.d
 cp 00-ssl.conf "${APACHE_INSTALL_DIR}"/conf.modules.d
-
-cd /home/ec2-user || exit
 
 #if [[ 'development' == "${ENV}" ]]
 if 'true'

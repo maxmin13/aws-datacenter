@@ -1,0 +1,17 @@
+*************
+Database dump
+*************
+
+* Admin instance ID: 'i-0f3791a1d8f4a10c3'
+* Admin Security Group ID: 'sg-0e778a0764765d4eb'
+* Admin public IP address: '34.251.159.78'
+* Database endpoint: 'mmdatainstance.cwjojoz4t7ua.eu-west-1.rds.amazonaws.com'
+
+dump_database.sh ready
+SSH access already granted to development machine
+Waiting for SSH to start
+Uploading files ...
+dump_database.sh uploaded
+Dumping Database ...
+Database dumped, downloading the dump ...
+scp: /home/ec2-user/script/dump-database-15-05-2021-15.01.06: No such file or directory

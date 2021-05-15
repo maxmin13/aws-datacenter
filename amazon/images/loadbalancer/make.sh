@@ -160,8 +160,8 @@ then
    __wait
    echo "'${LBAL_CRT_NM}' self-signed Load Balancer Certificate uploaded"
 
-   rm -f "${LBAL_KEY_FILE}"
-   rm -f "${LBAL_CRT_FILE}"
+   rm -f "${LBAL_KEY_FILE:?}"
+   rm -f "${LBAL_CRT_FILE:?}"
 )
 #elif [[ 'production' == "${ENV}" ]]
 #then

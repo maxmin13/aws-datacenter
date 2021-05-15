@@ -7,6 +7,7 @@ set +o xtrace
 
 # Install a Linux Apache PHP server (LAP).
 
+ENV='SEDenvironmentSED'
 SERVER_WEBPHP_HOSTNAME='SEDserver_webphp_hostnameSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
@@ -15,6 +16,8 @@ LOADBALANCER_VIRTUALHOST_CONFIG_FILE='SEDloadbalancer_virtualhost_configSED'
 LOADBALANCER_DOCROOT_ID='SEDloadbalancer_docroot_idSED'
 MONIT_VIRTUALHOST_CONFIG_FILE='SEDmonit_virtualhost_configSED'
 MONIT_DOCROOT_ID='SEDmonit_docroot_idSED'
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 webphp_log_file='/var/log/website_install.log'
 
 amazon-linux-extras install epel -y >> "${webphp_log_file}" 2>&1
@@ -23,24 +26,15 @@ amazon-linux-extras install epel -y >> "${webphp_log_file}" 2>&1
 ## System hostname ##
 ## *************** ##
 
-#if [[ 'development' == "${ENV}" ]]
-#then
-#   hostnamectl set-hostname "${SERVER_WEBPHP_HOSTNAME}"
-#   awk -v domain="${SERVER_WEBPHP_HOSTNAME}" '{if($1 == "127.0.0.1"){$2=domain;$3=domain".localdomain"; print $0} else {print $0}}' /etc/hosts > tmp
-#   mv tmp /etc/hosts
-#   echo 'System hostname modified'
-#elif [[ 'production' == "${ENV}" ]]
-#then
-   hostnamectl set-hostname "${SERVER_WEBPHP_HOSTNAME}"
-   hostname
-   echo 'System hostname modified'
-#fi
+hostnamectl set-hostname "${SERVER_WEBPHP_HOSTNAME}"
+echo 'System hostname modified:'
+hostname
 
-## ********************* ##
-## 'root' and 'ec2-user' ##
-## ********************* ##
+## ************* ##
+## ec2-user user ##
+## ************* ##
 
-cd /home/ec2-user || exit
+cd "${script_dir}" || exit
 
 yum install -y expect >> "${webphp_log_file}" 2>&1
 
@@ -51,20 +45,17 @@ yum install -y expect >> "${webphp_log_file}" 2>&1
    
    # Set ec2-user's sudo with password'
    echo 'ec2-user ALL = ALL' > /etc/sudoers.d/cloud-init
-   echo 'ec2-user no password set' 
-   
-   chmod +x chp_root.sh
-   ./chp_root.sh
-   echo "'root' user password set"
+   echo 'ec2-user sudo with password set' 
 } >> "${webphp_log_file}" 2>&1
 
-echo 'Users root and ec2-user configured'
+echo 'ec2-user user configured'
 
 ## ******* ##
 ## Rsyslog ##
 ## ******* ##
 
-cd /home/ec2-user || exit
+cd "${script_dir}" || exit
+
 cp -f /etc/rsyslog.conf /etc/rsyslog.conf__backup
 cp -f rsyslog.conf /etc/rsyslog.conf
 
@@ -82,8 +73,9 @@ echo 'Rsyslog configured'
 ## Apache Web Server ##
 ## ***************** ##
 
+cd "${script_dir}" || exit
+
 echo 'Installing Apache Web Server ...'
-cd /home/ec2-user || exit
 chmod +x install_apache_web_server.sh 
 ./install_apache_web_server.sh >> "${webphp_log_file}" 2>&1
 echo 'Apache Web Server installed'
@@ -92,8 +84,9 @@ echo 'Apache Web Server installed'
 ## Security Module ##
 ## *************** ##
 
+cd "${script_dir}" || exit
+
 echo 'Installing Apache Web Server Security module ...'
-cd /home/ec2-user || exit
 chmod +x extend_apache_web_server_with_security_module_template.sh 
 ./extend_apache_web_server_with_security_module_template.sh >> "${webphp_log_file}" 2>&1
 echo 'Apache Web Server Security module installed'
@@ -102,8 +95,9 @@ echo 'Apache Web Server Security module installed'
 ## PHP ##
 ## *** ##
 
+cd "${script_dir}" || exit
+
 echo 'Installing PHP ...'
-cd /home/ec2-user || exit
 chmod +x install_php.sh 
 ./install_php.sh >> "${webphp_log_file}" 2>&1
 echo 'PHP installed'
@@ -112,8 +106,9 @@ echo 'PHP installed'
 ## FastCGI ##
 ## ******* ##
 
+cd "${script_dir}" || exit
+
 echo 'Extending Apache Web Server with FastCGI ...'
-cd /home/ec2-user || exit
 chmod +x extend_apache_web_server_with_FCGI.sh 
 ./extend_apache_web_server_with_FCGI.sh >> "${webphp_log_file}" 2>&1
 echo 'Apache Web Server extended with FastCGI'
@@ -122,10 +117,10 @@ echo 'Apache Web Server extended with FastCGI'
 ## Monit ##
 ## ***** ##
 
+cd "${script_dir}" || exit
+
 echo 'Installing Monit ...'
 yum install -y monit >> "${webphp_log_file}" 2>&1 
-
-cd /home/ec2-user || exit
 cp -f monitrc /etc/monitrc
 
 {
@@ -145,7 +140,7 @@ mkdir --parents "${monit_doc_root}"
 touch "${monit_doc_root}"/monit
 echo ok > "${monit_doc_root}"/monit
 
-cd /home/ec2-user || exit
+cd "${script_dir}" || exit
 
 # Enable the Monit site (Apache Web Server hearttbeat).
 cp "${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
@@ -157,7 +152,7 @@ echo 'Monit installed'
 ## Load Balancer ##
 ## ************* ##
 
-cd /home/ec2-user || exit
+cd "${script_dir}" || exit
 
 # Create an heart-beat endpoint targeted by the Load Balancer.
 loadbalancer_doc_root="${APACHE_DOCROOT_DIR}"/"${LOADBALANCER_DOCROOT_ID}"/public_html
@@ -184,4 +179,5 @@ amazon-linux-extras disable epel -y >> "${webphp_log_file}" 2>&1
 echo 'Reboot the server'
 
 exit 194
+
 

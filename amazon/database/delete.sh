@@ -102,36 +102,47 @@ wait_ssh_started "${private_key}" "${admin_eip}" "${SHARED_BASE_INSTANCE_SSH_POR
 ## Upload scripts
 ## **************
 
-echo "Transferring Database scripts ..."
-scp_upload_files "${private_key}" "${admin_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" \
-                 "${TMP_DIR}"/database/delete_dbs.sql \
-                 "${TMP_DIR}"/database/delete_dbusers.sql \
-                 "${TMP_DIR}"/database/delete_database.sh
+## 
+## Remote commands that have to be executed as priviledged user are run with sudo.
+## The ec2-user sudo command has been configured with password.
+##  
+
+echo 'Uploading files ...'
+remote_dir=/home/ec2-user/script
+
+ssh_run_remote_command "mkdir ${remote_dir}" \
+                       "${private_key}" \
+                       "${eip}" \
+                       "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                       "${DEFAUT_AWS_USER}"
+                   
+scp_upload_files       "${private_key}" "${admin_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" "${remote_dir}" \
+                       "${TMP_DIR}"/database/delete_dbs.sql \
+                       "${TMP_DIR}"/database/delete_dbusers.sql \
+                       "${TMP_DIR}"/database/delete_database.sh
 
 echo "Deleting Database data ..."
  
 # Run the delete Database scripts uploaded in the Admin server. 
-ssh_run_remote_command 'chmod +x delete_database.sh' \
-                   "${private_key}" \
-                   "${admin_eip}" \
-                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" \
-                   "${SERVER_ADMIN_EC2_USER_PWD}" 
+ssh_run_remote_command_as_root "chmod +x ${remote_dir}/delete_database.sh" \
+                       "${private_key}" \
+                       "${admin_eip}" \
+                       "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                       "${DEFAUT_AWS_USER}" \
+                       "${SERVER_ADMIN_EC2_USER_PWD}" 
               
-ssh_run_remote_command './delete_database.sh' \
-                  "${private_key}" \
-                  "${admin_eip}" \
-                  "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                  "${DEFAUT_AWS_USER}" \
-                   "${SERVER_ADMIN_EC2_USER_PWD}"
+ssh_run_remote_command "${remote_dir}/delete_database.sh" \
+                       "${private_key}" \
+                       "${admin_eip}" \
+                       "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                       "${DEFAUT_AWS_USER}"
 
-# Clear Admin home directory
-ssh_run_remote_command 'rm -f -R /home/ec2-user/*' \
-                  "${private_key}" \
-                  "${admin_eip}" \
-                  "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                  "${DEFAUT_AWS_USER}" \
-                  "${SERVER_ADMIN_EC2_USER_PWD}"    
+# Clear remote home directory    
+ssh_run_remote_command "rm -rf ${remote_dir:?}" \
+                       "${private_key}" \
+                       "${admin_eip}" \
+                       "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                       "${DEFAUT_AWS_USER}"    
 
 ## *****************
 ## Remove SSH access

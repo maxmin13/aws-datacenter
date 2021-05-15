@@ -9,8 +9,10 @@ set +o xtrace
 # Script to make Linux more secure
 # ********************************
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 shared_log_file=/var/log/shared_install.log
-cd /home/ec2-user
+
+cd "${script_dir}"
 
 yum -y update >> "${shared_log_file}" 2>&1
 echo 'Programs installed'

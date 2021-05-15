@@ -21,6 +21,8 @@ source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
 source "${PROJECT_DIR}"/amazon/credential/recaptcha.sh
 source "${PROJECT_DIR}"/amazon/credential/passwords.sh
 
+log_file="${LOG_DIR}"/make-$(date +"%d-%m-%Y-%H.%M"."%S")
+
 echo ''
 
 if [[ 'production' == "${ENV}" ]]
@@ -35,20 +37,19 @@ then
    echo '****************' 
 fi
 
-echo ''
+echo
 
-. "${PROJECT_DIR}"/amazon/images/database/delete.sh
-. "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 1
-. "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 2
-. "${PROJECT_DIR}"/amazon/images/admin/delete.sh
-. "${PROJECT_DIR}"/amazon/images/shared/delete.sh
-. "${PROJECT_DIR}"/amazon/images/loadbalancer/delete.sh
-. "${PROJECT_DIR}"/amazon/datacenter/delete.sh
-. "${PROJECT_DIR}"/amazon/account/delete.sh
+. "${PROJECT_DIR}"/amazon/images/database/delete.sh     >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 1     >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 2     >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 3     >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/images/admin/delete.sh        >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/images/shared/delete.sh       >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/images/loadbalancer/delete.sh >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/datacenter/delete.sh          >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/account/delete.sh             >> "${log_file}" 2>&1
 
-#. "${PROJECT_DIR}"/amazon/website/admin/delete.sh 
-#. "${PROJECT_DIR}"/amazon/website/webphp/delete.sh 1
-
-
+#. "${PROJECT_DIR}"/amazon/website/admin/delete.sh       >> "${log_file}" 2>&1
+#. "${PROJECT_DIR}"/amazon/website/webphp/delete.sh 1    >> "${log_file}" 2>&1
 
 echo 'Data Center deleted'

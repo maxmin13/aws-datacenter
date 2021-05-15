@@ -25,8 +25,8 @@ set +o xtrace
 ## 
 ## FPM (FastCGI Process Manager) is an alternative 'PHP FastCGI implementation' with some additional features (mostly) useful for heavy-loaded sites.
 ## Configuration file: php-fpm.conf
-## sudo systemctl enable php-fpm.service
-## sudo systemctl start php-fpm.service
+## systemctl enable php-fpm.service
+## systemctl start php-fpm.service
 ##
 ## mod_fcgid is an Apache module that uses the FastCGI protocol to provide an interface between Apache and Common Gateway Interface (CGI) programs.
 ##
@@ -36,6 +36,8 @@ set +o xtrace
 ## Files required to be uploaded:
 ## 1) cp 09-fcgid.conf 
 ## 2) cp 10-fcgid.conf 
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 
@@ -58,7 +60,7 @@ else
 fi
 
 ## FastCGI module’s configuration
-cd /home/ec2-user || exit
+cd "${script_dir}" || exit
 cp 09-fcgid.conf "${APACHE_INSTALL_DIR}/conf.d"
 cp 10-fcgid.conf "${APACHE_INSTALL_DIR}/conf.d"
 

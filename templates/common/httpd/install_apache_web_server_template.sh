@@ -16,14 +16,7 @@ APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
 
-# TODO see how to run apache with suexec unique user
-#if ! getent group |grep -q "${APACHE_USR}"
-#then
-   ## Creating the apache user and group
-#   groupadd "${APACHE_USR}"
-#   useradd -s /bin/false -M -g "${APACHE_USR}" "${APACHE_USR}"
-#   echo 'User apache created'
-#fi
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo 'Installing Apache Web Server ...'
 yum install -y httpd
@@ -32,11 +25,13 @@ echo 'Apache Web Server installed'
 
 # Clear directories and configuration files.
 cd /var/www || exit
-rm -f -R cgi-bin error icons
+rm -rf cgi-bin error icons
 mkdir -p "${APACHE_SITES_AVAILABLE_DIR}" "${APACHE_SITES_ENABLED_DIR}"
 
+cd "${script_dir}" || exit
+
 # Configuration files 
-cd /home/ec2-user || exit
+
 mv "${APACHE_INSTALL_DIR}"/conf/httpd.conf "${APACHE_INSTALL_DIR}"/conf/httpd.conf.back
 cp -f httpd.conf "${APACHE_INSTALL_DIR}"/conf
 cp /etc/mime.types "${APACHE_INSTALL_DIR}"/conf

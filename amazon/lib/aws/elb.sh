@@ -79,7 +79,7 @@ function create_loadbalancer()
                     --security-groups "${sg_id}" \
                     --subnets "${subnet_id}" \
                     --region "${DEPLOY_REGION}" \
-                    --listener LoadBalancerPort="${LBAL_PORT}",InstancePort="${SERVER_WEBPHP_APACHE_WEBSITE_PORT}",Protocol=https,InstanceProtocol=http,SSLCertificateId="${cert_arn}" >> "${LOG_DIR}/loadbalancer.log"
+                    --listener LoadBalancerPort="${LBAL_PORT}",InstancePort="${SERVER_WEBPHP_APACHE_WEBSITE_PORT}",Protocol=https,InstanceProtocol=http,SSLCertificateId="${cert_arn}" >> /dev/null
  
    return 0
 }
@@ -111,7 +111,7 @@ function configure_loadbalancer_health_check()
  
    aws elb configure-health-check \
                     --load-balancer-name "${loadbalancer_nm}" \
-                    --health-check Target=HTTP:"${SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 >> "${LOG_DIR}/loadbalancer.log"
+                    --health-check Target=HTTP:"${SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 >> /dev/null
  
    return 0
 }
@@ -170,7 +170,7 @@ function register_instance_with_loadbalancer()
    local loadbalancer_nm="${1}"
    local instance_id="${2}"
    
-   aws elb register-instances-with-load-balancer --load-balancer-name "${loadbalancer_nm}" --instances "${instance_id}" >> "${LOG_DIR}/loadbalancer.log"
+   aws elb register-instances-with-load-balancer --load-balancer-name "${loadbalancer_nm}" --instances "${instance_id}" >> /dev/null
    
    return 0
 }
@@ -199,7 +199,7 @@ function deregister_instance_from_loadbalancer()
    local loadbalancer_nm="${1}"
    local instance_id="${2}"
    
-   aws elb deregister-instances-from-load-balancer --load-balancer-name "${loadbalancer_nm}" --instances "${instance_id}" >> "${LOG_DIR}/loadbalancer.log"
+   aws elb deregister-instances-from-load-balancer --load-balancer-name "${loadbalancer_nm}" --instances "${instance_id}" >> /dev/null
    
    return 0
 }

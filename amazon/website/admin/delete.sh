@@ -24,22 +24,22 @@ else
    echo "* Admin instance ID: '${admin_instance_id}'"
 fi
 
-admin_sgp_id="$(get_security_group_id "${SERVER_ADMIN_SEC_GRP_NM}")"
+adm_sgp_id="$(get_security_group_id "${SERVER_ADMIN_SEC_GRP_NM}")"
 
-if [[ -z "${admin_sgp_id}" ]]
+if [[ -z "${adm_sgp_id}" ]]
 then
    echo 'The Admin security group not found'
 else
-   echo "* Admin Security Group ID: '${admin_sgp_id}'"
+   echo "* Admin Security Group ID: '${adm_sgp_id}'"
 fi
 
-admin_eip="$(get_public_ip_address_associated_with_instance "${SERVER_ADMIN_NM}")"
+eip="$(get_public_ip_address_associated_with_instance "${SERVER_ADMIN_NM}")"
 
-if [[ -z "${admin_eip}" ]]
+if [[ -z "${eip}" ]]
 then
    echo 'Admin public IP address not found'
 else
-   echo "* Admin public IP address: '${admin_eip}'"
+   echo "* Admin public IP address: '${eip}'"
 fi
 
 echo
@@ -49,7 +49,7 @@ echo 'Deleting Admin website ...'
 rm -rf "${TMP_DIR:?}"/admin
 mkdir "${TMP_DIR}"/admin
 
-if [[ -n "${admin_eip}" && -n "${admin_instance_id}" && -n "${admin_sgp_id}" ]]
+if [[ -n "${eip}" && -n "${admin_instance_id}" && -n "${adm_sgp_id}" ]]
 then
    ## *** ##
    ## SSH ##
@@ -57,11 +57,15 @@ then
    
    # Check if the Admin Security Group grants access from the development machine through SSH port
    my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
-   access_granted="$(check_access_from_cidr_is_granted "${admin_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
+   ##### TODO REMOVE THIS
+   access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0")"
+   #####access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
    
    if [[ -z "${access_granted}" ]]
    then
-      allow_access_from_cidr "${admin_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+      ##### TODO REMOVE THIS
+      allow_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
+      #####allow_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
       echo "Granted SSH access to development machine" 
    else
       echo 'SSH access already granted to development machine'    
@@ -69,7 +73,7 @@ then
    
    echo 'Waiting for SSH to start'
    private_key="$(get_private_key_path "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}")" 
-   wait_ssh_started "${private_key}" "${admin_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"   
+   wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"   
    
    ## ******* ##
    ## Modules ##
@@ -81,23 +85,37 @@ then
        -e "s/SEDwebsite_virtualhost_fileSED/${WEBSITE_VIRTUALHOST_CONFIG_FILE}/g" \
           "${TEMPLATE_DIR}"/admin/website/delete_admin_website_template.sh > "${TMP_DIR}"/admin/delete_admin_website.sh
           
-   echo 'delete_admin_website.sh ready'     
+   echo 'delete_admin_website.sh ready' 
+   
+   ## 
+   ## Remote commands that have to be executed as priviledged user are run with sudo.
+   ## The ec2-user sudo command has been configured with password.
+   ##    
+   
+   echo 'Uploading files ...'
+   remote_dir=/home/ec2-user/script
+
+   ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir ${remote_dir}" \
+                   "${private_key}" \
+                   "${eip}" \
+                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                   "${DEFAUT_AWS_USER}"     
                                     
-   scp_upload_files "${private_key}" "${admin_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" \
+   scp_upload_files "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" "${remote_dir}" \
                    "${TMP_DIR}"/admin/delete_admin_website.sh 
 
    # Delete the Admin website
-   ssh_run_remote_command 'chmod +x delete_admin_website.sh' \
+   ssh_run_remote_command_as_root "chmod +x ${remote_dir}/delete_admin_website.sh" \
                    "${private_key}" \
-                   "${admin_eip}" \
+                   "${eip}" \
                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                    "${DEFAUT_AWS_USER}" \
                    "${SERVER_ADMIN_EC2_USER_PWD}" 
              
    set +e              
-   ssh_run_remote_command './delete_admin_website.sh' \
+   ssh_run_remote_command_as_root "${remote_dir}/delete_admin_website.sh" \
                    "${private_key}" \
-                   "${admin_eip}" \
+                   "${eip}" \
                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                    "${DEFAUT_AWS_USER}" \
                    "${SERVER_ADMIN_EC2_USER_PWD}" 
@@ -107,19 +125,18 @@ then
    # shellcheck disable=SC2181
    if [ 194 -eq "${exit_code}" ]
    then 
-      # Clear home directory    
-      ssh_run_remote_command 'rm -f -R /home/ec2-user/*' \
+      # Clear remote directory    
+      ssh_run_remote_command "rm -rf ${remote_dir:?}" \
                    "${private_key}" \
-                   "${admin_eip}" \
+                   "${eip}" \
                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                   "${DEFAUT_AWS_USER}" \
-                   "${SERVER_ADMIN_EC2_USER_PWD}"   
+                   "${DEFAUT_AWS_USER}"   
                    
       echo 'Rebooting instance ...'    
       set +e 
-      ssh_run_remote_command 'reboot' \
+      ssh_run_remote_command_as_root 'reboot' \
                    "${private_key}" \
-                   "${admin_eip}" \
+                   "${eip}" \
                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                    "${DEFAUT_AWS_USER}" \
                    "${SERVER_ADMIN_EC2_USER_PWD}"
@@ -133,12 +150,14 @@ then
    ## SSH ##
    ## *** ##
 
-   if [[ -z "${admin_sgp_id}" ]]
+   if [[ -z "${adm_sgp_id}" ]]
    then
       echo "'${SERVER_ADMIN_SEC_GRP_NM}' Admin Security Group not found"
    else
-      revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
-      echo 'Revoked SSH access' 
+        ##### TODO REMOVE THIS
+        revoke_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
+        #####revoke_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+        echo 'Revoked SSH access'
    fi   
 fi
 

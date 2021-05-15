@@ -37,9 +37,9 @@ webphp_dir=webphp"${webphp_id}"
 website_request_domain="${SERVER_WEBPHP_HOSTNAME/<ID>/${webphp_id}}"
 website_docroot_id="${WEBSITE_DOCROOT_ID/<ID>/${webphp_id}}"
 
-echo '************'
-echo "WebPhp box ${webphp_id}" 
-echo '************'
+echo '****************'
+echo "WebPhp website ${webphp_id}" 
+echo '****************'
 echo
 
 webphp_instance_id="$(get_instance_id "${webphp_nm}")"
@@ -60,14 +60,14 @@ else
    echo "* WebPhp Security Group ID: '${webphp_sgp_id}'"
 fi
 
-webphp_eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"
+eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"
 
-if [[ -z "${webphp_eip}" ]]
+if [[ -z "${eip}" ]]
 then
    echo 'ERROR: WebPhp public IP address not found'
    exit 1
 else
-   echo "* WebPhp public IP address: '${webphp_eip}'"
+   echo "* WebPhp public IP address: '${eip}'"
 fi
 
 loadbalancer_sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
@@ -94,19 +94,23 @@ mkdir "${TMP_DIR}"/"${webphp_dir}"
 
 # Check if the WebPhp Security Group grants access from the development machine through SSH port
 my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
-access_granted="$(check_access_from_cidr_is_granted "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
-   
+##### TODO REMOVE THIS
+access_granted="$(check_access_from_cidr_is_granted "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0")"
+##### access_granted="$(check_access_from_cidr_is_granted "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
+ 
 if [[ -z "${access_granted}" ]]
 then
-   allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
-   echo "Granted SSH access to development machine" 
+   ##### TODO REMOVE THIS
+   allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
+   #####allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+   echo "Granted SSH access to development machine"  
 else
    echo 'SSH access already granted to development machine'    
 fi
 
 echo 'Waiting for SSH to start'
 private_key="$(get_private_key_path "${webphp_keypair_nm}" "${WEBPHP_ACCESS_DIR}")"
-wait_ssh_started "${private_key}" "${webphp_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
+wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
 
 ## ******* ##
 ## Website ##
@@ -131,7 +135,7 @@ then
               globalvariables.php 
               
     # Minify javascript files.
-    cd "${TMP_DIR}"/"${webphp_dir}/webphp/jscss" || exit
+    cd "${TMP_DIR}/${webphp_dir}"/webphp/jscss || exit
 
     # create a concatenation of all javascript files
     cat signup.js > general.js && rm -f signup.sh
@@ -178,24 +182,38 @@ sed -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
        
 echo 'install_webphp_website.sh ready'
 
-scp_upload_files "${private_key}" "${webphp_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" \
+## 
+## Remote commands that have to be executed as priviledged user are run with sudo.
+## The ec2-user sudo command has been configured with password.
+## 
+
+echo 'Uploading files ...'
+remote_dir=/home/ec2-user/script
+
+ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
+                  "${private_key}" \
+                  "${eip}" \
+                  "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                  "${DEFAUT_AWS_USER}"   
+
+scp_upload_files "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" "${remote_dir}" \
                   "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_ARCHIVE}" \
                   "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
                   "${TMP_DIR}"/"${webphp_dir}"/install_webphp_website.sh 
 
 echo "Installing WebPhp website ..."
 
-ssh_run_remote_command 'chmod +x install_webphp_website.sh' \
+ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_webphp_website.sh" \
                   "${private_key}" \
-                  "${webphp_eip}" \
+                  "${eip}" \
                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                   "${DEFAUT_AWS_USER}" \
                   "${SERVER_WEBPHP_EC2_USER_PWD}"
 
 set +e                
-ssh_run_remote_command './install_webphp_website.sh' \
+ssh_run_remote_command_as_root "${remote_dir}/install_webphp_website.sh" \
                   "${private_key}" \
-                  "${webphp_eip}" \
+                  "${eip}" \
                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                   "${DEFAUT_AWS_USER}" \
                   "${SERVER_WEBPHP_EC2_USER_PWD}"                         
@@ -206,18 +224,17 @@ set -e
 if [ 194 -eq "${exit_code}" ]
 then 
    # Clear remote home directory    
-   ssh_run_remote_command 'rm -f -R /home/ec2-user/*' \
+   ssh_run_remote_command "rm -rf ${remote_dir:?}" \
                   "${private_key}" \
-                  "${webphp_eip}" \
+                  "${eip}" \
                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                  "${DEFAUT_AWS_USER}" \
-                  "${SERVER_WEBPHP_EC2_USER_PWD}"   
+                  "${DEFAUT_AWS_USER}"  
                    
    echo 'Rebooting instance ...'  
    set +e      
-   ssh_run_remote_command 'reboot' \
+   ssh_run_remote_command_as_root 'reboot' \
                   "${private_key}" \
-                  "${webphp_eip}" \
+                  "${eip}" \
                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                   "${DEFAUT_AWS_USER}" \
                   "${SERVER_WEBPHP_EC2_USER_PWD}" > /dev/null
@@ -250,8 +267,10 @@ if [[ -z "${webphp_sgp_id}" ]]
 then
    echo "'${webphp_sgp_nm}' WebPhp Security Group not found"
 else
-   revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
-   echo 'Revoked SSH access' 
+   ##### TODO REMOVE THIS
+   revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
+   #####revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+   echo 'Revoked SSH access'
 fi
 
 ## ******** ##
@@ -260,6 +279,6 @@ fi
 
 # Clear local files
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
-echo "Website ${webphp_id} deployed at: '${webphp_eip}'" 
+echo "Website ${webphp_id} deployed at: '${eip}'" 
 echo
 

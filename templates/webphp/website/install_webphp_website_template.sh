@@ -11,9 +11,12 @@ APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
 WEBSITE_ARCHIVE='SEDwebsite_archiveSED'
 WEBSITE_VIRTUALHOST_CONFIG_FILE='SEDwebphp_virtual_host_configSED'
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 webphp_log_file='/var/log/website_install.log'
 
-cd /home/ec2-user || exit
+cd "${script_dir}" || exit
+
 mkdir webphp
 unzip "${WEBSITE_ARCHIVE}" -d webphp >> "${webphp_log_file}" 2>&1
 webphp_docroot="${APACHE_DOCROOT_DIR}"/"${WEBSITE_DOCROOT_ID}"/public_html
@@ -36,8 +39,9 @@ find "${webphp_docroot}" -type d -exec chmod 755 {} +
 find "${webphp_docroot}" -type f -exec chown root:root {} +
 find "${webphp_docroot}" -type f -exec chmod 644 {} +
 
+cd "${script_dir}" || exit
+
 # Enable the WebPhp site.
-cd /home/ec2-user || exit
 cp -f "${WEBSITE_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" 
 echo 'WebPhp site enabled' >> "${webphp_log_file}" 2>&1

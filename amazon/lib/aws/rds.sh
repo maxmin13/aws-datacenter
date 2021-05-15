@@ -75,7 +75,7 @@ function create_db_subnet_group()
                            --db-subnet-group-name "${dbsubnetg_nm}" \
                            --db-subnet-group-description "${dbsubnetg_desc}" \
                            --tags "Key='Name',Value=${dbsubnetg_nm}" \
-                           --subnet-ids "${subnet_ids}" >> "${LOG_DIR}/database.log"
+                           --subnet-ids "${subnet_ids}" >> /dev/null
  
   return 0
 }
@@ -172,15 +172,15 @@ function create_log_slow_queries_db_parameter_group()
    aws rds create-db-parameter-group \
                         --db-parameter-group-name "${param_nm}" \
                         --description "${param_desc}"  \
-                        --db-parameter-group-family "${db_family}" >> "${LOG_DIR}/database.log"
+                        --db-parameter-group-family "${db_family}" >> /dev/null
 
    aws rds modify-db-parameter-group \
                        --db-parameter-group-name "${param_nm}" \
-                       --parameters 'ParameterName=slow_query_log,ParameterValue=1,ApplyMethod=immediate' >> "${LOG_DIR}/database.log"
+                       --parameters 'ParameterName=slow_query_log,ParameterValue=1,ApplyMethod=immediate' >> /dev/null
   
    aws rds modify-db-parameter-group \
                        --db-parameter-group-name "${param_nm}" \
-                       --parameters 'ParameterName=long_query_time,ParameterValue=1,ApplyMethod=immediate' >> "${LOG_DIR}/database.log"
+                       --parameters 'ParameterName=long_query_time,ParameterValue=1,ApplyMethod=immediate' >> /dev/null
 
    return 0
 }
@@ -316,7 +316,7 @@ function create_database()
                       --multi-az \
                       --vpc-security-group-ids "${sg_id}" \
                       --db-subnet-group-name "${DB_MMDATA_SUB_GRP_NM}" \
-                      --db-parameter-group-name "${DB_MMDATA_SLOW_QUERIES_LOG_PARAM_GRP_NM}" >> "${LOG_DIR}/database.log"
+                      --db-parameter-group-name "${DB_MMDATA_SLOW_QUERIES_LOG_PARAM_GRP_NM}" >> /dev/null
    else
       ## No multi availability zone
       aws rds create-db-instance \
@@ -336,7 +336,7 @@ function create_database()
                       --availability-zone "${DEPLOY_ZONE_1}"  \
                       --vpc-security-group-ids "${sg_id}" \
                       --db-subnet-group-name "${DB_MMDATA_SUB_GRP_NM}" \
-                      --db-parameter-group-name "${DB_MMDATA_SLOW_QUERIES_LOG_PARAM_GRP_NM}" >> "${LOG_DIR}/database.log"
+                      --db-parameter-group-name "${DB_MMDATA_SLOW_QUERIES_LOG_PARAM_GRP_NM}" >> /dev/null
    fi
 
    aws rds wait db-instance-available --db-instance-identifier "${DB_MMDATA_INSTANCE_NM}"
@@ -367,7 +367,7 @@ function delete_database()
    # terminate rds (with no final snapshot)
    aws rds delete-db-instance \
                        --db-instance-identifier "${db_nm}" \
-                       --skip-final-snapshot >> "${LOG_DIR}/database.log" 
+                       --skip-final-snapshot >> /dev/null 
 
    aws rds wait db-instance-deleted --db-instance-identifier "${db_nm}"
  
@@ -429,7 +429,7 @@ function delete_database_snapshot()
    local db_snapshot_id="${1}"
 
    aws rds delete-db-snapshot \
-              --db-snapshot-identifier "${db_snapshot_id}" >> "${LOG_DIR}/database.log"
+              --db-snapshot-identifier "${db_snapshot_id}" >> /dev/null
 
    return 0
 }

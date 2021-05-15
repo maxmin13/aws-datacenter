@@ -1,24 +1,6 @@
 
 
 
-change: scp_upload_file
-add parameter 'dir' 
-to upload to a specific directory for ex: 'script'
-
-change all calls to:
-
-ssh_run_remote_command
-
-to refer to that directory
-
-than do not call:
-
-ssh_run_remote_command 'rm -f -R /home/ec2-user/*' 
-
-but call
-
-ssh_run_remote_command 'rm -f /home/ec2-user/script' 
-
 ###############################
 
 

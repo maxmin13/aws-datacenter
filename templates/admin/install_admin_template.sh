@@ -5,6 +5,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+ENV='SEDenvironmentSED'
 SERVER_ADMIN_HOSTNAME='SEDserver_admin_hostnameSED'
 APACHE_DOC_ROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
@@ -18,6 +19,8 @@ PHPMYADMIN_VIRTUALHOST_CONFIG_FILE='SEDphpmyadmin_virtualhost_fileSED'
 LOGANALYZER_ARCHIVE='SEDloganalyzer_archiveSED'
 LOGANALYZER_DOCROOT_ID='SEDloganalyzer_docroot_idSED'
 LOGANALYZER_VIRTUALHOST_CONFIG_FILE='SEDloganalyzer_virtualhost_fileSED'
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 admin_log_file='/var/log/admin_install.log'
 
 amazon-linux-extras install epel -y >> "${admin_log_file}" 2>&1
@@ -26,24 +29,15 @@ amazon-linux-extras install epel -y >> "${admin_log_file}" 2>&1
 ## System hostname ##
 ## *************** ##
 
-#if [[ 'development' == "${ENV}" ]]
-#then
-#   hostnamectl set-hostname "${SERVER_ADMIN_HOSTNAME}"
-#   awk -v domain="${SERVER_ADMIN_HOSTNAME}" '{if($1 == "127.0.0.1"){$2=domain;$3=domain".localdomain"; print $0} else {print $0}}' /etc/hosts > tmp
-#   mv tmp /etc/hosts
-#   echo 'System hostname modified'
-#elif [[ 'production' == "${ENV}" ]]
-#then
-   hostnamectl set-hostname "${SERVER_ADMIN_HOSTNAME}"
-   hostname
-   echo 'System hostname modified'
-#fi
+hostnamectl set-hostname "${SERVER_ADMIN_HOSTNAME}"
+echo 'System hostname modified:'
+hostname
 
-## ********************* ##
-## 'root' and 'ec2-user' ##
-## ********************* ##
+## ******** ##
+## ec2-user ##
+## ******** ##
 
-cd /home/ec2-user || exit
+cd "${script_dir}" || exit
 
 yum install -y expect >> "${admin_log_file}" 2>&1
 
@@ -54,23 +48,17 @@ yum install -y expect >> "${admin_log_file}" 2>&1
    
    # Set ec2-user's sudo with password'
    echo 'ec2-user ALL = ALL' > /etc/sudoers.d/cloud-init
-   echo 'ec2-user no password set' 
-   
-   chmod +x chp_root.sh
-   ./chp_root.sh
-   echo "'root' user password set"
+   echo 'ec2-user sudo with password set' 
 } >> "${admin_log_file}" 2>&1
 
-echo 'Users root and ec2-user configured'
+echo 'ec2-user user configured'
 
 ## ******* ##
 ## Rsyslog ##
 ## ******* ##
 
-cd /home/ec2-user || exit
 cp -f /etc/rsyslog.conf /etc/rsyslog.conf__backup
 cp -f rsyslog.conf /etc/rsyslog.conf
-
 chown root:root /etc/rsyslog.conf
 chmod 400 /etc/rsyslog.conf
 
@@ -85,8 +73,9 @@ echo 'Rsyslog configured'
 ## Apache Web Server ##
 ## ***************** ##
 
+cd "${script_dir}" || exit
+
 echo 'Installing Apache Web Server ...'
-cd /home/ec2-user || exit
 chmod +x install_apache_web_server.sh 
 ./install_apache_web_server.sh >> "${admin_log_file}" 2>&1
 echo 'Apache Web Server installed'
@@ -95,8 +84,9 @@ echo 'Apache Web Server installed'
 ## PHP ##
 ## *** ##
 
+cd "${script_dir}" || exit
+
 echo 'Installing PHP ...'
-cd /home/ec2-user || exit
 chmod +x install_php.sh 
 ./install_php.sh >> "${admin_log_file}" 2>&1
 echo 'PHP installed'
@@ -105,8 +95,9 @@ echo 'PHP installed'
 ## FastCGI ##
 ## ******* ##
 
+cd "${script_dir}" || exit
+
 echo 'Extending Apache Web Server with FastCGI ...'
-cd /home/ec2-user || exit
 chmod +x extend_apache_web_server_with_FCGI.sh 
 ./extend_apache_web_server_with_FCGI.sh >> "${admin_log_file}" 2>&1
 echo 'Apache Web Server extended with FastCGI'
@@ -115,8 +106,9 @@ echo 'Apache Web Server extended with FastCGI'
 ## SSL ##
 ## *** ##
 
-echo 'Configuring Apache Web Server SSL'
-cd /home/ec2-user || exit
+cd "${script_dir}" || exit
+
+echo 'Configuring Apache Web Server SSL ...'
 chmod +x extend_apache_web_server_with_SSL_module_template.sh 
 ./extend_apache_web_server_with_SSL_module_template.sh >> "${admin_log_file}" 2>&1 
 echo 'Apache Web Server SSL configured'
@@ -125,30 +117,33 @@ echo 'Apache Web Server SSL configured'
 ## PHPMyAdmin ##
 ## ********** ##
 
+cd "${script_dir}" || exit
+
 echo 'Installing PHPMyAdmin ...'
 yum install -y phpmyadmin >> "${admin_log_file}" 2>&1 
 echo 'PHPMyAdmin installed'
 
-cd /home/ec2-user || exit
 phpMyAdmin_doc_root="${APACHE_DOC_ROOT_DIR}"/"${PHPMYADMIN_DOCROOT_ID}"/public_html
 mkdir --parents "${phpMyAdmin_doc_root}"
 mv /usr/share/phpMyAdmin "${phpMyAdmin_doc_root}"/phpmyadmin
 rm -f /etc/httpd/conf.d/phpMyAdmin.conf
 cp -f config.inc.php /etc/phpMyAdmin/config.inc.php
 
+# Configuration files permissions
 chown root:root /etc/phpMyAdmin/config.inc.php
 chmod 644 /etc/phpMyAdmin/config.inc.php
 chown root:root /etc/phpMyAdmin
 chmod 755 /etc/phpMyAdmin/
 
-# TODO see how to run apache with suexec unique user
+# Public pages permissions.
 find "${phpMyAdmin_doc_root}"/phpmyadmin -type d -exec chown root:root {} +
 find "${phpMyAdmin_doc_root}"/phpmyadmin -type d -exec chmod 755 {} +
 find "${phpMyAdmin_doc_root}"/phpmyadmin -type f -exec chown root:root {} +
 find "${phpMyAdmin_doc_root}"/phpmyadmin -type f -exec chmod 644 {} +
 
+cd "${script_dir}" || exit
+
 # Enable the and phpmyadmin site.
-cd /home/ec2-user || exit
 cp "${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"
 echo 'phpmyadmin site enabled'
@@ -159,45 +154,52 @@ echo 'phpmyadmin installed'
 ## Loganalyzer ##
 ## *********** ##
 
-echo 'Installing LogAnalyzer ...'
+cd "${script_dir}" || exit
 
-cd /home/ec2-user || exit
+echo 'Installing Loganalyzer ...'
+
 mkdir loganalyzer
 tar -xvf "${LOGANALYZER_ARCHIVE}" --directory loganalyzer --strip-components 1 >> "${admin_log_file}" 2>&1 && cd loganalyzer || exit  
 loganalyzer_doc_root="${APACHE_DOC_ROOT_DIR}"/"${LOGANALYZER_DOCROOT_ID}"/public_html
 mkdir --parents "${loganalyzer_doc_root}"
 mv src "${loganalyzer_doc_root}"/loganalyzer
-cd /home/ec2-user || exit
+
+cd "${script_dir}" || exit
 cp config.php "${loganalyzer_doc_root}"/loganalyzer
 
-# TODO see how to run apache with suexec unique user
+# Public pages permissions.
 find "${loganalyzer_doc_root}"/loganalyzer -type d -exec chown root:root {} +
 find "${loganalyzer_doc_root}"/loganalyzer -type d -exec chmod 755 {} +
 find "${loganalyzer_doc_root}"/loganalyzer -type f -exec chown root:root {} +
 find "${loganalyzer_doc_root}"/loganalyzer -type f -exec chmod 644 {} +
 
-# Enable the and loganalyzer site.
-cd /home/ec2-user || exit
+cd "${script_dir}" || exit
+
+# Enable the and Loganalyzer site.
 cp "${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"
-echo 'loganalyzer site enabled'
+echo 'Loganalyzer site enabled'
 
-echo 'loganalyzer installed'
+rm -rf loganalyzer
+
+echo 'Loganalyzer installed'
 
 ## ******* ##
 ## M/Monit ##
 ## ******* ##
 
+cd "${script_dir}" || exit
+
 echo 'Installing M/Monit ...'
-cd /home/ec2-user || exit
 mkdir "${MMONIT_DIR}"
 tar -xvf "${MMONIT_ARCHIVE}" --directory "${MMONIT_DIR}" --strip-components 1 >> "${admin_log_file}" 2>&1
 mv server.xml "${MMONIT_DIR}"/conf/server.xml
 chown root:root "${MMONIT_DIR}"/conf/server.xml
 chmod 400 "${MMONIT_DIR}"/conf/server.xml
 
+cd "${script_dir}" || exit
+
 ## Install M/Monit as a systemd service
-cd /home/ec2-user || exit
 mv mmonit.service /etc/systemd/system
 chown root:root /etc/systemd/system/mmonit.service
 chmod 400 /etc/systemd/system/mmonit.service
@@ -214,11 +216,12 @@ echo 'M/Monit installed'
 ## Monit ##
 ## ***** ##
 
+# Monit handles start/stop of other services.
+
+cd "${script_dir}" || exit
+
 echo 'Installing Monit ...'
 yum install -y monit >> "${admin_log_file}" 2>&1 
-echo 'Monit installed'
-
-cd /home/ec2-user || exit
 cp -f monitrc /etc/monitrc
 
 {
@@ -233,14 +236,17 @@ cp -f monitrc /etc/monitrc
 
 rm -f /etc/monit.d/logging
 
+echo 'Monit installed'
+
 # Create an Apache Web Server heartbeat endpoint, see monitrc configuration file.
 monit_doc_root="${APACHE_DOC_ROOT_DIR}"/"${MONIT_DOCROOT_ID}"/public_html
 mkdir --parents "${monit_doc_root}"
 touch "${monit_doc_root}"/monit
 echo ok > "${monit_doc_root}"/monit
 
+cd "${script_dir}" || exit
+
 # Enable the Monit site (Apache Web Server heartbeat).
-cd /home/ec2-user || exit
 cp "${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
 ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" 
 echo 'Monit heartbeat endpoint enabled'
@@ -257,7 +263,7 @@ echo 'Monit heartbeat endpoint enabled'
 ## Logrotate ##
 ## ********* ##
 
-# cd /home/ec2-user || exit
+# cd "${script_dir}" || exit
 # mv logrotatehttp /etc/logrotate.d/logrotatehttp
 # chown root:root /etc/logrotate.d/logrotatehttp
 # chmod 644 /etc/logrotate.d/logrotatehttp
@@ -269,10 +275,10 @@ echo 'Monit heartbeat endpoint enabled'
 ## JavaMail ##
 ## ******** ##
 
+# cd "${script_dir}" || exit
 # mkdir /java
-
 # mkdir /java/javamail
-# mv /home/ec2-user/launch_javaMail.sh /java/javamail/launch_javaMail.sh
+# mv launch_javaMail.sh /java/javamail/launch_javaMail.sh
 
 # chown root:root /java
 # chmod 700 /java
@@ -287,5 +293,6 @@ amazon-linux-extras disable epel -y >> "${admin_log_file}" 2>&1
 echo 'Reboot the server'
 
 exit 194
+
 
 

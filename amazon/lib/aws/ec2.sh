@@ -196,7 +196,7 @@ function create_subnet()
   ####################### TODO ASSOCIATE THE SUBNET IN ANOTHER FUNCTION FOR ATOMICITY ############################## 
   
    ## Associate this subnet with our route table 
-   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" >> "${LOG_DIR}/ec2.log"
+   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" >> /dev/null
   
    echo "${subnet_id}"
  
@@ -426,7 +426,7 @@ function set_route()
    
    aws ec2 create-route --route-table-id "${rtb_id}" \
                         --destination-cidr-block "${destination_cidr}" \
-                        --gateway-id "${target_id}" >> "${LOG_DIR}/ec2.log"
+                        --gateway-id "${target_id}" >> /dev/null
 
    return 0
 }
@@ -521,7 +521,7 @@ function delete_security_group()
 
    local sg_id="${1}"
   
-   aws ec2 delete-security-group --group-id "${sg_id}" 
+   aws ec2 delete-security-group --group-id "${sg_id}" >> /dev/null 
   
    return 0
 }
@@ -554,7 +554,7 @@ function allow_access_from_cidr()
                    --group-id "${sg_id}" \
                    --protocol tcp \
                    --port "${port}" \
-                   --cidr "${cidr}"
+                   --cidr "${cidr}" >> /dev/null
  
    return 0
 }
@@ -588,7 +588,7 @@ function allow_access_from_security_group()
                         --group-id "${sg_id}" \
                         --protocol tcp \
                         --port "${port}" \
-                        --source-group "${from_sg_id}" 
+                        --source-group "${from_sg_id}" >> /dev/null 
 
    return 0
 }
@@ -622,7 +622,7 @@ function revoke_access_from_security_group()
                       --group-id "${sg_id}" \
                       --protocol tcp \
                       --port "${port}" \
-                      --source-group "${from_sg_id}"
+                      --source-group "${from_sg_id}" >> /dev/null
 
    return 0
 }
@@ -656,7 +656,7 @@ function revoke_access_from_cidr()
                       --group-id "${sg_id}" \
                       --protocol tcp \
                       --port "${port}" \
-                      --cidr "${src_cidr}"
+                      --cidr "${src_cidr}" >> /dev/null
 
    return 0
 }
@@ -1089,7 +1089,7 @@ function stop_instance()
 
    local instance_id="${1}"
 
-   aws ec2 stop-instances --instance-ids "${instance_id}" >> "${LOG_DIR}/ec2.log"
+   aws ec2 stop-instances --instance-ids "${instance_id}" >> /dev/null
    aws ec2 wait instance-stopped --instance-ids "${instance_id}" 
 
    return 0
@@ -1118,7 +1118,7 @@ function delete_instance()
 
    local instance_id="${1}"
 
-   aws ec2 terminate-instances --instance-ids "${instance_id}" >> "${LOG_DIR}/ec2.log"
+   aws ec2 terminate-instances --instance-ids "${instance_id}" >> /dev/null
 
    aws ec2 wait instance-terminated --instance-ids "${instance_id}" 
 
@@ -1155,7 +1155,7 @@ function create_image()
                     --name "${img_nm}" \
                     --description "${img_desc}" \
                     --query 'ImageId' \
-                    --output text)" >> "${LOG_DIR}/ec2.log"
+                    --output text)" >> /dev/null
   
    aws ec2 wait image-available --image-ids "${img_id}"
  
@@ -1275,7 +1275,7 @@ function delete_image_snapshot()
 
    local img_snapshot_id="${1}"
 
-   aws ec2 delete-snapshot --snapshot-id "${img_snapshot_id}" >> "${LOG_DIR}/ec2.log"
+   aws ec2 delete-snapshot --snapshot-id "${img_snapshot_id}" >> /dev/null
 
    return 0
 }
@@ -1423,7 +1423,7 @@ function delete_key_pair()
    private_key="$(get_private_key_path "${keypair_nm}" "${keypair_dir}")"
    
    # Delete the local Private Key.
-   rm -f "${private_key}"
+   rm -f "${private_key:?}"
 
    # Delete the Key Pair on EC2.
    aws ec2 delete-key-pair --key-name "${keypair_nm}"

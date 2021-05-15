@@ -12,30 +12,32 @@ set +o xtrace
 ## 2) modsecurity_overrides.conf
 ## 3) owasp-coreruleset.tar.gz
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 OWASP_ARCHIVE='SEDowasp_archiveSED'
 
 yum install mod_security -y
 
-rm -f -R "${APACHE_INSTALL_DIR}"/modsecurity.d
+rm -rf "${APACHE_INSTALL_DIR:?}"/modsecurity.d
 mkdir -p "${APACHE_INSTALL_DIR}"/modsecurity.d
 
+cd "${script_dir}" || exit
+
 # Customize ModSecurity by choosing the rule set from OWASP CRS.
-cd /home/ec2-user || exit
 mkdir owasp-modsecurity-crs
 tar -xvf "${OWASP_ARCHIVE}" --directory owasp-modsecurity-crs --strip-components 1 
 cd owasp-modsecurity-crs || exit
 mv crs-setup.conf.example crs-setup.conf
 mv rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf.example rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
 mv rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
-cd /home/ec2-user || exit
-mv owasp-modsecurity-crs "${APACHE_INSTALL_DIR}"/modsecurity.d
 
-cd /home/ec2-user || exit
+cd "${script_dir}" || exit
+
+mv owasp-modsecurity-crs "${APACHE_INSTALL_DIR}"/modsecurity.d
 mv owasp_mod_security.conf "${APACHE_INSTALL_DIR}"/conf.d 
 echo 'Apache Web Server Owasp rules configured'
 
-cd /home/ec2-user || exit
 mv modsecurity_overrides.conf "${APACHE_INSTALL_DIR}"/modsecurity.d/
 echo 'Apache Web Server Security overrides configured'
 

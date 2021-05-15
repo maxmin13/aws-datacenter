@@ -39,14 +39,14 @@ else
    echo "* Admin Security Group ID: '${adm_sgp_id}'"
 fi
 
-admin_eip="$(get_public_ip_address_associated_with_instance "${SERVER_ADMIN_NM}")"
+eip="$(get_public_ip_address_associated_with_instance "${SERVER_ADMIN_NM}")"
 
-if [[ -z "${admin_eip}" ]]
+if [[ -z "${eip}" ]]
 then
    echo 'ERROR: Admin public IP address not found'
    exit 1
 else
-   echo "* Admin public IP address: '${admin_eip}'"
+   echo "* Admin public IP address: '${eip}'"
 fi
 
 echo
@@ -62,11 +62,15 @@ mkdir "${TMP_DIR}"/admin
 
 # Check if the Admin Security Group grants access from the development machine through SSH port
 my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
-access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
+##### TODO REMOVE THIS
+access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0")"
+##### access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
    
 if [[ -z "${access_granted}" ]]
 then
-   allow_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+   ##### TODO REMOVE THIS
+   allow_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
+   #####allow_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
    echo "Granted SSH access to development machine" 
 else
    echo 'SSH access already granted to development machine'    
@@ -74,7 +78,7 @@ fi
 
 echo 'Waiting for SSH to start'
 private_key="$(get_private_key_path "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}")"
-wait_ssh_started "${private_key}" "${admin_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
+wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
 
 ## ******* ##
 ## Modules ##
@@ -107,62 +111,75 @@ echo "${WEBSITE_ARCHIVE} ready"
 
 # Website virtualhost file.
 create_virtualhost_configuration_file '*' \
-                                       "${SERVER_ADMIN_APACHE_WEBSITE_PORT}" \
-                                       "${SERVER_ADMIN_HOSTNAME}" \
-                                       "${APACHE_DOCROOT_DIR}" \
-                                       "${WEBSITE_DOCROOT_ID}" \
-                                       "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"                              
+                         "${SERVER_ADMIN_APACHE_WEBSITE_PORT}" \
+                         "${SERVER_ADMIN_HOSTNAME}" \
+                         "${APACHE_DOCROOT_DIR}" \
+                         "${WEBSITE_DOCROOT_ID}" \
+                         "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"                              
                             
 add_alias_to_virtualhost 'admin' \
                          "${APACHE_DOCROOT_DIR}" \
                          "${WEBSITE_DOCROOT_ID}" \
                          "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"                        
                             
-echo "${WEBSITE_VIRTUALHOST_CONFIG_FILE} ready"                                          
- 
-scp_upload_files "${private_key}" "${admin_eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" \
-                  "${TMP_DIR}"/admin/"${WEBSITE_ARCHIVE}" \
-                  "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
-                  "${TMP_DIR}"/admin/install_admin_website.sh 
+echo "${WEBSITE_VIRTUALHOST_CONFIG_FILE} ready"  
+
+## 
+## Remote commands that have to be executed as priviledged user are run with sudo.
+## The ec2-user sudo command has been configured with password.
+##                                         
+
+echo 'Uploading files ...'
+remote_dir=/home/ec2-user/script
+
+ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
+                         "${private_key}" \
+                         "${eip}" \
+                         "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                         "${DEFAUT_AWS_USER}"   
+                    
+scp_upload_files "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" "${remote_dir}" \
+                         "${TMP_DIR}"/admin/"${WEBSITE_ARCHIVE}" \
+                         "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
+                         "${TMP_DIR}"/admin/install_admin_website.sh 
 
 echo 'Installing Admin website ...'
 
-ssh_run_remote_command 'chmod +x install_admin_website.sh' \
-                  "${private_key}" \
-                  "${admin_eip}" \
-                  "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                  "${DEFAUT_AWS_USER}" \
-                  "${SERVER_ADMIN_EC2_USER_PWD}"
+ssh_run_remote_command_as_root "chmod +x "${remote_dir}"/install_admin_website.sh" \
+                         "${private_key}" \
+                         "${eip}" \
+                         "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                         "${DEFAUT_AWS_USER}" \
+                         "${SERVER_ADMIN_EC2_USER_PWD}"
 
 set +e                
-ssh_run_remote_command './install_admin_website.sh' \
-                  "${private_key}" \
-                  "${admin_eip}" \
-                  "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                  "${DEFAUT_AWS_USER}" \
-                  "${SERVER_ADMIN_EC2_USER_PWD}"                         
+ssh_run_remote_command_as_root "${remote_dir}/install_admin_website.sh" \
+                         "${private_key}" \
+                         "${eip}" \
+                         "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                         "${DEFAUT_AWS_USER}" \
+                         "${SERVER_ADMIN_EC2_USER_PWD}"                         
 exit_code=$?	
 set -e
 
 # shellcheck disable=SC2181
 if [ 194 -eq "${exit_code}" ]
 then 
-   # Clear remote home directory    
-   ssh_run_remote_command 'rm -f -R /home/ec2-user/*' \
-                  "${private_key}" \
-                  "${admin_eip}" \
-                  "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                  "${DEFAUT_AWS_USER}" \
-                  "${SERVER_ADMIN_EC2_USER_PWD}"   
+   # Clear remote directory    
+   ssh_run_remote_command "rm -rf ${remote_dir:?}" \
+                         "${private_key}" \
+                         "${eip}" \
+                         "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                         "${DEFAUT_AWS_USER}"   
                    
    echo 'Rebooting instance ...'  
    set +e      
-   ssh_run_remote_command 'reboot' \
-                  "${private_key}" \
-                  "${admin_eip}" \
-                  "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                  "${DEFAUT_AWS_USER}" \
-                  "${SERVER_ADMIN_EC2_USER_PWD}" > /dev/null
+   ssh_run_remote_command_as_root 'reboot' \
+                         "${private_key}" \
+                         "${eip}" \
+                         "${SHARED_BASE_INSTANCE_SSH_PORT}" \
+                         "${DEFAUT_AWS_USER}" \
+                         "${SERVER_ADMIN_EC2_USER_PWD}" > /dev/null
    set -e   
 else
    echo 'Error running install_admin_website.sh'
@@ -177,7 +194,9 @@ if [[ -z "${adm_sgp_id}" ]]
 then
    echo "'${SERVER_ADMIN_SEC_GRP_NM}' Admin Security Group not found"
 else
-   revoke_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
+   ##### TODO REMOVE THIS
+   revoke_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
+   #####revoke_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
    echo 'Revoked SSH access' 
 fi
 
@@ -188,6 +207,6 @@ fi
 # Clear local files
 rm -rf "${TMP_DIR:?}"/admin
 
-echo "Admin website deployed at: '${admin_eip}'" 
+echo "Admin website deployed at: '${eip}'" 
 echo
 
