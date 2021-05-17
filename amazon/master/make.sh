@@ -42,9 +42,11 @@ echo
 # Create the datacenter.
 . "${PROJECT_DIR}"/amazon/datacenter/make.sh            ### >> "${log_file}" 2>&1
 
+# Create a base shared image.
+. "${PROJECT_DIR}"/amazon/image/shared/make.sh          ### >> "${log_file}" 2>&1
+
 # Create the server instances.
 . "${PROJECT_DIR}"/amazon/instance/database/make.sh     ### >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/image/shared/make.sh          ### >> "${log_file}" 2>&1
 . "${PROJECT_DIR}"/amazon/instance/loadbalancer/make.sh ### >> "${log_file}" 2>&1
 . "${PROJECT_DIR}"/amazon/instance/admin/make.sh        ### >> "${log_file}" 2>&1
 . "${PROJECT_DIR}"/amazon/instance/webphp/make.sh 1     ### >> "${log_file}" 2>&1
