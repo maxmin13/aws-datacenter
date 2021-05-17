@@ -60,13 +60,23 @@ fi
 ## **************
 ## Security Group
 ## **************
-  
+
 sg_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
-  
+
 if [[ -z "${sg_id}" ]]
 then
-   echo "'${LBAL_SEC_GRP_NM}' Security Group not found"
+   echo "'${LBAL_SEC_GRP_NM}' Loadbalancer Security Group not found"
 else
+   granted="$(check_access_from_cidr_is_granted "${sg_id}" "${LBAL_PORT}" '0.0.0.0/0')"
+   
+   if [[ -n "${granted}" ]]
+   then
+   	revoke_access_from_cidr "${sg_id}" "${LBAL_PORT}" '0.0.0.0/0'
+   	echo 'Revoked access to Loadbalancer'
+   else
+   	echo 'No access to Loadbalancer found'
+   fi
+   
    delete_security_group "${sg_id}" 
    echo "'${LBAL_SEC_GRP_NM}' Security Group deleted"
 fi

@@ -96,7 +96,7 @@ LBAL_SEC_GRP_NM='maxmin-elb-sgp'
 ## Admin box ##
 ## ********* ##
 
-SERVER_ADMIN_NM='maxmin-admin-instance1'
+SERVER_ADMIN_NM='maxmin-admin-instance'
 SERVER_ADMIN_PRIVATE_IP='10.0.0.10'
 # In dev, ip-base virtual hosting, in prod name-base virtual hosting with only one ip and port for
 # website, phpmyadmin and loganalyzer.

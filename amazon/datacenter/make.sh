@@ -32,9 +32,11 @@ echo "'${VPC_NM}' VPC created"
 ## DNS ##
 ## *** ##
 
-## Enable DNS support or modsecurity won't let Apache start...
-aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-support
-aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-hostnames
+## TODO Enable DNS support or modsecurity won't let Apache start...
+## TODO what is this ???????????????????????????????
+## 
+#aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-support
+#aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-hostnames
 
 echo 'DNS support configured'
 

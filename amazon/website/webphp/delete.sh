@@ -60,7 +60,7 @@ eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"
 
 if [[ -z "${eip}" ]]
 then
-   echo 'ERROR: WebPhp public IP address not found'
+   echo 'WebPhp public IP address not found'
 else
    echo "* WebPhp public IP address: '${eip}'"
 fi
@@ -128,7 +128,8 @@ then
    ## The ec2-user sudo command has been configured with password.
    ##  
       
-   echo 'Uploading files ...'
+   echo "Uploading files to webphp ${webphp_id} server ..."
+   
    remote_dir=/home/ec2-user/script
 
    ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
@@ -147,6 +148,8 @@ then
                 "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                 "${DEFAUT_AWS_USER}" \
                 "${SERVER_WEBPHP_EC2_USER_PWD}" 
+      
+   echo "Deleting webphp website ${webphp_id} ..."    
              
    set +e  
    ssh_run_remote_command_as_root "${remote_dir}/delete_webphp_website.sh" \
@@ -157,6 +160,8 @@ then
                 "${SERVER_WEBPHP_EC2_USER_PWD}" 
    exit_code=$?
    set -e
+   
+   echo "Webphp website ${webphp_id} deleted" 
 
    # shellcheck disable=SC2181
    if [ 194 -eq "${exit_code}" ]
@@ -187,7 +192,7 @@ fi
 ## SSH ##
 ## *** ##
 
-if [[ -z "${webphp_sgp_nm}" ]]
+if [[ -z "${webphp_sgp_id}" ]]
 then
    echo "'${webphp_sgp_nm}' WebPhp Security Group not found"
 else
@@ -200,6 +205,6 @@ fi
 # Clearing local files
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
 
-echo "Website ${webphp_id} delete" 
+echo "Website ${webphp_id} deleted" 
 echo
 

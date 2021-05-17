@@ -395,7 +395,7 @@ wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "$
 ## By AWS default, sudo has not password.
 ## 
 
-echo 'Uploading files ...'
+echo 'Uploading files to the Admin server ...'
 remote_dir=/home/ec2-user/script
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \

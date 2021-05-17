@@ -7,7 +7,7 @@ set +o xtrace
 
 if [[ $# -lt 1 ]]
 then
-   echo 'Error: Missing mandatory arguments'
+   echo 'ERROR: Missing mandatory arguments'
    exit 1
 else
    webphp_id="${1}"
@@ -23,7 +23,7 @@ echo '************'
 echo "WebPhp box ${webphp_id}" 
 echo '************'
 echo
-echo 'Deleting Webphp box ...'
+echo "Deleting WebPhp ${webphp_nm} box ..."
 
 ## ************* ##
 ## Load Balancer ##

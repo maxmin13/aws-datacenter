@@ -129,7 +129,7 @@ echo "${WEBSITE_VIRTUALHOST_CONFIG_FILE} ready"
 ## The ec2-user sudo command has been configured with password.
 ##                                         
 
-echo 'Uploading files ...'
+echo 'Uploading files to Admin server ...'
 remote_dir=/home/ec2-user/script
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
@@ -143,7 +143,7 @@ scp_upload_files "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "$
                          "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
                          "${TMP_DIR}"/admin/install_admin_website.sh 
 
-echo 'Installing Admin website ...'
+echo "Installing Admin website ..."
 
 ssh_run_remote_command_as_root "chmod +x "${remote_dir}"/install_admin_website.sh" \
                          "${private_key}" \
@@ -161,6 +161,8 @@ ssh_run_remote_command_as_root "${remote_dir}/install_admin_website.sh" \
                          "${SERVER_ADMIN_EC2_USER_PWD}"                         
 exit_code=$?	
 set -e
+
+echo 'Admin website installed'
 
 # shellcheck disable=SC2181
 if [ 194 -eq "${exit_code}" ]

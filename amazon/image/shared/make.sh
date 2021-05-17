@@ -158,7 +158,7 @@ then
                  "${DEFAUT_AWS_USER}"
    set -e 
 else
-   echo 'Error: securing Linux instance'
+   echo 'ERROR: securing Linux instance'
    exit 1
 fi
 

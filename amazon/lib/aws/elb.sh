@@ -56,8 +56,8 @@ function get_loadbalancer_dns_name()
 # +loadbalancer_nm     -- The Load Balancer name.
 # +cert_arn            -- The Amazon Resource Name (ARN) specifying the server
 #                         certificate.
-# +sg_id               -- The Security Group identifier.
-# +subnet_id           -- The Subnet identifier.
+# +sg_id               -- The Loadbalancer's Security Group identifier.
+# +subnet_id           -- The Loadbalancer's Subnet identifier.
 # Returns:      
 #  None  
 #===============================================================================
@@ -228,8 +228,7 @@ function check_instance_is_registered_with_loadbalancer()
    
    local loadbalancer_name
    loadbalancer_name="$(aws elb describe-load-balancers \
-          --load-balancer-name "${loadbalancer_nm}" \
-          --query "LoadBalancerDescriptions[?contains(Instances[].InstanceId, '${instance_id}')].{LoadBalancerName: LoadBalancerName}" \
+          --query "LoadBalancerDescriptions[?contains(LoadBalancerName, '${loadbalancer_nm}') && contains(Instances[].InstanceId, '${instance_id}')].{LoadBalancerName: LoadBalancerName}" \
           --output text)"                     
             
    echo "${loadbalancer_name}"

@@ -187,7 +187,8 @@ echo 'install_webphp_website.sh ready'
 ## The ec2-user sudo command has been configured with password.
 ## 
 
-echo 'Uploading files ...'
+echo "Uploading files to webphp ${webphp_id} server ..."
+
 remote_dir=/home/ec2-user/script
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
@@ -201,14 +202,14 @@ scp_upload_files "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "$
                   "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
                   "${TMP_DIR}"/"${webphp_dir}"/install_webphp_website.sh 
 
-echo "Installing WebPhp website ..."
-
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_webphp_website.sh" \
                   "${private_key}" \
                   "${eip}" \
                   "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                   "${DEFAUT_AWS_USER}" \
                   "${SERVER_WEBPHP_EC2_USER_PWD}"
+
+echo "Installing webphp website ${webphp_id} ..."  
 
 set +e                
 ssh_run_remote_command_as_root "${remote_dir}/install_webphp_website.sh" \
@@ -219,6 +220,10 @@ ssh_run_remote_command_as_root "${remote_dir}/install_webphp_website.sh" \
                   "${SERVER_WEBPHP_EC2_USER_PWD}"                         
 exit_code=$?	
 set -e
+
+echo "Webphp website ${webphp_id} installed" 
+
+echo 
 
 # shellcheck disable=SC2181
 if [ 194 -eq "${exit_code}" ]

@@ -56,7 +56,7 @@ webphp_instance_id="$(get_instance_id "${webphp_nm}")"
 
 if [[ -n "${webphp_instance_id}" ]]
 then
-   echo "Error: Instance '${webphp_nm}' already created"
+   echo "ERROR: Instance '${webphp_nm}' already created"
    exit 1
 fi
 
@@ -64,7 +64,7 @@ vpc_id="$(get_vpc_id "${VPC_NM}")"
   
 if [[ -z "${vpc_id}" ]]
 then
-   echo 'Error, VPC not found.'
+   echo 'ERROR, VPC not found.'
    exit 1
 else
    echo "* VPC ID: '${vpc_id}'"
@@ -74,7 +74,7 @@ subnet_id="$(get_subnet_id "${SUBNET_MAIN_NM}")"
 
 if [[ -z "${subnet_id}" ]]
 then
-   echo 'Error, Subnet not found.'
+   echo 'ERROR, Subnet not found.'
    exit 1
 else
    echo "* Subnet ID: '${subnet_id}'"
@@ -84,7 +84,7 @@ shared_base_ami_id="$(get_image_id "${SHARED_BASE_AMI_NM}")"
 
 if [[ -z "${shared_base_ami_id}" ]]
 then
-   echo "Error: Shared Base Image '${SHARED_BASE_AMI_NM}' not found"
+   echo "ERROR: Shared Base Image '${SHARED_BASE_AMI_NM}' not found"
    exit 1
 else
    echo "* Shared Base Image ID: ${shared_base_ami_id}"
@@ -104,7 +104,7 @@ db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
 
 if [[ -z "${db_endpoint}" ]]
 then
-   echo "Error: Database '${DB_MMDATA_NM}' Endpoint not found"
+   echo "ERROR: Database '${DB_MMDATA_NM}' Endpoint not found"
    exit 1
 else
    echo "* Database Endpoint: ${db_endpoint}"
@@ -114,7 +114,7 @@ admin_instance_id="$(get_instance_id "${SERVER_ADMIN_NM}")"
 
 if [[ -z "${admin_instance_id}" ]]
 then
-   echo "Error: Instance '${SERVER_ADMIN_NM}' not found"
+   echo "ERROR: Instance '${SERVER_ADMIN_NM}' not found"
    exit 1
 else
    echo "* Admin instance ID: '${admin_instance_id}'"
@@ -166,7 +166,7 @@ mkdir "${TMP_DIR}"/"${webphp_dir}"
 
 echo
 
-echo "Creating WebPhp box: ${webphp_nm} ..."
+echo "Creating WebPhp ${webphp_nm} box ..."
 
 ## *** ##
 ## SSH ##
@@ -391,7 +391,7 @@ echo 'rsyslog.conf ready'
 echo 'Waiting for SSH to start'
 wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
 
-echo 'Uploading files ...'
+
 remote_dir=/home/ec2-user/script
 
 ## 
@@ -404,6 +404,8 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
                     "${eip}" \
                     "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                     "${DEFAUT_AWS_USER}"  
+
+echo "Uploading files to webphp ${webphp_id} server ..."
 
 scp_upload_files    "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" "${remote_dir}" \
                     "${TMP_DIR}"/"${webphp_dir}"/install_webphp.sh \
@@ -425,12 +427,13 @@ scp_upload_files    "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}"
                     "${TEMPLATE_DIR}"/webphp/httpd/modsecurity_overrides.conf \
                     "${JAR_DIR}"/"${OWASP_ARCHIVE}"
 
-echo 'Installing WebPhp modules ...'
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_webphp.sh" \
                     "${private_key}" \
                     "${eip}" \
                     "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                     "${DEFAUT_AWS_USER}" 
+
+echo 'Installing WebPhp modules ...'
 
 set +e                
 ssh_run_remote_command_as_root "${remote_dir}/install_webphp.sh" \
@@ -440,6 +443,8 @@ ssh_run_remote_command_as_root "${remote_dir}/install_webphp.sh" \
                     "${DEFAUT_AWS_USER}"                          
 exit_code=$?
 set -e
+
+echo 'WebPhp modules installed'
 
 # shellcheck disable=SC2181
 if [ 194 -eq "${exit_code}" ]
@@ -461,7 +466,7 @@ then
                     "${SERVER_WEBPHP_EC2_USER_PWD}"
    set -e
 else
-   echo 'Error running install_webphp.sh'
+   echo 'ERROR running install_webphp.sh'
    exit 1
 fi  
 

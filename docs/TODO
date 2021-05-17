@@ -4,9 +4,15 @@
 ###############################
 
 
-check scripts in aws lib, 
-redirect standard output and standard error, both to log dir,
-not only standard output
+## *** ##
+## DNS ##
+## *** ##
+
+## TODO Enable DNS support or modsecurity won't let Apache start...
+## TODO what is this ???????????????????????????????
+## 
+#aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-support
+#aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-hostnames
 
 ###############################
 
@@ -17,11 +23,6 @@ to generate the certificate.
 Deploy one certificate on the load balancer, and add a Subject Alternative Name (SAN) for each additional website. 
 SANs enable you to protect multiple host names using a single certificate. 
 Check with your certificate provider for more information about the number of SANs they support per certificate and how to add and remove SANs.
-
-#############################
-Adding reCAPTHA to your site
-
-http://acmeextension.com/integrate-google-recaptcha-with-php/
 
 ############################
 
@@ -35,11 +36,6 @@ add tag or desc to security group in/out rules
 ############################
 fix SC2001 in httpd_utils.sh
 
-###########################
-test loadbalancer by connecting to webphp application,
-stop an apache and then the other.
-
-check also if modrpaf works, see logs
 
 ##############################
 

@@ -53,7 +53,7 @@ function get_vpc_id()
 # Arguments:
 # +vpc_nm     -- The VPC name.
 # Returns:      
-#  The VPC identifier, or blanc if the VPC is not found.  
+#  The VPC identifier.  
 #===============================================================================
 function create_vpc()
 {
@@ -77,6 +77,31 @@ function create_vpc()
                            --filters Name=tag-value,Values="${vpc_nm}"  
  
    echo "${vpc_id}"
+  
+   return 0
+}
+
+#===============================================================================
+# Delete a VPC.
+#
+# Globals:
+#  None
+# Arguments:
+# +vpc_nm     -- The VPC name.
+# Returns:      
+#  None.  
+#===============================================================================
+function delete_vpc()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'Error: Missing mandatory arguments'
+      exit 1
+   fi
+  
+   local vpc_id="${1}"
+  
+   aws ec2 delete-vpc --vpc-id "${vpc_id}"
   
    return 0
 }
@@ -203,6 +228,31 @@ function create_subnet()
    return 0
 }
 
+#===============================================================================
+# Deletes a Subnet.
+#
+# Globals:
+#  None
+# Arguments:
+# +subnet_id       -- The Subnet identifier.
+# Returns:      
+#  None.  
+#===============================================================================
+function delete_subnet()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'Error: Missing mandatory arguments'
+      exit 1
+   fi
+
+   local subnet_id="${1}"
+ 
+   aws ec2 delete-subnet --subnet-id "${subnet_id}"
+ 
+   return 0
+}
+
 #============================================================================
 # Returns the the Internet Gateway identifyer by name.
 #
@@ -305,6 +355,31 @@ function create_internet_gateway()
 }
 
 #===============================================================================
+# Deletes an Internet Gateway.
+#
+# Globals:
+#  None
+# Arguments:
+# +igw_id     -- The Internet Gateway identifier.
+# Returns:      
+#  None  
+#===============================================================================
+function delete_internet_gateway()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'Error: Missing mandatory arguments'
+      exit 1
+   fi
+  
+   local igw_id="${1}"
+ 
+   aws ec2 delete-internet-gateway --internet-gateway-id "${igw_id}"
+   
+   return 0
+}
+
+#===============================================================================
 # Attaches an Internet Gateway to a VPC.
 #
 # Globals:
@@ -394,6 +469,32 @@ function create_route_table()
                           --output text)"
  
    echo "${rtb_id}"
+ 
+   return 0
+}
+
+#===============================================================================
+# Delete a Route Table.
+#
+# Globals:
+#  None
+# Arguments:
+# +rtb_id     -- The route table identifier.
+
+# Returns:      
+#  None  
+#===============================================================================
+function delete_route_table()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'Error: Missing mandatory arguments'
+      exit 1
+   fi
+
+   local rtb_id="${1}"
+  
+   aws ec2 delete-route-table --route-table-id "${rtb_id}"
  
    return 0
 }
@@ -1568,7 +1669,7 @@ function release_public_ip_address()
 
    local allocation_id="${1}"
 
-   ec2 release-address --allocation-id "${allocation_id}" >> "${LOG_DIR}/ec2.log"
+   ec2 release-address --allocation-id "${allocation_id}" >> /dev/null
 
    return 0
 }
@@ -1598,7 +1699,7 @@ function release_all_public_ip_addresses()
                          
    for id in ${allocation_ids}
    do
-      aws ec2 release-address --allocation-id "${id}" >> "${LOG_DIR}/ec2.log"
+      aws ec2 release-address --allocation-id "${id}" >> /dev/null
    done
 
    return 0
@@ -1630,7 +1731,7 @@ function associate_public_ip_address_to_instance()
   
    aws ec2 associate-address \
                --instance-id "${instance_id}" \
-               --public-ip "${eip}" >> "${LOG_DIR}/ec2.log"
+               --public-ip "${eip}" >> /dev/null
 
    return 0
 }

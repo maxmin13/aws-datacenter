@@ -9,9 +9,9 @@ set +o xtrace
 # then runs the dump script on the server, enventually
 # download the result of the dump from the server in the Download directory.
 
-echo '*************'
-echo 'Database dump'
-echo '*************'
+echo '***************'
+echo 'Database backup'
+echo '***************'
 echo
 
 admin_instance_id="$(get_instance_id "${SERVER_ADMIN_NM}")"
@@ -55,6 +55,8 @@ else
 fi
 
 echo
+
+echo 'Dumping database ...'
 
 # Clear old files
 rm -rf "${TMP_DIR:?}"/database
@@ -109,7 +111,7 @@ wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "$
 ## Upload scripts
 ## **************
 
-echo 'Uploading files ...'
+echo 'Uploading files to the Admin server ...'
 
 ssh_run_remote_command "rm -rf ${script_dir} && rm -rf ${dump_dir} && mkdir ${script_dir} && mkdir ${dump_dir}" \
                    "${private_key}" \

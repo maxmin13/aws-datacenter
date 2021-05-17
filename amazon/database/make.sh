@@ -8,9 +8,9 @@ set +o xtrace
 # Uploads database files to the admin server,
 # then runs the install script on the server
 
-echo '***************'
-echo 'Database deploy'
-echo '***************'
+echo '*************'
+echo 'Database data'
+echo '*************'
 echo
 
 admin_instance_id="$(get_instance_id "${SERVER_ADMIN_NM}")"
@@ -92,7 +92,10 @@ echo 'install_database.sh ready'
 
 # Check if the Admin Security Group grants access from the development machine through SSH port
 my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
-access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
+
+##### TODO REMOVE THIS
+access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0")"
+#####access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
    
 if [[ -z "${access_granted}" ]]
 then

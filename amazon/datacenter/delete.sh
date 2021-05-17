@@ -30,7 +30,7 @@ else
       fi
    fi
     
-   aws ec2 delete-internet-gateway --internet-gateway-id "${gate_id}"
+   delete_internet_gateway "${gate_id}"
    echo "'${INTERNET_GATEWAY_NM}' internet gateway deleted"
 fi
 
@@ -44,7 +44,7 @@ if [[ -z "${main_subnet_id}" ]]
 then
    echo "'${SUBNET_MAIN_NM}' subnet not found"
 else
-   aws ec2 delete-subnet --subnet-id "${main_subnet_id}"
+   delete_subnet "${main_subnet_id}"
    echo "'${SUBNET_MAIN_NM}' subnet deleted"
 fi
 
@@ -58,7 +58,7 @@ if [[ -z "${backup_subnet_id}" ]]
 then
    echo "'${SUBNET_BACKUP_NM}' subnet not found"
 else
-   aws ec2 delete-subnet --subnet-id "${backup_subnet_id}"
+   delete_subnet "${backup_subnet_id}"
    echo "'${SUBNET_BACKUP_NM}' subnet deleted"
 fi
 
@@ -72,7 +72,7 @@ if [[ -z "${rtb_id}" ]]
 then
    echo "'${ROUTE_TABLE_NM}' route table not found"
 else
-   aws ec2 delete-route-table --route-table-id "${rtb_id}"
+   delete_route_table "${rtb_id}"
    echo "'${ROUTE_TABLE_NM}' route table deleted"
 fi
 
@@ -87,7 +87,7 @@ if [[ -z "${vpc_id}" ]]
 then
    echo "'${VPC_NM}' VPC not found"
 else
-   aws ec2 delete-vpc --vpc-id "${vpc_id}" 
+   delete_vpc "${vpc_id}" 
    echo "'${VPC_NM}' VPC deleted"
 fi                     
 

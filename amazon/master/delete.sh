@@ -21,7 +21,7 @@ source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
 source "${PROJECT_DIR}"/amazon/credential/recaptcha.sh
 source "${PROJECT_DIR}"/amazon/credential/passwords.sh
 
-log_file="${LOG_DIR}"/make-$(date +"%d-%m-%Y-%H.%M"."%S")
+log_file="${LOG_DIR}"/delete-$(date +"%d-%m-%Y-%H.%M"."%S")
 
 echo ''
 
@@ -39,17 +39,35 @@ fi
 
 echo
 
-. "${PROJECT_DIR}"/amazon/images/database/delete.sh     >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 1     >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 2     >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/images/webphp/delete.sh 3     >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/images/admin/delete.sh        >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/images/shared/delete.sh       >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/images/loadbalancer/delete.sh >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/datacenter/delete.sh          >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/account/delete.sh             >> "${log_file}" 2>&1
+# Make a backup of the database.
+. "${PROJECT_DIR}"/amazon/backup/database/make.sh         ### >> "${log_file}" 2>&1
 
-#. "${PROJECT_DIR}"/amazon/website/admin/delete.sh       >> "${log_file}" 2>&1
-#. "${PROJECT_DIR}"/amazon/website/webphp/delete.sh 1    >> "${log_file}" 2>&1
+# Delete the database objects.
+. "${PROJECT_DIR}"/amazon/database/delete.sh
+
+# Delete the websites.
+. "${PROJECT_DIR}"/amazon/website/admin/delete.sh         ### >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/website/webphp/delete.sh 1      ### >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/website/webphp/delete.sh 2      ### >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/website/webphp/delete.sh 3      ### >> "${log_file}" 2>&1
+
+# Delete the server instances.
+. "${PROJECT_DIR}"/amazon/instance/webphp/delete.sh 1     ### >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/instance/webphp/delete.sh 2     ### >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/instance/webphp/delete.sh 3     ### >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/instance/loadbalancer/delete.sh ### >> "${log_file}" 2>&1
+. "${PROJECT_DIR}"/amazon/instance/admin/delete.sh        ### >> "${log_file}" 2>&1
+
+# Delete the shared base instance.
+. "${PROJECT_DIR}"/amazon/image/shared/delete.sh          ### >> "${log_file}" 2>&1
+
+# Delete the database instance.
+. "${PROJECT_DIR}"/amazon/instance/database/delete.sh     ### >> "${log_file}" 2>&1
+
+# Release the IP addresses.
+. "${PROJECT_DIR}"/amazon/account/delete.sh               ### >> "${log_file}" 2>&1
+
+# Delete the datacenter.
+. "${PROJECT_DIR}"/amazon/datacenter/delete.sh            ### >> "${log_file}" 2>&1
 
 echo 'Data Center deleted'

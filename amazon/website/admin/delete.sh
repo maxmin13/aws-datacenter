@@ -92,7 +92,7 @@ then
    ## The ec2-user sudo command has been configured with password.
    ##    
    
-   echo 'Uploading files ...'
+   echo 'Uploading files to Admin server ...'
    remote_dir=/home/ec2-user/script
 
    ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir ${remote_dir}" \
@@ -111,6 +111,8 @@ then
                    "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                    "${DEFAUT_AWS_USER}" \
                    "${SERVER_ADMIN_EC2_USER_PWD}" 
+   
+   echo "Deleting Admin website ..."
              
    set +e              
    ssh_run_remote_command_as_root "${remote_dir}/delete_admin_website.sh" \
@@ -121,6 +123,8 @@ then
                    "${SERVER_ADMIN_EC2_USER_PWD}" 
    exit_code=$?
    set -e
+   
+   echo "Admin website deleted"
    
    # shellcheck disable=SC2181
    if [ 194 -eq "${exit_code}" ]

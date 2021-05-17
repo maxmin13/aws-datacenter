@@ -329,6 +329,7 @@ function wait_ssh_started()
       echo -n . 
       sleep 3
    done;
+   echo .
 
    return 0
 }
