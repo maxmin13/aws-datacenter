@@ -1669,7 +1669,7 @@ function release_public_ip_address()
 
    local allocation_id="${1}"
 
-   ec2 release-address --allocation-id "${allocation_id}" >> /dev/null
+   aws ec2 release-address --allocation-id "${allocation_id}" >> /dev/null
 
    return 0
 }

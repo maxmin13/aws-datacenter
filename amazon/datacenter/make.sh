@@ -20,113 +20,97 @@ vpc_id="$(get_vpc_id "${VPC_NM}")"
 
 if [[ -n "${vpc_id}" ]]
 then
-   echo "ERROR: The '${VPC_NM}' Data Center has already been created"
+   echo 'ERROR: the data center has already been created'
    exit 1
 fi
 
 ## Make a new VPC with a master 10.0.0.0/16 subnet
 vpc_id="$(create_vpc "${VPC_NM}")" 
-echo "'${VPC_NM}' VPC created"
+echo 'Data center created'
 
-## *** ##
-## DNS ##
-## *** ##
-
-## TODO Enable DNS support or modsecurity won't let Apache start...
-## TODO what is this ???????????????????????????????
 ## 
-#aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-support
-#aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-hostnames
-
-echo 'DNS support configured'
-
-## **************** ##
-## Internet Gateway ##
-## **************** ##
+## Internet gateway 
+## 
 
 ## Create an internet gateway (to allow access out to the Internet)
-gateway_id="$(get_internet_gateway_id "${INTERNET_GATEWAY_NM}")"
+internet_gate_id="$(get_internet_gateway_id "${INTERNET_GATEWAY_NM}")"
 
-if [[ -n "${gateway_id}" ]]
+if [[ -n "${internet_gate_id}" ]]
 then
-   echo "ERROR: The '${INTERNET_GATEWAY_NM}' Internet Gateway is already created"
+   echo 'ERROR: the internet gateway has already been created'
    exit 1
 fi
   
-gateway_id="$(create_internet_gateway "${INTERNET_GATEWAY_NM}" "${vpc_id}")"
+internet_gate_id="$(create_internet_gateway "${INTERNET_GATEWAY_NM}" "${vpc_id}")"
 	              
-echo "'${INTERNET_GATEWAY_NM}' Internet Gateway created"   
+echo 'Internet gateway created'   
 
 ## Check if the Internet Gateway is already attached to the VPC.
 attach_status="$(get_internet_gateway_attachment_status "${INTERNET_GATEWAY_NM}" "${vpc_id}")"
 
 if [[ available != "${attach_status}" ]]
 then
-   attach_internet_gateway "${gateway_id}" "${vpc_id}"
-   echo "'${INTERNET_GATEWAY_NM}' Internet Gateway attached to the VPC"	
-else
-   echo "'${INTERNET_GATEWAY_NM}' Internet Gateway already attached to the VPC"
+   attach_internet_gateway "${internet_gate_id}" "${vpc_id}"
+   echo 'The internet gateway has been attached to the data center'	
 fi
 
-## *********** ##
-## Route Table ##
-## *********** ##
+## 
+## Route table
+## 
 
 rtb_id="$(get_route_table_id "${ROUTE_TABLE_NM}")"
 							
 if [[ -n "${rtb_id}" ]]
 then
-   echo "The '${ROUTE_TABLE_NM}' Route Table is already created"
+   echo 'ERROR: the route table has already been created'
    exit 1
 fi
 
 rtb_id="$(create_route_table "${ROUTE_TABLE_NM}" "${vpc_id}")"	
 	                
-echo "'${ROUTE_TABLE_NM}' custom Route Table created"
-set_route "${rtb_id}" "${gateway_id}" '0.0.0.0/0'
-echo 'Created Route that points all traffic to the Internet Gateway'
+echo 'A custom route table has been created'
+set_route "${rtb_id}" "${internet_gate_id}" '0.0.0.0/0'
+echo 'Created Route that points all traffic to the internet gateway'
 
-## *********** ##
-## Main Subnet ##
-## *********** ##
+## 
+## Main subnet 
+## 
 
 main_subnet_id="$(get_subnet_id "${SUBNET_MAIN_NM}")"
 
 if [[ -n "${main_subnet_id}" ]]
 then
-   echo "ERROR: The '${SUBNET_MAIN_NM}' Subnet is already created"
+   echo 'ERROR: the main subnet has already been created'
    exit 1
 fi
 
-echo "Creating '${SUBNET_MAIN_NM}' Subnet"
 main_subnet_id="$(create_subnet "${SUBNET_MAIN_NM}" \
                                    "${SUBNET_MAIN_CIDR}" \
                                    "${DEPLOY_ZONE_1}" \
                                    "${vpc_id}" \
                                    "${rtb_id}")"
 
-echo "The '${SUBNET_MAIN_NM}' Subnet has been created in the '${DEPLOY_ZONE_1}' Availability Zone and associated with the Route Table"
+echo "The main subnet has been created in the '${DEPLOY_ZONE_1}' availability zone and associated to the route table"
 
-## ************* ##
-## Backup Subnet ##
-## ************* ##
+## 
+## Backup subnet 
+## 
 
 backup_subnet_id="$(get_subnet_id "${SUBNET_BACKUP_NM}")"	                
 	                
 if [[ -n "${backup_subnet_id}" ]]
 then
-   echo "ERROR: The '${SUBNET_BACKUP_NM}' Subnet is already created"
+   echo 'ERROR: the backup subnet is already created'
    exit 1
 fi
 
-echo "Creating '${SUBNET_BACKUP_NM}' Subnet"
 backup_subnet_id="$(create_subnet "${SUBNET_BACKUP_NM}" \
                                      "${SUBNET_BACKUP_CIDR}" \
                                      "${DEPLOY_ZONE_2}" \
                                      "${vpc_id}" \
                                      "${rtb_id}")"
 
-echo "The '${SUBNET_BACKUP_NM}' Subnet has been created in the '${DEPLOY_ZONE_2}' Availability Zone and associated with the Route Table"
+echo "The backup subnet has been created in the '${DEPLOY_ZONE_2}' availability zone and associated to the route table"
 
-echo 'Data Center setup completed'
+echo 'Data center up and running'
 echo

@@ -1,183 +1,111 @@
-#!/bin/bash
+#!/usr/bin/bash
 
 set -o errexit
 set -o pipefail
 set -o nounset
 set +o xtrace
 
-# Uploads database files to the admin server,
-# then runs the install script on the server
+## Database schema, tables, data are created with the deploy database script.
 
-echo '*************'
-echo 'Database data'
-echo '*************'
+echo '************'
+echo 'Database box'
+echo '************'
 echo
 
-admin_instance_id="$(get_instance_id "${SERVER_ADMIN_NM}")"
+# Checking if the Database already exists
+db_status="$(get_database_status "${DB_MMDATA_NM}")"
 
-if [[ -z "${admin_instance_id}" ]]
+if [[ -n "${db_status}" ]]
 then
-   echo "Error: Instance '${SERVER_ADMIN_NM}' not found"
+   echo "* ERROR: the database is already created"
    exit 1
-else
-   echo "* Admin instance ID: '${admin_instance_id}'"
 fi
 
-adm_sgp_id="$(get_security_group_id "${SERVER_ADMIN_SEC_GRP_NM}")"
+vpc_id="$(get_vpc_id "${VPC_NM}")"
 
-if [[ -z "${adm_sgp_id}" ]]
+if [[ -z "${vpc_id}" ]]
 then
-   echo 'ERROR: The Admin security group not found'
+   echo '* ERROR: data center not found.'
    exit 1
 else
-   echo "* Admin Security Group ID: '${adm_sgp_id}'"
+   echo "* data center ID: '${vpc_id}'"
 fi
 
-eip="$(get_public_ip_address_associated_with_instance "${SERVER_ADMIN_NM}")"
+subnet_ids="$(get_subnet_ids "${vpc_id}")"
 
-if [[ -z "${eip}" ]]
+if [[ -z "${subnet_ids}" ]]
 then
-   echo 'ERROR: Admin public IP address not found'
+   echo '* ERROR: subnets not found.'
    exit 1
 else
-   echo "* Admin public IP address: '${eip}'"
-fi
-
-db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
-
-if [[ -z "${db_endpoint}" ]]
-then
-   echo 'ERROR: Database endopoint not found'
-   exit 1
-else
-   echo "* Database endpoint: '${db_endpoint}'"
+   echo "* subnet IDs: '${subnet_ids}'"
 fi
 
 echo
-
-# Clear old files
-rm -rf "${TMP_DIR:?}"/database
-mkdir "${TMP_DIR}"/database
-
-private_key="$(get_private_key_path "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}")"
-
-## Retrieve database scripts
-sed "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
-    "${TEMPLATE_DIR}"/database/sql/dbs_template.sql > "${TMP_DIR}"/database/dbs.sql
-    
-echo 'dbs.sql ready'
-
-sed -e "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
-    -e "s/SEDDBUSR_adminrwSED/${DB_MMDATA_ADMIN_USER_NM}/g" \
-    -e "s/SEDDBPASS_adminrwSED/${DB_MMDATA_ADMIN_USER_PWD}/g" \
-    -e "s/SEDDBUSR_webphprwSED/${DB_MMDATA_WEBPHP_USER_NM}/g" \
-    -e "s/SEDDBPASS_webphprwSED/${DB_MMDATA_WEBPHP_USER_PWD}/g" \
-    -e "s/SEDDBUSR_javamailSED/${DB_MMDATA_JAVAMAIL_USER_NM}/g" \
-    -e "s/SEDDBPASS_javamailSED/${DB_MMDATA_JAVAMAIL_USER_PWD}/g" \
-       "${TEMPLATE_DIR}"/database/sql/dbusers_template.sql > "${TMP_DIR}"/database/dbusers.sql
-       
-echo 'dbusers.sql ready'    
-    
-sed -e "s/SEDdatabase_hostSED/${db_endpoint}/g" \
-    -e "s/SEDdatabase_main_userSED/${DB_MMDATA_MAIN_USER_NM}/g" \
-    -e "s/SEDdatabase_main_user_passwordSED/${DB_MMDATA_MAIN_USER_PWD}/g" \
-    -e "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
-       "${TEMPLATE_DIR}"/database/install_database_template.sh > "${TMP_DIR}"/database/install_database.sh  
-
-echo 'install_database.sh ready' 
-
-## ************
-## SSH from dev
-## ************
-
-# Check if the Admin Security Group grants access from the development machine through SSH port
-my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
-
-##### TODO REMOVE THIS
-access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0")"
-#####access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
-   
-if [[ -z "${access_granted}" ]]
-then
-   ##### TODO REMOVE THIS
-   allow_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
-   ##### allow_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
-   echo "Granted SSH access to development machine" 
-else
-   echo 'SSH access already granted to development machine'    
-fi
-
-echo 'Waiting for SSH to start'
-wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}"
-
-## **************
-## Upload scripts
-## **************
 
 ## 
-## Remote commands that have to be executed as priviledged user are run with sudo.
-## The ec2-user sudo command has been configured with password.
-##  
+## Database security group
+##
 
-echo 'Uploading files ...'
-remote_dir=/home/ec2-user/script
-
-ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir ${remote_dir}" \
-                       "${private_key}" \
-                       "${eip}" \
-                       "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                       "${DEFAUT_AWS_USER}"
-
-echo "Uploading Database scripts ..."    
-scp_upload_files       "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" "${remote_dir}" \
-                       "${TMP_DIR}"/database/dbs.sql \
-                       "${TMP_DIR}"/database/dbusers.sql \
-                       "${TMP_DIR}"/database/install_database.sh            
-
-echo "Creating Database ..."
- 
-# Run the install Database script uploaded in the Admin server. 
-ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_database.sh" \
-                       "${private_key}" \
-                       "${eip}" \
-                       "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                       "${DEFAUT_AWS_USER}" \
-                       "${SERVER_ADMIN_EC2_USER_PWD}" 
-
-ssh_run_remote_command_as_root "${remote_dir}/install_database.sh" \
-                       "${private_key}" \
-                       "${eip}" \
-                       "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                       "${DEFAUT_AWS_USER}" \
-                       "${SERVER_ADMIN_EC2_USER_PWD}"
-
-# Clear remote home directory    
-ssh_run_remote_command "rm -rf ${remote_dir:?}" \
-                       "${private_key}" \
-                       "${eip}" \
-                       "${SHARED_BASE_INSTANCE_SSH_PORT}" \
-                       "${DEFAUT_AWS_USER}"
-
-echo 'Database created'
-
-## *****************
-## Remove SSH access
-## *****************
-
-if [[ -z "${adm_sgp_id}" ]]
+sg_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
+  
+if [[ -n "${sg_id}" ]]
 then
-   echo "'${SERVER_ADMIN_SEC_GRP_NM}' Admin Security Group not found"
-else
-   ##### TODO REMOVE THIS
-   revoke_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
-   #####revoke_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
-   echo 'Revoked SSH access' 
+   echo 'ERROR: the database security group is already created'
+   exit 1
 fi
 
-# Clear local files
-rm -rf "${TMP_DIR:?}"/database
+sg_id="$(create_security_group "${vpc_id}" "${DB_MMDATA_SEC_GRP_NM}" "Database security group")"
+echo 'Database security group created'
 
-echo "Database created"
+## 
+## Database subnet group
+## 
+
+db_subnet_group_status="$(get_db_subnet_group_status "${DB_MMDATA_SUB_GRP_NM}")"
+
+if [[ -n "${db_subnet_group_status}" ]]
+then
+   echo 'ERROR: the database subnet group is already created'
+   exit 1
+fi
+
+create_db_subnet_group "${DB_MMDATA_SUB_GRP_NM}" "${DB_MMDATA_SUB_GRP_DESC}" "${subnet_ids}"
+echo 'Database subnet group created'
+
+## 
+## Database parameter group
+##
+
+## Log slow queries and set the trigger time to be 1 second.
+## Any query taking more than 1 second will be logged.
+
+db_param_desc="$(get_db_parameter_group_desc "${DB_MMDATA_SLOW_QUERIES_LOG_PARAM_GRP_NM}")"                     
+
+if [[ -n "${db_param_desc}" ]]
+then
+   echo 'ERROR: slow queries log parameter group alredy created'
+   exit 1
+fi
+
+create_log_slow_queries_db_parameter_group \
+                       "${DB_MMDATA_SLOW_QUERIES_LOG_PARAM_GRP_NM}" \
+                       "${DB_MMDATA_SLOW_QUERIES_LOG_PARAM_GRP_DESC}"  \
+                       "${DB_MMDATA_FAMILY}" 
+                      
+echo 'Slow queries log parameter group created'
+
+## 
+## Database instance
+## 
+
+echo 'Creating database instance ...'
+
+create_database "${DB_MMDATA_NM}" "${sg_id}"  
+
+# this is the address, or endpoint, for the db
+db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
+
+echo "Database up and running at: '${db_endpoint}'"
 
 echo
-

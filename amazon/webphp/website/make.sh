@@ -46,7 +46,7 @@ webphp_instance_id="$(get_instance_id "${webphp_nm}")"
 
 if [[ -z "${webphp_instance_id}" ]]
 then
-   echo "Error: Instance '${webphp_nm}' not found"
+   echo '* ERROR: webphp instance not found'
    exit 1
 fi
 
@@ -54,53 +54,50 @@ webphp_sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
 
 if [[ -z "${webphp_sgp_id}" ]]
 then
-   echo 'ERROR: The WebPhp security group not found'
+   echo '* ERROR: webPhp security group not found'
    exit 1
 else
-   echo "* WebPhp Security Group ID: '${webphp_sgp_id}'"
+   echo "* webPhp security group ID: '${webphp_sgp_id}'"
 fi
 
 eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"
 
 if [[ -z "${eip}" ]]
 then
-   echo 'ERROR: WebPhp public IP address not found'
+   echo '* ERROR: webPhp public IP address not found'
    exit 1
 else
-   echo "* WebPhp public IP address: '${eip}'"
+   echo "* webPhp public IP address: '${eip}'"
 fi
 
 loadbalancer_sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
 
 if [[ -z "${loadbalancer_sgp_id}" ]]
 then
-   echo 'ERROR: Load Balancer Security Group not found'
+   echo '* ERROR: load balancer security group not found'
    exit 1
 else
-   echo "* Load Balancer Security Group ID: '${loadbalancer_sgp_id}'"
+   echo "* load balancer security group ID: '${loadbalancer_sgp_id}'"
 fi
 
 echo
-echo "Deploying website ${webphp_id} ..."
 
 # Clear old files
 # shellcheck disable=SC2115
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
 mkdir "${TMP_DIR}"/"${webphp_dir}"
 
-## *** ##
-## SSH ##
-## *** ##
+## 
+## SSH access to the webphp instance
+## 
 
 # Check if the WebPhp Security Group grants access from the development machine through SSH port
 my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
-##### TODO REMOVE THIS
-access_granted="$(check_access_from_cidr_is_granted "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0")"
+access_granted="$(check_access_from_cidr_is_granted "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
 ##### access_granted="$(check_access_from_cidr_is_granted "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
  
 if [[ -z "${access_granted}" ]]
 then
-   ##### TODO REMOVE THIS
    allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
    #####allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
    echo "Granted SSH access to development machine"  
@@ -149,7 +146,7 @@ then
 fi 
 
 ## Prepare the archives.
-echo 'Preparing the archives with the WebPhp site source files ...'
+echo 'Preparing the archives with the webphp site source files ...'
 
 cd "${TMP_DIR}"/"${webphp_dir}"/webphp || exit
 zip -r ../"${WEBSITE_ARCHIVE}" ./* > /dev/null 2>&1
@@ -158,17 +155,17 @@ echo "${WEBSITE_ARCHIVE} ready"
          
 # Create the website virtualhost file.   
 create_virtualhost_configuration_file '*' \
-                                       "${SERVER_WEBPHP_APACHE_WEBSITE_PORT}" \
-                                       "${website_request_domain}" \
-                                       "${APACHE_DOCROOT_DIR}" \
-                                       "${website_docroot_id}" \
-                                       "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"     
+                  "${SERVER_WEBPHP_APACHE_WEBSITE_PORT}" \
+                  "${website_request_domain}" \
+                  "${APACHE_DOCROOT_DIR}" \
+                  "${website_docroot_id}" \
+                  "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"     
                                      
 add_alias_to_virtualhost 'webphp' \
-   "${APACHE_DOCROOT_DIR}" \
-   "${website_docroot_id}" \
-   "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
-   'index.php'
+                  "${APACHE_DOCROOT_DIR}" \
+                  "${website_docroot_id}" \
+                  "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
+                  'index.php'
                             
 echo "${WEBSITE_VIRTUALHOST_CONFIG_FILE} ready" 
 
@@ -187,7 +184,7 @@ echo 'install_webphp_website.sh ready'
 ## The ec2-user sudo command has been configured with password.
 ## 
 
-echo "Uploading files to webphp ${webphp_id} server ..."
+echo 'Uploading scripts to the webphp server ...'
 
 remote_dir=/home/ec2-user/script
 
@@ -209,7 +206,7 @@ ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_webphp_website.sh
                   "${DEFAUT_AWS_USER}" \
                   "${SERVER_WEBPHP_EC2_USER_PWD}"
 
-echo "Installing webphp website ${webphp_id} ..."  
+echo "Installing the webphp website ${webphp_id} ..."  
 
 set +e                
 ssh_run_remote_command_as_root "${remote_dir}/install_webphp_website.sh" \
@@ -245,45 +242,40 @@ then
                   "${SERVER_WEBPHP_EC2_USER_PWD}" > /dev/null
    set -e   
 else
-   echo 'Error running install_webphp_website.sh'
+   echo 'ERROR: running install_webphp_website.sh'
    exit 1
 fi
 
-## *********************** ##
-## Grants to Load Balancer ##
-## *********************** ##
+##
+## Grants to load balancer to access the webphp instance
+## 
 
 loadbalancer_sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
 
 if [[ -n "${loadbalancer_sgp_id}" ]]
 then
-   # Allow Load Balancer access to the website
+   # Allow Load Balancer access to the instance.
    allow_access_from_security_group "${webphp_sgp_id}" "${SERVER_WEBPHP_APACHE_WEBSITE_PORT}" "${loadbalancer_sgp_id}"
-   echo 'Granted Load Balancer access to the website'
-else
-   echo 'Load Balancer group not found, access not granted'
+   echo 'Granted the load balancer access to the webphp instance'
 fi
                                    
-## *** ##
-## SSH ##
-## *** ##
+## 
+## SSH access to the instance
+## 
 
-if [[ -z "${webphp_sgp_id}" ]]
+if [[ -n "${webphp_sgp_id}" ]]
 then
-   echo "'${webphp_sgp_nm}' WebPhp Security Group not found"
-else
-   ##### TODO REMOVE THIS
    revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
    #####revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
-   echo 'Revoked SSH access'
+   echo 'Revoked SSH access to the webphp instance'
 fi
 
-## ******** ##
-## Clearing ##
-## ******** ##
+## 
+## Clearing local files
+## 
 
-# Clear local files
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
-echo "Website ${webphp_id} deployed at: '${eip}'" 
+
+echo "Website ${webphp_id} up and running at: '${eip}'" 
 echo
 

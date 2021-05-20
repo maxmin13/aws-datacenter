@@ -47,7 +47,7 @@ admin_instance_id="$(get_instance_id "${SERVER_ADMIN_NM}")"
 
 if [[ -n "${admin_instance_id}" ]]
 then
-   echo "Error: Instance '${SERVER_ADMIN_NM}' already created"
+   echo '* ERROR: the admin box was already created'
    exit 1
 fi
 
@@ -55,50 +55,50 @@ vpc_id="$(get_vpc_id "${VPC_NM}")"
   
 if [[ -z "${vpc_id}" ]]
 then
-   echo 'Error, VPC not found.'
+   echo '* ERROR: data center not found.'
    exit 1
 else
-   echo "* VPC ID: '${vpc_id}'"
+   echo "* data center ID: '${vpc_id}'"
 fi
 
 subnet_id="$(get_subnet_id "${SUBNET_MAIN_NM}")"
 
 if [[ -z "${subnet_id}" ]]
 then
-   echo 'Error, Subnet not found.'
+   echo '* ERROR: main subnet not found.'
    exit 1
 else
-   echo "* Subnet ID: '${subnet_id}'"
+   echo "* main subnet ID: '${subnet_id}'"
 fi
 
 db_sg_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
   
 if [[ -z "${db_sg_id}" ]]
 then
-   echo "ERROR: The '${DB_MMDATA_SEC_GRP_NM}' Database Security Group not found"
+   echo '* ERROR: database security group not found'
    exit 1
 else
-   echo "* Database Security Group ID: ${db_sg_id}"
+   echo "* database security group ID: ${db_sg_id}"
 fi
 
 db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
 
 if [[ -z "${db_endpoint}" ]]
 then
-   echo "Error: Database '${DB_MMDATA_NM}' Endpoint not found"
+   echo '* ERROR: database not found'
    exit 1
 else
-   echo "* Database Endpoint: ${db_endpoint}"
+   echo "* database Endpoint: ${db_endpoint}"
 fi
 
 shared_base_ami_id="$(get_image_id "${SHARED_BASE_AMI_NM}")"
 
 if [[ -z "${shared_base_ami_id}" ]]
 then
-   echo "Error: Shared Base Image '${SHARED_BASE_AMI_NM}' not found"
+   echo '* ERROR: shared base image not found'
    exit 1
 else
-   echo "* Shared Base Image ID: ${shared_base_ami_id}"
+   echo "* shared base image ID: ${shared_base_ami_id}"
 fi
 
 echo
@@ -107,64 +107,63 @@ echo
 rm -rf "${TMP_DIR:?}"/admin
 mkdir "${TMP_DIR}"/admin
 
-## ************ ##
-## SSH Key Pair ##
-## ************ ##
+## 
+## SSH key pair 
+## 
 
 # Create a key pair to SSH into the instance.
 create_key_pair "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}"
-echo 'Created Admin Key Pair to SSH into the Instance, the Private Key is saved in the credentials directory'
+echo 'Created admin key pair to SSH into the Instance, the private key is saved in the credentials directory'
 
 private_key="$(get_private_key_path "${SERVER_ADMIN_KEY_PAIR_NM}" "${ADMIN_ACCESS_DIR}")"
 
-## ************** ##
-## Security Group ##
-## ************** ##
+## 
+## Security group 
+## 
 
 my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
 adm_sg_id="$(get_security_group_id "${SERVER_ADMIN_SEC_GRP_NM}")"
 
 if [[ -n "${adm_sg_id}" ]]
 then
-   echo 'ERROR: The Admin security group is already created'
+   echo 'ERROR: the admin security group is already created'
    exit 1
 fi
   
 adm_sg_id="$(create_security_group "${vpc_id}" "${SERVER_ADMIN_SEC_GRP_NM}" \
                     'Admin security group')"
 
-##### TODO REMOVE THIS
 allow_access_from_cidr "${adm_sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
 #####allow_access_from_cidr "${adm_sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
-echo 'Created Admin Security Group'
+echo 'Created admin security group'
 
-## *************** ##
-## Database access ##
-## *************** ##
+##
+## Database access 
+##
 
 allow_access_from_security_group "${db_sg_id}" "${DB_MMDATA_PORT}" "${adm_sg_id}"
-echo 'Granted access to Database'
+echo 'Granted access to the database'
 
-## ************** ##
-## Admin Instance ##
-## ************** ##
+## 
+## Admin instance 
+## 
 
-echo "Creating '${SERVER_ADMIN_NM}' Admin Instance ..."
-
+echo 'Creating the admin instance ...'
 # The Admin instance is run from the secured Shared Image.
 run_admin_instance "${shared_base_ami_id}" "${adm_sg_id}" "${subnet_id}"
 admin_instance_id="$(get_instance_id "${SERVER_ADMIN_NM}")"
+echo 'Admin instance created'
 
-## ********* ##
-## Public IP ##
-## ********* ##
+## 
+## Public IP 
+## 
 
-echo 'Checking if there is any public IP avaiable in the account'
+echo 'Checking for any public IP avaiable in the account'
 eip="$(get_public_ip_address_unused)"
 
 if [[ -n "${eip}" ]]
 then
-   echo "Found '${eip}' unused public IP address"
+   echo "Found the '${eip}' unused public IP address"
 else
    echo 'Not found any unused public IP address, a new one must be allocated'
    eip="$(allocate_public_ip_address)" 
@@ -174,9 +173,9 @@ fi
 associate_public_ip_address_to_instance "${eip}" "${admin_instance_id}"
 echo "The '${eip}' public IP address has been associated with the Admin instance"
 
-## ******* ##
-## Modules ##
-## ******* ##
+##
+## Modules 
+## 
 
 echo 'Preparing the scripts to run on the server'
 
@@ -292,7 +291,7 @@ else
    # TODO        
    # TODO  sudo awk -i inplace '{if($1 == "#SSLCertificateChainFile"){$1="SSLCertificateChainFile"; print $0} else {print $0}}' "${TMP_DIR}"/"${webphp_dir}"/ssl.conf 
    
-   echo 'Error: a production certificate is not available, use a developement self-signed one'
+   echo 'ERROR: a production certificate is not available, use a developement self-signed one'
    exit 1        
 fi
 
@@ -395,7 +394,7 @@ wait_ssh_started "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "$
 ## By AWS default, sudo has not password.
 ## 
 
-echo 'Uploading files to the Admin server ...'
+echo 'Uploading the scripts to the admin server ...'
 remote_dir=/home/ec2-user/script
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
@@ -435,7 +434,7 @@ scp_upload_files "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "$
                            "${TEMPLATE_DIR}"/common/launch_javaMail.sh \
                            "${TEMPLATE_DIR}"/"${webphp_dir}"/logrotatehttp
                 
-echo 'Files uploaded'
+echo 'Scripts uploaded'
                             
 # TODO 
 # Rotate log files cron job files
@@ -443,7 +442,7 @@ echo 'Files uploaded'
 # PHPMyAdmin (MySQL remote database administration)
 # TODO
 
-echo 'Installing Admin modules ...'
+echo 'Installing the admin modules ...'
 
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin.sh" \
                            "${private_key}" \
@@ -459,6 +458,8 @@ ssh_run_remote_command_as_root "${remote_dir}/install_admin.sh" \
                            "${DEFAUT_AWS_USER}"                          
 exit_code=$?
 set -e
+
+echo 'Admin modules installed'
 
 # shellcheck disable=SC2181
 if [ 194 -eq "${exit_code}" ]
@@ -480,26 +481,23 @@ then
                            "${SERVER_ADMIN_EC2_USER_PWD}"
    set -e
 else
-   echo 'Error running install_admin.sh'
+   echo 'ERROR: running install_admin.sh'
    exit 1
 fi
       
-## ********** ##
-## SSH access ##
-## ********** ##
+## 
+## SSH access 
+## 
 
-if [[ -z "${adm_sg_id}" ]]
+if [[ -n "${adm_sg_id}" ]]
 then
-   echo "'${SERVER_ADMIN_SEC_GRP_NM}' Admin Security Group not found"
-else
-   ##### TODO REMOVE THIS
    ##### revoke_access_from_cidr "${adm_sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
    revoke_access_from_cidr "${adm_sg_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
-   echo 'Revoked SSH access' 
+   echo 'Revoked SSH access to the admin instance' 
 fi
        
 # Removing temp files
 rm -rf "${TMP_DIR:?}"/admin   
 
-echo "Admin box set up completed, IP address: '${eip}'" 
+echo "Admin box up and running at: '${eip}'" 
 echo

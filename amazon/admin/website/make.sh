@@ -23,52 +23,49 @@ admin_instance_id="$(get_instance_id "${SERVER_ADMIN_NM}")"
 
 if [[ -z "${admin_instance_id}" ]]
 then
-   echo "Error: Instance '${SERVER_ADMIN_NM}' not found"
+   echo '* ERROR: admin instance not found'
    exit 1
 else
-   echo "* Admin instance ID: '${admin_instance_id}'"
+   echo "* admin instance ID: '${admin_instance_id}'"
 fi
 
 adm_sgp_id="$(get_security_group_id "${SERVER_ADMIN_SEC_GRP_NM}")"
 
 if [[ -z "${adm_sgp_id}" ]]
 then
-   echo 'ERROR: The Admin security group not found'
+   echo '* ERROR: admin security group not found'
    exit 1
 else
-   echo "* Admin Security Group ID: '${adm_sgp_id}'"
+   echo "* admin security group ID: '${adm_sgp_id}'"
 fi
 
 eip="$(get_public_ip_address_associated_with_instance "${SERVER_ADMIN_NM}")"
 
 if [[ -z "${eip}" ]]
 then
-   echo 'ERROR: Admin public IP address not found'
+   echo '* ERROR: admin public IP address not found'
    exit 1
 else
-   echo "* Admin public IP address: '${eip}'"
+   echo "* admin public IP address: '${eip}'"
 fi
 
 echo
-echo 'Deploying the Admin website ...'
 
 # Clear old files
 rm -rf "${TMP_DIR:?}"/admin
 mkdir "${TMP_DIR}"/admin
 
-## *** ##
-## SSH ##
-## *** ##
+## 
+## SSH access to the instance
+## 
 
 # Check if the Admin Security Group grants access from the development machine through SSH port
 my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
-##### TODO REMOVE THIS
 access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0")"
 ##### access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
    
 if [[ -z "${access_granted}" ]]
 then
-   ##### TODO REMOVE THIS
    allow_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
    #####allow_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
    echo "Granted SSH access to development machine" 
@@ -105,7 +102,7 @@ sed -i -e "s/SEDis_devSED/0/g" \
        -e "s/SEDsend_email_fromSED/${SERVER_ADMIN_EMAIL}/g" \
            init.php 
 
-echo 'Preparing the archive with the Admin site source files ...'
+echo 'Preparing the archive with the admin website source files ...'
 zip -r "${WEBSITE_ARCHIVE}" ./*.php ./*.css > /dev/null 2>&1
 echo "${WEBSITE_ARCHIVE} ready"
 
@@ -129,7 +126,7 @@ echo "${WEBSITE_VIRTUALHOST_CONFIG_FILE} ready"
 ## The ec2-user sudo command has been configured with password.
 ##                                         
 
-echo 'Uploading files to Admin server ...'
+echo 'Uploading files to admin server ...'
 remote_dir=/home/ec2-user/script
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
@@ -143,7 +140,7 @@ scp_upload_files "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "$
                          "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
                          "${TMP_DIR}"/admin/install_admin_website.sh 
 
-echo "Installing Admin website ..."
+echo "Installing admin website ..."
 
 ssh_run_remote_command_as_root "chmod +x "${remote_dir}"/install_admin_website.sh" \
                          "${private_key}" \
@@ -184,31 +181,26 @@ then
                          "${SERVER_ADMIN_EC2_USER_PWD}" > /dev/null
    set -e   
 else
-   echo 'Error running install_admin_website.sh'
+   echo 'ERROR: running install_admin_website.sh'
    exit 1
 fi
                                    
-## *** ##
-## SSH ##
-## *** ##
+## 
+## SSH access to the admin instance
+## 
 
-if [[ -z "${adm_sgp_id}" ]]
+if [[ -n "${adm_sgp_id}" ]]
 then
-   echo "'${SERVER_ADMIN_SEC_GRP_NM}' Admin Security Group not found"
-else
-   ##### TODO REMOVE THIS
    revoke_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
    #####revoke_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
-   echo 'Revoked SSH access' 
+   echo 'Revoked SSH access to the admin server' 
 fi
 
-## ******** ##
-## Clearing ##
-## ******** ##
-
-# Clear local files
+## 
+## Clearing local files
+## 
 rm -rf "${TMP_DIR:?}"/admin
 
-echo "Admin website deployed at: '${eip}'" 
+echo "Admin website up and running at: '${eip}'" 
 echo
 

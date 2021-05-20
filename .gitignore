@@ -2,3 +2,4 @@
 
 *.log
 *.pem
+templates/dns/register-domain.json

@@ -42,35 +42,38 @@ echo
 
 if [[ -z "${webphp_instance_id}" ]]
 then
-   echo "Instance '${webphp_nm}' not found"
+   echo '* WARN: webphp instance not found'
 else
-   echo "* Admin instance ID: '${webphp_instance_id}'"
+   echo "* webphp instance ID: '${webphp_instance_id}'"
 fi
 
 webphp_sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
 
 if [[ -z "${webphp_sgp_id}" ]]
 then
-   echo 'The WebPhp security group not found'
+   echo '* WARN: webphp security group not found'
 else
-   echo "* WebPhp Security Group ID: '${webphp_sgp_id}'"
+   echo "* webphp security group ID: '${webphp_sgp_id}'"
 fi
 
 eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"
 
 if [[ -z "${eip}" ]]
 then
-   echo 'WebPhp public IP address not found'
+   echo '* WARN: webphp public IP address not found'
 else
-   echo "* WebPhp public IP address: '${eip}'"
+   echo "* webphp public IP address: '${eip}'"
 fi
 
 echo
-echo "Deleting website ${webphp_id} ..." 
 
 # Clearing local files
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
 mkdir "${TMP_DIR}"/"${webphp_dir}"
+
+##
+## Revoke load balancer access to the website
+##
 
 loadbalancer_sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
 
@@ -79,7 +82,6 @@ then
    granted="$(check_access_from_group_is_granted "${webphp_sgp_id}" "${SERVER_WEBPHP_APACHE_WEBSITE_PORT}" "${loadbalancer_sgp_id}")"
    if [[ -n "${granted}" ]]
    then
-      # Revoke Load Balancer access to the website
       revoke_access_from_security_group "${webphp_sgp_id}" "${SERVER_WEBPHP_APACHE_WEBSITE_PORT}" "${loadbalancer_sgp_id}"
       echo 'Load Balancer access to the website revoked'
    fi
@@ -87,19 +89,16 @@ fi
 
 if [[ -n "${eip}" && -n "${webphp_instance_id}" && -n "${webphp_sgp_id}" ]]
 then
-   ## *** ##
-   ## SSH ##
-   ## *** ##
-
-   # Grant access from development machine.
+   ## 
+   ## grant SSH access from the development machine 
+   ## 
+   
    my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
-   ##### TODO REMOVE THIS
    access_granted="$(check_access_from_cidr_is_granted "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0")"
    ##### access_granted="$(check_access_from_cidr_is_granted "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
 
    if [[ -z "${access_granted}" ]]
    then
-      ##### TODO REMOVE THIS
       allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
       #####allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
       echo "Granted SSH access to development machine" 
@@ -188,15 +187,15 @@ then
    fi     
 fi           
 
-## *** ##
-## SSH ##
-## *** ##
+## 
+## revoke SSH access from development machine.
+## 
 
-if [[ -z "${webphp_sgp_id}" ]]
+access_granted="$(check_access_from_cidr_is_granted "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0")"
+##### access_granted="$(check_access_from_cidr_is_granted "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
+
+if [[ -n "${access_granted}" ]]
 then
-   echo "'${webphp_sgp_nm}' WebPhp Security Group not found"
-else
-   ##### TODO REMOVE THIS
    revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
    #revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
    echo 'Revoked SSH access' 
@@ -205,6 +204,4 @@ fi
 # Clearing local files
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
 
-echo "Website ${webphp_id} deleted" 
-echo
 

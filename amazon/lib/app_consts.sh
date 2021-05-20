@@ -7,6 +7,7 @@ ENV='production'
 
 AMAZON_CHECK_IP_URL='http://checkip.amazonaws.com'
 DEFAUT_AWS_USER='ec2-user'
+MAXMIN_TLD=maxmin.it
 
 ## *********** ##
 ## Data Center ##

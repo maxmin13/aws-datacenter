@@ -26,7 +26,7 @@ function __wait()
 }
 
 echo '*************'
-echo 'Load Balancer'
+echo 'Load balancer'
 echo '*************'
 echo
 
@@ -34,7 +34,7 @@ loadbalancer_dns="$(get_loadbalancer_dns_name "${LBAL_NM}")"
 
 if [[ -n "${loadbalancer_dns}" ]]
 then
-   echo "ERROR: The '${LBAL_NM}' Load Balancer is already created"
+   echo '* ERROR: the load balancer is already created'
    exit 1
 fi
 
@@ -42,20 +42,20 @@ vpc_id="$(get_vpc_id "${VPC_NM}")"
   
 if [[ -z "${vpc_id}" ]]
 then
-   echo 'Error, VPC not found.'
+   echo '* ERROR: data center not found.'
    exit 1
 else
-   echo "* VPC ID: '${vpc_id}'"
+   echo "* data center ID: '${vpc_id}'"
 fi
 
 subnet_ids="$(get_subnet_ids "${vpc_id}")"
 
 if [[ -z "${subnet_ids}" ]]
 then
-   echo 'Error, Subnets not found.'
+   echo '* ERROR: subnets not found.'
    exit 1
 else
-   echo "* Subnet IDs: '${subnet_ids}'"
+   echo "* subnet IDs: '${subnet_ids}'"
 fi
 
 echo
@@ -64,35 +64,34 @@ echo
 rm -rf "${TMP_DIR:?}"/loadbalancer
 mkdir "${TMP_DIR}"/loadbalancer
 
-## ************** ##amazon/images/loadbalancer/make.sh
-## Security Group ##
-## ************** ##
+## 
+## Security group
+## 
 
-echo "Creating ${LBAL_SEC_GRP_NM} Load Balancer Security Group ..."
 sg_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
   
 if [[ -n "${sg_id}" ]]
 then
-   echo "ERROR: The '${LBAL_SEC_GRP_NM}' Load Balancer Security Group is already created"
+   echo 'ERROR: the load balancer security group is already created'
    exit 1
 fi
 
 sg_id="$(create_security_group "${vpc_id}" "${LBAL_SEC_GRP_NM}" 'Load balancer security group')"
-echo "'${LBAL_SEC_GRP_NM}' Load Balancer Security Group created"
+echo 'Load balancer security group created'
 allow_access_from_cidr "${sg_id}" "${LBAL_PORT}" '0.0.0.0/0'
-echo 'Granted HTTPS access from anywhere'
+echo 'Granted HTTPS access to the load balancer from anywhere in the Internet'
 
-## **************** ##
-## X509 Certificate ##
-## **************** ##
+## 
+## SSL certificate
+##
 
 cert_arn="$(get_server_certificate_arn "${LBAL_CRT_NM}")"
 
 if [[ -n "${cert_arn}" ]]
 then
-   echo "Deleting '${LBAL_CRT_NM}' Load Balancer Certificate ..."  
+   echo 'Deleting previous load balancer certificate ...' 
    delete_server_certificate "${LBAL_CRT_NM}"
-   echo "'${LBAL_CRT_NM}' Load Balancer Certificate deleted"
+   echo 'Load balancer certificate deleted'
 fi
 
 #if [[ 'development' == "${ENV}" ]]
@@ -112,18 +111,18 @@ then
    chmod +x gen-rsa.sh
    ./gen-rsa.sh > /dev/null
    rm -f gen-rsa.sh
-   echo 'Primary Key created'
+   echo 'Primary key created'
 
    # Remove the password protection from the key file.
    sed -e "s/SEDkey_fileSED/server.key/g" \
        -e "s/SEDnew_key_fileSED/server.key.org/g" \
        -e "s/SEDkey_pwdSED/${LBAL_PK_PWD}/g" \
-      "${TEMPLATE_DIR}"/ssl/remove-passphase_template.exp > remove-passphase.sh   
+          "${TEMPLATE_DIR}"/ssl/remove-passphase_template.exp > remove-passphase.sh   
       
    chmod +x remove-passphase.sh
    ./remove-passphase.sh > /dev/null
    rm -f remove-passphase.sh  
-   echo 'Password protection removed'
+   echo 'Removed password protection'
 
    rm -f server.key
    mv server.key.org server.key
@@ -138,27 +137,28 @@ then
        -e "s/SEDunit_nameSED/${LBAL_CRT_UNIT_NM}/g" \
        -e "s/SEDcommon_nameSED/${LBAL_CRT_COMMON_NM}/g" \
        -e "s/SEDemail_addressSED/${LBAL_EMAIL_ADD}/g" \
-      "${TEMPLATE_DIR}"/ssl/gen-selfsign-cert_template.exp > gen-selfsign-cert.sh
+          "${TEMPLATE_DIR}"/ssl/gen-selfsign-cert_template.exp > gen-selfsign-cert.sh
       
    chmod +x gen-selfsign-cert.sh
    ./gen-selfsign-cert.sh > /dev/null
    rm -f gen-selfsign-cert.sh
-   echo 'Self-signed Load Balancer Certificate created'
+   echo 'Self-signed load balancer certificate created'
 
    mv 'server.key' "${LBAL_KEY_FILE}"
    mv 'server.crt' "${LBAL_CRT_FILE}"
    
    # Print the certificate to the console
-   openssl x509 -in "${LBAL_CRT_FILE}" -text -noout  >> "${LOG_DIR}/loadbalancer.log"
+   # openssl x509 -in "${LBAL_CRT_FILE}" -text -noout  >> "${LOG_DIR}/loadbalancer.log"
    
    # Upload to IAM
-   echo "Uploading '${LBAL_CRT_NM}' self-signed Load Balancer Certificate ..."
+   echo 'Uploading the certificate to the load balancer ...'
    upload_server_certificate "${LBAL_CRT_NM}" \
                              "${LBAL_CRT_FILE}" \
                              "${LBAL_KEY_FILE}" \
                              "${TMP_DIR}"/loadbalancer
    __wait
-   echo "'${LBAL_CRT_NM}' self-signed Load Balancer Certificate uploaded"
+   
+   echo 'Uploaded the self-signed certificate to the load balancer'
 
    rm -f "${LBAL_KEY_FILE:?}"
    rm -f "${LBAL_CRT_FILE:?}"
@@ -177,11 +177,11 @@ else
 )
 fi
 
-## ******** ## 
-## Instance ## 
-## ******** ##
+##  
+## Instance
+## 
 
-echo "Creating '${LBAL_NM}' Load Balancer ..."
+echo 'Creating the load balancer ....'
 
 cert_arn="$(get_server_certificate_arn "${LBAL_CRT_NM}")"
 create_loadbalancer "${LBAL_NM}" "${cert_arn}" "${sg_id}" "${subnet_ids}"
@@ -190,7 +190,7 @@ loadbalancer_dns_nm="$(get_loadbalancer_dns_name "${LBAL_NM}")"
 
 echo "Load Balancer created and available at: ${loadbalancer_dns_nm}"
 
-# Removing old files
+# Removing old local files
 rm -rf "${TMP_DIR:?}"/loadbalancer
 
 echo

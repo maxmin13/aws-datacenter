@@ -31,7 +31,7 @@ MONIT_DOCROOT_ID='monit.maxmin.it'
 
 if [[ $# -lt 1 ]]
 then
-   echo 'Error: Missing mandatory arguments'
+   echo '* ERROR: Missing mandatory arguments'
    exit 1
 else
    webphp_id="${1}"
@@ -56,7 +56,7 @@ webphp_instance_id="$(get_instance_id "${webphp_nm}")"
 
 if [[ -n "${webphp_instance_id}" ]]
 then
-   echo "ERROR: Instance '${webphp_nm}' already created"
+   echo '* ERROR: webphp instance already created'
    exit 1
 fi
 
@@ -64,99 +64,99 @@ vpc_id="$(get_vpc_id "${VPC_NM}")"
   
 if [[ -z "${vpc_id}" ]]
 then
-   echo 'ERROR, VPC not found.'
+   echo '* ERROR, data center not found.'
    exit 1
 else
-   echo "* VPC ID: '${vpc_id}'"
+   echo "* data center ID: '${vpc_id}'"
 fi
 
 subnet_id="$(get_subnet_id "${SUBNET_MAIN_NM}")"
 
 if [[ -z "${subnet_id}" ]]
 then
-   echo 'ERROR, Subnet not found.'
+   echo '* ERROR, subnet not found.'
    exit 1
 else
-   echo "* Subnet ID: '${subnet_id}'"
+   echo "* subnet ID: '${subnet_id}'"
 fi
 
 shared_base_ami_id="$(get_image_id "${SHARED_BASE_AMI_NM}")"
 
 if [[ -z "${shared_base_ami_id}" ]]
 then
-   echo "ERROR: Shared Base Image '${SHARED_BASE_AMI_NM}' not found"
+   echo '* ERROR: shared base image not found'
    exit 1
 else
-   echo "* Shared Base Image ID: ${shared_base_ami_id}"
+   echo "* shared base image ID: ${shared_base_ami_id}"
 fi
 
 db_sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
   
 if [[ -z "${db_sgp_id}" ]]
 then
-   echo "ERROR: The '${DB_MMDATA_SEC_GRP_NM}' Database Security Group not found"
+   echo '* ERROR: database security group not found' 
    exit 1
 else
-   echo "* Database Security Group ID: ${db_sgp_id}"
+   echo "* database security group ID: ${db_sgp_id}"
 fi
 
 db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
 
 if [[ -z "${db_endpoint}" ]]
 then
-   echo "ERROR: Database '${DB_MMDATA_NM}' Endpoint not found"
+   echo '* ERROR: database not found'
    exit 1
 else
-   echo "* Database Endpoint: ${db_endpoint}"
+   echo "* database endpoint: ${db_endpoint}"
 fi
 
 admin_instance_id="$(get_instance_id "${SERVER_ADMIN_NM}")"
 
 if [[ -z "${admin_instance_id}" ]]
 then
-   echo "ERROR: Instance '${SERVER_ADMIN_NM}' not found"
+   echo '* ERROR: admin instance not found'
    exit 1
 else
-   echo "* Admin instance ID: '${admin_instance_id}'"
+   echo "* admin instance ID: '${admin_instance_id}'"
 fi
 
 adm_sgp_id="$(get_security_group_id "${SERVER_ADMIN_SEC_GRP_NM}")"
 
 if [[ -z "${adm_sgp_id}" ]]
 then
-   echo 'ERROR: Admin security group not found'
+   echo '* ERROR: admin security group not found'
    exit 1
 else
-   echo "* Admin Security Group ID: '${adm_sgp_id}'"
+   echo "* admin security group ID: '${adm_sgp_id}'"
 fi
 
 adm_pip="$(get_private_ip_address_associated_with_instance "${SERVER_ADMIN_NM}")"
 
 if [[ -z "${adm_pip}" ]]
 then
-   echo 'ERROR: Admin private IP address not found'
+   echo '* ERROR: admin instance private IP address not found'
    exit 1
 else
-   echo "* Admin private IP address: '${adm_pip}'"
+   echo "* admin instance private IP address: '${adm_pip}'"
 fi
 
 loadbalancer_dns_nm="$(get_loadbalancer_dns_name "${LBAL_NM}")"
 if [[ -z "${loadbalancer_dns_nm}" ]]
 then
-   echo 'ERROR: Load Balancer not found'
+   echo '* ERROR: load balancer not found'
    exit 1
 else
-   echo "* Load Balancer: '${loadbalancer_dns_nm}'"
+   echo "* load balancer: '${loadbalancer_dns_nm}'"
 fi
 
 loadbalancer_sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
 
 if [[ -z "${loadbalancer_sgp_id}" ]]
 then
-   echo 'ERROR: Load Balancer security group not found'
+   echo '* ERROR: load balancer security group not found'
    exit 1
 else
-   echo "* Load Balancer Group ID: '${adm_sgp_id}'"
+   echo "* load balancer security group ID: '${adm_sgp_id}'"
 fi
 
 # Removing old files
@@ -166,72 +166,70 @@ mkdir "${TMP_DIR}"/"${webphp_dir}"
 
 echo
 
-echo "Creating WebPhp ${webphp_nm} box ..."
-
-## *** ##
-## SSH ##
-## *** ##
+## 
+## SSH accress to the instance
+## 
 
 # Create a key pair to SSH into the instance.
 create_key_pair "${key_pair_nm}" "${WEBPHP_ACCESS_DIR}"
-echo 'Created WebPhp Key Pair to SSH into the Instance, the Private Key is saved in the credentials directory'
+echo 'Created key pair to SSH into the Instance, the private key is saved in the credentials directory'
 
 private_key="$(get_private_key_path "${key_pair_nm}" "${WEBPHP_ACCESS_DIR}")"
 
-## ************** ##
-## Security Group ##
-## ************** ##
+## 
+## Security group 
+## 
 
 my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
 webphp_sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
 
 if [[ -n "${webphp_sgp_id}" ]]
 then
-   echo 'ERROR: The WebPhp security group is already created'
+   echo 'ERROR: The webphp security group is already created'
    exit 1
 fi
   
 webphp_sgp_id="$(create_security_group "${vpc_id}" "${webphp_sgp_nm}" \
                     "${webphp_sgp_nm} security group")"
 
-echo "Created ${webphp_sgp_nm} Security Group"
+echo 'Created the webphp security group'
 
 ##### TODO REMOVE THIS
 allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
 #####allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
-echo 'Granted SSH to development machine'
+echo 'Granted SSH access to development machine'
 
-## ******************** ##
-## Grants from Database ##
-## ******************** ##
+## 
+## Grants from database 
+## 
 
 # Allow access to the database.
 allow_access_from_security_group "${db_sgp_id}" "${DB_MMDATA_PORT}" "${webphp_sgp_id}"
-echo 'Granted access to Database'
+echo 'Granted access to database'
 
-## ***************** ##
-## Grants from Admin ##
-## ***************** ##
+## 
+## Grants from the admin server
+## 
 
 allow_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_RSYSLOG_PORT}" "${webphp_sgp_id}"
-echo 'Granted access to Admin server rsyslog'
+echo 'Granted access to admin server Rsyslog'
 
 allow_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_COLLECTOR_PORT}" "${webphp_sgp_id}"
-echo 'Granted access to Admin server MMonit collector'
+echo 'Granted access to admin server MMonit collector'
 
-## *************** ##
-## WebPhp instance ##
-## *************** ##
+##
+## WebPhp instance 
+##
 
-echo "Creating '${webphp_nm}' WebPhp instance ..."
+echo 'Creating the webphp instance ...'
 # The WebPhp instance is run from the secured Shared Image.
 run_webphp_instance "${shared_base_ami_id}" "${webphp_nm}" "${webphp_sgp_id}" "${subnet_id}" "${key_pair_nm}"
 webphp_instance_id="$(get_instance_id "${webphp_nm}")"
-echo "WebPhp instance running"
+echo "WebPhp instance created"
 
-## ********* ##
-## Public IP ##
-## ********* ##
+## 
+## Public IP 
+## 
 
 echo 'Checking if there is any public IP avaiable in the account'
 eip="$(get_public_ip_address_unused)"
@@ -248,9 +246,9 @@ fi
 associate_public_ip_address_to_instance "${eip}" "${webphp_instance_id}"
 echo "The '${eip}' public IP address has been associated with the WebPhp instance"
 
-## ******* ##
-## Modules ## 
-## ******* ##
+## 
+## Modules 
+## 
 
 # Prepare the scripts to run on the server.
 
@@ -405,7 +403,7 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
                     "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                     "${DEFAUT_AWS_USER}"  
 
-echo "Uploading files to webphp ${webphp_id} server ..."
+echo 'Uploading the scripts to webphp server ...'
 
 scp_upload_files    "${private_key}" "${eip}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${DEFAUT_AWS_USER}" "${remote_dir}" \
                     "${TMP_DIR}"/"${webphp_dir}"/install_webphp.sh \
@@ -433,7 +431,7 @@ ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_webphp.sh" \
                     "${SHARED_BASE_INSTANCE_SSH_PORT}" \
                     "${DEFAUT_AWS_USER}" 
 
-echo 'Installing WebPhp modules ...'
+echo 'Installing webphp modules ...'
 
 set +e                
 ssh_run_remote_command_as_root "${remote_dir}/install_webphp.sh" \
@@ -444,7 +442,7 @@ ssh_run_remote_command_as_root "${remote_dir}/install_webphp.sh" \
 exit_code=$?
 set -e
 
-echo 'WebPhp modules installed'
+echo 'Webphp modules installed'
 
 # shellcheck disable=SC2181
 if [ 194 -eq "${exit_code}" ]
@@ -466,42 +464,39 @@ then
                     "${SERVER_WEBPHP_EC2_USER_PWD}"
    set -e
 else
-   echo 'ERROR running install_webphp.sh'
+   echo 'ERROR: running install_webphp.sh'
    exit 1
 fi  
 
-## ************* ##
-## Load Balancer ##
-## ************* ##
+## 
+## Load balancer 
+## 
 
 register_instance_with_loadbalancer "${LBAL_NM}" "${webphp_instance_id}"
-echo 'Instance registered with Load Balancer'
+echo 'Webphp instance registered with the load balancer'
 
 # Grant Load Balancer access for healt-check
 allow_access_from_security_group "${webphp_sgp_id}" "${SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}" "${loadbalancer_sgp_id}"
-echo 'Granted Load Balancer access to the instance'
+echo 'Granted the load balancer access to the webphp instance'
        
-## *** ##
-## SSH ##
-## *** ##
+## 
+## SSH access to the instance. 
+## 
 
-if [[ -z "${webphp_sgp_id}" ]]
+if [[ -n "${webphp_sgp_id}" ]]
 then
-   echo "'${webphp_sgp_nm}' WebPhp Security Group not found"
-else
-   ##### TODO REMOVE THIS
    revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
    #revoke_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
-   echo 'Revoked SSH access' 
+   echo 'Revoked SSH access to the webphp instance' 
 fi
  
-## ******** ##
-## Clearing ##
-## ******** ##
+## 
+## Clearing local files
+## 
        
 # Removing local temp files
 # shellcheck disable=SC2115
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
 
-echo "WebPhp box set up completed, IP address: '${eip}'" 
+echo "WebPhp box up and running at: '${eip}'" 
 echo

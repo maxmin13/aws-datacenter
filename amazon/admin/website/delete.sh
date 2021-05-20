@@ -19,31 +19,30 @@ admin_instance_id="$(get_instance_id "${SERVER_ADMIN_NM}")"
 
 if [[ -z "${admin_instance_id}" ]]
 then
-   echo "Instance '${SERVER_ADMIN_NM}' not found"
+   echo '* WARN: admin instance not found'
 else
-   echo "* Admin instance ID: '${admin_instance_id}'"
+   echo "* admin instance ID: '${admin_instance_id}'"
 fi
 
 adm_sgp_id="$(get_security_group_id "${SERVER_ADMIN_SEC_GRP_NM}")"
 
 if [[ -z "${adm_sgp_id}" ]]
 then
-   echo 'The Admin security group not found'
+   echo '* WARN: admin security group not found'
 else
-   echo "* Admin Security Group ID: '${adm_sgp_id}'"
+   echo "* admin security group ID: '${adm_sgp_id}'"
 fi
 
 eip="$(get_public_ip_address_associated_with_instance "${SERVER_ADMIN_NM}")"
 
 if [[ -z "${eip}" ]]
 then
-   echo 'Admin public IP address not found'
+   echo '* WARN: admin public IP address not found'
 else
-   echo "* Admin public IP address: '${eip}'"
+   echo "* admin public IP address: '${eip}'"
 fi
 
 echo
-echo 'Deleting Admin website ...'
 
 # Clearing local files
 rm -rf "${TMP_DIR:?}"/admin
@@ -51,19 +50,16 @@ mkdir "${TMP_DIR}"/admin
 
 if [[ -n "${eip}" && -n "${admin_instance_id}" && -n "${adm_sgp_id}" ]]
 then
-   ## *** ##
-   ## SSH ##
-   ## *** ##
-   
-   # Check if the Admin Security Group grants access from the development machine through SSH port
+   ## 
+   ## grant SSH access from the development machine 
+   ## 
+
    my_ip="$(curl -s "${AMAZON_CHECK_IP_URL}")"
-   ##### TODO REMOVE THIS
    access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0")"
    #####access_granted="$(check_access_from_cidr_is_granted "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32")"
    
    if [[ -z "${access_granted}" ]]
    then
-      ##### TODO REMOVE THIS
       allow_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
       #####allow_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
       echo "Granted SSH access to development machine" 
@@ -92,7 +88,7 @@ then
    ## The ec2-user sudo command has been configured with password.
    ##    
    
-   echo 'Uploading files to Admin server ...'
+   echo 'Uploading files to admin server ...'
    remote_dir=/home/ec2-user/script
 
    ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir ${remote_dir}" \
@@ -112,7 +108,7 @@ then
                    "${DEFAUT_AWS_USER}" \
                    "${SERVER_ADMIN_EC2_USER_PWD}" 
    
-   echo "Deleting Admin website ..."
+   echo "Deleting admin website ..."
              
    set +e              
    ssh_run_remote_command_as_root "${remote_dir}/delete_admin_website.sh" \
@@ -124,7 +120,7 @@ then
    exit_code=$?
    set -e
    
-   echo "Admin website deleted"
+   echo "admin website deleted"
    
    # shellcheck disable=SC2181
    if [ 194 -eq "${exit_code}" ]
@@ -150,15 +146,14 @@ then
       exit 1
    fi                   
 
-   ## *** ##
-   ## SSH ##
-   ## *** ##
+   ## 
+   ## revoke SSH access from development machine.
+   ## 
 
    if [[ -z "${adm_sgp_id}" ]]
    then
-      echo "'${SERVER_ADMIN_SEC_GRP_NM}' Admin Security Group not found"
+      echo "'${SERVER_ADMIN_SEC_GRP_NM}' admin security group not found"
    else
-        ##### TODO REMOVE THIS
         revoke_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
         #####revoke_access_from_cidr "${adm_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
         echo 'Revoked SSH access'
@@ -168,6 +163,4 @@ fi
 # Clearing local files
 rm -rf "${TMP_DIR:?}"/admin
 
-echo 'Admin website deleted'
-echo
 

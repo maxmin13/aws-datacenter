@@ -8,7 +8,7 @@ set +o xtrace
 function __wait()
 {
    count=0
-   while [[ ${count} -lt 60 ]]; do
+   while [[ ${count} -lt 70 ]]; do
       count=$((count+3))
       printf '.'
       sleep 3
@@ -21,67 +21,85 @@ echo 'Load Balancer'
 echo '*************'
 echo
 
-echo 'Deleting Load Balancer ...'
-
 # Removing old files
 rm -rf "${TMP_DIR:?}"/loadbalancer
 mkdir "${TMP_DIR}"/loadbalancer
 
 elb_dns="$(get_loadbalancer_dns_name "${LBAL_NM}")"
-  
+
 if [[ -z "${elb_dns}" ]]
 then
-   echo "'${LBAL_NM}' Load Balancer not found"
+   echo '* WARN: load balancer instance not found'
 else
-   echo "Deleting '${LBAL_NM}' Load Balancer ..."
+   echo "* load balancer dns name: '${elb_dns}'"
+fi
+
+cert_arn="$(get_server_certificate_arn "${LBAL_CRT_NM}")"
+
+if [[ -z "${cert_arn}" ]]
+then
+   echo '* WARN: security certificate not found'
+else
+   echo "* load balancer security certificate: '${cert_arn}'"
+fi
+
+sg_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
+
+if [[ -z "${sg_id}" ]]
+then
+   echo '* WARN: security group not found'
+else
+   echo "* load balancer security group ID: '${sg_id}'"
+fi
+
+echo
+
+##  
+## Delete the instance.
+##  
+  
+if [[ -n "${elb_dns}" ]]
+then
+   echo 'Deleting load balancer ...'
    delete_loadbalancer "${LBAL_NM}"
    
    ## Not found any other way to wait, it takes a lot to disappear,
    ## not able to delete the certificate until then.
    __wait  
 
-   echo "'${LBAL_NM}' Load Balancer deleted"
+   echo 'Load balancer deleted'
 fi
 
-## ******************
-## Server Certificate
-## ******************
-
-cert_arn="$(get_server_certificate_arn "${LBAL_CRT_NM}")"
+## 
+## Delete the server certificate
+## 
   
-if [[ -z "${cert_arn}" ]]
+if [[ -n "${cert_arn}" ]]
 then
-   echo "'${LBAL_CRT_NM}' Load Balancer Certificate not found"
-else
    delete_server_certificate "${LBAL_CRT_NM}"
-   echo "'${LBAL_CRT_NM}' Load Balancer Certificate deleted"
+   echo 'Load balancer certificate deleted'
 fi
 
-## **************
-## Security Group
-## **************
+## 
+## Delete the security group
+## 
 
-sg_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
-
-if [[ -z "${sg_id}" ]]
+if [[ -n "${sg_id}" ]]
 then
-   echo "'${LBAL_SEC_GRP_NM}' Loadbalancer Security Group not found"
-else
    granted="$(check_access_from_cidr_is_granted "${sg_id}" "${LBAL_PORT}" '0.0.0.0/0')"
    
    if [[ -n "${granted}" ]]
    then
    	revoke_access_from_cidr "${sg_id}" "${LBAL_PORT}" '0.0.0.0/0'
-   	echo 'Revoked access to Loadbalancer'
+   	echo 'Revoked access from internet to the load balancer'
    else
-   	echo 'No access to Loadbalancer found'
+   	echo 'No internet access to the load balancer found'
    fi
    
    delete_security_group "${sg_id}" 
-   echo "'${LBAL_SEC_GRP_NM}' Security Group deleted"
+   echo 'Load balancer security group deleted'
 fi
 
-echo 'Load Balancer components deleted'
 echo
 
 # Removing old files

@@ -62,15 +62,6 @@ set +o xtrace
 # service, you have to update the name servers for the domain registration.
 #===============================================================================
 
-## TODO 
-## TODO 
-## TODO Enable DNS support or modsecurity won't let Apache start...
-## TODO what is this ???????????????????????????????
-## 
-#aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-support
-#aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-hostnames
-## TODO 
-
 #===============================================================================
 # Creates a new public hosted zone. 
 # When you submit a CreateHostedZone request, the initial status of the hosted 
@@ -95,16 +86,15 @@ set +o xtrace
 #===============================================================================
 function create_public_hosted_zone()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'Error: Missing mandatory arguments'
       exit 1
    fi
    
    local domain_nm="${1}"
-   local delegation_set_id="${2}"
-   local caller_reference="${3}"
-   local comment="${4}"
+   local caller_reference="${2}"
+   local comment="${3}"
    local hosted_zone_id
 
    hosted_zone_id="$(aws route53 create-hosted-zone \
@@ -188,10 +178,160 @@ function get_public_hosted_zone_id()
    return 0
 }
 
+#===============================================================================
+# Creates, changes, or deletes a resource record set, which contains 
+# authoritative DNS information for a specified domain name or subdomain name. 
+# When you submit a ChangeResourceRecordSets request, Route 53 propagates your 
+# changes to all of the Route 53 authoritative DNS servers. While your changes 
+# are propagating, GetChange returns a status of PENDING . When propagation is 
+# complete, GetChange returns a status of INSYNC . Changes generally propagate 
+# to all Route 53 name servers within 60 seconds. 
+#
+# Globals:
+#  None
+# Arguments:
+# +hosted_zone_id -- the identifier of the hosted zone that contains the 
+#                    resource record sets that you want to change.
+# +domain_nm      -- the DNS domain name.
+# +ip_address     -- the IP address associated to the domain.
+# +record_type    -- SOA | A | TXT | NS | CNAME | MX | PTR | SRV | SPF | AAAA
+# +action         -- CREATE | DELETE | UPSERT
+# +comment        -- comment about the changes in this change batch request.
+# Returns:      
+#  The ID of the request.  
+#===============================================================================
+function __change_resource_record_sets()
+{
+   if [[ $# -lt 6 ]]
+   then
+      echo 'Error: Missing mandatory arguments'
+      exit 1
+   fi
+   
+   local hosted_zone_id="${1}"
+   local domain_nm="${2}"
+   local ip_address="${3}"
+   local record_type="${4}"
+   local action="${5}"
+   local comment="${6}"
+   local change_batch
+   local request_id
+   
+   change_batch="$(__create_change_batch "${domain_nm}" "${ip_address}" "${record_type}" "${action}" "${comment}")"
+
+   request_id="$(aws route53 change-resource-record-sets \
+                               --hosted-zone-id "${hosted_zone_id}" \
+                               --change-batch "${change_batch}" \
+                               --query ChangeInfo.Id \
+                               --output text)"
+                 
+   echo "${request_id}"              
+
+   return 0   
+}
+
+#===============================================================================
+# Returns the current status of a change batch request.
+# The status is one of the following values:
+# PENDING indicates that the changes in this request  have  not  propagated  to 
+# all Amazon Route 53 DNS servers. This is the initial status of all change 
+# batch requests.
+# INSYNC indicates that the changes have propagated to all Route 53 DNS servers.
+#
+# Globals:
+#  None
+# Arguments:
+# +request_id      -- the ID of the request.
+# Returns:      
+#  The status of the request.  
+#===============================================================================
+function __get_change()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'Error: Missing mandatory arguments'
+      exit 1
+   fi
+   
+   local request_id="${1}"
+   local status
+   
+   status="$(aws route53 get-change \
+                            --id="${request_id}" \
+                            --query ChangeInfo.Status \
+                            --output test)"
+   echo "${status}"
+   
+   return 0
+}
+
+#===============================================================================
+# Creates the change batch containing the list of change items to create, delete
+# or update a resource record set.
+#
+# Globals:
+#  None
+# Arguments:
+# +domain_nm   -- the DNS domain name.
+# +ip_address  -- the IP address associated to the domain.
+# +record_type -- SOA | A | TXT | NS | CNAME | MX | PTR | SRV | SPF | AAAA
+# +action      -- CREATE | DELETE | UPSERT
+# +comment     -- comment about the changes in this change batch request.
+# Returns:      
+#  None  
+#=============================================================================== 
+function __create_change_batch()
+{
+   if [[ $# -lt 5 ]]
+   then
+      echo 'Error: Missing mandatory arguments'
+      exit 1
+   fi
+   
+   local domain_nm="${1}"
+   local ip_address="${2}"
+   local record_type="${3}"
+   local action="${4}"
+   local comment="${5}"
+   local template
+   
+   template=$(cat <<-'EOF'
+        {
+           "Comment": "SEDcommentSED",
+           "Changes": [
+              {
+                 "Action": "SEDactionSED",
+                 "ResourceRecordSet": {
+                    "Name": "SEDdomain_nameSED",
+                    "Type": "SEDtypeSED",
+                    "TTL": 120,
+                    "ResourceRecords": [
+                       {
+                          "Value": "SEDip_addressSED"
+                       }
+                    ]
+                 }
+              }
+           ]
+        }
+	EOF
+   )
+   
+   change_batch_block="$(printf '%b\n' "${template}" \
+                        | sed -e "s/SEDdomain_nameSED/${domain_nm}/g" \
+                              -e "s/SEDip_addressSED/${ip_address}/g" \
+                              -e "s/SEDtypeSED/${record_type}/g" \
+                              -e "s/SEDcommentSED/${comment}/g" \
+                              -e "s/SEDactionSED/${action}/g")" 
+   
+   echo "${change_batch_block}"
+   
+   return 0
+}
 
 
 
-
+## __create_change_batch 'maxmin.it' '192.0.0.3' 'A' 'CREATE' 'maxmin record' 
 
 
 

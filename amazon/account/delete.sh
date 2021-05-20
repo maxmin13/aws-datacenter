@@ -5,24 +5,25 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-## *************************
-## Delete Account components
-## *************************
-
-echo 'Deleting Account components ...'
-echo 
-
-echo 'Releasing public IP addresses allocated to the account ...'
+echo '*******'
+echo 'Account'
+echo '*******'
+echo
 
 allocation_ids="$(get_all_allocation_ids)"
 
-if [[ -n "${allocation_ids}" ]]; then
-   echo "Found '${allocation_ids}' allocation identifiers of public IP addresses" 
-   release_all_public_ip_addresses "${allocation_ids}"
-   echo 'Deleted all allocated public IP address'
+if [[ -z "${allocation_ids}" ]]
+then
+   echo 'WARN: not found any public IP address allocated with the account'
 else
-   echo 'No allocated public IP addresses found'
+   echo "* public IP address allocation IDs: '${allocation_ids}'"
 fi
 
-echo 'Accounts components deleted'
+echo
+
+if [[ -n "${allocation_ids}" ]]; then
+   release_all_public_ip_addresses "${allocation_ids}"
+   echo 'Released all allocated public IP addresses'
+fi
+
 echo 
