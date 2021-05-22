@@ -38,13 +38,6 @@ then
    echo '****************' 
 fi
 
-. "${PROJECT_DIR}"/amazon/database/data/make.sh
-. "${PROJECT_DIR}"/amazon/admin/website/make.sh         
-. "${PROJECT_DIR}"/amazon/webphp/website/make.sh 2
-. "${PROJECT_DIR}"/amazon/dns/domain/registration/make.sh
-
-exit
-
 echo
 
 # Create the datacenter.
