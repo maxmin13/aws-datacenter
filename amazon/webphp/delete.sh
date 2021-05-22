@@ -29,8 +29,8 @@ else
    echo "* webphp instance ID: '${webphp_instance_id}'"
 fi
 
-webphp_sg_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
-webphp_sg_id="$(get_security_group_id "${webphp_sg_nm}")"
+webphp_sgp_nm="${SERVER_WEBPHP_SEC_GRP_NM/<ID>/${webphp_id}}"
+webphp_sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
 
 if [[ -z "${webphp_sgp_id}" ]]
 then
@@ -126,13 +126,13 @@ echo 'The SSH access keys have been deleted'
 
 db_sg_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
 
-if [[ -n "${db_sg_id}" && -n ${webphp_sg_id} ]]
+if [[ -n "${db_sg_id}" && -n ${webphp_sgp_id} ]]
 then
-   granted="$(check_access_from_group_is_granted "${db_sg_id}" "${DB_MMDATA_PORT}" "${webphp_sg_id}")"
+   granted="$(check_access_from_group_is_granted "${db_sg_id}" "${DB_MMDATA_PORT}" "${webphp_sgp_id}")"
    
    if [[ -n "${granted}" ]]
    then
-   	revoke_access_from_security_group "${db_sg_id}" "${DB_MMDATA_PORT}" "${webphp_sg_id}"
+   	revoke_access_from_security_group "${db_sg_id}" "${DB_MMDATA_PORT}" "${webphp_sgp_id}"
    	echo 'Revoked access to database'
    else
    	echo 'Access to database was not granted'
@@ -143,25 +143,25 @@ fi
 ## Remove grants to access admin server from the instance. 
 ## 
 
-if [[ -n "${adm_sgp_id}" && -n ${webphp_sg_id} ]]
+if [[ -n "${adm_sgp_id}" && -n ${webphp_sgp_id} ]]
 then
    # Check if access to admin rsyslog is granted.
-   rsyslog_granted="$(check_access_from_group_is_granted "${adm_sgp_id}" "${SERVER_ADMIN_RSYSLOG_PORT}" "${webphp_sg_id}")"
+   rsyslog_granted="$(check_access_from_group_is_granted "${adm_sgp_id}" "${SERVER_ADMIN_RSYSLOG_PORT}" "${webphp_sgp_id}")"
    
    if [[ -n "${rsyslog_granted}" ]]
    then
-   	revoke_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_RSYSLOG_PORT}" "${webphp_sg_id}"
+   	revoke_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_RSYSLOG_PORT}" "${webphp_sgp_id}"
    	echo "Revoked access to admin server Rsyslog"
    else
    	echo 'Access to admin server Rsyslog not granted'
    fi
 
    # Check if webphp instance is granted access to admin instance M/Monit
-   mmonit_granted="$(check_access_from_group_is_granted "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_COLLECTOR_PORT}" "${webphp_sg_id}")"
+   mmonit_granted="$(check_access_from_group_is_granted "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_COLLECTOR_PORT}" "${webphp_sgp_id}")"
    
    if [[ -n "${mmonit_granted}" ]]
    then
-   	revoke_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_COLLECTOR_PORT}" "${webphp_sg_id}"
+   	revoke_access_from_security_group "${adm_sgp_id}" "${SERVER_ADMIN_MMONIT_COLLECTOR_PORT}" "${webphp_sgp_id}"
    	echo "Revoked access to admin server MMonit"
    else
    	echo 'Access to admin server MMonit not found'
@@ -172,9 +172,9 @@ fi
 ## Security Group 
 ##
   
-if [[ -n "${webphp_sg_id}" ]]
+if [[ -n "${webphp_sgp_id}" ]]
 then
-   delete_security_group "${webphp_sg_id}"    
+   delete_security_group "${webphp_sgp_id}"    
    echo 'Webphp security group deleted'
 fi
 

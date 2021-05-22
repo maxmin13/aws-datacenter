@@ -39,3 +39,8 @@ amazon/master/make.sh
 cd datacenter
 amazon/master/delete.sh
 ```
+
+## Configure reCaptcha
+
+Add the 'maxmin.it' domain to the account.
+ 

@@ -77,7 +77,7 @@ then
    echo '* ERROR, subnet not found.'
    exit 1
 else
-   echo "* subnet ID: '${subnet_id}'"
+   echo "* main subnet ID: '${subnet_id}'"
 fi
 
 shared_base_ami_id="$(get_image_id "${SHARED_BASE_AMI_NM}")"

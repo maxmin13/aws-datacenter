@@ -38,6 +38,13 @@ then
    echo '****************' 
 fi
 
+. "${PROJECT_DIR}"/amazon/database/data/make.sh
+. "${PROJECT_DIR}"/amazon/admin/website/make.sh         
+. "${PROJECT_DIR}"/amazon/webphp/website/make.sh 2
+. "${PROJECT_DIR}"/amazon/dns/domain/registration/make.sh
+
+exit
+
 echo
 
 # Create the datacenter.
@@ -51,7 +58,7 @@ echo
 . "${PROJECT_DIR}"/amazon/loadbalancer/make.sh          ### >> "${log_file}" 2>&1
 . "${PROJECT_DIR}"/amazon/admin/make.sh                 ### >> "${log_file}" 2>&1
 . "${PROJECT_DIR}"/amazon/webphp/make.sh 1              ### >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/webphp/make.sh 2              ### >> "${log_file}" 2>&1
+##. "${PROJECT_DIR}"/amazon/webphp/make.sh 2              ### >> "${log_file}" 2>&1
 
 # Deploy database objects
 . "${PROJECT_DIR}"/amazon/database/data/make.sh
@@ -59,7 +66,7 @@ echo
 # Deploy admin website and public webphp websites.
 . "${PROJECT_DIR}"/amazon/admin/website/make.sh         ### >> "${log_file}" 2>&1
 . "${PROJECT_DIR}"/amazon/webphp/website/make.sh 1      ### >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/webphp/website/make.sh 2      ### >> "${log_file}" 2>&1
+##. "${PROJECT_DIR}"/amazon/webphp/website/make.sh 2      ### >> "${log_file}" 2>&1
 
 # Register 'maxmin.it' domain with the AWS registrar.
 . "${PROJECT_DIR}"/amazon/dns/domain/registration/make.sh

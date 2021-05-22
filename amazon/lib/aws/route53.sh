@@ -73,9 +73,11 @@ set +o xtrace
 # Globals:
 #  None
 # Arguments:
-# +domain_nm         -- The name of the domain (FQDN).
-#                       If you're creating a public hosted zone, this is the name 
+# +domain_nm         -- The name of the domain. Specify a fully qualified domain name, for example, 
+#                       www.example.com .If you're creating a public hosted zone, this is the name 
 #                       you have registered with your DNS registrar.
+#                       If you're creating a public hosted zone, this is the name you have 
+#                       registered with your DNS registrar.
 # +delegation_set_id --
 # +caller_reference  -- Any unique string that identifies the request and that 
 #                       allows failed CreateHostedZone requests to be retried 
@@ -84,11 +86,11 @@ set +o xtrace
 # Returns:      
 #  The hosted zone identifier.  
 #===============================================================================
-function create_public_hosted_zone()
+function create_hosted_zone()
 {
    if [[ $# -lt 3 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: Missing mandatory arguments'
       exit 1
    fi
    
@@ -115,7 +117,7 @@ function create_public_hosted_zone()
 # and NS resource record sets. If the hosted zone contains other resource record 
 # sets, you must delete them before you can delete the hosted zone. If you try 
 # to delete a hosted zone that contains other resource record sets, the request 
-# fails, and Route 53 returns a HostedZoneNotEmpty error.
+# fails, and Route 53 returns a HostedZoneNotEmpty ERROR.
 # If you delete a hosted zone, you can't undelete it. Instead, you must create a 
 # new hosted zone and update the name servers for your domain registration, which 
 # can require up to 48 hours to take effect. (If you delegated responsibility 
@@ -127,53 +129,58 @@ function create_public_hosted_zone()
 # Globals:
 #  None
 # Arguments:
-# +hosted_zone_id         -- The hosted zone identifier. 
-
+# +domain_nm         -- The name of the domain. Specify a fully qualified domain name, for example, 
+#                       www.example.com .If you're creating a public hosted zone, this is the name 
+#                       you have registered with your DNS registrar.
+#                       If you're creating a public hosted zone, this is the name you have 
+#                       registered with your DNS registrar.
 # Returns:      
 #  None
 #===============================================================================
-function delete_public_hosted_zone()
+function delete_hosted_zone()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: Missing mandatory arguments'
       exit 1
    fi
    
-   local hosted_zone_id="${1}"
-
+   local domain_nm="${1}"
+   
+   hosted_zone_id="$(__get_hosted_zone_id "${domain_nm}")"
+   
    aws route53 delete-hosted-zone --id "${hosted_zone_id}"
    
    return 0
 }
 
 #===============================================================================
-# Gets a hosted zone identifier.
+# Gets a hosted zone attributes.
 #
 # Globals:
 #  None
 # Arguments:
-# +domain_nm            -- The name of the domain. 
-
+# +domain_nm         -- The name of the domain. Specify a fully qualified domain name, for example, 
+#                       www.example.com .If you're creating a public hosted zone, this is the name 
+#                       you have registered with your DNS registrar.
+#                       If you're creating a public hosted zone, this is the name you have 
+#                       registered with your DNS registrar.
 # Returns:      
-#  The hosted zone identifier, or blanc if not found.
+#  The attributes of a hosted zone. 
 #===============================================================================
-function get_public_hosted_zone_id()
+function get_hosted_zone() 
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: Missing mandatory arguments'
       exit 1
    fi
    
    local domain_nm="${1}"
-   local hosted_zone_id
-
-   hosted_zone_id="$(aws route53 list-hosted-zones-by-name \
-             --query "HostedZones[?contains(Name, '${domain_nm}')].{Id: Id}" \
-             --output text)"
-             
-   echo "${hosted_zone_id}"          
+   
+   hosted_zone_id="$(__get_hosted_zone_id "${domain_nm}")"
+   
+   aws route53 get-hosted-zone --id "${hosted_zone_id}"
    
    return 0
 }
@@ -190,8 +197,11 @@ function get_public_hosted_zone_id()
 # Globals:
 #  None
 # Arguments:
-# +hosted_zone_id -- the identifier of the hosted zone that contains the 
-#                    resource record sets that you want to change.
+# +hosted_zone_nm -- The name of the domain. Specify a fully qualified domain name, for example, 
+#                    www.example.com .If you're creating a public hosted zone, this is the name 
+#                    you have registered with your DNS registrar.
+#                    If you're creating a public hosted zone, this is the name you have 
+#                    registered with your DNS registrar.
 # +domain_nm      -- the DNS domain name.
 # +ip_address     -- the IP address associated to the domain.
 # +record_type    -- SOA | A | TXT | NS | CNAME | MX | PTR | SRV | SPF | AAAA
@@ -204,11 +214,11 @@ function __change_resource_record_sets()
 {
    if [[ $# -lt 6 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: Missing mandatory arguments'
       exit 1
    fi
    
-   local hosted_zone_id="${1}"
+   local hosted_zone_nm="${1}"
    local domain_nm="${2}"
    local ip_address="${3}"
    local record_type="${4}"
@@ -216,6 +226,8 @@ function __change_resource_record_sets()
    local comment="${6}"
    local change_batch
    local request_id
+   
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")" 
    
    change_batch="$(__create_change_batch "${domain_nm}" "${ip_address}" "${record_type}" "${action}" "${comment}")"
 
@@ -249,7 +261,7 @@ function __get_change()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: Missing mandatory arguments'
       exit 1
    fi
    
@@ -259,7 +271,7 @@ function __get_change()
    status="$(aws route53 get-change \
                             --id="${request_id}" \
                             --query ChangeInfo.Status \
-                            --output test)"
+                            --output text)"
    echo "${status}"
    
    return 0
@@ -284,7 +296,7 @@ function __create_change_batch()
 {
    if [[ $# -lt 5 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: Missing mandatory arguments'
       exit 1
    fi
    
@@ -329,13 +341,55 @@ function __create_change_batch()
    return 0
 }
 
+#===============================================================================
+# Gets a hosted zone identifier.
+#
+# Globals:
+#  None
+# Arguments:
+# +domain_nm            -- The name of the domain. 
 
+# Returns:      
+#  The hosted zone identifier. 
+#===============================================================================
+function __get_hosted_zone_id()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: Missing mandatory arguments'
+      exit 1
+   fi
+   
+   local domain_nm="${1}"
+   local hosted_zone_id
+
+   hosted_zone_id="$(aws route53 list-hosted-zones-by-name \
+             --query "HostedZones[?contains(Name, '${domain_nm}')].{Id: Id}" \
+             --output text)"
+             
+   if [[ -z "${hosted_zone_id}" ]]
+   then
+     echo 'ERROR: hosted zone not found'
+     exit 1
+   fi          
+             
+   echo "${hosted_zone_id}"          
+   
+   return 0
+}
+
+## TODO delete all non-required resource record sets before deleting the hosted zone.
+
+create_hosted_zone
+
+##delete_hosted_zone 'maxmin.it' 
+##get_hosted_zone 'maxmin.it'
 
 ## __create_change_batch 'maxmin.it' '192.0.0.3' 'A' 'CREATE' 'maxmin record' 
+## __change_resource_record_sets 'maxmin.it' 'webphp1.maxmin.it' '34.242.102.242' 'A' 'CREATE' 'admin website' 
 
-
-
-
+## __get_hosted_zone_id 'maxmin.it'
+##__get_change '/change/C0398056OWZA90PICZPC'
 
 
 

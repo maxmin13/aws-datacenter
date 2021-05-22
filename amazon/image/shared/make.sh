@@ -92,11 +92,11 @@ then
    exit 1
 fi
 
-echo "Creating '${SHARED_BASE_INSTANCE_NM}' instance ..."
+echo "Creating the shared base instance ..."
 run_base_instance "${sg_id}" "${subnet_id}"
 instance_id="$(get_instance_id "${SHARED_BASE_INSTANCE_NM}")"
 eip="$(get_public_ip_address_associated_with_instance "${SHARED_BASE_INSTANCE_NM}")"
-echo "Instance public address: '${eip}'"
+echo "Shared base instance public address: '${eip}'"
 
 echo 'Waiting for SSH to start'
 wait_ssh_started "${private_key}" "${eip}" 22 "${DEFAUT_AWS_USER}"
