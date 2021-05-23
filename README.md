@@ -42,5 +42,6 @@ amazon/master/delete.sh
 
 ## Configure reCaptcha
 
-Add the 'maxmin.it' domain to the account.
+The reCaptcha keys are in: recaptcha.sh
+Add the 'maxmin.it' domain to the Google account.
  

@@ -77,8 +77,8 @@ function register_domain()
 
    operation_id="$(aws route53domains register-domain \
                                  --region 'us-east-1' \
-                                 --cli-input-json file://"${request_file}")" \
-                                 --output text
+                                 --cli-input-json file://"${request_file}" \
+                                 --output text)"
   
    echo "${operation_id}"
    

@@ -12,15 +12,10 @@ set +o xtrace
 #       GLOBALS: None
 #        AUTHOR: MaxMin, minardi.massimiliano@libero.it
 #
-# When you register a domain with Route 53, we automatically make Route 53 the 
-# DNS service for the domain. Route 53 creates a hosted zone that has the same 
-# name as the domain, assigns four name servers to the hosted zone, and updates 
-# the domain to use those name servers.
-#
 # A public hosted zone defines how you want to route traffic on the internet 
 # for a domain, such as example.com, and its subdomains (apex.example.com, 
 # acme.example.com). 
-# You can't create a hosted zone for a top-level domain (TLD)  such as .com.
+# You can't create a hosted zone for a top-level domain (TLD) such as .com.
 # For public hosted zones, Route 53 automatically creates a default SOA record 
 # and four NS records for the zone. 
 # If you want to use the same name servers for multiple public hosted zones, 
@@ -48,22 +43,23 @@ set +o xtrace
 # zone, someone could hijack the domain and route traffic to their own 
 # resources using your domain name.
 #
-# If you delegated responsibility for a subdomain to a hosted zone and you want 
-# to delete the child hosted zone, you must also update the parent hosted zone 
-# by deleting the NS record that has the same name as the child hosted zone. 
-# We recommend that you delete the NS record first, and wait for the duration 
-# of the TTL on the NS record before you delete the child hosted zone. 
-# This ensures that someone can't hijack the child hosted zone during the period 
-# that DNS resolvers still have the name servers for the child hosted zone 
-# cached.
-#
 # If you want to avoid the monthly charge for the hosted zone, you can transfer 
 # DNS service for the domain to a free DNS service. When you transfer DNS 
 # service, you have to update the name servers for the domain registration.
+#
+#
+# Both Route53 and ELB are used to distribute the network traffic. 
+# These AWS services appear similar but there are minor differences between them.
+
+# ELB distributes traffic among Multiple Availability Zone but not to multiple Regions. 
+# Route53 can distribute traffic among multiple Regions. 
+# In short, ELBs are intended to load balance across EC2 instances in a single region whereas DNS 
+# load-balancing (Route53) is intended to help balance traffic across regions.
+#
 #===============================================================================
 
 #===============================================================================
-# Creates a new public hosted zone. 
+# Creates a new public or private hosted zone. 
 # When you submit a CreateHostedZone request, the initial status of the hosted 
 # zone is PENDING . For public hosted zones, this means that the NS and SOA 
 # records are not yet available on all Route 53 DNS servers. 
@@ -73,16 +69,15 @@ set +o xtrace
 # Globals:
 #  None
 # Arguments:
-# +domain_nm         -- The name of the domain. Specify a fully qualified domain name, for example, 
-#                       www.example.com .If you're creating a public hosted zone, this is the name 
-#                       you have registered with your DNS registrar.
-#                       If you're creating a public hosted zone, this is the name you have 
+# +domain_nm         -- The name of the domain. Specify a fully qualified domain 
+#                       name, for example, www.example.com . If you're creating 
+#                       a public hosted zone, this is the name you have 
 #                       registered with your DNS registrar.
-# +delegation_set_id --
 # +caller_reference  -- Any unique string that identifies the request and that 
 #                       allows failed CreateHostedZone requests to be retried 
 #                       without the risk of executing the operation twice.
-# +comment           -- A comment.
+# +comment           -- Any comments that you want to include about the hosted 
+#                       zone.
 # Returns:      
 #  The hosted zone identifier.  
 #===============================================================================
@@ -115,16 +110,7 @@ function create_hosted_zone()
 # Deletes a hosted zone.
 # You can delete a hosted zone only if it contains only the default SOA record 
 # and NS resource record sets. If the hosted zone contains other resource record 
-# sets, you must delete them before you can delete the hosted zone. If you try 
-# to delete a hosted zone that contains other resource record sets, the request 
-# fails, and Route 53 returns a HostedZoneNotEmpty ERROR.
-# If you delete a hosted zone, you can't undelete it. Instead, you must create a 
-# new hosted zone and update the name servers for your domain registration, which 
-# can require up to 48 hours to take effect. (If you delegated responsibility 
-# for a subdomain to a hosted zone and you delete the child hosted zone, you must 
-# update the name servers in the parent hosted zone.) In addition, if you delete 
-# a hosted zone, someone could hijack the domain and route traffic to their own 
-# resources using your domain name.
+# sets, you must delete them before you can delete the hosted zone. 
 #
 # Globals:
 #  None
@@ -132,8 +118,6 @@ function create_hosted_zone()
 # +domain_nm         -- The name of the domain. Specify a fully qualified domain name, for example, 
 #                       www.example.com .If you're creating a public hosted zone, this is the name 
 #                       you have registered with your DNS registrar.
-#                       If you're creating a public hosted zone, this is the name you have 
-#                       registered with your DNS registrar.
 # Returns:      
 #  None
 #===============================================================================
@@ -160,15 +144,13 @@ function delete_hosted_zone()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm         -- The name of the domain. Specify a fully qualified domain name, for example, 
-#                       www.example.com .If you're creating a public hosted zone, this is the name 
-#                       you have registered with your DNS registrar.
-#                       If you're creating a public hosted zone, this is the name you have 
-#                       registered with your DNS registrar.
+# +domain_nm         -- The name of the domain. Specify a fully qualified domain 
+#                       name, for example, www.example.com . 
 # Returns:      
-#  The attributes of a hosted zone. 
+#  A complex type that contains general information about the specified hosted 
+#  zone. 
 #===============================================================================
-function get_hosted_zone() 
+function get_hosted_zone_description() 
 {
    if [[ $# -lt 1 ]]
    then
@@ -186,33 +168,52 @@ function get_hosted_zone()
 }
 
 #===============================================================================
-# Creates, changes, or deletes a resource record set, which contains 
-# authoritative DNS information for a specified domain name or subdomain name. 
-# When you submit a ChangeResourceRecordSets request, Route 53 propagates your 
-# changes to all of the Route 53 authoritative DNS servers. While your changes 
-# are propagating, GetChange returns a status of PENDING . When propagation is 
-# complete, GetChange returns a status of INSYNC . Changes generally propagate 
-# to all Route 53 name servers within 60 seconds. 
+# Lists the resource record sets in a specified hosted zone.
 #
 # Globals:
 #  None
 # Arguments:
-# +hosted_zone_nm -- The name of the domain. Specify a fully qualified domain name, for example, 
-#                    www.example.com .If you're creating a public hosted zone, this is the name 
-#                    you have registered with your DNS registrar.
-#                    If you're creating a public hosted zone, this is the name you have 
-#                    registered with your DNS registrar.
-# +domain_nm      -- the DNS domain name.
-# +ip_address     -- the IP address associated to the domain.
-# +record_type    -- SOA | A | TXT | NS | CNAME | MX | PTR | SRV | SPF | AAAA
-# +action         -- CREATE | DELETE | UPSERT
-# +comment        -- comment about the changes in this change batch request.
+# +domain_nm         -- The name of the domain. Specify a fully qualified domain 
+#                       name, for example, www.example.com . 
+# Returns:      
+#  A list of resource record sets.  
+#===============================================================================
+function get_hosted_zone_record_sets() 
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: Missing mandatory arguments'
+      exit 1
+   fi
+   
+   local domain_nm="${1}"
+   
+   hosted_zone_id="$(__get_hosted_zone_id "${domain_nm}")"
+   
+   aws route53 list-resource-record-sets --hosted-zone-id "${hosted_zone_id}"
+   
+   return 0
+}
+
+#===============================================================================
+# Adds an A-record to a hosted zone.
+# A-records are the DNS server equivalent of the hosts file - a simple domain 
+# name to IP-address mapping. 
+# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+#
+# Globals:
+#  None
+# Arguments:
+# +hosted_zone_nm -- The hosted zone name, this is the name you have registered with your DNS 
+#                    registrar.
+# +domain_nm      -- the DNS domain name to which the record set refers to.
+# +ip_address     -- the IP address associated to the domain name.
 # Returns:      
 #  The ID of the request.  
 #===============================================================================
-function __change_resource_record_sets()
+function add_record()
 {
-   if [[ $# -lt 6 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'ERROR: Missing mandatory arguments'
       exit 1
@@ -221,31 +222,169 @@ function __change_resource_record_sets()
    local hosted_zone_nm="${1}"
    local domain_nm="${2}"
    local ip_address="${3}"
-   local record_type="${4}"
-   local action="${5}"
-   local comment="${6}"
-   local change_batch
    local request_id
+                                                           
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
    
-   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")" 
+   request_body="$(__create_type_A_change_batch "${domain_nm}" \
+                                               "${ip_address}" \
+                                               'CREATE' \
+                                               "A Record for ${ip_address}")"
+                                                  
+   ## Submit the hosted zone changes. 
+   request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")"                                              
    
-   change_batch="$(__create_change_batch "${domain_nm}" "${ip_address}" "${record_type}" "${action}" "${comment}")"
-
-   request_id="$(aws route53 change-resource-record-sets \
-                               --hosted-zone-id "${hosted_zone_id}" \
-                               --change-batch "${change_batch}" \
-                               --query ChangeInfo.Id \
-                               --output text)"
-                 
-   echo "${request_id}"              
-
-   return 0   
+   echo "${request_id}"
+   
+   return 0
 }
 
 #===============================================================================
-# Returns the current status of a change batch request.
+# Deletes a record in a hosted zone.
+# Changes to a hosted zoned generally propagate to all Route 53 name servers 
+# within 60 seconds. 
+#
+# Globals:
+#  None
+# Arguments:
+# +hosted_zone_nm -- The hosted zone name, this is the name you have registered  
+#                    with your DNS registrar.
+# +domain_nm      -- the DNS domain name to which the record set refers to.
+# +ip_address     -- the IP address associated to the domain name.
+# Returns:      
+#  The ID of the request.  
+#===============================================================================
+function delete_record()
+{
+   if [[ $# -lt 3 ]]
+   then
+      echo 'ERROR: Missing mandatory arguments'
+      exit 1
+   fi
+   
+   local hosted_zone_nm="${1}"
+   local domain_nm="${2}"
+   local ip_address="${3}"
+   local request_id
+                                                           
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+   
+   request_body="$(__create_type_A_change_batch "${domain_nm}" \
+                                               "${ip_address}" \
+                                               'DELETE' \
+                                               "A Record for ${ip_address}")"
+                                                  
+   ## Submit the hosted zone changes. 
+   request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")"                                              
+   
+   echo "${request_id}"
+   
+   return 0
+}
+
+#===============================================================================
+# Adds an alias record to a hosted zone.
+# A Canonical Name record (abbreviated as CNAME record) is a type of resource 
+# record in the Domain Name System (DNS) that maps one domain name (an alias) to 
+# another (the canonical name).
+# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+#
+# Globals:
+#  None
+# Arguments:
+# +hosted_zone_nm -- The hosted zone name, this is the name you have registered with your DNS 
+#                    registrar.
+# +domain_nm      -- the DNS domain name to which the record set refers to.
+# +dns_nm         -- the DNS address associated to the domain name.
+# Returns:      
+#  The ID of the request.  
+#===============================================================================
+function add_alias_record()
+{
+   if [[ $# -lt 4 ]]
+   then
+      echo 'ERROR: Missing mandatory arguments'
+      exit 1
+   fi
+   
+   local domain_nm="${1}"
+   local hosted_zone_nm="${2}"
+   local target_domain_nm="${3}"
+   local target_hosted_zone_id="${4}"
+   local hosted_zone_id
+   local request_body
+   local request_id
+   
+   # The alias record is removed from this hosted zone.
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+    
+   request_body="$(__create_alias_change_batch "${domain_nm}" \
+                                               "${target_domain_nm}" \
+                                               "${target_hosted_zone_id}" \
+                                               'CREATE' \
+                                               "Alias record for ${target_domain_nm}")"
+                                                  
+   ## Submit the changes to the hosted zone. 
+   request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")"                                          
+   
+   echo "${request_id}"
+   
+   return 0
+}
+
+#===============================================================================
+# Deletes an alias record in a hosted zone.
+# Changes to a hosted zoned generally propagate to all Route 53 name servers 
+# within 60 seconds. 
+#
+# Globals:
+#  None
+# Arguments:
+# +domain_nm                 -- the alias name.
+# +hosted_zone_nm            -- the hosted zone where the alias will be created.   
+# +target_domain_nm          -- the domain name referred by the alias.
+# +target_hosted_zone_id     -- the hosted zone that contains the referred domain name.
+# Returns:      
+#  The ID of the request.  
+#===============================================================================
+function delete_alias_record()
+{
+   if [[ $# -lt 4 ]]
+   then
+      echo 'ERROR: Missing mandatory arguments'
+      exit 1
+   fi
+   
+   local domain_nm="${1}"
+   local hosted_zone_nm="${2}"
+   local target_domain_nm="${3}"
+   local target_hosted_zone_id="${4}"
+   local hosted_zone_id
+   local request_body
+   local request_id
+   
+   # The alias record is removed from this hosted zone.
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+    
+   request_body="$(__create_alias_change_batch "${domain_nm}" \
+                                               "${target_domain_nm}" \
+                                               "${target_hosted_zone_id}" \
+                                               'DELETE' \
+                                               "Alias record for ${target_domain_nm}")"
+                                                  
+   ## Submit the changes to the hosted zone. 
+   request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")"                                          
+   
+   echo "${request_id}"
+   
+   return 0
+}
+
+#===============================================================================
+# Returns the current status of a request to add/delete a record in the hosted
+# zone.
 # The status is one of the following values:
-# PENDING indicates that the changes in this request  have  not  propagated  to 
+# PENDING indicates that the changes in this request have not propagated to 
 # all Amazon Route 53 DNS servers. This is the initial status of all change 
 # batch requests.
 # INSYNC indicates that the changes have propagated to all Route 53 DNS servers.
@@ -257,7 +396,7 @@ function __change_resource_record_sets()
 # Returns:      
 #  The status of the request.  
 #===============================================================================
-function __get_change()
+function get_record_request_status()
 {
    if [[ $# -lt 1 ]]
    then
@@ -268,33 +407,65 @@ function __get_change()
    local request_id="${1}"
    local status
    
-   status="$(aws route53 get-change \
-                            --id="${request_id}" \
-                            --query ChangeInfo.Status \
-                            --output text)"
+   status="$(__get_change_batch_request_status "${request_id}")"
    echo "${status}"
    
    return 0
 }
 
 #===============================================================================
-# Creates the change batch containing the list of change items to create, delete
-# or update a resource record set.
+# Returns the current status of a change batch request.
+# The status is one of the following values:
+# PENDING indicates that the changes in this request have not propagated to 
+# all Amazon Route 53 DNS servers. This is the initial status of all change 
+# batch requests.
+# INSYNC indicates that the changes have propagated to all Route 53 DNS servers.
+#
+# Globals:
+#  None
+# Arguments:
+# +cb_request_id      -- the ID of the change batch request.
+# Returns:      
+#  The status of the request.  
+#===============================================================================
+function __get_change_batch_request_status()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: Missing mandatory arguments'
+      exit 1
+   fi
+   
+   local cb_request_id="${1}"
+   local status
+   
+   status="$(aws route53 get-change --id="${cb_request_id}" \
+                                    --query ChangeInfo.Status \
+                                    --output text)"
+   echo "${status}"
+   
+   return 0
+}
+
+#===============================================================================
+# Creates the change batch request to create, delete or update a record type A.
+# A-records are the DNS server equivalent of the hosts file - a simple domain 
+# name to IP-address mapping. 
+# Changes generally propagate to all Route 53 name servers within 60 seconds. 
 #
 # Globals:
 #  None
 # Arguments:
 # +domain_nm   -- the DNS domain name.
 # +ip_address  -- the IP address associated to the domain.
-# +record_type -- SOA | A | TXT | NS | CNAME | MX | PTR | SRV | SPF | AAAA
 # +action      -- CREATE | DELETE | UPSERT
 # +comment     -- comment about the changes in this change batch request.
 # Returns:      
-#  None  
+#  The change batch containing the changes to apply to a hosted zone.  
 #=============================================================================== 
-function __create_change_batch()
+function __create_type_A_change_batch()
 {
-   if [[ $# -lt 5 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: Missing mandatory arguments'
       exit 1
@@ -302,9 +473,8 @@ function __create_change_batch()
    
    local domain_nm="${1}"
    local ip_address="${2}"
-   local record_type="${3}"
-   local action="${4}"
-   local comment="${5}"
+   local action="${3}"
+   local comment="${4}"
    local template
    
    template=$(cat <<-'EOF'
@@ -315,7 +485,7 @@ function __create_change_batch()
                  "Action": "SEDactionSED",
                  "ResourceRecordSet": {
                     "Name": "SEDdomain_nameSED",
-                    "Type": "SEDtypeSED",
+                    "Type": "A",
                     "TTL": 120,
                     "ResourceRecords": [
                        {
@@ -329,16 +499,116 @@ function __create_change_batch()
 	EOF
    )
    
-   change_batch_block="$(printf '%b\n' "${template}" \
+   change_batch="$(printf '%b\n' "${template}" \
                         | sed -e "s/SEDdomain_nameSED/${domain_nm}/g" \
                               -e "s/SEDip_addressSED/${ip_address}/g" \
-                              -e "s/SEDtypeSED/${record_type}/g" \
                               -e "s/SEDcommentSED/${comment}/g" \
                               -e "s/SEDactionSED/${action}/g")" 
    
-   echo "${change_batch_block}"
+   echo "${change_batch}"
    
    return 0
+}
+
+#===============================================================================
+# Creates the change batch request to create, delete or update a record type for
+# an alias.
+# Changes generally propagate to all Route 53 name servers within 60 seconds.  
+#
+# Globals:
+#  None
+# Arguments:
+# +domain_nm          -- the DNS domain name.
+# +dns_hosted_zone_id -- the identifier of the hosted zone of the DNS domain name.
+# +dns_nm             -- the DNS name referred by the alias.
+# +action             -- CREATE | DELETE | UPSERT
+# +comment            -- comment about the changes in this change batch request.
+# Returns:      
+#  The change batch containing the changes to apply to a hosted zone.  
+#=============================================================================== 
+function __create_alias_change_batch()
+{
+   if [[ $# -lt 5 ]]
+   then
+      echo 'ERROR: Missing mandatory arguments'
+      exit 1
+   fi
+
+   local domain_nm="${1}"
+   local target_domain_nm="${2}"
+   local target_hosted_zone_id="${3}"
+   local action="${4}"
+   local comment="${5}"
+   local template
+   
+   template=$(cat <<-'EOF' 
+        {
+             "Comment": "SEDcommentSED",
+             "Changes": [
+                           {
+                              "Action": "CREATE",
+                              "ResourceRecordSet": 
+                                 {
+                                    "Name": "SEDdomain_nameSED",
+                                    "Type": "A",
+                                    "AliasTarget":
+                                       {
+                                            "HostedZoneId": "SEDtarget_hosted_zone_idSED",
+                                            "DNSName": "SEDtarget_domain_nameSED",
+                                            "EvaluateTargetHealth": false
+                                       }
+                                }
+                          }
+                       ]
+        }        
+	EOF
+   )
+  
+   change_batch="$(printf '%b\n' "${template}" \
+                    | sed -e "s/SEDdomain_nameSED/${domain_nm}/g" \
+                          -e "s/SEDtarget_domain_nameSED/${target_domain_nm}/g" \
+                          -e "s/SEDtarget_hosted_zone_idSED/${target_hosted_zone_id}/g" \
+                          -e "s/SEDcommentSED/${comment}/g" \
+                          -e "s/SEDactionSED/${action}/g")" 
+   
+   echo "${change_batch}"
+   
+   return 0
+}
+
+#===============================================================================
+# Submit the change batch request.
+# Changes generally propagate to all Route 53 name servers within 60 seconds.  
+#
+# Globals:
+#  None
+# Arguments:
+# +hosted_zone_id -- the hosted zone identifier.
+# +request_body   -- the request details.
+# Returns:      
+#  The change batch request identifier.  
+#=============================================================================== 
+function __submit_change_batch()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: Missing mandatory arguments'
+      exit 1
+   fi
+   
+   local hosted_zone_id="${1}"
+   local request_body="${2}"
+
+   ## Submit the changes in the batch to the hosted zone.
+   request_id="$(aws route53 change-resource-record-sets \
+                               --hosted-zone-id "${hosted_zone_id}" \
+                               --change-batch "${request_body}" \
+                               --query ChangeInfo.Id \
+                               --output text)"
+                               
+   echo "${request_id}"
+   
+   return 0                              
 }
 
 #===============================================================================
@@ -378,18 +648,27 @@ function __get_hosted_zone_id()
    return 0
 }
 
-## TODO delete all non-required resource record sets before deleting the hosted zone.
+## create_hosted_zone 'maxmin.it' 'maxmin_it_caller_reference' 'maxmin.it public hosted zone'
+## delete_hosted_zone 'maxmin.it' 
+## get_hosted_zone_description 'maxmin.it'
+## get_hosted_zone_record_sets 'maxmin.it'
 
-create_hosted_zone
+## add_record 'maxmin.it' 'admin.maxmin.it' '54.72.236.225'
+## delete_record 'maxmin.it' 'admin.maxmin.it' '54.72.236.225'
+## get_record_request_status '/change/C05501752DVMPQL5QQE8Q'
 
-##delete_hosted_zone 'maxmin.it' 
-##get_hosted_zone 'maxmin.it'
+## add_alias_record 'www.maxmin.it' 'maxmin.it' 'dualstack.elbmaxmin-450194799.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2'
+## delete_alias_record 'www.maxmin.it' 'maxmin.it' 'dualstack.elbmaxmin-450194799.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2'
+## get_record_request_status '/change/C08567412987M8ULD7QKI'
 
-## __create_change_batch 'maxmin.it' '192.0.0.3' 'A' 'CREATE' 'maxmin record' 
-## __change_resource_record_sets 'maxmin.it' 'webphp1.maxmin.it' '34.242.102.242' 'A' 'CREATE' 'admin website' 
+## __create_type_A_change_batch 'webphp1.maxmin.it' '34.242.102.242' 'A' 'CREATE' 'admin website' 
+## __create_alias_change_batch 'www.maxmin.it' 'dualstack.elbmaxmin-450194799.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2' 'CREATE' 'elb alias'
+
+## __get_change_batch_request_status '/change/C0398056OWZA90PICZPC'
 
 ## __get_hosted_zone_id 'maxmin.it'
-##__get_change '/change/C0398056OWZA90PICZPC'
+## __get_hosted_zone_id 'elbmaxmin-450194799'
+
 
 
 

@@ -45,6 +45,37 @@ function get_loadbalancer_dns_name()
 }
 
 #===============================================================================
+# Returns the Load Balancer DNS hosted zone identifier or, if the Load Balancer 
+# doesn't exist, an empty string.
+#
+# Globals:
+#  None
+# Arguments:
+# +loadbalancer_nm     -- The Load Balancer name.
+# Returns:      
+#  The ELB hosted zone identifier, or blanc if the ELB is not found.  
+#===============================================================================
+function get_loadbalancer_dns_hosted_zone_id()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'Error: Missing mandatory arguments'
+      exit 1
+   fi
+
+   local loadbalancer_nm="${1}"
+   local elb_dns
+ 
+   elb_dns="$(aws elb describe-load-balancers \
+                      --query "LoadBalancerDescriptions[?LoadBalancerName=='${loadbalancer_nm}'].CanonicalHostedZoneNameID" \
+                      --output text)"
+ 
+   echo "${elb_dns}"
+ 
+   return 0
+}
+
+#===============================================================================
 # Creates a Classic Load Balancer. 
 # Elastic Load Balancers support sticky sessions. 
 # The Load Balander listens on 443 and forwards the requests to the
