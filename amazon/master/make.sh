@@ -19,6 +19,7 @@ source "${PROJECT_DIR}"/amazon/lib/aws/elb.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/iam.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
+source "${PROJECT_DIR}"/amazon/lib/aws/route53.sh
 source "${PROJECT_DIR}"/amazon/credential/recaptcha.sh
 source "${PROJECT_DIR}"/amazon/credential/passwords.sh
 
@@ -63,6 +64,9 @@ echo
 
 # Register 'maxmin.it' domain with the AWS registrar.
 . "${PROJECT_DIR}"/amazon/dns/domain/registration/make.sh
+
+# Create the hosted zone that handles the application DNS records.
+. "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh
 
 echo 'Data Center up and running'
 echo

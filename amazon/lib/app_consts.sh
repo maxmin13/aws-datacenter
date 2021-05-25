@@ -92,6 +92,7 @@ LBAL_CRT_UNIT_NM='UN'
 LBAL_CRT_COMMON_NM='www.maxmin.it'
 LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 LBAL_SEC_GRP_NM='maxmin-elb-sgp'
+LBAL_DNS_SUB_DOMAIN='www'
 
 ## ********* ##
 ## Admin box ##
@@ -123,6 +124,7 @@ SERVER_ADMIN_CRT_COMPANY_NM='maxmin13'
 SERVER_ADMIN_CRT_ORGANIZATION_NM='WWW'
 SERVER_ADMIN_CRT_UNIT_NM='UN'
 SERVER_ADMIN_HOSTNAME='admin.maxmin.it'
+SERVER_ADMIN_DNS_SUB_DOMAIN='admin'
 
 ## ********** ##
 ## WebPhp box ##

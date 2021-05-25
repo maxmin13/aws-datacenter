@@ -163,4 +163,4 @@ fi
 # Clearing local files
 rm -rf "${TMP_DIR:?}"/admin
 
-
+echo

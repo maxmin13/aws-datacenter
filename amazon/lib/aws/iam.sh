@@ -1,6 +1,8 @@
 #!/usr/bin/bash
 
 set -o errexit
+## turn on -e in subshells
+shopt -s inherit_errexit
 set -o pipefail
 set -o nounset
 set +o xtrace

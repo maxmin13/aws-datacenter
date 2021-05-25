@@ -6,8 +6,9 @@ set -o nounset
 set +o xtrace
 
 ###############################################
-# Registers the maxmin.it domain with AWS 
-# registrar. 
+# Checks if the maxmin.it domain is registered
+# with AWS, if not, checks if it's available 
+# and submit a registration request. 
 ###############################################
 
 
@@ -16,46 +17,33 @@ echo 'DNS domain register'
 echo '*******************'
 echo
 
-error=0
+registered="$(check_domain_is_registered_with_the_account "${MAXMIN_TLD}")"
 
-availability="$(check_domain_availability "${MAXMIN_TLD}")"
-
-if [[ "${availability}" != 'AVAILABLE' ]]
+if [[ -n "${registered}" ]]
 then
-   echo "* WARN: the '${MAXMIN_TLD}' domain is not available"
-   error=1
-fi
-
-if [[ -f "${DOWNLOAD_DIR}/domain_registration.txt" ]]
-then
-   echo "* WARN: a registration request has been already submitted"
-   operation_id="$(cat "${DOWNLOAD_DIR}"/domain_registration.txt)"  
-   error=1
-fi
-
-echo
-
-if [[ "${error}" -eq 0 ]]
-then
-   echo "The '${MAXMIN_TLD}' domain is available"
-   echo 'Registering the domain with the AWS registrar ...'
-
-   operation_id="$(register_domain "${TEMPLATE_DIR}/dns/register-domain.json")"
-
-   # Save the registration id.
-   echo "Operation ID: ${operation_id}"
-   echo "${operation_id}" >> "${DOWNLOAD_DIR}/domain_registration.txt" 
- 
-   echo 'Request sent to the AWS registrar.' 
-fi
-
-if [[ -n "${operation_id}" ]]
-then
-   date="$(get_request_date "${operation_id}")" 
-   status="$(get_request_status "${operation_id}")" 
+   echo "The ${MAXMIN_TLD} domain is registered with the account."
+else
+   echo "* WARN: the '${MAXMIN_TLD}' domain is not registered with the account."
    
-   echo "Date of submission: ${date}"  
-   echo "Date of status: ${status}"
+   status="$(get_request_status 'REGISTER_DOMAIN')" 
+
+   if [[ 'IN_PROGRESS' == "${status}" ]]
+   then
+      echo '* WARN: a registration request has already been submitted'
+   else
+      availability="$(check_domain_availability "${MAXMIN_TLD}")"
+
+      if [[ "${availability}" != 'AVAILABLE' ]]
+      then
+         echo "* WARN: the '${MAXMIN_TLD}' domain is not available for registration"
+      else
+         echo "The '${MAXMIN_TLD}' domain is available, registering"
+         
+         register_domain "${TEMPLATE_DIR}"/dns/register-domain.json
+         
+         echo 'Request sent to the AWS registrar.' 
+      fi     
+   fi
 fi
 
 echo

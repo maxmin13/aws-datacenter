@@ -18,6 +18,7 @@ source "${PROJECT_DIR}"/amazon/lib/aws/ec2.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/elb.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/iam.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
+source "${PROJECT_DIR}"/amazon/lib/aws/route53.sh
 source "${PROJECT_DIR}"/amazon/credential/recaptcha.sh
 source "${PROJECT_DIR}"/amazon/credential/passwords.sh
 
@@ -71,6 +72,10 @@ echo
 
 # Delete the datacenter.
 . "${PROJECT_DIR}"/amazon/datacenter/delete.sh            ### >> "${log_file}" 2>&1
+
+# Delete the application hosted zone
+. "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh        ### >> "${log_file}" 2>&1
+
 
 echo 'Data center deleted'
 echo

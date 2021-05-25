@@ -1,6 +1,8 @@
 #!/usr/bin/bash
 
 set -o errexit
+## turn on -e in subshells
+shopt -s inherit_errexit
 set -o pipefail
 set -o nounset
 set +o xtrace
@@ -69,10 +71,8 @@ set +o xtrace
 # Globals:
 #  None
 # Arguments:
-# +domain_nm         -- The name of the domain. Specify a fully qualified domain 
-#                       name, for example, www.example.com . If you're creating 
-#                       a public hosted zone, this is the name you have 
-#                       registered with your DNS registrar.
+# +hosted_zone_nm    -- The hosted zone name, this is the name you have registered with your DNS 
+#                       registrar.
 # +caller_reference  -- Any unique string that identifies the request and that 
 #                       allows failed CreateHostedZone requests to be retried 
 #                       without the risk of executing the operation twice.
@@ -89,13 +89,13 @@ function create_hosted_zone()
       exit 1
    fi
    
-   local domain_nm="${1}"
+   local hosted_zone_nm="${1}"
    local caller_reference="${2}"
    local comment="${3}"
    local hosted_zone_id
 
    hosted_zone_id="$(aws route53 create-hosted-zone \
-                           --name "${domain_nm}" \
+                           --name "${hosted_zone_nm}" \
                            --caller-reference "${caller_reference}" \
                            --hosted-zone-config Comment="${comment}" \
                            --query 'HostedZone.Id' \
@@ -115,9 +115,8 @@ function create_hosted_zone()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm         -- The name of the domain. Specify a fully qualified domain name, for example, 
-#                       www.example.com .If you're creating a public hosted zone, this is the name 
-#                       you have registered with your DNS registrar.
+# +hosted_zone_nm -- The hosted zone name, this is the name you have registered 
+#                    with your DNS registrar.
 # Returns:      
 #  None
 #===============================================================================
@@ -129,9 +128,9 @@ function delete_hosted_zone()
       exit 1
    fi
    
-   local domain_nm="${1}"
+   local hosted_zone_nm="${1}"
    
-   hosted_zone_id="$(__get_hosted_zone_id "${domain_nm}")"
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
    
    aws route53 delete-hosted-zone --id "${hosted_zone_id}"
    
@@ -139,18 +138,17 @@ function delete_hosted_zone()
 }
 
 #===============================================================================
-# Gets a hosted zone attributes.
+# Checks if a hosted zone exits by returning its name, or blanc if not found.
 #
 # Globals:
 #  None
 # Arguments:
-# +domain_nm         -- The name of the domain. Specify a fully qualified domain 
-#                       name, for example, www.example.com . 
+# +hosted_zone_nm -- The hosted zone name, this is the name you have registered 
+#                    with your DNS registrar.
 # Returns:      
-#  A complex type that contains general information about the specified hosted 
-#  zone. 
+#  The hosted zone's name if it exists, blanc otherwise.
 #===============================================================================
-function get_hosted_zone_description() 
+function check_hosted_zone_exists() 
 {
    if [[ $# -lt 1 ]]
    then
@@ -158,27 +156,33 @@ function get_hosted_zone_description()
       exit 1
    fi
    
-   local domain_nm="${1}"
+   local hosted_zone_nm="${1}"
+   local exist
    
-   hosted_zone_id="$(__get_hosted_zone_id "${domain_nm}")"
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
    
-   aws route53 get-hosted-zone --id "${hosted_zone_id}"
+   exists="$(aws route53 get-hosted-zone --id "${hosted_zone_id}" \
+                                         --query HostedZone.Name \
+                                         --output text)"
+   
+   echo "${exists}"
    
    return 0
 }
 
 #===============================================================================
-# Lists the resource record sets in a specified hosted zone.
+# Returns a string containing a hosted zone name servers.
 #
 # Globals:
 #  None
 # Arguments:
-# +domain_nm         -- The name of the domain. Specify a fully qualified domain 
-#                       name, for example, www.example.com . 
+# +hosted_zone_nm -- The hosted zone name, this is the name you have registered 
+#                    with your DNS registrar.
 # Returns:      
-#  A list of resource record sets.  
+#  A string representing the hosted zone name servers.
+#  ex: ns-128.awsdns-16.com ns-1930.awsdns-49.co.uk ns-752.awsdns-30.net ns-1095.awsdns-08.org
 #===============================================================================
-function get_hosted_zone_record_sets() 
+function get_hosted_zone_name_servers() 
 {
    if [[ $# -lt 1 ]]
    then
@@ -186,11 +190,51 @@ function get_hosted_zone_record_sets()
       exit 1
    fi
    
-   local domain_nm="${1}"
+   local hosted_zone_nm="${1}"
+   local name_servers
    
-   hosted_zone_id="$(__get_hosted_zone_id "${domain_nm}")"
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
    
-   aws route53 list-resource-record-sets --hosted-zone-id "${hosted_zone_id}"
+   name_servers="$(aws route53 get-hosted-zone \
+                                  --id "${hosted_zone_id}" \
+                                  --query DelegationSet.NameServers[*] \
+                                  --output text)"
+   
+   echo "${name_servers}"
+   
+   return 0
+}
+
+#===============================================================================
+# Returs the name of the record if the record is present in the hosted zone, or 
+# blanc if the record is not found.
+#
+# Globals:
+#  None
+# Arguments:
+# +sub_domain_nm      -- the alias sub-domain name, eg. www
+# +hosted_zone_nm     -- The hosted zone name, this is the name you have registered with your DNS 
+#                        registrar.
+# Returns:      
+#  The name of the record, or blanc if not found.  
+#===============================================================================
+function check_hosted_zone_has_record() 
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: Missing mandatory arguments'
+      exit 1
+   fi
+   
+   local sub_domain_nm="${1}"
+   local hosted_zone_nm="${2}"
+   
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+   
+   aws route53 list-resource-record-sets \
+                     --hosted-zone-id "${hosted_zone_id}" \
+                     --query "ResourceRecordSets[?contains(Name,'${sub_domain_nm}.${hosted_zone_nm}')].Name" \
+                     --output text
    
    return 0
 }
@@ -204,14 +248,14 @@ function get_hosted_zone_record_sets()
 # Globals:
 #  None
 # Arguments:
+# +sub_domain_nm      -- the alias sub-domain name, eg. www
 # +hosted_zone_nm -- The hosted zone name, this is the name you have registered with your DNS 
 #                    registrar.
-# +domain_nm      -- the DNS domain name to which the record set refers to.
 # +ip_address     -- the IP address associated to the domain name.
 # Returns:      
 #  The ID of the request.  
 #===============================================================================
-function add_record()
+function create_record()
 {
    if [[ $# -lt 3 ]]
    then
@@ -219,17 +263,17 @@ function add_record()
       exit 1
    fi
    
-   local hosted_zone_nm="${1}"
-   local domain_nm="${2}"
+   local sub_domain_nm="${1}"
+   local hosted_zone_nm="${2}"
    local ip_address="${3}"
    local request_id
                                                            
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
    
-   request_body="$(__create_type_A_change_batch "${domain_nm}" \
-                                               "${ip_address}" \
-                                               'CREATE' \
-                                               "A Record for ${ip_address}")"
+   request_body="$(__create_type_A_change_batch "${sub_domain_nm}.${hosted_zone_nm}" \
+                                                "${ip_address}" \
+                                                'CREATE' \
+                                                "A Record for ${ip_address}")"
                                                   
    ## Submit the hosted zone changes. 
    request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")"                                              
@@ -247,9 +291,9 @@ function add_record()
 # Globals:
 #  None
 # Arguments:
-# +hosted_zone_nm -- The hosted zone name, this is the name you have registered  
-#                    with your DNS registrar.
-# +domain_nm      -- the DNS domain name to which the record set refers to.
+# +sub_domain_nm      -- the alias sub-domain name, eg. www
+# +hosted_zone_nm -- The hosted zone name, this is the name you have registered with your DNS 
+#                    registrar.
 # +ip_address     -- the IP address associated to the domain name.
 # Returns:      
 #  The ID of the request.  
@@ -262,17 +306,17 @@ function delete_record()
       exit 1
    fi
    
-   local hosted_zone_nm="${1}"
-   local domain_nm="${2}"
+   local sub_domain_nm="${1}"
+   local hosted_zone_nm="${2}"
    local ip_address="${3}"
    local request_id
                                                            
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
    
-   request_body="$(__create_type_A_change_batch "${domain_nm}" \
-                                               "${ip_address}" \
-                                               'DELETE' \
-                                               "A Record for ${ip_address}")"
+   request_body="$(__create_type_A_change_batch "${sub_domain_nm}.${hosted_zone_nm}" \
+                                                "${ip_address}" \
+                                                'DELETE' \
+                                                "A Record for ${ip_address}")"
                                                   
    ## Submit the hosted zone changes. 
    request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")"                                              
@@ -292,14 +336,15 @@ function delete_record()
 # Globals:
 #  None
 # Arguments:
-# +hosted_zone_nm -- The hosted zone name, this is the name you have registered with your DNS 
-#                    registrar.
-# +domain_nm      -- the DNS domain name to which the record set refers to.
-# +dns_nm         -- the DNS address associated to the domain name.
+# +sub_domain_nm         -- the alias sub-domain name, eg. www .
+# +hosted_zone_nm        -- the alias's hosted zone, this is the name you have  
+#                           registered with your DNS registrar.
+# +target_domain_nm      -- the domain name referred by the alias.
+# +target_hosted_zone_id -- the hosted zone identifier of the referred domain. 
 # Returns:      
 #  The ID of the request.  
 #===============================================================================
-function add_alias_record()
+function create_alias_record()
 {
    if [[ $# -lt 4 ]]
    then
@@ -307,7 +352,7 @@ function add_alias_record()
       exit 1
    fi
    
-   local domain_nm="${1}"
+   local sub_domain_nm="${1}"
    local hosted_zone_nm="${2}"
    local target_domain_nm="${3}"
    local target_hosted_zone_id="${4}"
@@ -318,15 +363,15 @@ function add_alias_record()
    # The alias record is removed from this hosted zone.
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
     
-   request_body="$(__create_alias_change_batch "${domain_nm}" \
-                                               "${target_domain_nm}" \
+   request_body="$(__create_alias_change_batch "${sub_domain_nm}.${hosted_zone_nm}" \
+                                               "dualstack.${target_domain_nm}" \
                                                "${target_hosted_zone_id}" \
                                                'CREATE' \
-                                               "Alias record for ${target_domain_nm}")"
+                                               "Alias record for ${sub_domain_nm}.${hosted_zone_nm}")"
                                                   
    ## Submit the changes to the hosted zone. 
-   request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")"                                          
-   
+   request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")"   
+                                        
    echo "${request_id}"
    
    return 0
@@ -340,22 +385,23 @@ function add_alias_record()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm                 -- the alias name.
-# +hosted_zone_nm            -- the hosted zone where the alias will be created.   
-# +target_domain_nm          -- the domain name referred by the alias.
-# +target_hosted_zone_id     -- the hosted zone that contains the referred domain name.
+# +sub_domain_nm         -- the alias sub-domain name, eg. www .
+# +hosted_zone_nm        -- the alias's hosted zone, this is the name you have  
+#                           registered with your DNS registrar.
+# +target_domain_nm      -- the domain name referred by the alias.
+# +target_hosted_zone_id -- the hosted zone identifier of the referred domain. 
 # Returns:      
 #  The ID of the request.  
 #===============================================================================
 function delete_alias_record()
 {
-   if [[ $# -lt 4 ]]
+  if [[ $# -lt 4 ]]
    then
       echo 'ERROR: Missing mandatory arguments'
       exit 1
    fi
    
-   local domain_nm="${1}"
+   local sub_domain_nm="${1}"
    local hosted_zone_nm="${2}"
    local target_domain_nm="${3}"
    local target_hosted_zone_id="${4}"
@@ -366,15 +412,15 @@ function delete_alias_record()
    # The alias record is removed from this hosted zone.
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
     
-   request_body="$(__create_alias_change_batch "${domain_nm}" \
-                                               "${target_domain_nm}" \
+   request_body="$(__create_alias_change_batch "${sub_domain_nm}.${hosted_zone_nm}" \
+                                               "dualstack.${target_domain_nm}" \
                                                "${target_hosted_zone_id}" \
                                                'DELETE' \
-                                               "Alias record for ${target_domain_nm}")"
-                                                  
+                                               "Alias record for ${sub_domain_nm}.${hosted_zone_nm}")"
+                                             
    ## Submit the changes to the hosted zone. 
    request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")"                                          
-   
+  
    echo "${request_id}"
    
    return 0
@@ -518,11 +564,11 @@ function __create_type_A_change_batch()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm          -- the DNS domain name.
-# +dns_hosted_zone_id -- the identifier of the hosted zone of the DNS domain name.
-# +dns_nm             -- the DNS name referred by the alias.
-# +action             -- CREATE | DELETE | UPSERT
-# +comment            -- comment about the changes in this change batch request.
+# +domain_nm             -- the DNS domain name.
+# +target_domain_nm      -- the DNS name referred by the alias.
+# +target_hosted_zone_id -- the identifier of the hosted zone of the DNS domain name.
+# +action                -- CREATE | DELETE | UPSERT
+# +comment               -- comment about the changes in this change batch request.
 # Returns:      
 #  The change batch containing the changes to apply to a hosted zone.  
 #=============================================================================== 
@@ -546,15 +592,15 @@ function __create_alias_change_batch()
              "Comment": "SEDcommentSED",
              "Changes": [
                            {
-                              "Action": "CREATE",
+                              "Action": "SEDactionSED",
                               "ResourceRecordSet": 
                                  {
-                                    "Name": "SEDdomain_nameSED",
+                                    "Name": "SEDdomain_nmSED",
                                     "Type": "A",
                                     "AliasTarget":
                                        {
                                             "HostedZoneId": "SEDtarget_hosted_zone_idSED",
-                                            "DNSName": "SEDtarget_domain_nameSED",
+                                            "DNSName": "SEDtarget_domain_nmSED",
                                             "EvaluateTargetHealth": false
                                        }
                                 }
@@ -565,8 +611,8 @@ function __create_alias_change_batch()
    )
   
    change_batch="$(printf '%b\n' "${template}" \
-                    | sed -e "s/SEDdomain_nameSED/${domain_nm}/g" \
-                          -e "s/SEDtarget_domain_nameSED/${target_domain_nm}/g" \
+                    | sed -e "s/SEDdomain_nmSED/${domain_nm}/g" \
+                          -e "s/SEDtarget_domain_nmSED/${target_domain_nm}/g" \
                           -e "s/SEDtarget_hosted_zone_idSED/${target_hosted_zone_id}/g" \
                           -e "s/SEDcommentSED/${comment}/g" \
                           -e "s/SEDactionSED/${action}/g")" 
@@ -598,6 +644,7 @@ function __submit_change_batch()
    
    local hosted_zone_id="${1}"
    local request_body="${2}"
+   local request_id
 
    ## Submit the changes in the batch to the hosted zone.
    request_id="$(aws route53 change-resource-record-sets \
@@ -605,7 +652,7 @@ function __submit_change_batch()
                                --change-batch "${request_body}" \
                                --query ChangeInfo.Id \
                                --output text)"
-                               
+              
    echo "${request_id}"
    
    return 0                              
@@ -617,7 +664,8 @@ function __submit_change_batch()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm            -- The name of the domain. 
+# +hosted_zone_nm -- The hosted zone name, this is the name you have registered  
+#                    with the DNS registrar. 
 
 # Returns:      
 #  The hosted zone identifier. 
@@ -650,19 +698,23 @@ function __get_hosted_zone_id()
 
 ## create_hosted_zone 'maxmin.it' 'maxmin_it_caller_reference' 'maxmin.it public hosted zone'
 ## delete_hosted_zone 'maxmin.it' 
-## get_hosted_zone_description 'maxmin.it'
-## get_hosted_zone_record_sets 'maxmin.it'
+## check_hosted_zone_exists 'maxmin.it'
+## get_hosted_zone_name_servers "maxmin.it" 
 
-## add_record 'maxmin.it' 'admin.maxmin.it' '54.72.236.225'
-## delete_record 'maxmin.it' 'admin.maxmin.it' '54.72.236.225'
-## get_record_request_status '/change/C05501752DVMPQL5QQE8Q'
-
-## add_alias_record 'www.maxmin.it' 'maxmin.it' 'dualstack.elbmaxmin-450194799.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2'
-## delete_alias_record 'www.maxmin.it' 'maxmin.it' 'dualstack.elbmaxmin-450194799.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2'
+## create_record 'admin' 'maxmin.it' '54.72.236.225'
+## delete_record 'admin' 'maxmin.it' '54.72.236.225'
 ## get_record_request_status '/change/C08567412987M8ULD7QKI'
+## check_hosted_zone_has_record 'admin' 'maxmin.it'
+
+## create_alias_record 'www' 'maxmin.it' 'elbmaxmin-1613735089.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2'
+## delete_alias_record 'www' 'maxmin.it' 'elbmaxmin-450194799.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2'
+## get_record_request_status '/change/C08567412987M8ULD7QKI'
+## check_hosted_zone_has_record 'www' 'maxmin.it'
 
 ## __create_type_A_change_batch 'webphp1.maxmin.it' '34.242.102.242' 'A' 'CREATE' 'admin website' 
-## __create_alias_change_batch 'www.maxmin.it' 'dualstack.elbmaxmin-450194799.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2' 'CREATE' 'elb alias'
+# __create_alias_change_batch 'www.maxmin.it' 'dualstack.elbmaxmin-1613735089.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2' 'CREATE' 'elb alias'
+
+# __submit_change_batch '/hostedzone/Z07357981HPLU4QUR6272' 'file:///home/maxmin/Projects/datacenter/amazon/lib/aws/request_body.json'
 
 ## __get_change_batch_request_status '/change/C0398056OWZA90PICZPC'
 

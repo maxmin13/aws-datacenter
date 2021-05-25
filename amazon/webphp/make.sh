@@ -167,7 +167,7 @@ mkdir "${TMP_DIR}"/"${webphp_dir}"
 echo
 
 ## 
-## SSH accress to the instance
+## SSH access to the instance
 ## 
 
 # Create a key pair to SSH into the instance.
@@ -194,7 +194,6 @@ webphp_sgp_id="$(create_security_group "${vpc_id}" "${webphp_sgp_nm}" \
 
 echo 'Created the webphp security group'
 
-##### TODO REMOVE THIS
 allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "0.0.0.0/0"
 #####allow_access_from_cidr "${webphp_sgp_id}" "${SHARED_BASE_INSTANCE_SSH_PORT}" "${my_ip}/32"
 echo 'Granted SSH access to development machine'
