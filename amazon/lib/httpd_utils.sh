@@ -16,39 +16,49 @@ set +o xtrace
 # Creates an Apache Web Server Virtual Host configuration file that can be 
 # loaded at start up by Apache 'httpd' main configuration file.
 # 
-# Ex:
+# Ex: to create a virtual host for phpmyadmin:
 #
-#  create_virtualhost_configuration_file '127,0.0.1' '8090' 'webphp.maxmin.it' '/var/www/html' 'webphp1.maxmin.it' './virtual.conf'
-#  add_alias_to_virtualhost 'phpmyadmin' '/var/www/html' 'phpmyadmin.maxmin.it' './virtual.conf'
-#  remove_alias_from_virtualhost 'phpmyadmin' '/var/www/html' 'phpmyadmin.maxmin.it' './virtual.conf'
+#  create_virtualhost_configuration_file './virtual.conf' '127,0.0.1' '8090' 'admin.maxmin.it' '/var/www/html' 'phpmyadmin.maxmin.it' 
+#  add_alias_to_virtualhost './virtual.conf' 'phpmyadmin' '/var/www/html' 'phpmyadmin.maxmin.it' 'phpmyadmin' 
+#  remove_alias_from_virtualhost './virtual.conf' 'phpmyadmin' '/var/www/html' 'phpmyadmin.maxmin.it' 
 # 
-#  <VirtualHost 127.0.0.1:8090>
+#  <VirtualHost 127,0.0.1:8090>
 #     ServerName admin.maxmin.it
-#     DocumentRoot /var/www/html
+#     DocumentRoot /var/www/html/phpmyadmin.maxmin.it/public_html
 #     Alias /phpmyadmin /var/www/html/phpmyadmin.maxmin.it/public_html/phpmyadmin
 #  </VirtualHost>
-# 
 #  <Directory /var/www/html/phpmyadmin.maxmin.it/public_html>
 #     Require all granted
 #  </Directory>
 #
-# Ex:
+# Ex: to create a load balancer virtual host for the heal-check of an instance:
 #
-#  create_virtualhost_configuration_file '127,0.0.1' '8090' 'wephp.maxmin.it' '/var/www/html' 'webphp2.maxmin.it' './virtual.conf'
-#  add_loadbalancer_rule_to_virtualhost 'elb.htm' '/var/www/html' 'elb.maxmin.it' './virtual.conf'
-#  remove_loadbalancer_rule_from_virtualhost 'elb.htm' '/var/www/html' 'elb.maxmin.it' './virtual.conf'
+#  create_virtualhost_configuration_file './virtual.conf' '127,0.0.1' '8090' 'admin.maxmin.it' '/var/www/html' 'elb.maxmin.it' 
+#  add_loadbalancer_rule_to_virtualhost './virtual.conf' 'elb.htm' '/var/www/html' 'elb.maxmin.it' 
+#  remove_loadbalancer_rule_from_virtualhost './virtual.conf' 'elb.htm' '/var/www/html' 'elb.maxmin.it'  
 #
-#  <VirtualHost 127.0.0.1:8090>
+#  <VirtualHost 127,0.0.1:8090>
 #     ServerName admin.maxmin.it
 #     DocumentRoot /var/www/html/elb.maxmin.it/public_html
 #     RewriteEngine On
-#     RewriteCond  "%{HTTP_USER_AGENT}" "^ELB-HealthChecker\/(.*)$"
-#     RewriteRule  "/elb.htm" "/var/www/html/elb.maxmin.it/public_html/elb.htm" [L]
+#     RewriteCond %{HTTP_USER_AGENT} ^ELB-HealthChecker\/(.*)$
+#     RewriteRule elb.htm /var/www/html/elb.maxmin.it/public_html/elb.htm [L]
 #  </VirtualHost>
-# 
 #  <Directory /var/www/html/elb.maxmin.it/public_html>
 #     Require all granted
 #  </Directory>
+#
+# Ex: to create a Certbot virtual host on port 80:
+#
+#  create_virtualhost_configuration_file './virtual.conf' '*' '80' 'example.com' '/var/www/html' 
+#  add_server_alias_to_virtualhost './virtual.conf' 'www.example.com'
+#  remove_server_alias_from_virtualhost './virtual.conf' 'www.example.com' 
+#
+#  <VirtualHost *:80>
+#     ServerName example.com
+#     DocumentRoot /var/www/html
+#     ServerAlias www.example.com
+#  </VirtualHost>
 #
 #===============================================================================
 
@@ -64,6 +74,7 @@ set +o xtrace
 # Globals:
 #  None
 # Arguments:
+# +virtual_host_file  -- The path to the virtual host configuration file.
 # +address            -- The server IP address to which the virtual host 
 #                        responds.
 # +port               -- The server IP port to which the virtual host responds. 
@@ -76,38 +87,93 @@ set +o xtrace
 #                        full path to the directory with the content served by the 
 #                        virtual host, eg:
 #                        /var/www/html/webphp1.maxmin.it/public_html
-# +virtual_host_file  -- The path to the virtual host configuration file.
 # Returns:      
 #  None  
 #===============================================================================
 function create_virtualhost_configuration_file()
 {
-   if [[ $# -lt 6 ]]
+   if [[ $# -lt 5 ]]
    then
       echo 'Error: missing mandatory arguments'
       exit 1
    fi
    
-   local address="${1}"
-   local port="${2}"
-   local domain="${3}"
-   local base_doc_root="${4}" 
-   local doc_root_id="${5}"    
-   local virtual_host_file="${6}"
-      
-   __add_virtualhost_element "${address}" "${port}" "${domain}" "${base_doc_root}" "${doc_root_id}" "${virtual_host_file}"
+   local virtual_host_file="${1}"
+   local address="${2}"
+   local port="${3}"
+   local domain="${4}"
+   local base_doc_root="${5}" 
+   local doc_root_id='-' 
+   
+   if [[ $# -eq 6 ]]
+   then
+      doc_root_id="${6}"
+      __add_virtualhost_element "${virtual_host_file}" "${address}" "${port}" "${domain}" "${base_doc_root}" "${doc_root_id}"
+   else
+      __add_virtualhost_element "${virtual_host_file}" "${address}" "${port}" "${domain}" "${base_doc_root}" 
+   fi   
    
    return 0
 }
 
 #===============================================================================
+# Add a ServerAlias directive to the <VirtualHost>  element.
+# The ServerAlias directive sets the alternate names for a host, for use with 
+# name-based virtual hosts.
+#
+# Eg: ServerAlias www.example.com
+#
+# Globals:
+#  None
+# Arguments:
+# +virtual_host_file  -- The path to the virtual host configuration file.
+# +server_alias_nm    -- The server alias name.
+# Returns:      
+#  None  
+#===============================================================================
+function add_server_alias_to_virtualhost()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'Error: missing mandatory arguments'
+      exit 1
+   fi
+   
+   local virtual_host_file="${1}"
+   local server_alias_nm="${2}"
+
+   __add_server_alias_directive "${virtual_host_file}" "${server_alias_nm}"
+ 
+   return 0
+}
+
+function remove_server_alias_from_virtualhost()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'Error: missing mandatory arguments'
+      exit 1
+   fi
+   
+   local virtual_host_file="${1}"
+   local server_alias_nm="${2}"
+   
+   __remove_directive "${virtual_host_file}" "ServerAlias ${server_alias_nm}"  
+   
+   return 0
+} 
+
+#===============================================================================
 # Add an Alias directive to the <VirtualHost>  element.
+# The Alias directive allows documents to be stored in the local filesystem 
+# other than under the DocumentRoot.
 #
 # Eg: Alias /phpmyadmin /var/www/html/phpmyadmin.maxmin.it/public_html/phpmyadmin
 #
 # Globals:
 #  None
 # Arguments:
+# +virtual_host_file  -- The path to the virtual host configuration file.
 # +alias_nm           -- The alias name.
 # +base_doc_root      -- The Apache server base document root, usually
 #                        /var/www/http, from which the DocumentRoot directive
@@ -116,7 +182,6 @@ function create_virtualhost_configuration_file()
 #                        full path to the directory with the content served by the 
 #                        virtual host, eg:
 #                        /var/www/html/webphp1.maxmin.it/public_html
-# +virtual_host_file  -- The path to the virtual host configuration file.
 # +aliased_nm         -- The resource referred by the alias. If the aliased_nm 
 #                        parameter is not passed, the aliased resource name is
 #                        supposed equal to the alias name.
@@ -125,28 +190,22 @@ function create_virtualhost_configuration_file()
 #===============================================================================
 function add_alias_to_virtualhost()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 5 ]]
    then
       echo 'Error: missing mandatory arguments'
       exit 1
    fi
    
-   local alias_nm="${1}"
-   local base_doc_root="${2}"
-   local doc_root_id="${3}"
-   local virtual_host_file="${4}"
+   local virtual_host_file="${1}"
+   local alias_nm="${2}"
+   local base_doc_root="${3}"
+   local doc_root_id="${4}"
+   local aliased_nm="${5}"
    
-   if [[ $# -eq 4 ]]
-   then
-       __add_alias_directive "${alias_nm}" "${base_doc_root}" "${doc_root_id}" "${virtual_host_file}"
-   elif [[ $# -eq 5 ]]  
-   then
-      # The alias name is different from the aliased resource.
-      aliased_nm="${5}"
-      __add_alias_directive "${alias_nm}" "${base_doc_root}" "${doc_root_id}" "${virtual_host_file}" "${aliased_nm}"
-   fi   
-   
-   __add_directory_element "${base_doc_root}" "${doc_root_id}" "${virtual_host_file}" 
+   #### './virtual.conf' 'www.example.com' '/var/www/html' 
+      
+   __add_alias_directive "${virtual_host_file}" "${alias_nm}" "${base_doc_root}" "${doc_root_id}" "${aliased_nm}"  
+   __add_directory_element "${virtual_host_file}" "${base_doc_root}" "${doc_root_id}"  
  
    return 0
 }
@@ -159,13 +218,13 @@ function remove_alias_from_virtualhost()
       exit 1
    fi
    
-   local alias_nm="${1}"
-   local base_doc_root="${2}"
-   local doc_root_id="${3}"
-   local virtual_host_file="${4}"
+   local virtual_host_file="${1}"
+   local alias_nm="${2}"
+   local base_doc_root="${3}"
+   local doc_root_id="${4}"
    
-   __remove_directive "Alias /${alias_nm}" "${virtual_host_file}" 
-   __remove_directory_element "${base_doc_root}" "${doc_root_id}" "${virtual_host_file}" 
+   __remove_directive "${virtual_host_file}" "Alias /${alias_nm}"  
+   __remove_directory_element "${virtual_host_file}" "${base_doc_root}" "${doc_root_id}"  
    
    return 0
 } 
@@ -183,6 +242,7 @@ function remove_alias_from_virtualhost()
 # Globals:
 #  None
 # Arguments:
+# +virtual_host_file  -- The path to the virtual host configuration file.
 # +alias_nm           -- The alias name.
 # +base_doc_root      -- The Apache server base document root, usually
 #                        /var/www/http, from which the DocumentRoot directive
@@ -191,7 +251,6 @@ function remove_alias_from_virtualhost()
 #                        full path to the directory with the content served by 
 #                        the virtual host, eg:
 #                        /var/www/html/webphp1.maxmin.it/public_html
-# +virtual_host_file  -- The path to the virtual host configuration file.
 # Returns:      
 #  None  
 #===============================================================================
@@ -203,11 +262,11 @@ function add_loadbalancer_rule_to_virtualhost()
       exit 1
    fi
    
-   local alias="${1}"
-   local base_doc_root="${2}"
-   local doc_root_id="${3}"
-   local virtual_host_file="${4}"
-
+   local virtual_host_file="${1}"
+   local alias="${2}"
+   local base_doc_root="${3}"
+   local doc_root_id="${4}"
+   
    # For mod_rewrite, you need to escape the space and forward slash in the regular expression pattern:
    # the regex of: ^ELB-HealthChecker/1.0$ would be: ^ELB-HealthChecker\\\\/(.*)$ 
                               
@@ -215,9 +274,9 @@ function add_loadbalancer_rule_to_virtualhost()
   
    __add_rewrite_engine_directive "${virtual_host_file}"
    ##__add_log_level_directive "${virtual_host_file}"
-   __add_rewrite_cond_directive '%{HTTP_USER_AGENT}'  '^ELB-HealthChecker\\\\/(.*)$' "${virtual_host_file}"
-   __add_rewrite_rule_directive "${alias}" "${substitution}" "${virtual_host_file}"
-   __add_directory_element "${base_doc_root}" "${doc_root_id}" "${virtual_host_file}"                                 
+   __add_rewrite_cond_directive  "${virtual_host_file}" '%{HTTP_USER_AGENT}'  '^ELB-HealthChecker\\\\/(.*)$'
+   __add_rewrite_rule_directive "${virtual_host_file}" "${alias}" "${substitution}" 
+   __add_directory_element "${virtual_host_file}" "${base_doc_root}" "${doc_root_id}"                                
  
    return 0
 }
@@ -230,46 +289,61 @@ function remove_loadbalancer_rule_from_virtualhost()
       exit 1
    fi
    
-   local alias="${1}"
-   local base_doc_root="${2}"
-   local doc_root_id="${3}"
-   local virtual_host_file="${4}"
-
+   local virtual_host_file="${1}"
+   local alias="${2}"
+   local base_doc_root="${3}"
+   local doc_root_id="${4}"
+   
    # RewriteCond directive
-   __remove_directive '%{HTTP_USER_AGENT}' "${virtual_host_file}" 
+   __remove_directive "${virtual_host_file}" '%{HTTP_USER_AGENT}'  
+   
    # RewriteRule directive
-   __remove_directive "RewriteRule ${alias}" "${virtual_host_file}"
+   __remove_directive "${virtual_host_file}" "RewriteRule ${alias}" 
+   
    # RewriteEngine directive
-   __remove_directive 'RewriteEngine' "${virtual_host_file}"
+   __remove_directive "${virtual_host_file}" 'RewriteEngine'
+    
    # LogLevel directive
-   __remove_directive 'LogLevel' "${virtual_host_file}"
-   __remove_directory_element "${base_doc_root}" "${doc_root_id}" "${virtual_host_file}"                            
+   __remove_directive "${virtual_host_file}" 'LogLevel' 
+   __remove_directory_element "${virtual_host_file}" "${base_doc_root}" "${doc_root_id}"                             
  
    return 0
 }
 
 function __add_virtualhost_element()
 {
-   if [[ $# -lt 6 ]]
+   if [[ $# -lt 5 ]]
    then
       echo 'Error: missing mandatory arguments'
       exit 1
    fi
 
-   local address="${1}"
-   local port="${2}"
-   local domain="${3}"
-   local base_doc_root="${4}" 
-   local doc_root_id="${5}"    
-   local virtual_host_file="${6}"
-   local virtual_host_element
+   local virtual_host_file="${1}"
+   local address="${2}"
+   local port="${3}"
+   local domain="${4}"
+   local base_doc_root="${5}" 
+   local doc_root_id='-' 
+   local virtual_host_element   
    
-   cat <<-EOF > "${virtual_host_file}"
+   if [[ $# -eq 6 ]]
+   then
+      doc_root_id="${6}"
+   
+      cat <<-EOF > "${virtual_host_file}"
 	<VirtualHost SEDip_addressSED:SEDip_portSED>
 	   ServerName SEDrequest_domainSED
 	   DocumentRoot SEDbase_doc_root_dirSED/SEDdoc_root_idSED/public_html
 	</VirtualHost>
 	EOF
+   else
+      cat <<-EOF > "${virtual_host_file}"
+	<VirtualHost SEDip_addressSED:SEDip_portSED>
+	   ServerName SEDrequest_domainSED
+	   DocumentRoot SEDbase_doc_root_dirSED
+	</VirtualHost>
+	EOF
+   fi
 
    virtual_host_element="$(sed -e "s/SEDip_addressSED/${address}/g" \
                -e "s/SEDip_portSED/${port}/g" \
@@ -291,9 +365,9 @@ function __add_directory_element()
       exit 1
    fi
    
-   local base_doc_root="${1}"
-   local doc_root_id="${2}" 
-   local virtual_host_file="${3}"   
+   local virtual_host_file="${1}"
+   local base_doc_root="${2}"
+   local doc_root_id="${3}" 
    local directory_element 
    
    directory_element="$(__build_directory_element "${base_doc_root}" "${doc_root_id}")"
@@ -310,9 +384,9 @@ function __remove_directory_element()
       exit 1
    fi
    
-   local base_doc_root="${1}"
-   local doc_root_id="${2}"
-   local virtual_host_file="${3}" 
+   local virtual_host_file="${1}"
+   local base_doc_root="${2}"
+   local doc_root_id="${3}"
    local directory_element
 
    sed -i "/<Directory $(escape "${base_doc_root}"/"${doc_root_id}"/public_html)/,/<\/Directory>/d" "${virtual_host_file}"
@@ -328,9 +402,9 @@ function __add_rewrite_rule_directive()
       exit 1
    fi
    
-   local pattern="${1}"
-   local substitution="${2}"
-   local virtual_host_file="${3}"       
+   local virtual_host_file="${1}" 
+   local pattern="${2}"
+   local substitution="${3}"    
    local rewrite_rule_directive 
    
    # Add the directive before the </VirtualHost> element.
@@ -350,9 +424,9 @@ function __add_rewrite_cond_directive()
       exit 1
    fi
    
-   local test_string="${1}"
-   local cond_pattern="${2}"
-   local virtual_host_file="${3}"       
+   local virtual_host_file="${1}"
+   local test_string="${2}"
+   local cond_pattern="${3}"     
    local rewrite_cond_directive 
    
    # Add the directive before the </VirtualHost> element.
@@ -398,30 +472,50 @@ function __add_log_level_directive()
    return 0  
 }
 
-function __add_alias_directive()
+# The ServerAlias directive sets the alternate names for a host, for use with name-based virtual 
+# hosts.
+function __add_server_alias_directive()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 2 ]]
    then
       echo 'Error: missing mandatory arguments'
       exit 1
    fi
    
-   local alias_nm="${1}"
-   local base_doc_root="${2}"
-   local doc_root_id="${3}"
-   local virtual_host_file="${4}"
-   local aliased_nm            
+   local virtual_host_file="${1}"
+   local server_alias_nm="${2}"      
    local directive
    
-   if [[ $# -eq 4 ]]
+   directive="$(__build_server_alias_directive "${server_alias_nm}")"
+     
+   # Add the ServerAlias directive before the </VirtualHost> element.
+   sed -i "/^<\/VirtualHost>/i ${directive}" "${virtual_host_file}"
+   sed -i "s/^ServerAlias/   ServerAlias/g" "${virtual_host_file}"
+                                                
+   return 0
+}
+
+# The Alias directive allows documents to be stored in the local filesystem other than under the 
+# DocumentRoot. 
+function __add_alias_directive()
+{
+   if [[ $# -lt 5 ]]
    then
-      directive="$(__build_alias_directive "${alias_nm}" "${base_doc_root}" "${doc_root_id}")"
-   elif [[ $# -eq 5 ]]  
-   then
-      # The alias name is different from the aliased resource.
-      aliased_nm="${5}"
-      directive="$(__build_alias_directive "${alias_nm}" "${base_doc_root}" "${doc_root_id}" "${aliased_nm}")"
+      echo 'Error: missing mandatory arguments'
+      exit 1
    fi
+   
+   local virtual_host_file="${1}"
+   local alias_nm="${2}"
+   local base_doc_root="${3}"
+   local doc_root_id="${4}"
+   local aliased_nm="${5}"      
+   local directive
+   
+   directive="$(__build_alias_directive "${alias_nm}" \
+                                        "${base_doc_root}" \
+                                        "${doc_root_id}" \
+                                        "${aliased_nm}")"
      
    # Add the Alias directive before the </VirtualHost> element.
    sed -i "/^<\/VirtualHost>/i ${directive}" "${virtual_host_file}"
@@ -439,9 +533,9 @@ function __remove_directive()
       exit 1
    fi
    
-   local regex="${1}"
-   local virtual_host_file="${2}"
-                                              
+   local virtual_host_file="${1}"
+   local regex="${2}"
+                                               
    sed -i "/$(escape "${regex}")/d" "${virtual_host_file}"
    
    return 0
@@ -457,9 +551,9 @@ function __build_directory_element()
 
    local base_doc_root="${1}"
    local doc_root_id="${2}" 
-   local directory_element_template='<Directory SEDbase_doc_root_dirSED/SEDdoc_root_idSED/public_html>\n   Require all granted\n</Directory>\n'
+   local template='<Directory SEDbase_doc_root_dirSED/SEDdoc_root_idSED/public_html>\n   Require all granted\n</Directory>\n'
 
-   directory_element="$(printf '%b\n' "${directory_element_template}" \
+   directory_element="$(printf '%b\n' "${template}" \
                         | sed -e "s/SEDdoc_root_idSED/${doc_root_id}/g" \
                               -e "s/SEDbase_doc_root_dirSED/$(escape "${base_doc_root}")/g")"               
 
@@ -468,9 +562,27 @@ function __build_directory_element()
    return 0
 }
 
+function __build_server_alias_directive()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'Error: missing mandatory arguments'
+      exit 1
+   fi
+   
+   local server_alias_nm="${1}"
+   local template='ServerAlias SEDpar1SED'
+   local directive 
+  
+   directive="$(__build_directive "${template}" "${server_alias_nm}")"           
+   echo "${directive}"
+
+   return 0                                                        
+}
+
 function __build_alias_directive()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'Error: missing mandatory arguments'
       exit 1
@@ -479,20 +591,15 @@ function __build_alias_directive()
    local alias_nm="${1}"
    local base_doc_root="${2}"
    local doc_root_id="${3}"
-   local aliased_nm
+   local aliased_nm="${4}"
+   local template='Alias /SEDpar1SED SEDpar2SED/SEDpar3SED/public_html/SEDpar4SED'
    local directive 
   
-   if [[ $# -eq 3 ]]
-   then
-      # The alias name is the same as the aliased resource.
-      directive="$(__build_directive 'false' 'Alias /SEDpar1SED SEDpar2SED/SEDpar3SED/public_html/SEDpar1SED' "${alias_nm}" "${base_doc_root}" "${doc_root_id}")"
-   elif [[ $# -eq 4 ]]  
-   then
-      # The alias name is different from the aliased resource.
-      aliased_nm="${4}"
-      directive="$(__build_directive 'false' 'Alias /SEDpar1SED SEDpar2SED/SEDpar3SED/public_html/SEDpar4SED' "${alias_nm}" "${base_doc_root}" "${doc_root_id}" "${aliased_nm}")" 
-   fi                
-     
+   directive="$(__build_directive "${template}" \
+                                  "${alias_nm}" \
+                                  "${base_doc_root}" \
+                                  "${doc_root_id}" \
+                                  "${aliased_nm}")"           
    echo "${directive}"
 
    return 0                                                        
@@ -508,10 +615,12 @@ function __build_rewrite_cond_directive()
    
    local test_string="${1}"
    local cond_pattern="${2}"
+   local template='RewriteCond SEDpar1SED SEDpar2SED'
    local directive  
  
-   directive="$(__build_directive 'true' 'RewriteCond SEDpar1SED SEDpar2SED' "${test_string}" "${cond_pattern}")"
-   
+   directive="$(__build_directive "${template}" \
+                                  "${test_string}" \
+                                  "${cond_pattern}")"
    echo "${directive}"
 
    return 0
@@ -527,10 +636,12 @@ function __build_rewrite_rule_directive()
    
    local pattern="${1}"
    local substitution="${2}"
+   local template='RewriteRule SEDpar1SED SEDpar2SED [L]'
    local directive
 
-   directive="$(__build_directive 'true' 'RewriteRule SEDpar1SED SEDpar2SED [L]' "${pattern}" "${substitution}")"
-   
+   directive="$(__build_directive "${template}" \
+                                  "${pattern}" \
+                                  "${substitution}")"
    echo "${directive}"
 
    return 0
@@ -542,24 +653,22 @@ function __build_rewrite_rule_directive()
 #  Alias SEDpar1SED SEDpar2SED/SEDpar3SED/public_html/SEDpar4SED
 function __build_directive()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 2 ]]
    then
       echo 'Error: missing mandatory arguments'
       exit 1
    fi
    
-   local directive_template="${2}"
+   local directive_template="${1}"
    local directive_param par
    local count=1
-
-   shift 
+ 
    shift
    for par in "$@"
    do
       # Substitute each pamameter in the template directive.
       directive_param="$(echo 'SEDpar<i>SED' | sed -e "s/<i>/$count/g")"  
-      directive_template="$(echo "${directive_template}" \
-                       | sed -e "s/${directive_param}/$(escape ${par})/g")"                      
+      directive_template=${directive_template//${directive_param}/$(escape ${par})}  
       ((count++))
    done
                                                            
@@ -568,30 +677,37 @@ function __build_directive()
    return 0                                                       
 }
 
+#__build_directive 'Alias /SEDpar1SED SEDpar2SED/SEDpar3SED/public_html/SEDpar4SED' "webphp" "/var/www/html" "webphp.maxmin.it" "webphp"
+#__build_directive 'Alias /SEDpar1SED SEDpar2SED/SEDpar3SED/public_html/SEDpar4SED' "index.php" "/var/www/html" "webphp.maxmin.it" "index.php"
+
 #__build_rewrite_cond_directive "%{HTTP_USER_AGENT}"  "^ELB-HealthChecker/(.*)$"
 #__build_rewrite_rule_directive "/elb.htm" "/var/www/html" "/elb.maxmin.it"
-#__build_alias_directive 'elb.htm' '/var/www/html' 'elb.maxmin.it'
+#__build_alias_directive 'elb.htm' '/var/www/html' 'elb.maxmin.it' 'elb.htm'
 #__build_alias_directive 'webphp' '/var/www/html' 'elb.maxmin.it' 'index.php'
+#__build_server_alias_directive 'www.example.com'
 #__build_directory_element '/var/www/html' 'elb.maxmin.it'
 
-#__add_virtualhost_element '127.0.0.1' '8090' 'admin.maxmin.it' '/var/www/html' 'admin.maxmin.it'  './virtual.conf'
+#__add_virtualhost_element './virtual.conf' '127.0.0.1' '8090' 'admin.maxmin.it' '/var/www/html' 'admin.maxmin.it'  
 
-#__add_alias_directive 'elb.htm' '/var/www/html' 'elb.maxmin.it' './virtual.conf'
-#__add_alias_directive 'webphp' '/var/www/html' 'elb.maxmin.it' './virtual.conf' 'index.php'
+#__add_alias_directive './virtual.conf' 'elb.htm' '/var/www/html' 'elb.maxmin.it' 'elb.htm'  
+#__remove_directive 'elb.htm' './virtual.conf'
+#__add_alias_directive './virtual.conf' 'webphp' '/var/www/html' 'elb.maxmin.it'  'index.php' 
+#__remove_directive './virtual.conf' 'webphp' 
+#__add_server_alias_directive './virtual.conf' 'www.example.com'
+#__remove_directive './virtual.conf' 'www.example.com' 
 
-#__add_directory_element '/var/www/html' 'elb.maxmin.it' './virtual.conf'
-#__remove_directory_element '/var/www/html' 'elb.maxmin.it' './virtual.conf'
+#__add_directory_element './virtual.conf' '/var/www/html' 'elb.maxmin.it' 
+#__remove_directory_element './virtual.conf' '/var/www/html' 'elb.maxmin.it' 
 
 #__add_rewrite_engine_directive './virtual.conf'
-#__add_rewrite_cond_directive "%{HTTP_USER_AGENT}"  "^ELB-HealthChecker/(.*)$" './virtual.conf'
-#__add_rewrite_rule_directive "%{HTTP_USER_AGENT}"  "^ELB-HealthChecker/(.*)$" './virtual.conf'
+#__add_rewrite_cond_directive './virtual.conf' "%{HTTP_USER_AGENT}" "^ELB-HealthChecker/(.*)$" 
+#__add_rewrite_rule_directive './virtual.conf' "%{HTTP_USER_AGENT}" "^ELB-HealthChecker/(.*)$"  
+#
+#  create_virtualhost_configuration_file './virtual.conf' '127,0.0.1' '8090' 'admin.maxmin.it' '/var/www/html' 'phpmyadmin.maxmin.it' 
+#  add_alias_to_virtualhost './virtual.conf' 'phpmyadmin' '/var/www/html' 'phpmyadmin.maxmin.it' 'phpmyadmin' 
+#  remove_alias_from_virtualhost './virtual.conf' 'phpmyadmin' '/var/www/html' 'phpmyadmin.maxmin.it' 
+#
+#  create_virtualhost_configuration_file './virtual.conf' '*' '80' 'example.com' '/var/www/html' 
+#  add_server_alias_to_virtualhost './virtual.conf' 'www.example.com'
+#  remove_server_alias_from_virtualhost './virtual.conf' 'www.example.com'
 
-#create_virtualhost_configuration_file '127.0.0.1' '8090' 'phpadmin.maxmin.it' '/var/www/html' 'phpadmin.maxmin.it' './virtual.conf'
-#  add_alias_to_virtualhost 'phpmyadmin' '/var/www/html' 'phpmyadmin.maxmin.it' './virtual.conf'
-#  add_alias_to_virtualhost 'webphp' '/var/www/html' 'webphp1.maxmin.it' './virtual.conf' 'index.php'
-#  remove_alias_from_virtualhost 'phpmyadmin' '/var/www/html' 'phpmyadmin.maxmin.it' './virtual.conf'
-#  remove_alias_from_virtualhost 'webphp' '/var/www/html' 'phpmyadmin.maxmin.it' './virtual.conf'  
-
-#  create_virtualhost_configuration_file '127.0.0.1' '8090' 'admin.maxmin.it' '/var/www/html' 'admin.maxmin.it'  './virtual.conf'
-#  add_loadbalancer_rule_to_virtualhost 'elb.htm' '/var/www/html' 'elb.maxmin.it' './virtual.conf'
-#  remove_loadbalancer_rule_from_virtualhost 'elb.htm' '/var/www/html' 'elb.maxmin.it' './virtual.conf'

@@ -107,18 +107,19 @@ zip -r "${WEBSITE_ARCHIVE}" ./*.php ./*.css > /dev/null 2>&1
 echo "${WEBSITE_ARCHIVE} ready"
 
 # Website virtualhost file.
-create_virtualhost_configuration_file '*' \
+create_virtualhost_configuration_file "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
+                         '*' \
                          "${SERVER_ADMIN_APACHE_WEBSITE_PORT}" \
                          "${SERVER_ADMIN_HOSTNAME}" \
                          "${APACHE_DOCROOT_DIR}" \
-                         "${WEBSITE_DOCROOT_ID}" \
-                         "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"                              
+                         "${WEBSITE_DOCROOT_ID}"                               
                             
-add_alias_to_virtualhost 'admin' \
+add_alias_to_virtualhost "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
+                         'admin' \
                          "${APACHE_DOCROOT_DIR}" \
                          "${WEBSITE_DOCROOT_ID}" \
-                         "${TMP_DIR}"/admin/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"                        
-                            
+                         'index.php' 
+                                                                    
 echo "${WEBSITE_VIRTUALHOST_CONFIG_FILE} ready"  
 
 ## 

@@ -292,9 +292,9 @@ function create_record()
 #  None
 # Arguments:
 # +sub_domain_nm      -- the alias sub-domain name, eg. www
-# +hosted_zone_nm -- The hosted zone name, this is the name you have registered with your DNS 
-#                    registrar.
-# +ip_address     -- the IP address associated to the domain name.
+# +hosted_zone_nm     -- The hosted zone name, this is the name you have 
+#                        registered with your DNS registrar.
+# +ip_address         -- the IP address associated to the domain name.
 # Returns:      
 #  The ID of the request.  
 #===============================================================================

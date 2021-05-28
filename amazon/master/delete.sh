@@ -38,10 +38,19 @@ then
    echo '****************' 
 fi
 
+. "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh 
+. "${PROJECT_DIR}"/amazon/webphp/delete.sh 2 
+. "${PROJECT_DIR}"/amazon/admin/delete.sh                 
+
+exit
+
 echo
 
 # Make a backup of the database.
-. "${PROJECT_DIR}"/amazon/database/data/backup/make.sh    ### >> "${log_file}" 2>&1
+#. "${PROJECT_DIR}"/amazon/database/data/backup/make.sh    ### >> "${log_file}" 2>&1
+
+# Delete the application hosted zone
+. "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh        ### >> "${log_file}" 2>&1
 
 # Delete the websites.
 . "${PROJECT_DIR}"/amazon/admin/website/delete.sh         ### >> "${log_file}" 2>&1
@@ -72,10 +81,6 @@ echo
 
 # Delete the datacenter.
 . "${PROJECT_DIR}"/amazon/datacenter/delete.sh            ### >> "${log_file}" 2>&1
-
-# Delete the application hosted zone
-. "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh        ### >> "${log_file}" 2>&1
-
 
 echo 'Data center deleted'
 echo

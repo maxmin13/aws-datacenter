@@ -22,8 +22,8 @@ WebPhp website:
 ---------------
 
 # No load balancer, enable security group access on port 8070
-http://52.210.102.93:8070/webphp
-http://54.155.164.83:8070/webphp
+http://52.210.102.93:8070
+http://54.155.164.83:8070
 
 # Through the load balancer
-https://www.maxmin.it/webphp
+https://www.maxmin.it

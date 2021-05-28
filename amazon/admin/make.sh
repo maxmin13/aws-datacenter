@@ -341,47 +341,50 @@ sed -e "s/SEDadmin_rsyslog_portSED/${SERVER_ADMIN_RSYSLOG_PORT}/g" \
 echo 'Rsyslog rsyslog.conf ready'
        
 # Monit Apache heartbeat virtualhost.                                     
-create_virtualhost_configuration_file '127.0.0.1' \
+create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" \
+                           '127.0.0.1' \
                            "${SERVER_ADMIN_APACHE_MONIT_PORT}" \
                            "${SERVER_ADMIN_HOSTNAME}" \
                            "${APACHE_DOCROOT_DIR}" \
-                           "${MONIT_DOCROOT_ID}" \
-                           "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"                                      
-                                       
-add_alias_to_virtualhost 'monit' \
+                           "${MONIT_DOCROOT_ID}" 
+                                                                 
+add_alias_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" \
+                           'monit' \
                            "${APACHE_DOCROOT_DIR}" \
                            "${MONIT_DOCROOT_ID}" \
-                           "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"
+                           'monit' 
                             
 echo "Monit ${MONIT_VIRTUALHOST_CONFIG_FILE} ready"                                                                                        
 
 # phpmyadmin Virtual Host file.
-create_virtualhost_configuration_file '*' \
+create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" \
+                           '*' \
                            "${SERVER_ADMIN_APACHE_PHPMYADMIN_PORT}" \
                            "${SERVER_ADMIN_HOSTNAME}" \
                            "${APACHE_DOCROOT_DIR}" \
-                           "${PHPMYADMIN_DOCROOT_ID}" \
-                           "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"      
+                           "${PHPMYADMIN_DOCROOT_ID}"       
                                      
-add_alias_to_virtualhost 'phpmyadmin' \
+add_alias_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}" \
+                           'phpmyadmin' \
                            "${APACHE_DOCROOT_DIR}" \
                            "${PHPMYADMIN_DOCROOT_ID}" \
-                           "${TMP_DIR}"/"${webphp_dir}"/"${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE}"                       
+                           'phpmyadmin'                        
 
 echo "PhpMyAdmin ${PHPMYADMIN_VIRTUALHOST_CONFIG_FILE} ready"                             
                             
 # loganalyzer Virtual Host file.
-create_virtualhost_configuration_file '*' \
+create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" \
+                           '*' \
                            "${SERVER_ADMIN_APACHE_LOGANALYZER_PORT}" \
                            "${SERVER_ADMIN_HOSTNAME}" \
                            "${APACHE_DOCROOT_DIR}" \
-                           "${LOGANALYZER_DOCROOT_ID}" \
-                           "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"                              
+                           "${LOGANALYZER_DOCROOT_ID}"                               
                             
-add_alias_to_virtualhost 'loganalyzer' \
+add_alias_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}" \
+                           'loganalyzer' \
                            "${APACHE_DOCROOT_DIR}" \
                            "${LOGANALYZER_DOCROOT_ID}" \
-                           "${TMP_DIR}"/"${webphp_dir}"/"${LOGANALYZER_VIRTUALHOST_CONFIG_FILE}"  
+                           'loganalyzer'   
                             
 echo "Loganalyzer ${LOGANALYZER_VIRTUALHOST_CONFIG_FILE} ready"                                    
   

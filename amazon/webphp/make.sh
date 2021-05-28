@@ -347,34 +347,35 @@ sed -e "s/SEDhostnameSED/${webphp_nm}/g" \
 echo 'monitrc ready'
     
 # Create Monit heartbeat virtualhost to check Apache Web Server.   
-create_virtualhost_configuration_file '127.0.0.1' \
+create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"  \
+                    '127.0.0.1' \
                     "${SERVER_WEBPHP_APACHE_MONIT_PORT}" \
                     "${monit_request_domain}" \
                     "${APACHE_DOCROOT_DIR}" \
-                    "${MONIT_DOCROOT_ID}" \
-                    "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"     
+                    "${MONIT_DOCROOT_ID}"     
  
 # Enable Apache Web Server Monit heartbeat endpoint.                                       
-add_alias_to_virtualhost 'monit' \
+add_alias_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" \
+                    'monit' \
                     "${APACHE_DOCROOT_DIR}" \
                     "${MONIT_DOCROOT_ID}" \
-                    "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"
+                    'monit' 
    
 echo "${MONIT_VIRTUALHOST_CONFIG_FILE} ready"   
        
 # Create a Load Balancer healt-check virtualhost. 
-create_virtualhost_configuration_file '*' \
+create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" \
+                    '*' \
                     "${SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}" \
                     "${loadbalancer_request_domain}" \
                     "${APACHE_DOCROOT_DIR}" \
-                    "${LOADBALANCER_DOCROOT_ID}" \
-                    "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}"   
+                    "${LOADBALANCER_DOCROOT_ID}"    
  
 # Enable the Load Balancer virtualhost.                                       
-add_loadbalancer_rule_to_virtualhost 'elb.htm' \
+add_loadbalancer_rule_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" \
+                    'elb.htm' \
                     "${APACHE_DOCROOT_DIR}" \
-                    "${LOADBALANCER_DOCROOT_ID}" \
-                    "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" 
+                    "${LOADBALANCER_DOCROOT_ID}"  
 
 echo "${LOADBALANCER_VIRTUALHOST_CONFIG_FILE} ready" 
                 

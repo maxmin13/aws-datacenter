@@ -98,7 +98,7 @@ LBAL_DNS_SUB_DOMAIN='www'
 ## Admin box ##
 ## ********* ##
 
-SERVER_ADMIN_NM='maxmin-admin-instance'
+SERVER_ADMIN_NM='maxmin-admin-instance1'
 SERVER_ADMIN_PRIVATE_IP='10.0.0.10'
 # In dev, ip-base virtual hosting, in prod name-base virtual hosting with only one ip and port for
 # website, phpmyadmin and loganalyzer.
@@ -106,6 +106,7 @@ SERVER_ADMIN_APACHE_WEBSITE_PORT='443'
 SERVER_ADMIN_APACHE_PHPMYADMIN_PORT='7443'
 SERVER_ADMIN_APACHE_LOGANALYZER_PORT='9443'
 SERVER_ADMIN_APACHE_MONIT_PORT='8090'
+SERVER_ADMIN_APACHE_CERTBOT_PORT='80'
 SERVER_ADMIN_MMONIT_PUBLIC_PORT='8443'
 SERVER_ADMIN_MMONIT_COLLECTOR_PORT='8080'
 SERVER_ADMIN_RSYSLOG_PORT='514'

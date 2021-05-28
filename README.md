@@ -40,8 +40,20 @@ cd datacenter
 amazon/master/delete.sh
 ```
 
-## Configure reCaptcha
+## Configure reCaptcha:
 
 The reCaptcha keys are in: recaptcha.sh
-Add the 'maxmin.it' domain to the Google account.
+Add the 'maxmin.it' domain to your Google account.
+
+## Access the website:
  
+https://www.maxmin.it
+
+## Access the Admin website:
+
+Enable access to the Admin website's 443 port in the security group.
+
+https://admin.maxmin.it
+
+
+

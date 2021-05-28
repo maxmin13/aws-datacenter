@@ -21,13 +21,13 @@ mkdir admin
 unzip "${WEBSITE_ARCHIVE}" -d admin  >> "${admin_log_file}"
 website_doc_root="${APACHE_DOCROOT_DIR}"/"${WEBSITE_DOCROOT_ID}"/public_html
 mkdir --parents "${website_doc_root}"
-mv admin "${website_doc_root}"
+mv admin/* "${website_doc_root}"
 echo 'Admin site installed' >> "${admin_log_file}"
 
-find "${website_doc_root}"/admin -type d -exec chown root:root {} +
-find "${website_doc_root}"/admin -type d -exec chmod 755 {} +
-find "${website_doc_root}"/admin -type f -exec chown root:root {} +
-find "${website_doc_root}"/admin -type f -exec chmod 644 {} +
+find "${website_doc_root}" -type d -exec chown root:root {} +
+find "${website_doc_root}" -type d -exec chmod 755 {} +
+find "${website_doc_root}" -type f -exec chown root:root {} +
+find "${website_doc_root}" -type f -exec chmod 644 {} +
 
 cd "${script_dir}" || exit
 

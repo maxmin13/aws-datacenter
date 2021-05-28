@@ -1,12 +1,19 @@
 
-enable ports: 8443, 443, 9443, 7443, 38142
+used ports: 
+
+Admin website: 443
+Loganalyzer: 9443
+Phpmyadmin: 7443
+Monit Apache healt-check: 8090 
+M/Monit website: 8443
+SSH: 38142
 
 ------------
 SSH Session:
 ------------
 
 # Enable security group access on port 38142
-rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-admin-kp.pem' -p 38142 ec2-user@54.72.236.225
+rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-admin-kp.pem' -p 38142 ec2-user@46.137.140.109
 
 ------------------
 Admin LogAnalizer:
@@ -23,16 +30,6 @@ PHPMyAdmin:
 https://admin.maxmin.it:7443/phpmyadmin/index.php
 (maxmin/fognamarcia11)
 
------------------
-Monit (DISABLED):
------------------
-
-# No load balancer, enable security group access on port 2812
-http://admin.maxmin.it:2812 
-(admin/monit)
-
-disabled, use M/Monit.
-
 --------
 M/Monit:
 --------
@@ -47,6 +44,6 @@ Admin website:
 --------------
 
 # No load balancer, enable security group access on port 443
-https://admin.maxmin.it/admin/index.php
+https://admin.maxmin.it
 (password is admin)
 

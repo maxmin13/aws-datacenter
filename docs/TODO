@@ -4,15 +4,16 @@
 ###############################
 
 
-## *** ##
-## DNS ##
-## *** ##
+/amazon/dns/hostedzone/make.sh
 
-## TODO Enable DNS support or modsecurity won't let Apache start...
-## TODO what is this ???????????????????????????????
-## 
-#aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-support
-#aws ec2 modify-vpc-attribute --vpc-id "${vpc_id}" --enable-dns-hostnames
+check if the records are alredy created,
+if so delete them and recreate them or update the ip address
+
+
+/amazon/dns/hostedzone/delete.sh
+get the value of hosted zone and loadbalancer dns name
+not from the current running load balancer but from the hosted zone
+
 
 ###############################
 
@@ -24,10 +25,6 @@ Deploy one certificate on the load balancer, and add a Subject Alternative Name 
 SANs enable you to protect multiple host names using a single certificate. 
 Check with your certificate provider for more information about the number of SANs they support per certificate and how to add and remove SANs.
 
-############################
-
-try to jail the webphp site
-see install.sh
 
 ###########################
 

@@ -154,19 +154,19 @@ zip -r ../"${WEBSITE_ARCHIVE}" ./* > /dev/null 2>&1
 echo "${WEBSITE_ARCHIVE} ready"
          
 # Create the website virtualhost file.   
-create_virtualhost_configuration_file '*' \
+create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
+                  '*' \
                   "${SERVER_WEBPHP_APACHE_WEBSITE_PORT}" \
                   "${website_request_domain}" \
                   "${APACHE_DOCROOT_DIR}" \
-                  "${website_docroot_id}" \
-                  "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"     
+                  "${website_docroot_id}"      
                                      
-add_alias_to_virtualhost 'webphp' \
+add_alias_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"  \
+                  'webphp' \
                   "${APACHE_DOCROOT_DIR}" \
                   "${website_docroot_id}" \
-                  "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
                   'index.php'
-                            
+                                           
 echo "${WEBSITE_VIRTUALHOST_CONFIG_FILE} ready" 
 
 sed -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \

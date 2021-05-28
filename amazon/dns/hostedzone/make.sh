@@ -82,6 +82,8 @@ fi
 ##
 
 lbal_alias_record="$(check_hosted_zone_has_record "${LBAL_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+
+## TODO IF the record exists, get its data and delete, than recreate it with the upated data 
                              
 if [[ -z "${lbal_alias_record}" ]]
 then
@@ -99,6 +101,8 @@ else
 fi
 
 admin_record="$(check_hosted_zone_has_record "${SERVER_ADMIN_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+
+## TODO IF the record exists, get its data and delete, than recreate it with the upated data 
 
 if [[ -z "${admin_record}" ]]
 then

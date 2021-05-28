@@ -39,6 +39,21 @@ then
    echo '****************' 
 fi
 
+
+#. "${PROJECT_DIR}"/amazon/admin/website/delete.sh
+#. "${PROJECT_DIR}"/amazon/admin/website/make.sh 
+. "${PROJECT_DIR}"/amazon/webphp/website/delete.sh 1            
+. "${PROJECT_DIR}"/amazon/webphp/website/make.sh 1
+. "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh
+
+
+
+exit
+exit
+
+
+
+
 echo
 
 # Create the datacenter.

@@ -2,4 +2,7 @@
 
 *.log
 *.pem
+.project
+.buildpath
+
 templates/dns/register-domain.json
