@@ -25,11 +25,6 @@ source "${PROJECT_DIR}"/amazon/credential/passwords.sh
 
 log_file="${LOG_DIR}"/delete-$(date +"%d-%m-%Y-%H.%M"."%S")
 
-
-exit
-exit
-exit
-
 echo ''
 
 {
