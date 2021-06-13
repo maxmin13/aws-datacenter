@@ -1,5 +1,5 @@
 /*
-	this file creates the required database users for MYDB
+	this file creates the required Database users for MYDB
 	these are:
 	
 	adminrw

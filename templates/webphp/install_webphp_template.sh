@@ -8,7 +8,7 @@ set +o xtrace
 # Install a Linux Apache PHP server (LAP).
 
 ENV='SEDenvironmentSED'
-SERVER_WEBPHP_HOSTNAME='SEDserver_webphp_hostnameSED'
+SRV_WEBPHP_HOSTNAME='SEDserver_webphp_hostnameSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
@@ -26,29 +26,9 @@ amazon-linux-extras install epel -y >> "${webphp_log_file}" 2>&1
 ## System hostname ##
 ## *************** ##
 
-hostnamectl set-hostname "${SERVER_WEBPHP_HOSTNAME}"
+hostnamectl set-hostname "${SRV_WEBPHP_HOSTNAME}"
 echo 'System hostname modified:'
 hostname
-
-## ************* ##
-## ec2-user user ##
-## ************* ##
-
-cd "${script_dir}" || exit
-
-yum install -y expect >> "${webphp_log_file}" 2>&1
-
-{
-   chmod +x chp_ec2-user.sh
-   ./chp_ec2-user.sh 
-   echo "'ec2-user' user password set"
-   
-   # Set ec2-user's sudo with password'
-   echo 'ec2-user ALL = ALL' > /etc/sudoers.d/cloud-init
-   echo 'ec2-user sudo with password set' 
-} >> "${webphp_log_file}" 2>&1
-
-echo 'ec2-user user configured'
 
 ## ******* ##
 ## Rsyslog ##
@@ -135,17 +115,28 @@ cp -f monitrc /etc/monitrc
 rm -f /etc/monit.d/logging
 
 # Create an heartbeat endpoint targeted by Monit, see monitrc configuration file.
-monit_doc_root="${APACHE_DOCROOT_DIR}"/"${MONIT_DOCROOT_ID}"/public_html
-mkdir --parents "${monit_doc_root}"
-touch "${monit_doc_root}"/monit
-echo ok > "${monit_doc_root}"/monit
+monit_docroot="${APACHE_DOCROOT_DIR}"/"${MONIT_DOCROOT_ID}"/public_html
+mkdir --parents "${monit_docroot}"
+touch "${monit_docroot}"/monit
+echo ok > "${monit_docroot}"/monit
+
+# Public pages permissions.
+find "${monit_docroot}" -type d -exec chown root:root {} +
+find "${monit_docroot}" -type d -exec chmod 755 {} +
+find "${monit_docroot}" -type f -exec chown root:root {} +
+find "${monit_docroot}" -type f -exec chmod 644 {} +
 
 cd "${script_dir}" || exit
 
 # Enable the Monit site (Apache Web Server hearttbeat).
-cp "${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
-ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" 
-echo 'Monit heartbeat endpoint enabled'
+
+if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" ]]
+then
+   cp "${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
+   ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" 
+   echo 'Monit heartbeat endpoint enabled'
+fi
+
 echo 'Monit installed'
 
 ## ************* ##
@@ -155,15 +146,24 @@ echo 'Monit installed'
 cd "${script_dir}" || exit
 
 # Create an heart-beat endpoint targeted by the Load Balancer.
-loadbalancer_doc_root="${APACHE_DOCROOT_DIR}"/"${LOADBALANCER_DOCROOT_ID}"/public_html
-mkdir --parents "${loadbalancer_doc_root}"
-touch "${loadbalancer_doc_root}"/elb.htm
-echo ok > "${loadbalancer_doc_root}"/elb.htm
+loadbalancer_docroot="${APACHE_DOCROOT_DIR}"/"${LOADBALANCER_DOCROOT_ID}"/public_html
+mkdir --parents "${loadbalancer_docroot}"
+touch "${loadbalancer_docroot}"/elb.htm
+echo ok > "${loadbalancer_docroot}"/elb.htm
+
+# Public pages permissions.
+find "${loadbalancer_docroot}" -type d -exec chown root:root {} +
+find "${loadbalancer_docroot}" -type d -exec chmod 755 {} +
+find "${loadbalancer_docroot}" -type f -exec chown root:root {} +
+find "${loadbalancer_docroot}" -type f -exec chmod 644 {} +
 
 # Enable the Load Balancer endopoint.
-cp "${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
-ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" 
-echo 'Load Balancer healt-check endpoint enabled'
+if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" ]]
+then
+   cp "${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
+   ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" 
+   echo 'Load Balancer healt-check endpoint enabled'
+fi   
 
 ## ********
 ## ????????

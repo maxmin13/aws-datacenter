@@ -1,49 +1,52 @@
 
-used ports: 
+Used ports: 
 
-Admin website: 443
-Loganalyzer: 9443
-Phpmyadmin: 7443
+Admin website:            80/443
+Loganalyzer:              8081/9444
+Phpmyadmin:               8080/9443
+M/Monit website:          8083/9445
 Monit Apache healt-check: 8090 
-M/Monit website: 8443
-SSH: 38142
+SSH:                      38142
 
 ------------
 SSH Session:
 ------------
 
-# Enable security group access on port 38142
-rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-admin-kp.pem' -p 38142 ec2-user@46.137.140.109
+# Enable Security Group access on port 38142
+rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-admin-kp.pem' -p 38142 admin-user@34.244.139.17
 
-------------------
-Admin LogAnalizer:
-------------------
+------------
+LogAnalizer:
+------------
 
-# No load balancer, enable security group access on port 9443
-https://admin.maxmin.it:9443/loganalyzer/index.php
+# No Load Balancer, enable Security Group access on port 9443
+https://admin.maxmin.it:9444/loganalyzer/index.php
+http://admin.maxmin.it:8081/loganalyzer/index.php
 
 -----------
 PHPMyAdmin:
 -----------
 
-# No load balancer, enable security group access on port 7443
-https://admin.maxmin.it:7443/phpmyadmin/index.php
+# No Load Balancer, enable Security Group access on port 7443
+https://admin.maxmin.it:9443/phpmyadmin/index.php
+http://admin.maxmin.it:8080/phpmyadmin/index.php
 (maxmin/fognamarcia11)
 
 --------
 M/Monit:
 --------
 
-# No load balancer, enable security group access on port 8443
-https://admin.maxmin.it:8443/admin/general 
-http://admin.maxmin.it:8080/admin/general 
+# No Load Balancer, enable Security Group access on port 8443
+https://admin.maxmin.it:9445/admin/general  
+http://admin.maxmin.it:8083/admin/general  
 (admin/swordfish)
 
 --------------
 Admin website:
 --------------
 
-# No load balancer, enable security group access on port 443
+# No Load Balancer, enable Security Group access on port 443
 https://admin.maxmin.it
+http://admin.maxmin.it
 (password is admin)
 

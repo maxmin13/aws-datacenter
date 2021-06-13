@@ -15,13 +15,12 @@ APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
-
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo 'Installing Apache Web Server ...'
 yum install -y httpd
 systemctl enable httpd.service
-echo 'Apache Web Server installed'
+echo 'Apache Web Server installed.'
 
 # Clear directories and configuration files.
 cd /var/www || exit
@@ -69,7 +68,7 @@ echo '-------------------------------------------------'
 echo 'Modules compiled statically into the server:'
 /usr/sbin/httpd -l
 echo '-------------------------------------------------'
-echo 'Modules compiled dynamically enabled with Apache'
+echo 'Modules compiled dynamically enabled with Apache:'
 /usr/sbin/httpd -M
 echo '-------------------------------------------------'
 echo 'Server version:'

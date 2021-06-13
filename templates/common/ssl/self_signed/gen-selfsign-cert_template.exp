@@ -1,0 +1,32 @@
+#!/usr/bin/expect -f
+
+set force_conservative 0
+
+if {$force_conservative} {
+   set send_slow {1 .1}
+   proc send {ignore arg} {
+      sleep .1
+      exp_send -s -- $arg
+   }
+}
+
+set timeout -1
+log_user 0
+spawn openssl req -new -x509 -key SEDkey_fileSED -days 365 -sha256 -out SEDcert_fileSED
+match_max 100000
+expect -exact ":"
+send -- "SEDcountrySED\r"
+expect -exact ":"
+send -- "SEDstate_or_provinceSED\r"
+expect -exact ":"
+send -- "SEDcitySED\r"
+expect -exact ":"
+send -- "SEDorganizationSED\r"
+expect -exact ":"
+send -- "SEDunit_nameSED\r"
+expect -exact ":"
+send -- "SEDcommon_nameSED\r"
+expect -exact ":"
+send -- "SEDemail_addressSED\r"
+send_user SEDcert_fileSED
+expect eof

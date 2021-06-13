@@ -25,7 +25,16 @@
 	   
        </Engine>
        
-       <Connector address="SEDserver_admin_private_ipSED" port="SEDpublic_portSED" processors="10" secure="true" />
+       <!--
+    -e "s/SEDssl_secureSED/false/g" \
+    -e "s/SEDcertificateSED//g" \
+           
+       -->
+       
+       <!--
+       secure="true"
+       -->
+       <Connector address="SEDserver_admin_private_ipSED" port="SEDpublic_portSED" processors="10" />
       
        <Engine name="SEDserver_admin_public_ipSED" defaultHost="SEDserver_admin_public_ipSED" fileCache="10MB">
            
@@ -35,7 +44,10 @@
                   reapConnections="300" />
            <ErrorLogger directory="logs" fileName="error.log" rotate="month" />
 
-           <Host name="SEDserver_admin_public_ipSED" appBase="." address="SEDserver_admin_private_ipSED" certificate="conf/mmonit.pem">
+<!--
+certificate="conf/mmonit.pem"
+-->
+           <Host name="SEDserver_admin_public_ipSED" appBase="." address="SEDserver_admin_private_ipSED" >
 	       <Logger directory="logs" fileName="mmonit.log" rotate="month" timestamp="true" />
                <Context path="" docBase="docroot" sessionTimeout="1800" maxActiveSessions="1024" saveSessions="true" />
                <Context path="/collector" docBase="docroot/collector" />

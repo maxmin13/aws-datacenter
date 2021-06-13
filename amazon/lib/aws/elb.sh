@@ -24,13 +24,13 @@ set +o xtrace
 # Arguments:
 # +loadbalancer_nm     -- The Load Balancer name.
 # Returns:      
-#  The ELB DNS name, or blanc if the ELB is not found.  
+#  The Load Balancer DNS name, or blanc if the Looad Balancer is not found.  
 #===============================================================================
 function get_loadbalancer_dns_name()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
@@ -38,8 +38,8 @@ function get_loadbalancer_dns_name()
    local elb_dns
  
    elb_dns="$(aws elb describe-load-balancers \
-                      --query "LoadBalancerDescriptions[?LoadBalancerName=='${loadbalancer_nm}'].DNSName" \
-                      --output text)"
+       --query "LoadBalancerDescriptions[?LoadBalancerName=='${loadbalancer_nm}'].DNSName" \
+       --output text)"
  
    echo "${elb_dns}"
  
@@ -61,7 +61,7 @@ function get_loadbalancer_dns_hosted_zone_id()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
@@ -69,8 +69,8 @@ function get_loadbalancer_dns_hosted_zone_id()
    local elb_dns
  
    elb_dns="$(aws elb describe-load-balancers \
-                      --query "LoadBalancerDescriptions[?LoadBalancerName=='${loadbalancer_nm}'].CanonicalHostedZoneNameID" \
-                      --output text)"
+       --query "LoadBalancerDescriptions[?LoadBalancerName=='${loadbalancer_nm}'].CanonicalHostedZoneNameID" \
+       --output text)"
  
    echo "${elb_dns}"
  
@@ -79,9 +79,8 @@ function get_loadbalancer_dns_hosted_zone_id()
 
 #===============================================================================
 # Creates a Classic Load Balancer. 
-# Elastic Load Balancers support sticky sessions. 
-# The Load Balander listens on 443 and forwards the requests to the
-# clients on port 8070. 
+# The Load Balander listens on 443 port and forwards the requests to 8070 port.
+# Elastic Load Balancers support sticky sessions.  
 #
 # Globals:
 #  None
@@ -98,7 +97,7 @@ function create_loadbalancer()
 {
    if [[ $# -lt 4 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
@@ -108,11 +107,11 @@ function create_loadbalancer()
    local subnet_id="${4}"
  
    aws elb create-load-balancer \
-                    --load-balancer-name "${loadbalancer_nm}" \
-                    --security-groups "${sg_id}" \
-                    --subnets "${subnet_id}" \
-                    --region "${DEPLOY_REGION}" \
-                    --listener LoadBalancerPort="${LBAL_PORT}",InstancePort="${SERVER_WEBPHP_APACHE_WEBSITE_PORT}",Protocol=https,InstanceProtocol=http,SSLCertificateId="${cert_arn}" >> /dev/null
+       --load-balancer-name "${loadbalancer_nm}" \
+       --security-groups "${sg_id}" \
+       --subnets "${subnet_id}" \
+       --region "${DTC_DEPLOY_REGION}" \
+       --listener LoadBalancerPort="${LBAL_PORT}",InstancePort="${SRV_WEBPHP_APACHE_WEBSITE_PORT}",Protocol=https,InstanceProtocol=http,SSLCertificateId="${cert_arn}" >> /dev/null
  
    return 0
 }
@@ -122,7 +121,7 @@ function create_loadbalancer()
 # your EC2 instances. Each monitored instance is expected to provide a 
 # endpoint receable by the Load Balancer, ex: HTTP:8090/elb.htm.
 # The endpoint must return 'ok' response.
-# Each registered instance must allow access to the load balancer ping in the 
+# Each registered instance must allow access to the Load Balancer ping in the 
 # Security Group.
 #
 # Globals:
@@ -136,23 +135,23 @@ function configure_loadbalancer_health_check()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
    local loadbalancer_nm="${1}"
  
    aws elb configure-health-check \
-                    --load-balancer-name "${loadbalancer_nm}" \
-                    --health-check Target=HTTP:"${SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 >> /dev/null
+       --load-balancer-name "${loadbalancer_nm}" \
+       --health-check Target=HTTP:"${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 >> /dev/null
  
    return 0
 }
 
 #===============================================================================
-# Deletes the specified load balancer. 
-# The DNS name associated with a deleted load balancer is no longer usable. 
-# The name and associated DNS record of the deleted load balancer no longer 
+# Deletes the specified Load Balancer. 
+# The DNS name associated with a deleted Load Balancer is no longer usable. 
+# The name and associated DNS record of the deleted Load Balancer no longer 
 # exist and traffic sent to any of its IP addresses is no longer delivered to
 # your instances.
 #
@@ -167,7 +166,7 @@ function delete_loadbalancer()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
@@ -179,16 +178,16 @@ function delete_loadbalancer()
 }
 
 #===============================================================================
-# Adds the specified instances to the specified load balancer.
+# Adds the specified instances to the specified Load Balancer.
 # The instance must be a running instance in the same network as the load
 # balancer. After the instance is registered, it starts receiving traffic and
-# requests from the load balancer.
+# requests from the Load Balancer.
 #
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm      -- The Load Balancer name.
-# +instance_id          -- The instance ID.
+# +loadbalancer_nm      -- Load Balancer name.
+# +instance_id          -- the instance ID.
 # Returns:      
 #  None  
 #===============================================================================
@@ -196,28 +195,30 @@ function register_instance_with_loadbalancer()
 {
    if [[ $# -lt 2 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
    local loadbalancer_nm="${1}"
    local instance_id="${2}"
    
-   aws elb register-instances-with-load-balancer --load-balancer-name "${loadbalancer_nm}" --instances "${instance_id}" >> /dev/null
+   aws elb register-instances-with-load-balancer \
+       --load-balancer-name "${loadbalancer_nm}" \
+       --instances "${instance_id}" >> /dev/null
    
    return 0
 }
 
 #===============================================================================
-# Deregisters  the  specified instances from the specified load balancer. After 
+# Deregisters  the  specified instances from the specified Load Balancer. After 
 # the instance is deregistered, it no longer receives traffic from the load 
 # balancer.
 #
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm      -- The Load Balancer name.
-# +instance_id          -- The instance ID.
+# +loadbalancer_nm      -- Load Balancer name.
+# +instance_id          -- the instance ID.
 # Returns:      
 #  None  
 #===============================================================================
@@ -225,14 +226,16 @@ function deregister_instance_from_loadbalancer()
 {
    if [[ $# -lt 2 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
    local loadbalancer_nm="${1}"
    local instance_id="${2}"
    
-   aws elb deregister-instances-from-load-balancer --load-balancer-name "${loadbalancer_nm}" --instances "${instance_id}" >> /dev/null
+   aws elb deregister-instances-from-load-balancer \
+       --load-balancer-name "${loadbalancer_nm}" \
+       --instances "${instance_id}" >> /dev/null
    
    return 0
 }
@@ -243,8 +246,8 @@ function deregister_instance_from_loadbalancer()
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm      -- The Load Balancer name.
-# +instance_id          -- The instance ID.
+# +loadbalancer_nm      -- Load Balancer name.
+# +instance_id          -- the instance ID.
 # Returns:      
 #  The Load Balancer name if the instance is registered, blanc otherwise.  
 #===============================================================================
@@ -252,7 +255,7 @@ function check_instance_is_registered_with_loadbalancer()
 {
    if [[ $# -lt 2 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
@@ -261,8 +264,8 @@ function check_instance_is_registered_with_loadbalancer()
    
    local loadbalancer_name
    loadbalancer_name="$(aws elb describe-load-balancers \
-          --query "LoadBalancerDescriptions[?contains(LoadBalancerName, '${loadbalancer_nm}') && contains(Instances[].InstanceId, '${instance_id}')].{LoadBalancerName: LoadBalancerName}" \
-          --output text)"                     
+       --query "LoadBalancerDescriptions[?contains(LoadBalancerName, '${loadbalancer_nm}') && contains(Instances[].InstanceId, '${instance_id}')].{LoadBalancerName: LoadBalancerName}" \
+       --output text)"                     
             
    echo "${loadbalancer_name}"
    

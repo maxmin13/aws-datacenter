@@ -1,29 +1,31 @@
 
-enable ports: 38142, 2812, 8070
+Used ports: 
+
+Monit website:  2812
+Webphp website: 8070
+SSH:            38142
 
 ----------------------
 Establish SSH Session:
 ----------------------
 
-# Enable security group access on port 38142
-rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-webphp1-kp.pem' -p 38142 ec2-user@52.210.102.93
+# Enable Security Group access on port 38142
+rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-webphp1-kp.pem' -p 38142 webphp-user@3.248.199.53
 
 ------
 Monit:
 ------
 
-# No load balancer, enable security group access on port 2812
-http://52.210.102.93:2812 
-http://54.155.164.83:2812 
+# No Load Balancer, enable Security Group access on port 2812
+http://3.248.199.53:2812 
 (monit/monit)
 
 ---------------
 WebPhp website:
 ---------------
 
-# No load balancer, enable security group access on port 8070
-http://52.210.102.93:8070
-http://54.155.164.83:8070
-
-# Through the load balancer
+# Through the Load Balancer
 https://www.maxmin.it
+
+# No Load Balancer, enable Security Group access on port 8070
+http://3.248.199.53:8070

@@ -22,7 +22,7 @@ Sent to <?php echo $to;?>
 <br>
 <br>
 
-Check the sendemails database table.
+Check the sendemails Database table.
 
 <br>
 <br>

@@ -12,7 +12,7 @@ database_log_file=/var/log/database_install.log
 
 echo 'Installing Database ...' >> "${database_log_file}" 2>&1
 
-yum install -y mysql
+yum install -y mysql >> "${database_log_file}" 2>&1
 
 cd "${script_dir}"
 
@@ -32,7 +32,7 @@ mysql --host=SEDdatabase_hostSED \
 
 echo 'Users created' >> "${database_log_file}" 2>&1
 
-echo 'Verifing database ...' >> "${database_log_file}" 2>&1
+echo 'Verifing Database ...' >> "${database_log_file}" 2>&1
 
 mysql --host=SEDdatabase_hostSED \
       --user=SEDdatabase_main_userSED \

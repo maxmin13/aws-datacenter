@@ -11,7 +11,6 @@ set +o xtrace
 # and submit a registration request. 
 ###############################################
 
-
 echo '*******************'
 echo 'DNS domain register'
 echo '*******************'
@@ -29,15 +28,15 @@ else
 
    if [[ 'IN_PROGRESS' == "${status}" ]]
    then
-      echo '* WARN: a registration request has already been submitted'
+      echo '* WARN: a registration request has already been submitted.'
    else
       availability="$(check_domain_availability "${MAXMIN_TLD}")"
 
       if [[ "${availability}" != 'AVAILABLE' ]]
       then
-         echo "* WARN: the '${MAXMIN_TLD}' domain is not available for registration"
+         echo "* WARN: the ${MAXMIN_TLD} domain is not available for registration."
       else
-         echo "The '${MAXMIN_TLD}' domain is available, registering"
+         echo "The ${MAXMIN_TLD} domain is available, registering."
          
          register_domain "${TEMPLATE_DIR}"/dns/register-domain.json
          

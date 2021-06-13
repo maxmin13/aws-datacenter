@@ -1,0 +1,20 @@
+#!/usr/bin/expect -f
+
+set force_conservative 0
+
+if {$force_conservative} {
+   set send_slow {1 .1}
+   proc send {ignore arg} {
+      sleep .1
+      exp_send -s -- $arg
+   }
+}
+
+set timeout -1
+log_user 0
+spawn openssl rsa -in SEDkey_fileSED -out SEDnew_key_fileSED
+match_max 100000
+expect -exact ":"
+send -- "SEDkey_pwdSED\r"
+send_user SEDnew_key_fileSED
+expect eof

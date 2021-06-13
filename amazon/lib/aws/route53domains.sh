@@ -44,7 +44,7 @@ function check_domain_availability()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
@@ -77,7 +77,7 @@ function check_domain_is_registered_with_the_account()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
@@ -109,7 +109,7 @@ function register_domain()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
@@ -147,7 +147,7 @@ function update_domain_registration_name_servers()
 {
    if [[ $# -lt 2 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
@@ -185,7 +185,7 @@ function get_request_status()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
@@ -218,7 +218,7 @@ function __create_update_name_servers_request()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    

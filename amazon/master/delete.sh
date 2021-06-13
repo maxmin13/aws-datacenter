@@ -19,68 +19,70 @@ source "${PROJECT_DIR}"/amazon/lib/aws/elb.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/iam.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53.sh
+source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
 source "${PROJECT_DIR}"/amazon/credential/recaptcha.sh
 source "${PROJECT_DIR}"/amazon/credential/passwords.sh
 
 log_file="${LOG_DIR}"/delete-$(date +"%d-%m-%Y-%H.%M"."%S")
 
-echo ''
-
-if [[ 'production' == "${ENV}" ]]
-then
-   echo '*********************'
-   echo 'Env: production (AWS)'
-   echo '*********************'
-elif [[ 'development' == "${ENV}" ]]
-then
-   echo '****************'
-   echo 'Env: development'
-   echo '****************' 
-fi
-
-. "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh 
-. "${PROJECT_DIR}"/amazon/webphp/delete.sh 2 
-. "${PROJECT_DIR}"/amazon/admin/delete.sh                 
 
 exit
+exit
+exit
+
+echo ''
+
+{
+   if [[ 'production' == "${ENV}" ]]
+   then
+      echo '*********************'
+      echo 'Env: production (AWS)'
+      echo '*********************'
+   elif [[ 'development' == "${ENV}" ]]
+   then
+      echo '****************'
+      echo 'Env: development'
+      echo '****************' 
+   fi
+
+   # Make a backup of the database.
+   . "${PROJECT_DIR}"/amazon/database/box/data/backup/make.sh 
+
+   # Delete the application hosted zone
+   . "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh         
+
+   # Delete the websites.
+   . "${PROJECT_DIR}"/amazon/admin/box/website/delete.sh      
+   . "${PROJECT_DIR}"/amazon/webphp/box/website/delete.sh 1   
+
+   # Delete SSL 
+   ## TODO . "${PROJECT_DIR}"/amazon/ssl/admin/delete.sh
+
+   # Delete the server instances.
+   . "${PROJECT_DIR}"/amazon/shared/box/delete.sh             
+   . "${PROJECT_DIR}"/amazon/webphp/box/delete.sh 1           
+   . "${PROJECT_DIR}"/amazon/loadbalancer/box/delete.sh       
+
+   # Delete the Database objects.
+   . "${PROJECT_DIR}"/amazon/database/box/data/delete.sh
+
+   # Delete the Admin instance.
+   . "${PROJECT_DIR}"/amazon/admin/box/delete.sh                 
+
+   # Delete the Database instance.
+   . "${PROJECT_DIR}"/amazon/database/box/delete.sh              
+
+   # Delete the Shared instance.
+   . "${PROJECT_DIR}"/amazon/shared/image/delete.sh            
+
+   # Release the IP addresses.
+   . "${PROJECT_DIR}"/amazon/account/delete.sh               
+
+   # Delete the datacenter.
+   . "${PROJECT_DIR}"/amazon/datacenter/delete.sh    
+
+} ### >> "${log_file}" 2>&1        
 
 echo
-
-# Make a backup of the database.
-#. "${PROJECT_DIR}"/amazon/database/data/backup/make.sh    ### >> "${log_file}" 2>&1
-
-# Delete the application hosted zone
-. "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh        ### >> "${log_file}" 2>&1
-
-# Delete the websites.
-. "${PROJECT_DIR}"/amazon/admin/website/delete.sh         ### >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/webphp/website/delete.sh 1      ### >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/webphp/website/delete.sh 2      ### >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/webphp/website/delete.sh 3      ### >> "${log_file}" 2>&1
-
-# Delete the server instances.
-. "${PROJECT_DIR}"/amazon/webphp/delete.sh 1              ### >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/webphp/delete.sh 2              ### >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/webphp/delete.sh 3              ### >> "${log_file}" 2>&1
-. "${PROJECT_DIR}"/amazon/loadbalancer/delete.sh          ### >> "${log_file}" 2>&1
-
-# Delete the database objects.
-. "${PROJECT_DIR}"/amazon/database/data/delete.sh
-
-# Delete the Admin instance.
-. "${PROJECT_DIR}"/amazon/admin/delete.sh                 ### >> "${log_file}" 2>&1
-
-# Delete the database instance.
-. "${PROJECT_DIR}"/amazon/database/delete.sh              ### >> "${log_file}" 2>&1
-
-# Delete the shared base instance.
-. "${PROJECT_DIR}"/amazon/image/shared/delete.sh          ### >> "${log_file}" 2>&1
-
-# Release the IP addresses.
-. "${PROJECT_DIR}"/amazon/account/delete.sh               ### >> "${log_file}" 2>&1
-
-# Delete the datacenter.
-. "${PROJECT_DIR}"/amazon/datacenter/delete.sh            ### >> "${log_file}" 2>&1
-
 echo 'Data center deleted'
 echo

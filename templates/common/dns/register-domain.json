@@ -1,0 +1,72 @@
+{
+              "DomainName": "maxmin.it",
+              "DurationInYears": 1,
+              "AutoRenew": true,
+              "AdminContact": {
+                  "FirstName": "Massimiliano",
+                  "LastName": "Minardi",
+                  "ContactType": "PERSON",
+                  "AddressLine1": "40 Blessington Street",
+                  "City": "Dublin",
+                  "CountryCode": "IE",
+                  "ZipCode": "D07 T2H0",
+                  "PhoneNumber": "+353.838146399",
+                  "ExtraParams": [ 
+                     { 
+                        "Name": "IT_NATIONALITY",
+                        "Value": "Italy"
+                     },
+                     { 
+                        "Name": "IT_PIN",
+                        "Value": "AY9195328"
+                     }
+                  ],                  
+                  "Email": "minardi.massimiliano@libero.it"
+              },
+              "RegistrantContact": {
+                  "FirstName": "Massimiliano",
+                  "LastName": "Minardi",
+                  "ContactType": "PERSON",
+                  "AddressLine1": "40 Blessington Street",
+                  "City": "Dublin",
+                  "CountryCode": "IE",
+                  "ZipCode": "D07 T2H0",
+                  "PhoneNumber": "+353.838146399",
+                  "ExtraParams": [ 
+                     { 
+                        "Name": "IT_NATIONALITY",
+                        "Value": "Italy"
+                     },
+                     { 
+                        "Name": "IT_PIN",
+                        "Value": "AY9195328"
+                     }
+                  ],                  
+                  "Email": "minardi.massimiliano@libero.it"
+              },
+              "TechContact": {
+                  "FirstName": "Massimiliano",
+                  "LastName": "Minardi",
+                  "ContactType": "PERSON",
+                  "AddressLine1": "40 Blessington Street",
+                  "City": "Dublin",     
+                  "CountryCode": "IE",
+                  "ZipCode": "D07 T2H0",
+                  "PhoneNumber": "+353.838146399",
+                  "ExtraParams": [ 
+                     { 
+                        "Name": "IT_NATIONALITY",
+                        "Value": "Italy"
+                     },
+                     { 
+                        "Name": "IT_PIN",
+                        "Value": "AY9195328"
+                     }
+                  ],                  
+                  "Email": "minardi.massimiliano@libero.it"
+              },
+              "PrivacyProtectAdminContact": true,
+              "PrivacyProtectRegistrantContact": true,
+              "PrivacyProtectTechContact": true
+          }
+

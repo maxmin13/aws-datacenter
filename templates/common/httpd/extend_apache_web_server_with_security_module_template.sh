@@ -12,10 +12,9 @@ set +o xtrace
 ## 2) modsecurity_overrides.conf
 ## 3) owasp-coreruleset.tar.gz
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 OWASP_ARCHIVE='SEDowasp_archiveSED'
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 yum install mod_security -y
 
@@ -36,10 +35,10 @@ cd "${script_dir}" || exit
 
 mv owasp-modsecurity-crs "${APACHE_INSTALL_DIR}"/modsecurity.d
 mv owasp_mod_security.conf "${APACHE_INSTALL_DIR}"/conf.d 
-echo 'Apache Web Server Owasp rules configured'
+echo 'Apache Web Server Owasp rules configured.'
 
 mv modsecurity_overrides.conf "${APACHE_INSTALL_DIR}"/modsecurity.d/
-echo 'Apache Web Server Security overrides configured'
+echo 'Apache Web Server Security overrides configured.'
 
 # Set files and directories permissions
 find "${APACHE_INSTALL_DIR}/modsecurity.d" -type d -exec chown root:root {} +
@@ -52,7 +51,7 @@ find "${APACHE_INSTALL_DIR}/conf.d" -type f -exec chmod 400 {} +
 # Check the syntax of configuration files.
 httpd -t
 systemctl restart httpd
-echo 'Apache Security module installed'
+echo 'Apache Security module installed.'
 
 echo '-------------------------------------------------'
 echo 'Directory modules:'
@@ -61,7 +60,7 @@ echo '-------------------------------------------------'
 echo 'Modules compiled statically into the server:'
 /usr/sbin/httpd -l
 echo '-------------------------------------------------'
-echo 'Modules compiled dynamically enabled with Apache'
+echo 'Modules compiled dynamically enabled with Apache:'
 /usr/sbin/httpd -M
 echo '-------------------------------------------------'
 echo 'Server version:'

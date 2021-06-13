@@ -85,7 +85,7 @@ function create_hosted_zone()
 {
    if [[ $# -lt 3 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
@@ -124,7 +124,7 @@ function delete_hosted_zone()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
@@ -152,12 +152,12 @@ function check_hosted_zone_exists()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
    local hosted_zone_nm="${1}"
-   local exist
+   local exists
    
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
    
@@ -186,7 +186,7 @@ function get_hosted_zone_name_servers()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
@@ -206,41 +206,195 @@ function get_hosted_zone_name_servers()
 }
 
 #===============================================================================
-# Returs the name of the record if the record is present in the hosted zone, or 
-# blanc if the record is not found.
+# Returs the name of the record if the record is present in the hosted zone.
 #
 # Globals:
 #  None
 # Arguments:
+# +hosted_zone_nm     -- The hosted zone name, this is the name you have 
+#                        registered with your DNS registrar.
 # +sub_domain_nm      -- the alias sub-domain name, eg. www
-# +hosted_zone_nm     -- The hosted zone name, this is the name you have registered with your DNS 
-#                        registrar.
 # Returns:      
 #  The name of the record, or blanc if not found.  
 #===============================================================================
 function check_hosted_zone_has_record() 
 {
-   if [[ $# -lt 2 ]]
+   if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
+   local hosted_zone_nm="${1}"
+   local sub_domain_nm='-'
+   local domain
+   local record
+   
+   if [[ $# -eq 2 ]]
+   then
+      sub_domain_nm="${2}"
+      domain="${sub_domain_nm}"."${hosted_zone_nm}"
+   else
+      # TLD
+      domain="${hosted_zone_nm}"
+   fi
    
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
    
-   aws route53 list-resource-record-sets \
+   record="$(aws route53 list-resource-record-sets \
                      --hosted-zone-id "${hosted_zone_id}" \
-                     --query "ResourceRecordSets[?contains(Name,'${sub_domain_nm}.${hosted_zone_nm}')].Name" \
-                     --output text
+                     --query "ResourceRecordSets[?contains(Name,'${domain}')].Name" \
+                     --output text)"
+                     
+   echo "${record}"
+   
+   return 0
+}
+
+#===============================================================================
+# Returs the IP address associated with a record or an empty string if the 
+# record doesn't have one.
+#
+# Globals:
+#  None
+# Arguments:
+# +hosted_zone_nm     -- The hosted zone name, this is the name you have 
+#                        registered with your DNS registrar.
+# +sub_domain_nm      -- the alias sub-domain name, eg. www
+# Returns:      
+#  The IP address associated with the record, or blanc if not found.  
+#===============================================================================
+function get_record_ip_address() 
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      exit 1
+   fi
+   
+   local hosted_zone_nm="${1}"
+   local sub_domain_nm='-'
+   local domain
+   local ip_address
+   
+   if [[ $# -eq 2 ]]
+   then
+      sub_domain_nm="${2}"
+      domain="${sub_domain_nm}"."${hosted_zone_nm}"
+   else
+      # TLD
+      domain="${hosted_zone_nm}"
+   fi
+   
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+   
+   ip_address="$(aws route53 list-resource-record-sets \
+                     --hosted-zone-id "${hosted_zone_id}" \
+                     --query "ResourceRecordSets[?contains(Name,'${domain}')].ResourceRecords[*].Value" \
+                     --output text)"
+                     
+   echo "${ip_address}"
+   
+   return 0
+}
+
+#===============================================================================
+# Returs the DNS name associated with a record or an empty string if the 
+# record doesn't have one.
+#
+# Globals:
+#  None
+# Arguments:
+# +hosted_zone_nm     -- The hosted zone name, this is the name you have 
+#                        registered with your DNS registrar.
+# +sub_domain_nm      -- the alias sub-domain name, eg. www
+# Returns:      
+#  The DNS name associated with the record, or blanc if not found.  
+#===============================================================================
+function get_record_dns_name() 
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      exit 1
+   fi
+   
+   local hosted_zone_nm="${1}"
+   local sub_domain_nm='-'
+   local domain
+   local dns_nm
+   
+   if [[ $# -eq 2 ]]
+   then
+      sub_domain_nm="${2}"
+      domain="${sub_domain_nm}"."${hosted_zone_nm}"
+   else
+      # TLD
+      domain="${hosted_zone_nm}"
+   fi
+   
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+   
+   dns_nm="$(aws route53 list-resource-record-sets \
+                     --hosted-zone-id "${hosted_zone_id}" \
+                     --query "ResourceRecordSets[?contains(Name,'${domain}')].AliasTarget.DNSName" \
+                     --output text)"
+                     
+   echo "${dns_nm}"
+   
+   return 0
+}
+
+#===============================================================================
+# Returs the Hosted Zone ID associated with a record or an empty string if the 
+# record doesn't have one.
+#
+# Globals:
+#  None
+# Arguments:
+# +hosted_zone_nm     -- The hosted zone name, this is the name you have 
+#                        registered with your DNS registrar.
+# +sub_domain_nm      -- the alias sub-domain name, eg. www
+# Returns:      
+#  The Hosted Zone identifier associated with the record, or blanc if not found.  
+#===============================================================================
+function get_record_hosted_zone_id() 
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      exit 1
+   fi
+   
+   local hosted_zone_nm="${1}"
+   local sub_domain_nm='-'
+   local domain
+   local dns_nm
+   
+   if [[ $# -eq 2 ]]
+   then
+      sub_domain_nm="${2}"
+      domain="${sub_domain_nm}"."${hosted_zone_nm}"
+   else
+      # TLD
+      domain="${hosted_zone_nm}"
+   fi
+   
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+   
+   dns_nm="$(aws route53 list-resource-record-sets \
+                     --hosted-zone-id "${hosted_zone_id}" \
+                     --query "ResourceRecordSets[?contains(Name,'${domain}')].AliasTarget.HostedZoneId" \
+                     --output text)"
+                     
+   echo "${dns_nm}"
    
    return 0
 }
 
 #===============================================================================
 # Adds an A-record to a hosted zone.
+# If the subdomain is not passed, the domain is considered a top level domain.
 # A-records are the DNS server equivalent of the hosts file - a simple domain 
 # name to IP-address mapping. 
 # Changes generally propagate to all Route 53 name servers within 60 seconds. 
@@ -248,29 +402,39 @@ function check_hosted_zone_has_record()
 # Globals:
 #  None
 # Arguments:
-# +sub_domain_nm      -- the alias sub-domain name, eg. www
-# +hosted_zone_nm -- The hosted zone name, this is the name you have registered with your DNS 
-#                    registrar.
-# +ip_address     -- the IP address associated to the domain name.
+# +ip_address       -- the IP address associated to the domain name.
+# +hosted_zone_nm   -- the hosted zone name, this is the name you have 
+#                      registered with the DNS registrar.
+# +sub_domain_nm    -- the alias sub-domain name, eg. www. 
 # Returns:      
 #  The ID of the request.  
 #===============================================================================
 function create_record()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 2 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
-   local ip_address="${3}"
+   local ip_address="${1}"
+   local hosted_zone_nm="${2}" 
+   local sub_domain_nm='-' 
+   local domain
    local request_id
+   
+   if [[ $# -eq 3 ]]
+   then
+      sub_domain_nm="${3}"
+      domain="${sub_domain_nm}"."${hosted_zone_nm}"
+   else
+      # TLD
+      domain="${hosted_zone_nm}"
+   fi
                                                            
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
    
-   request_body="$(__create_type_A_change_batch "${sub_domain_nm}.${hosted_zone_nm}" \
+   request_body="$(__create_type_A_change_batch "${domain}" \
                                                 "${ip_address}" \
                                                 'CREATE' \
                                                 "A Record for ${ip_address}")"
@@ -285,6 +449,7 @@ function create_record()
 
 #===============================================================================
 # Deletes a record in a hosted zone.
+# If the subdomain is not passed, the domain is considered a top level domain.
 # Changes to a hosted zoned generally propagate to all Route 53 name servers 
 # within 60 seconds. 
 #
@@ -300,20 +465,30 @@ function create_record()
 #===============================================================================
 function delete_record()
 {
-   if [[ $# -lt 3 ]]
+  if [[ $# -lt 2 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
-   local ip_address="${3}"
+   local ip_address="${1}"
+   local hosted_zone_nm="${2}" 
+   local sub_domain_nm='-' 
+   local domain
    local request_id
+   
+   if [[ $# -eq 3 ]]
+   then
+      sub_domain_nm="${3}"
+      domain="${sub_domain_nm}"."${hosted_zone_nm}"
+   else
+      # TLD
+      domain="${hosted_zone_nm}"
+   fi
                                                            
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
    
-   request_body="$(__create_type_A_change_batch "${sub_domain_nm}.${hosted_zone_nm}" \
+   request_body="$(__create_type_A_change_batch "${domain}" \
                                                 "${ip_address}" \
                                                 'DELETE' \
                                                 "A Record for ${ip_address}")"
@@ -328,6 +503,7 @@ function delete_record()
 
 #===============================================================================
 # Adds an alias record to a hosted zone.
+# If the subdomain is not passed, the domain is considered a top level domain.
 # A Canonical Name record (abbreviated as CNAME record) is a type of resource 
 # record in the Domain Name System (DNS) that maps one domain name (an alias) to 
 # another (the canonical name).
@@ -336,34 +512,43 @@ function delete_record()
 # Globals:
 #  None
 # Arguments:
-# +sub_domain_nm         -- the alias sub-domain name, eg. www .
+# +target_hosted_zone_id -- the hosted zone identifier of the referred domain. 
+# +target_domain_nm      -- the domain name referred by the alias.
 # +hosted_zone_nm        -- the alias's hosted zone, this is the name you have  
 #                           registered with your DNS registrar.
-# +target_domain_nm      -- the domain name referred by the alias.
-# +target_hosted_zone_id -- the hosted zone identifier of the referred domain. 
+# +sub_domain_nm         -- the alias sub-domain name, eg. www .
 # Returns:      
 #  The ID of the request.  
 #===============================================================================
 function create_alias_record()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
-   
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
-   local target_domain_nm="${3}"
-   local target_hosted_zone_id="${4}"
+
+   local target_hosted_zone_id="${1}"
+   local target_domain_nm="${2}"  
+   local hosted_zone_nm="${3}"
+   local sub_domain_nm='-'
    local hosted_zone_id
    local request_body
    local request_id
+   local domain
    
-   # The alias record is removed from this hosted zone.
+   if [[ $# -eq 4 ]]
+   then
+      sub_domain_nm="${4}"
+      domain="${sub_domain_nm}"."${hosted_zone_nm}"
+   else
+      # TLD
+      domain="${hosted_zone_nm}"
+   fi
+
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
     
-   request_body="$(__create_alias_change_batch "${sub_domain_nm}.${hosted_zone_nm}" \
+   request_body="$(__create_alias_change_batch "${domain}" \
                                                "dualstack.${target_domain_nm}" \
                                                "${target_hosted_zone_id}" \
                                                'CREATE' \
@@ -379,48 +564,58 @@ function create_alias_record()
 
 #===============================================================================
 # Deletes an alias record in a hosted zone.
+# If the subdomain is not passed, the domain is considered a top level domain.
 # Changes to a hosted zoned generally propagate to all Route 53 name servers 
 # within 60 seconds. 
 #
 # Globals:
 #  None
 # Arguments:
-# +sub_domain_nm         -- the alias sub-domain name, eg. www .
+# +target_hosted_zone_id -- the hosted zone identifier of the referred domain. 
+# +target_domain_nm      -- the domain name referred by the alias.
 # +hosted_zone_nm        -- the alias's hosted zone, this is the name you have  
 #                           registered with your DNS registrar.
-# +target_domain_nm      -- the domain name referred by the alias.
-# +target_hosted_zone_id -- the hosted zone identifier of the referred domain. 
+# +sub_domain_nm         -- the alias sub-domain name, eg. www . 
 # Returns:      
 #  The ID of the request.  
 #===============================================================================
 function delete_alias_record()
 {
-  if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
-   
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
-   local target_domain_nm="${3}"
-   local target_hosted_zone_id="${4}"
+
+   local target_hosted_zone_id="${1}"
+   local target_domain_nm="${2}"  
+   local hosted_zone_nm="${3}"
+   local sub_domain_nm='-' 
    local hosted_zone_id
    local request_body
    local request_id
+   local domain
    
-   # The alias record is removed from this hosted zone.
+   if [[ $# -eq 4 ]]
+   then
+      sub_domain_nm="${4}"
+      domain="${sub_domain_nm}"."${hosted_zone_nm}"
+   else
+      # TLD
+      domain="${hosted_zone_nm}"
+   fi
+
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
     
-   request_body="$(__create_alias_change_batch "${sub_domain_nm}.${hosted_zone_nm}" \
+   request_body="$(__create_alias_change_batch "${domain}" \
                                                "dualstack.${target_domain_nm}" \
                                                "${target_hosted_zone_id}" \
                                                'DELETE' \
                                                "Alias record for ${sub_domain_nm}.${hosted_zone_nm}")"
-                                             
+                                                  
    ## Submit the changes to the hosted zone. 
-   request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")"                                          
-  
+   request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")"   
+                                        
    echo "${request_id}"
    
    return 0
@@ -446,7 +641,7 @@ function get_record_request_status()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
@@ -478,7 +673,7 @@ function __get_change_batch_request_status()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
@@ -513,7 +708,7 @@ function __create_type_A_change_batch()
 {
    if [[ $# -lt 4 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
@@ -576,7 +771,7 @@ function __create_alias_change_batch()
 {
    if [[ $# -lt 5 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
@@ -638,7 +833,7 @@ function __submit_change_batch()
 {
    if [[ $# -lt 2 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
@@ -674,7 +869,7 @@ function __get_hosted_zone_id()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'ERROR: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
@@ -699,17 +894,32 @@ function __get_hosted_zone_id()
 ## create_hosted_zone 'maxmin.it' 'maxmin_it_caller_reference' 'maxmin.it public hosted zone'
 ## delete_hosted_zone 'maxmin.it' 
 ## check_hosted_zone_exists 'maxmin.it'
-## get_hosted_zone_name_servers "maxmin.it" 
+## get_hosted_zone_name_servers 'maxmin.it'
 
-## create_record 'admin' 'maxmin.it' '54.72.236.225'
-## delete_record 'admin' 'maxmin.it' '54.72.236.225'
-## get_record_request_status '/change/C08567412987M8ULD7QKI'
-## check_hosted_zone_has_record 'admin' 'maxmin.it'
+## get_record_ip_address 'maxmin.it' 'admin'
+## get_record_ip_address 'maxmin.it' 'www'
+## get_record_dns_name 'maxmin.it' 'admin'
+## get_record_dns_name 'maxmin.it' 'www'
+## get_record_hosted_zone_id 'maxmin.it' 'www'
 
-## create_alias_record 'www' 'maxmin.it' 'elbmaxmin-1613735089.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2'
-## delete_alias_record 'www' 'maxmin.it' 'elbmaxmin-450194799.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2'
+## create_record '18.203.73.111' 'maxmin.it' 'admin' 
+## delete_record '18.203.73.111' 'maxmin.it' 'admin' 
+## create_record '18.203.73.111' 'maxmin.it' 'www' 
+## delete_record '18.203.73.111' 'maxmin.it' 'www' 
+## create_record '18.203.73.111' 'maxmin.it' 
+## delete_record '18.203.73.111' 'maxmin.it'
+
 ## get_record_request_status '/change/C08567412987M8ULD7QKI'
-## check_hosted_zone_has_record 'www' 'maxmin.it'
+## check_hosted_zone_has_record 'maxmin.it' 'admin'
+
+## create_alias_record 'Z32O12XQLNTSW2' 'elbmaxmin-1203266565.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'www'
+## delete_alias_record 'Z32O12XQLNTSW2' 'elbmaxmin-1203266565.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'www'
+## create_alias_record 'Z32O12XQLNTSW2' 'elbmaxmin-1203266565.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'abc' 
+## delete_alias_record 'Z32O12XQLNTSW2' 'elbmaxmin-1203266565.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'abc'
+
+## get_record_request_status '/change/C08567412987M8ULD7QKI'
+## check_hosted_zone_has_record 'maxmin.it' 'www' 
+## check_hosted_zone_has_record 'maxmin.it' 
 
 ## __create_type_A_change_batch 'webphp1.maxmin.it' '34.242.102.242' 'A' 'CREATE' 'admin website' 
 # __create_alias_change_batch 'www.maxmin.it' 'dualstack.elbmaxmin-1613735089.eu-west-1.elb.amazonaws.com' 'Z32O12XQLNTSW2' 'CREATE' 'elb alias'

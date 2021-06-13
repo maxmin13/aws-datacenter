@@ -1,0 +1,54 @@
+
+RUN SCRIPT AT BOOT:
+
+aws ec2 run-instances \
+          .....
+          --user-data file:///home/maxmin/Temp/cloud-init.sh
+          
+in default mode, the script runs only at first boot
+
+works with bash script, python script
+
+USE CLOUD-CONFIG:
+
+override some default configurations
+
+
+#cloud-config
+
+--- 
+system-info: 
+  default_user: 
+    gecos: "Foo B. Bar"
+    lock_passwd: true
+    name: foobar
+    primary_group: foobar
+    shell: /bin/bash
+    sudo: 
+      - "ALL=(ALL) NOPASSWD:ALL"
+
+aws ec2 run-instances \
+          .....
+          --user-data file:///home/maxmin/Temp/cloud-config.yml 
+          
+CLOUD SCHEMA:
+
+cloud-init devel schema --config-file /home/maxmin/Temp/cloud-config.yml
+
+PHASES:
+
+cloud init runs in 3 phases:
+
+1) init phase, which is before SSH comes up 
+
+2) config phase that doesn't affect other stages of boot
+
+3) final phase, configuration that must be run as late as possible, ex: to install packages
+
+the configuration as what run in each phase is in:
+
+/etc/cloud/cloud.cfg 
+ 
+write files module
+
+ 

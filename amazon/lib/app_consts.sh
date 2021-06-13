@@ -2,76 +2,68 @@
 
 # shellcheck disable=SC2034
 
-#ENV='development'
-ENV='production'
+ENV='development'
+#ENV='production'
 
-AMAZON_CHECK_IP_URL='http://checkip.amazonaws.com'
-DEFAUT_AWS_USER='ec2-user'
-MAXMIN_TLD=maxmin.it
+## Amazon EBS-backed image:
+## By default, the root volume is deleted when the instance terminates.
+## Data on any other EBS volumes persists after instance termination by default.
+AWS_BASE_AMI_ID='ami-0bb3fad3c0286ebd5'
+AWS_CHECK_IP_URL='http://checkip.amazonaws.com'
+
+## ********** ##
+## App domain ##
+## ********** ##
+
+MAXMIN_TLD='maxmin.it'
 
 ## *********** ##
 ## Data Center ##
 ## *********** ##
 
-DEPLOY_REGION='eu-west-1'
-DEPLOY_ZONE_1='eu-west-1a'
-DEPLOY_ZONE_2='eu-west-1b'
-VPC_NM='maxmin-vpc'
-VPC_CDIR='10.0.0.0/16'
-SUBNET_MAIN_NM='maxmin-main-sbn'
-SUBNET_MAIN_CIDR='10.0.0.0/24'
-SUBNET_BACKUP_NM='maxmin-backup-sbn'
-SUBNET_BACKUP_CIDR='10.0.10.0/24'
-INTERNET_GATEWAY_NM='maxmin-gate'
-ROUTE_TABLE_NM='maxmin-route-tb'
+DTC_NM='maxmin-datacenter'
+DTC_CDIR='10.0.0.0/16'
+DTC_DEPLOY_REGION='eu-west-1'
+DTC_DEPLOY_ZONE_1='eu-west-1a'
+DTC_DEPLOY_ZONE_2='eu-west-1b'
+DTC_SUBNET_MAIN_NM='maxmin-main-sbn'
+DTC_SUBNET_MAIN_CIDR='10.0.0.0/24'
+DTC_SUBNET_BACKUP_NM='maxmin-backup-sbn'
+DTC_SUBNET_BACKUP_CIDR='10.0.10.0/24'
+DTC_INTERNET_GATEWAY_NM='maxmin-gate'
+DTC_ROUTE_TABLE_NM='maxmin-route-tb'
 
 ## ******************* ##
 ## Relational Database ##
 ## ******************* ##
 
 DB_MMDATA_INSTANCE_NM='mmdatainstance'
+DB_MMDATA_PORT='3306'
 DB_MMDATA_NM='mmdata'
-# the instance type to use (different from EC2 instance types)
-# Represents compute and memory capacity class 
-DB_MMDATA_INSTANCE_TYPE='db.t3.micro'
-DB_MMDATA_VOLUME_SIZE='10' # in GB
-# 1=use multi-az, 0=don't
-DB_MMDATA_USE_MULTI_AZ='0'
+DB_MMDATA_LOG_SLOW_QUERIES_PARAM_GRP_NM='logslowqueries' ## can't have capitals
+DB_MMDATA_LOG_SLOW_QUERIES_PARAM_GRP_DESC='Log slow queries database parameter group'
 DB_MMDATA_SUB_GRP_NM='maxmin-rds-subgp'
 DB_MMDATA_SUB_GRP_DESC='Database Subnet Group that spans multiple subnets'
 DB_MMDATA_SEC_GRP_NM='maxmin-rds-sgp'
-DB_MMDATA_SLOW_QUERIES_LOG_PARAM_GRP_NM='slowqueries-mysql80'
-DB_MMDATA_SLOW_QUERIES_LOG_PARAM_GRP_DESC='The database logs slow queries'
-#DB_MMDATA_FAMILY='mysql8.0'
-DB_MMDATA_FAMILY='mysql5.7'
-#MYSQL_VERSION='8.0'
-MYSQL_VERSION='5.7'
-DB_MMDATA_ENGINE='MYSQL'
-DB_MMDATA_PORT='3306'
-# Disable automated database backups
-DB_MMDATA_BACKUP_RET_PERIOD='0'
 # The db main user is set when the db is created, see: rds.sh
 DB_MMDATA_MAIN_USER_NM='maxmin'
 DB_MMDATA_ADMIN_USER_NM='adminrw'
 DB_MMDATA_WEBPHP_USER_NM='webphprw'
 DB_MMDATA_JAVAMAIL_USER_NM='javamail'
 
-## ***************** ##
-## Shared Base image ##
-## ***************** ##
+## ************ ##
+## Shared image ##
+## ************ ##
 
-## Amazon Linux 2 image
-BASE_AMI_ID='ami-0bb3fad3c0286ebd5'
-SHARED_BASE_INSTANCE_NM='maxmin-base-instance'
-SHARED_BASE_INSTANCE_PRIVATE_IP='10.0.0.8'
-SHARED_BASE_INSTANCE_SSH_PORT='38142'
-SHARED_BASE_INSTANCE_ROOT_DEV_NM='/dev/xvda'
-SHARED_BASE_INSTANCE_KEY_PAIR_NM='maxmin-base-kp'
-SHARED_BASE_INSTANCE_SEC_GRP_NM='maxmin-base-instance-sgp'
-SHARED_BASE_INSTANCE_TYPE='t2.micro'
-SHARED_BASE_INSTANCE_EBS_VOL_SIZE='10' ## in GB, subsequent servers can be larger, but not smaller
-SHARED_BASE_AMI_NM='maxmin-shared-ami'
-SHARED_BASE_AMI_DESC='Maxmin Linux secured Image'
+SHAR_INSTANCE_NM='maxmin-shared-instance'
+SHAR_INSTANCE_HOSTNAME='shared.maxmin.it'
+SHAR_INSTANCE_USER_NM='shared-user'
+SHAR_INSTANCE_PRIVATE_IP='10.0.0.8'
+SHAR_INSTANCE_SSH_PORT='38142'
+SHAR_INSTANCE_KEY_PAIR_NM='maxmin-shared-kp'
+SHAR_INSTANCE_SEC_GRP_NM='maxmin-shared-instance-sgp'
+SHAR_IMAGE_NM='maxmin-shared-ami'
+SHAR_IMAGE_DESC='Linux secured Image'
 
 ## ************* ##
 ## Load Balancer ##
@@ -79,17 +71,6 @@ SHARED_BASE_AMI_DESC='Maxmin Linux secured Image'
 
 LBAL_NM='elbmaxmin'
 LBAL_PORT='443'
-LBAL_CRT_NM='maxmin-dev-elb-cert'
-LBAL_CRT_FILE='maxmin-dev-elb-cert.pem'
-LBAL_KEY_FILE='maxmin-dev-elb-key.pem'
-LBAL_CHAIN_FILE='maxmin-dev-elb-chain.pem'
-LBAL_CRT_COUNTRY_NM='IE'
-LBAL_CRT_PROVINCE_NM='Dublin'
-LBAL_CRT_CITY_NM='Dublin'
-LBAL_CRT_COMPANY_NM='maxmin13'
-LBAL_CRT_ORGANIZATION_NM='WWW'
-LBAL_CRT_UNIT_NM='UN'
-LBAL_CRT_COMMON_NM='www.maxmin.it'
 LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 LBAL_SEC_GRP_NM='maxmin-elb-sgp'
 LBAL_DNS_SUB_DOMAIN='www'
@@ -98,54 +79,44 @@ LBAL_DNS_SUB_DOMAIN='www'
 ## Admin box ##
 ## ********* ##
 
-SERVER_ADMIN_NM='maxmin-admin-instance1'
-SERVER_ADMIN_PRIVATE_IP='10.0.0.10'
+SRV_ADMIN_NM='maxmin-admin-instance'
+SRV_ADMIN_PRIVATE_IP='10.0.0.10'
+SRV_ADMIN_HOSTNAME='admin.maxmin.it'
+SRV_ADMIN_USER_NM='admin-user'
 # In dev, ip-base virtual hosting, in prod name-base virtual hosting with only one ip and port for
 # website, phpmyadmin and loganalyzer.
-SERVER_ADMIN_APACHE_WEBSITE_PORT='443'
-SERVER_ADMIN_APACHE_PHPMYADMIN_PORT='7443'
-SERVER_ADMIN_APACHE_LOGANALYZER_PORT='9443'
-SERVER_ADMIN_APACHE_MONIT_PORT='8090'
-SERVER_ADMIN_APACHE_CERTBOT_PORT='80'
-SERVER_ADMIN_MMONIT_PUBLIC_PORT='8443'
-SERVER_ADMIN_MMONIT_COLLECTOR_PORT='8080'
-SERVER_ADMIN_RSYSLOG_PORT='514'
-SERVER_ADMIN_EMAIL='minardi.massimiliano@libero.it'
-SERVER_ADMIN_ROOT_DEV_NM='/dev/xvda'
-SERVER_ADMIN_KEY_PAIR_NM='maxmin-admin-kp'
-SERVER_ADMIN_SEC_GRP_NM='maxmin-admin-instance-sgp'
-SERVER_ADMIN_TYPE='t2.micro'
-SERVER_ADMIN_EBS_VOL_SIZE='10' ## in GB, subsequent servers can be larger, but not smaller
-SERVER_ADMIN_CRT_FILE_NM='admin.maxmin.it.crt'
-SERVER_ADMIN_CRT_CHAIN_FILE_NM='admin.maxmin.it.chain.crt'
-SERVER_ADMIN_CRT_COUNTRY_NM='IE'
-SERVER_ADMIN_CRT_PROVINCE_NM='Dublin'
-SERVER_ADMIN_CRT_CITY_NM='Dublin'
-SERVER_ADMIN_CRT_COMPANY_NM='maxmin13'
-SERVER_ADMIN_CRT_ORGANIZATION_NM='WWW'
-SERVER_ADMIN_CRT_UNIT_NM='UN'
-SERVER_ADMIN_HOSTNAME='admin.maxmin.it'
-SERVER_ADMIN_DNS_SUB_DOMAIN='admin'
+SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT='80'
+SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT='443'
+SRV_ADMIN_APACHE_PHPMYADMIN_HTTP_PORT='8080'
+SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT='9443'
+SRV_ADMIN_APACHE_LOGANALYZER_HTTP_PORT='8081'
+SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT='9444'
+SRV_ADMIN_APACHE_MONIT_HTTP_PORT='8082'
+SRV_ADMIN_MMONIT_HTTP_PORT='8083'
+SRV_ADMIN_MMONIT_HTTPS_PORT='9445'
+SRV_ADMIN_MMONIT_COLLECTOR_PORT='8084'
+SRV_ADMIN_RSYSLOG_PORT='514'
+SRV_ADMIN_EMAIL='minardi.massimiliano@libero.it'
+SRV_ADMIN_KEY_PAIR_NM='maxmin-admin-kp'
+SRV_ADMIN_SEC_GRP_NM='maxmin-admin-instance-sgp'
+SRV_ADMIN_DNS_SUB_DOMAIN='admin'
 
 ## ********** ##
 ## WebPhp box ##
 ## ********** ##
 
-SERVER_WEBPHP_NM='maxmin-webphp<ID>-instance'
-
+SRV_WEBPHP_NM='maxmin-webphp<ID>-instance'
+SRV_WEBPHP_PRIVATE_IP='10.0.0.2<ID>'
+SRV_WEBPHP_HOSTNAME='webphp<ID>.maxmin.it'
+SRV_WEBPHP_USER_NM='webphp-user'
 # In dev, ip-base virtual hosting, in prod name-base virtual hosting with only one ip and port for
 # website, loadbalancer (instance healt heart-bit) and monit (httpd healt heart-bit).
-SERVER_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT='8090'
-SERVER_WEBPHP_APACHE_WEBSITE_PORT='8070'
-SERVER_WEBPHP_APACHE_MONIT_PORT='8060'
-SERVER_WEBPHP_RSYSLOG_PORT='514'
-SERVER_WEBPHP_SEC_GRP_NM='maxmin-webphp<ID>-instance-sgp'
-SERVER_WEBPHP_KEY_PAIR_NM='maxmin-webphp<ID>-kp'
-SERVER_WEBPHP_TYPE='t2.micro'
-SERVER_WEBPHP_ROOT_DEV_NM='/dev/xvda'
-SERVER_WEBPHP_EBS_VOL_SIZE='10'
-SERVER_WEBPHP_PRIVATE_IP='10.0.0.2<ID>'
-SERVER_WEBPHP_EMAIL='minardi.massimiliano@libero.it'
-SERVER_WEBPHP_HOSTNAME='webphp<ID>.maxmin.it'
+SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT='8090'
+SRV_WEBPHP_APACHE_WEBSITE_PORT='8070'
+SRV_WEBPHP_APACHE_MONIT_PORT='8060'
+SRV_WEBPHP_RSYSLOG_PORT='514'
+SRV_WEBPHP_SEC_GRP_NM='maxmin-webphp<ID>-instance-sgp'
+SRV_WEBPHP_KEY_PAIR_NM='maxmin-webphp<ID>-kp'
+SRV_WEBPHP_EMAIL='minardi.massimiliano@libero.it'
 
 

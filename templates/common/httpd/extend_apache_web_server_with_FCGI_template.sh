@@ -43,7 +43,7 @@ APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 
 echo 'Installing mod_fcgid and php-fpm ...'
 yum install -y mod_fcgid php-fpm
-echo 'mod_fcgid and php-fpm installed'
+echo 'mod_fcgid and php-fpm installed.'
 
 # Configure PHP-FPM to use UNIX sockets instead of TCP.
 are_sockets_used="$(grep -E '^\s*listen\s*=\s*[a-zA-Z/]+' /etc/php-fpm.d/www.conf || true)"
@@ -54,9 +54,9 @@ if [[ -z "${are_sockets_used}" ]]
 then
    ## add:     listen = /var/run/php-fpm/www.sock
    ## comment: listen = 127.0.0.1:9000
-   echo 'TODO: PHP-FPM configured to use UNIX sockets instead of TCP'
+   echo 'TODO: PHP-FPM configured to use UNIX sockets instead of TCP.'
 else 
-   echo 'TODO: PHP-FPM already configured to use UNIX sockets instead of TCP'
+   echo 'TODO: PHP-FPM already configured to use UNIX sockets instead of TCP.'
 fi
 
 ## FastCGI module’s configuration
@@ -82,14 +82,14 @@ echo '-------------------------------------------------'
 echo 'Modules compiled statically into the server:'
 /usr/sbin/httpd -l
 echo '-------------------------------------------------'
-echo 'Modules compiled dynamically enabled with Apache'
+echo 'Modules compiled dynamically enabled with Apache:'
 /usr/sbin/httpd -M
 echo '-------------------------------------------------'
 echo 'Server version:'
 /usr/sbin/httpd -V
 echo '-------------------------------------------------'
 
-echo 'FastCGI modules configured'
+echo 'FastCGI modules configured.'
 
 exit 0
 

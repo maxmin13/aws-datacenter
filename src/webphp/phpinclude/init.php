@@ -14,7 +14,7 @@ if (($global_require_ssl == 1)) {
     }
 }
 
-// include database functionality
+// include Database functionality
 include 'db.php';
 
 // include shared functions

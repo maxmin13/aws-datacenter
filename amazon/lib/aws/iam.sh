@@ -30,14 +30,14 @@ function delete_server_certificate()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
    local crt_nm="${1}"
  
    aws iam delete-server-certificate \
-                --server-certificate-name "${crt_nm}"
+       --server-certificate-name "${crt_nm}"
   
    return 0
 }
@@ -49,7 +49,7 @@ function delete_server_certificate()
 # Globals:
 #  None
 # Arguments:
-# +crt_nm     -- The Certificate name.
+# +crt_nm     -- the Certificate name.
 # Returns:      
 #  The Server Certificate ARN.
 #===============================================================================
@@ -57,15 +57,15 @@ function get_server_certificate_arn()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
 
    local crt_nm="${1}"
 
    cert_arn="$(aws iam list-server-certificates \
-                    --query "ServerCertificateMetadataList[?ServerCertificateName=='${crt_nm}'].Arn" \
-                    --output text)" 
+       --query "ServerCertificateMetadataList[?ServerCertificateName=='${crt_nm}'].Arn" \
+       --output text)" 
   
    echo "${cert_arn}"
 
@@ -73,9 +73,9 @@ function get_server_certificate_arn()
 }
 #===============================================================================
 # Uploads a Server Certificate to IAM.
-# Before you can upload a Certificate to IAM, you must make sure that the Certificate, Private Key, 
-# and Certificate Chain are all PEM-encoded. You must also ensure that the Private Key is not protected
-# by a passphrase. 
+# Before you can upload a Certificate to IAM, you must make sure that the 
+# Certificate, Private Key, and Certificate Chain are all PEM-encoded. 
+# You must also ensure that the Private Key is not protected by a passphrase. 
 #
 # Globals:
 #  None
@@ -95,7 +95,7 @@ function upload_server_certificate()
 {
    if [[ $# -lt 4 ]]
    then
-      echo 'Error: Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
       exit 1
    fi
    
@@ -106,22 +106,22 @@ function upload_server_certificate()
    local chain_file=''
    
    if [[ $# -gt 4 ]]; then
-   	chain_file="${5}"
+      chain_file="${5}"
    fi
    
    local cert_arn
  
    if [[ -z "${chain_file}" ]]; then
       aws iam upload-server-certificate \
-                  --server-certificate-name "${crt_nm}" \
-                  --certificate-body file://"${cert_dir}/${crt_file}" \
-                  --private-key file://"${cert_dir}/${key_file}" >> /dev/null
+          --server-certificate-name "${crt_nm}" \
+          --certificate-body file://"${cert_dir}/${crt_file}" \
+          --private-key file://"${cert_dir}/${key_file}" >> /dev/null
    else
       aws iam upload-server-certificate \
-                  --server-certificate-name "${crt_nm}" \
-                  --certificate-body file://"${cert_dir}/${crt_file}" \
-                  --private-key file://"${cert_dir}/${key_file}" \
-                  --certificate-chain file://"${cert_dir}/${chain_file}" >> /dev/null
+          --server-certificate-name "${crt_nm}" \
+          --certificate-body file://"${cert_dir}/${crt_file}" \
+          --private-key file://"${cert_dir}/${key_file}" \
+          --certificate-chain file://"${cert_dir}/${chain_file}" >> /dev/null
    fi
   
    return 0

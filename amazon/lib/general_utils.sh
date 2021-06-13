@@ -28,7 +28,7 @@ function escape()
 {
    if [[ $# -lt 1 ]]
    then
-      echo 'Error: missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments'
       exit 1
    fi
    
@@ -45,7 +45,7 @@ function escape()
 escaped="$(escape 'abc/efg')"
 if [[ "${escaped}" != 'abc\/efg' ]]
 then
-   echo "Error: escaping 'abc/efg'"
+   echo "ERROR: escaping 'abc/efg'"
    exit 1 
 fi
 ## End tests. ##

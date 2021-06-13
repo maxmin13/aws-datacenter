@@ -1,0 +1,5 @@
+
+
+find ./ -type f -exec sed -i 's/_/_/g' {} \;
+
+

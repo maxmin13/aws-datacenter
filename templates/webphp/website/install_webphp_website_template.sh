@@ -46,7 +46,9 @@ cp -f "${WEBSITE_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" 
 echo 'WebPhp site enabled' >> "${webphp_log_file}" 2>&1
 
-echo 'Reboot the server' >> "${webphp_log_file}" 2>&1
+systemctl restart httpd >> "${webphp_log_file}" 2>&1
 
-exit 194
+echo 'Apache web server restarted' >> "${webphp_log_file}" 2>&1
+
+exit 0
 

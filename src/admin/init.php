@@ -10,7 +10,7 @@ date_default_timezone_set('UTC');
 
 $db = null;
 
-// connect to the database with selected user
+// connect to the Database with selected user
 // determines if in-house or aws
 function dbconnect($npriv)
 {
