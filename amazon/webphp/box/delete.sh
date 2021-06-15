@@ -177,7 +177,7 @@ then
 fi
 
 ## 
-## SSH Access
+## SSH Key-pair
 ## 
 
 key_pair_file="$(get_keypair_file_path "${keypair_nm}" "${SRV_WEBPHP_ACCESS_DIR}")"

@@ -286,6 +286,8 @@ echo 'Shared box stopped.'
 ## SSH Access
 ## 
 
+granted_ssh_38142="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
+
 if [[ -n "${granted_ssh_38142}" ]]
 then
    # Revoke SSH access from the development machine

@@ -6,7 +6,7 @@ set -o nounset
 set +o xtrace
 
 ## Install Apache Web Server on /etc/httpd directory,
-## Listen on 80 port, no SSL.
+## SSL module not loaded.
 ## Files required to be uploaded:
 ## 1) httpd.conf 
 ## 2) httpd-mpm.conf 
@@ -57,6 +57,9 @@ find "${APACHE_DOCROOT_DIR}" -type d -exec chown root:root {} +
 find "${APACHE_DOCROOT_DIR}" -type d -exec chmod 755 {} +
 find "${APACHE_DOCROOT_DIR}" -type f -exec chown root:root {} +
 find "${APACHE_DOCROOT_DIR}" -type f -exec chmod 400 {} +
+
+# Don't load SSL module.
+rm -f "${APACHE_INSTALL_DIR}"/conf.modules.d/00-ssl.conf
 
 # Check the syntax
 httpd -t

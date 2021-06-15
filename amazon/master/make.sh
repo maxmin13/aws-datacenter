@@ -38,7 +38,20 @@ echo
       echo '****************'
       echo 'Env: development'
       echo '****************' 
-   fi
+   fi 
+   
+   
+
+   
+   
+   . "${PROJECT_DIR}"/amazon/admin/box/website/make.sh       
+
+    
+   exit
+   exit
+   exit   
+   
+   echo
    
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
@@ -68,7 +81,7 @@ echo
    . "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh      
 
    # Configure SSL in the Admin instance by installing the certificate
-   ## TODO . "${PROJECT_DIR}"/amazon/ssl/admin/make.sh    
+   ## TODO . "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh     
               
 } ### >> "${log_file}" 2>&1  
 

@@ -83,7 +83,7 @@ then
 fi
 
 ## 
-## SSH access
+## SSH Key-pair
 ## 
 
 key_pair_file="$(get_keypair_file_path "${SHAR_INSTANCE_KEY_PAIR_NM}" "${SHAR_INSTANCE_ACCESS_DIR}")"

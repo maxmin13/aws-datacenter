@@ -80,11 +80,12 @@ if false
 then
    delete_hosted_zone "${MAXMIN_TLD}"
    
+   echo
    echo "Hosted zone ${MAXMIN_TLD} deleted."
+   echo
 else
+   echo
    echo "Hosted zone ${MAXMIN_TLD} not deleted."
+   echo
 fi
 
-echo
-echo 'Hosted Zone deleted.'
-echo

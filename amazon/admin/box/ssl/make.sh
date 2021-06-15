@@ -19,8 +19,14 @@ APACHE_DOCROOT_DIR='/var/www/html'
 APACHE_SITES_AVAILABLE_DIR='/etc/httpd/sites-available'
 APACHE_SITES_ENABLED_DIR='/etc/httpd/sites-enabled'
 APACHE_USER='apache'
-CERTBOT_VIRTUALHOST_CONFIG_FILE='certbot.virtualhost.maxmin.it.conf'
 CERTBOT_DOCROOT_ID='admin.maxmin.it' 
+CERTBOT_VIRTUALHOST_CONFIG_FILE='certbot.virtualhost.maxmin.it.conf'
+PHPMYADMIN_DOCROOT_ID='phpmyadmin.maxmin.it'
+PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE='phpmyadmin.https.virtualhost.maxmin.it.conf'
+LOGANALYZER_DOCROOT_ID='loganalyzer.maxmin.it'
+LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE='loganalyzer.https.virtualhost.maxmin.it.conf'
+ADMIN_DOCROOT_ID='SEDadmin_docroot_idSED'
+ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE='admin.https.virtualhost.maxmin.it.conf' 
 MMONIT_INSTALL_DIR='/opt/mmonit'
 ssl_dir='ssl/certbot'
 
@@ -36,7 +42,7 @@ then
    echo '* ERROR: Admin box not found.'
    exit 1
 else
-   echo "* Admin instance ID: ${instance_id}."   
+   echo "* Admin box ID: ${instance_id}."   
 fi
 
 sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
@@ -74,17 +80,20 @@ key_pair_file="$(get_keypair_file_path "${SRV_ADMIN_KEY_PAIR_NM}" "${SRV_ADMIN_A
 if [[ -z "${key_pair_file}" ]] 
 then
    echo 'ERROR: not found Admin SSH access key.'
-   exit
+   
+   exit 1
 fi
     
-granted_ssh="$(check_access_from_cidr_is_granted "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"  
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
 
-if [[ -z "${granted_ssh}" ]]
+if [[ -n "${granted_ssh}" ]]
 then
+   echo 'WARN: SSH access to the Admin box already granted.'
+else
    allow_access_from_cidr "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0'
    
-   echo 'Granted the development machine SSH access to the Admin box.'
-fi  
+   echo 'Granted SSH access to the Admin box.'
+fi
          
 granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" '80' '0.0.0.0/0')"  
 
@@ -96,10 +105,9 @@ then
 fi  
 
 ##
-## Upload the scripts
+## Upload scripts
 ## 
 
-echo
 echo 'Uploading the scripts to the Admin box ...'
 
 remote_dir=/home/"${SRV_ADMIN_USER_NM}"/script
@@ -110,11 +118,15 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${key_pair_file}" \
     "${eip}" \
     "${SHAR_INSTANCE_SSH_PORT}" \
-    "${SRV_ADMIN_USER_NM}"  
-    
+    "${SRV_ADMIN_USER_NM}"   
+
 sed -e "s/SEDenvironmentSED/${ENV}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-    -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
+    -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
+    -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \       
+    -e "s/SEDphpmyadmin_https_virtualhost_fileSED/${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDloganalyzer_https_virtualhost_fileSED/${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDadmin_https_virtualhost_fileSED/${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \         
        "${TEMPLATE_DIR}"/admin/ssl/install_admin_ssl_template.sh > "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh
 
 echo 'install_admin_ssl.sh ready.'
@@ -123,14 +135,94 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDenvironmentSED/${ENV}/g" \
     -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
        "${TEMPLATE_DIR}"/common/httpd/extend_apache_web_server_with_SSL_module_template.sh > "${TMP_DIR}"/"${ssl_dir}"/extend_apache_web_server_with_SSL_module_template.sh
-
+             
 echo 'extend_apache_web_server_with_SSL_module_template.sh ready.'   
+
+# Apache Web Server main configuration file.
+sed -e "s/SEDserver_admin_hostnameSED/${SRV_ADMIN_HOSTNAME}/g" \
+    -e "s/SEDapache_monit_http_portSED/${SRV_ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
+    -e "s/SEDadmin_emailSED/${SRV_ADMIN_EMAIL}/g" \
+    -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+    -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
+    -e "s/SEDdatabase_hostSED/${db_endpoint}/g" \
+    -e "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
+    -e "s/SEDdatabase_portSED/${DB_MMDATA_PORT}/g" \
+    -e "s/SEDdatabase_user_adminrwSED/${DB_MMDATA_ADMIN_USER_NM}/g" \
+    -e "s/SEDdatabase_password_adminrwSED/${DB_MMDATA_ADMIN_USER_PWD}/g" \
+       "${TEMPLATE_DIR}"/admin/httpd/httpd_template.conf > "${TMP_DIR}"/"${ssl_dir}"/httpd.conf
+
+echo 'Apache httpd.conf ready.'
+    
+# Apache Web Server SSL configuration file.
+sed -e "s/SEDwebsite_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
+    -e "s/SEDphpmyadmin_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
+    -e "s/SEDloganalyzer_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
+    -e "s/SEDkey_fileSED/${dev_key_file}/g" \
+    -e "s/SEDcert_fileSED/${dev_crt_file}/g" \
+       "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/"${ssl_dir}"/ssl.conf 
+          
+echo 'Apache ssl.conf ready.'   
 
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh \
     "${TMP_DIR}"/"${ssl_dir}"/extend_apache_web_server_with_SSL_module_template.sh \
-    "${TEMPLATE_DIR}"/common/httpd/00-ssl.conf   
+    "${TMP_DIR}"/"${ssl_dir}"/httpd.conf \
+    "${TMP_DIR}"/"${ssl_dir}"/ssl.conf  \
+    "${TEMPLATE_DIR}"/common/httpd/00-ssl.conf      
+   
+# Loganalyzer Virtual Host file.
+create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
+    '*' \
+    "${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}" \
+    "${SRV_ADMIN_HOSTNAME}" \
+    "${APACHE_DOCROOT_DIR}" \
+    "${LOGANALYZER_DOCROOT_ID}"        
      
+add_alias_to_virtualhost "${TMP_DIR}"/"${ssl_dir}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
+    'loganalyzer' \
+    "${APACHE_DOCROOT_DIR}" \
+    "${LOGANALYZER_DOCROOT_ID}" \
+    'loganalyzer'   
+     
+echo "Loganalyzer ${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."     
+
+# Phpmyadmin Virtual Host file.
+create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
+    '*' \
+    "${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}" \
+    "${SRV_ADMIN_HOSTNAME}" \
+    "${APACHE_DOCROOT_DIR}" \
+    "${PHPMYADMIN_DOCROOT_ID}"    
+           
+add_alias_to_virtualhost "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
+    'phpmyadmin' \
+    "${APACHE_DOCROOT_DIR}" \
+    "${PHPMYADMIN_DOCROOT_ID}" \
+    'phpmyadmin'                  
+
+echo "Phpmyadmin ${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."     
+
+# Website virtualhost file.
+create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
+    '*' \
+    "${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}" \
+    "${SRV_ADMIN_HOSTNAME}" \
+    "${APACHE_DOCROOT_DIR}" \
+    "${ADMIN_DOCROOT_ID}"        
+     
+add_alias_to_virtualhost "${TMP_DIR}"/"${ssl_dir}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
+    'admin' \
+    "${APACHE_DOCROOT_DIR}" \
+    "${ADMIN_DOCROOT_ID}" \
+    'index.php' 
+                      
+echo "${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."  
+
+scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
+     "${TMP_DIR}"/"${ssl_dir}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
+     "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \ 
+     "${TMP_DIR}"/"${ssl_dir}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}"
+   
 if [[ 'development' == "${ENV}" ]]
 then
 
@@ -161,7 +253,7 @@ then
    # Apache Web Server SSL key generation script.
    sed -e "s/SEDkey_fileSED/${dev_key_file}/g" \
        -e "s/SEDkey_pwdSED/secret@123/g" \
-          "${TEMPLATE_DIR}"/ssl/self_signed/gen-rsa_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen-rsa.sh
+          "${TEMPLATE_DIR}"/common/ssl/self_signed/gen-rsa_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen-rsa.sh
 
    echo 'Apache SSL gen-rsa.sh ready.'
 
@@ -169,7 +261,7 @@ then
    sed -e "s/SEDkey_fileSED/${dev_key_file}/g" \
        -e "s/SEDnew_key_fileSED/${dev_key_file_no_pwd}/g" \
        -e "s/SEDkey_pwdSED/secret@123/g" \
-          "${TEMPLATE_DIR}"/ssl/self_signed/remove-passphase_template.exp > "${TMP_DIR}"/"${ssl_dir}"/remove-passphase.sh   
+          "${TEMPLATE_DIR}"/common/ssl/self_signed/remove-passphase_template.exp > "${TMP_DIR}"/"${ssl_dir}"/remove-passphase.sh   
 
    echo 'Apache SSL remove-passphase.sh ready.'
 
@@ -188,25 +280,17 @@ then
        -e "s/SEDunit_nameSED/${crt_dev_unit}/g" \
        -e "s/SEDcommon_nameSED/${SRV_ADMIN_HOSTNAME}/g" \
        -e "s/SEDemail_addressSED/${SRV_ADMIN_EMAIL}/g" \
-          "${TEMPLATE_DIR}"/ssl/self_signed/gen-selfsign-cert_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen-selfsign-cert.sh
+          "${TEMPLATE_DIR}"/common/ssl/self_signed/gen-selfsign-cert_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen-selfsign-cert.sh
 
    echo 'gen-selfsign-cert.sh ready.'
    
-   # Apache Web Server SSL configuration file.
-   sed -e "s/SEDwebsite_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
-       -e "s/SEDphpmyadmin_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
-       -e "s/SEDloganalyzer_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
-       -e "s/SEDkey_fileSED/${dev_key_file}/g" \
-       -e "s/SEDcert_fileSED/${dev_crt_file}/g" \
-          "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/"${ssl_dir}"/ssl.conf 
-          
-   echo 'Apache ssl.conf ready.'   
+
    
    scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${ssl_dir}"/gen-selfsign-cert.sh \
        "${TMP_DIR}"/"${ssl_dir}"/remove-passphase.sh \
-       "${TMP_DIR}"/"${ssl_dir}"/gen-rsa.sh \
-       "${TMP_DIR}"/"${ssl_dir}"/ssl.conf  
+       "${TMP_DIR}"/"${ssl_dir}"/gen-rsa.sh
+       
 else
 
    # cert.pem
@@ -253,7 +337,7 @@ else
    # Certboot HTTP virtualhost file.
    create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" \
        '*' \
-       '443' \
+       '80' \
        "${MAXMIN_TLD}" \
        "${APACHE_DOCROOT_DIR}" \
        "${CERTBOT_DOCROOT_ID}"
@@ -288,44 +372,50 @@ echo 'Scripts uploaded.'
 ## By AWS default, sudo has not password.
 ## 
 
-echo 'Configuring Admin box SSL ...'
+echo 'Configuring SSL in the Admin box ...'
     
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin_ssl.sh" \
     "${key_pair_file}" \
     "${eip}" \
     "${SHAR_INSTANCE_SSH_PORT}" \
     "${SRV_ADMIN_USER_NM}" \
-    "${SRV_ADMIN_USER_PWD}"      
+    "${SRV_ADMIN_USER_PWD}"
 
-set +e  
+set +e   
+          
 ssh_run_remote_command_as_root "${remote_dir}/install_admin_ssl.sh" \
     "${key_pair_file}" \
     "${eip}" \
     "${SHAR_INSTANCE_SSH_PORT}" \
     "${SRV_ADMIN_USER_NM}" \
-    "${SRV_ADMIN_USER_PWD}"           
+    "${SRV_ADMIN_USER_PWD}"   
                      
 exit_code=$?
 set -e
 
 # shellcheck disable=SC2181
 if [ 0 -eq "${exit_code}" ]
-then
-   echo 'Admin box SSL successfully configured.'
-   
-   ssh_run_remote_command "rm -rf ${remote_dir}" \
+then 
+   echo 'SSL successfully configured in the Admin box.' 
+     
+   ssh_run_remote_command "rm -rf ${remote_dir:?}" \
        "${key_pair_file}" \
        "${eip}" \
        "${SHAR_INSTANCE_SSH_PORT}" \
-       "${SRV_ADMIN_USER_NM}"     
+       "${SRV_ADMIN_USER_NM}"   
+                   
+   echo 'Cleared remote directory.'
 else
-   echo 'ERROR: configuring Admin box SSL.'
+   echo 'ERROR: configuring SSL in the Admin box.'
+   
    exit 1
 fi
       
 ## 
 ## SSH Access.
-## 
+##
+
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')" 
 
 if [[ -n "${granted_ssh}" ]]
 then
@@ -343,5 +433,5 @@ fi
 rm -rf "${TMP_DIR:?}"/"${ssl_dir}"  
 
 echo
-echo 'Admin SSL configured.' 
+echo 'SSL configured in the Admin box.' 
 echo

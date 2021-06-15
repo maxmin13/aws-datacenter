@@ -17,7 +17,7 @@ set +o xtrace
 APACHE_DOCROOT_DIR='/var/www/html'
 APACHE_SITES_AVAILABLE_DIR='/etc/httpd/sites-available'
 APACHE_SITES_ENABLED_DIR='/etc/httpd/sites-enabled'
-WEBSITE_VIRTUALHOST_CONFIG_FILE='webphp.virtualhost.maxmin.it.conf' 
+WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='webphp.http.virtualhost.maxmin.it.conf' 
 WEBSITE_DOCROOT_ID='webphp<ID>.maxmin.it'
 WEBSITE_ARCHIVE='webphp.zip'
 
@@ -114,10 +114,12 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${SHAR_INSTANCE_SSH_PORT}" \
     "${SRV_WEBPHP_USER_NM}"  
 
-sed -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
+sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+    -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
-    -e "s/SEDwebphp_virtual_host_configSED/${WEBSITE_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebphp_virtual_host_configSED/${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebsite_http_portSED/${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}/g" \
     -e "s/SEDwebsite_archiveSED/${WEBSITE_ARCHIVE}/g" \
     -e "s/SEDwebsite_docroot_idSED/${website_docroot_id}/g" \
        "${TEMPLATE_DIR}"/webphp/website/install_webphp_website_template.sh > "${TMP_DIR}"/"${webphp_dir}"/install_webphp_website.sh  
@@ -171,27 +173,27 @@ scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_
     "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_ARCHIVE}" 
          
 # Create the website virtualhost file.   
-create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}" \
+create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
-    "${SRV_WEBPHP_APACHE_WEBSITE_PORT}" \
+    "${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}" \
     "${website_request_domain}" \
     "${APACHE_DOCROOT_DIR}" \
     "${website_docroot_id}"      
                                      
-add_alias_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"  \
+add_alias_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}"  \
     'webphp' \
     "${APACHE_DOCROOT_DIR}" \
     "${website_docroot_id}" \
     'index.php'
                                            
-echo "${WEBSITE_VIRTUALHOST_CONFIG_FILE} ready." 
+echo "${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE} ready." 
 
 scp_upload_file "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_WEBPHP_USER_NM}" "${remote_dir}" \
-    "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_VIRTUALHOST_CONFIG_FILE}"
+    "${TMP_DIR}"/"${webphp_dir}"/"${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}"
                   
 echo "Installing Webphp website ..."
 
-ssh_run_remote_command_as_root "chmod +x "${remote_dir}"/install_webphp_website.sh" \
+ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_webphp_website.sh" \
     "${key_pair_file}" \
     "${eip}" \
     "${SHAR_INSTANCE_SSH_PORT}" \
@@ -233,19 +235,21 @@ fi
 ## 
 
 loadbalancer_granted="$(check_access_from_security_group_is_granted "${sgp_id}" \
-    "${SRV_WEBPHP_APACHE_WEBSITE_PORT}" \
+    "${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}" \
     "${loadbalancer_sgp_id}")"
 
 if [[ -z "${loadbalancer_granted}" ]]
 then
    # Allow Load Balancer access to the instance.
-   allow_access_from_security_group "${sgp_id}" "${SRV_WEBPHP_APACHE_WEBSITE_PORT}" "${loadbalancer_sgp_id}"
+   allow_access_from_security_group "${sgp_id}" "${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${loadbalancer_sgp_id}"
    echo 'Granted the Load Balancer access to the Webphp instance.'
 fi
     
 ## 
 ## SSH Access.
 ## 
+
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then

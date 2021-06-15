@@ -27,7 +27,12 @@ mkdir -p "${APACHE_INSTALL_DIR}"/ssl
 cd "${script_dir}" || exit
 
 cp ssl.conf "${APACHE_INSTALL_DIR}"/conf.d
+
+echo 'Copied ssl.conf configuration file.'
+
 cp 00-ssl.conf "${APACHE_INSTALL_DIR}"/conf.modules.d
+
+echo 'Copied 00-ssl.conf load SSL module configuration file.'
 
 # Set files and directories permissions
 

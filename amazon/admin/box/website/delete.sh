@@ -79,7 +79,6 @@ fi
 echo 'Uploading the scripts to the Admin box ...'
 
 remote_dir=/home/"${SRV_ADMIN_USER_NM}"/script
-
 key_pair_file="$(get_keypair_file_path "${SRV_ADMIN_KEY_PAIR_NM}" "${SRV_ADMIN_ACCESS_DIR}")"
 wait_ssh_started "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}"
 
@@ -94,6 +93,7 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDwebsite_docroot_idSED/${WEBSITE_DOCROOT_ID}/g" \
     -e "s/SEDwebsite_http_virtualhost_fileSED/${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebsite_http_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
        "${TEMPLATE_DIR}"/admin/website/delete_admin_website_template.sh > "${TMP_DIR}"/"${admin_dir}"/delete_admin_website.sh
           
 echo 'delete_admin_website.sh ready' 

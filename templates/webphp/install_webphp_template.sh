@@ -7,32 +7,26 @@ set +o xtrace
 
 # Install a Linux Apache PHP server (LAP).
 
-ENV='SEDenvironmentSED'
-SRV_WEBPHP_HOSTNAME='SEDserver_webphp_hostnameSED'
+APACHE_INSTALL_DIR='SEDapache_install_dirSED'
+APACHE_DEFAULT_HTTP_PORT='SEDapache_default_http_portSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
-LOADBALANCER_VIRTUALHOST_CONFIG_FILE='SEDloadbalancer_virtualhost_configSED'
-LOADBALANCER_DOCROOT_ID='SEDloadbalancer_docroot_idSED'
-MONIT_VIRTUALHOST_CONFIG_FILE='SEDmonit_virtualhost_configSED'
+LBAL_HTTP_VIRTUALHOST_CONFIG_FILE='SEDlbal_http_virtualhost_configSED'
+LBAL_HTTP_PORT='SEDlbal_http_portSED'
+LBAL_DOCROOT_ID='SEDlbal_docroot_idSED'
+MONIT_HTTP_VIRTUALHOST_CONFIG_FILE='SEDmonit_http_virtualhost_configSED'
+MONIT_HTTP_PORT='SEDmonit_http_portSED'
 MONIT_DOCROOT_ID='SEDmonit_docroot_idSED'
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-webphp_log_file='/var/log/website_install.log'
+webphp_log_file='/var/log/webphp_box_install.log'
 
 amazon-linux-extras install epel -y >> "${webphp_log_file}" 2>&1
 
-## *************** ##
-## System hostname ##
-## *************** ##
-
-hostnamectl set-hostname "${SRV_WEBPHP_HOSTNAME}"
-echo 'System hostname modified:'
-hostname
-
-## ******* ##
-## Rsyslog ##
-## ******* ##
+## 
+## Rsyslog 
+##
 
 cd "${script_dir}" || exit
 
@@ -47,59 +41,69 @@ find '/var/log' -type d -exec chmod 755 {} +
 find '/var/log' -type f -exec chown root:root {} +
 find '/var/log' -type f -exec chmod 644 {} +
 
-echo 'Rsyslog configured'
+echo 'Rsyslog configured.'
 
-## ***************** ##
-## Apache Web Server ##
-## ***************** ##
+## 
+## Apache Web Server 
+## 
 
 cd "${script_dir}" || exit
 
 echo 'Installing Apache Web Server ...'
+
 chmod +x install_apache_web_server.sh 
 ./install_apache_web_server.sh >> "${webphp_log_file}" 2>&1
-echo 'Apache Web Server installed'
 
-## *************** ##
-## Security Module ##
-## *************** ##
+
+echo 'Apache Web Server installed.'
+
+## 
+## Security Module 
+## 
 
 cd "${script_dir}" || exit
 
 echo 'Installing Apache Web Server Security module ...'
+
 chmod +x extend_apache_web_server_with_security_module_template.sh 
 ./extend_apache_web_server_with_security_module_template.sh >> "${webphp_log_file}" 2>&1
-echo 'Apache Web Server Security module installed'
 
-## *** ##
-## PHP ##
-## *** ##
+echo 'Apache Web Server Security module installed.'
+
+## 
+## PHP 
+## 
 
 cd "${script_dir}" || exit
 
 echo 'Installing PHP ...'
+
 chmod +x install_php.sh 
 ./install_php.sh >> "${webphp_log_file}" 2>&1
-echo 'PHP installed'
 
-## ******* ##
-## FastCGI ##
-## ******* ##
+echo 'PHP installed.'
+
+## 
+## FastCGI 
+## 
 
 cd "${script_dir}" || exit
 
 echo 'Extending Apache Web Server with FastCGI ...'
+
 chmod +x extend_apache_web_server_with_FCGI.sh 
 ./extend_apache_web_server_with_FCGI.sh >> "${webphp_log_file}" 2>&1
-echo 'Apache Web Server extended with FastCGI'
 
-## ***** ##
-## Monit ##
-## ***** ##
+echo 'Apache Web Server extended with FastCGI.'
+
+##
+## Monit 
+##
 
 cd "${script_dir}" || exit
 
 echo 'Installing Monit ...'
+
 yum install -y monit >> "${webphp_log_file}" 2>&1 
 cp -f monitrc /etc/monitrc
 
@@ -129,54 +133,80 @@ find "${monit_docroot}" -type f -exec chmod 644 {} +
 cd "${script_dir}" || exit
 
 # Enable the Monit site (Apache Web Server hearttbeat).
+cp -f "${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
 
-if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" ]]
+if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" ]]
 then
-   cp "${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
-   ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" 
-   echo 'Monit heartbeat endpoint enabled'
+   ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" 
+   
+   echo 'Monit heartbeat endpoint enabled.'
 fi
 
-echo 'Monit installed'
+# Enable Monit HTTP port.
+sed -i "s/^#Listen \+${MONIT_HTTP_PORT}/Listen ${MONIT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
-## ************* ##
-## Load Balancer ##
-## ************* ##
+echo "Enabled Apache web server listen on ${MONIT_HTTP_PORT} port."
+echo 'Monit installed.'
+
+## 
+## Load Balancer
+##
 
 cd "${script_dir}" || exit
 
 # Create an heart-beat endpoint targeted by the Load Balancer.
-loadbalancer_docroot="${APACHE_DOCROOT_DIR}"/"${LOADBALANCER_DOCROOT_ID}"/public_html
-mkdir --parents "${loadbalancer_docroot}"
-touch "${loadbalancer_docroot}"/elb.htm
-echo ok > "${loadbalancer_docroot}"/elb.htm
+
+lbal_docroot="${APACHE_DOCROOT_DIR}"/"${LBAL_DOCROOT_ID}"/public_html
+mkdir --parents "${lbal_docroot}"
+touch "${lbal_docroot}"/elb.htm
+echo ok > "${lbal_docroot}"/elb.htm
 
 # Public pages permissions.
-find "${loadbalancer_docroot}" -type d -exec chown root:root {} +
-find "${loadbalancer_docroot}" -type d -exec chmod 755 {} +
-find "${loadbalancer_docroot}" -type f -exec chown root:root {} +
-find "${loadbalancer_docroot}" -type f -exec chmod 644 {} +
+find "${lbal_docroot}" -type d -exec chown root:root {} +
+find "${lbal_docroot}" -type d -exec chmod 755 {} +
+find "${lbal_docroot}" -type f -exec chown root:root {} +
+find "${lbal_docroot}" -type f -exec chmod 644 {} +
 
 # Enable the Load Balancer endopoint.
-if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" ]]
+cp -f "${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
+
+if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" ]]
 then
-   cp "${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
-   ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" 
-   echo 'Load Balancer healt-check endpoint enabled'
-fi   
+   ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" 
+   
+   echo 'Load Balancer healt-check endpoint enabled.'
+fi 
 
-## ********
-## ????????
-## ********
+# Enable Load Balancer HTTP port.
+sed -i "s/^#Listen \+${LBAL_HTTP_PORT}/Listen ${LBAL_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
-## yum install -y mod_evasive
-####   TODO cp -f mod_evasive.conf /etc/httpd/conf.d/mod_evasive.conf
+echo "Enabled Apache web server listen on ${LBAL_HTTP_PORT} port."
+echo 'Load balancer Apache endpoint enabled.' 
+
+##
+## Apache web server
+##
+
+# Disable the default port
+sed -i "s/^Listen \+${APACHE_DEFAULT_HTTP_PORT}$/#Listen ${APACHE_DEFAULT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf 
+
+##
+## SSH config
+##
+
+# Set the allowed user.
+cd "${script_dir}" || exit
+cp sshd_config /etc/ssh/sshd_config
+chown root:root /etc/ssh/sshd_config
+chmod 400 /etc/ssh/sshd_config
+
+echo 'SSH configured.'
 
 # Remove expect
 yum erase -y expect >> "${webphp_log_file}" 2>&1
 amazon-linux-extras disable epel -y >> "${webphp_log_file}" 2>&1
 
-echo 'Reboot the server'
+echo 'Reboot the server.'
 
 exit 194
 

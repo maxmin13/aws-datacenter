@@ -1,5 +1,7 @@
 
 
-find ./ -type f -exec sed -i 's/_/_/g' {} \;
+find ./ -type f -exec sed -i 's/SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT/SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT/g' {} \;
+find ./ -type f -exec sed -i 's/SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT/SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT/g' {} \;
+find ./ -type f -exec sed -i 's/SRV_WEBPHP_APACHE_MONIT_HTTP_PORT/SRV_WEBPHP_APACHE_MONIT_HTTP_PORT/g' {} \;
 
 

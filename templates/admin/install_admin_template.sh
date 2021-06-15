@@ -5,9 +5,8 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-ENV='SEDenvironmentSED'
-SRV_ADMIN_HOSTNAME='SEDserver_admin_hostnameSED'
 APACHE_INSTALL_DIR='SEDapache_install_dirSED'
+APACHE_DEFAULT_HTTP_PORT='SEDapache_default_http_portSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
@@ -15,13 +14,15 @@ MMONIT_ARCHIVE='SEDmmonit_archiveSED'
 MMONIT_DIR='SEDmmonit_install_dirSED'
 MONIT_DOCROOT_ID='SEDmonit_docroot_idSED'
 MONIT_HTTP_VIRTUALHOST_CONFIG_FILE='SEDmonit_http_virtualhost_fileSED'
+MONIT_HTTP_PORT='SEDmonit_http_portSED'
 PHPMYADMIN_DOCROOT_ID='SEDphpmyadmin_docroot_idSED'
 PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE='SEDphpmyadmin_http_virtualhost_fileSED'
+PHPMYADMIN_HTTP_PORT='SEDphpmyadmin_http_portSED'
 LOGANALYZER_ARCHIVE='SEDloganalyzer_archiveSED'
 LOGANALYZER_DOCROOT_ID='SEDloganalyzer_docroot_idSED'
 LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE='SEDloganalyzer_http_virtualhost_fileSED'
-
-admin_log_file='/var/log/admin_install.log'
+LOGANALYZER_HTTP_PORT='SEDloganalyzer_http_portSED'
+admin_log_file='/var/log/admin_box_install.log'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 amazon-linux-extras install epel -y >> "${admin_log_file}" 2>&1
@@ -147,13 +148,17 @@ find "${phpMyAdmin_docroot}"/phpmyadmin -type f -exec chmod 644 {} +
 cd "${script_dir}" || exit
 
 # Enable the and phpmyadmin site.
-cp "${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
+cp -f "${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 
 if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}" ]]
 then
    ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}"
 fi
 
+# Enable Phpmyadmin HTTP port.
+sed -i "s/^#Listen \+${PHPMYADMIN_HTTP_PORT}/Listen ${PHPMYADMIN_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
+
+echo "Enabled Apache web server listen on ${PHPMYADMIN_HTTP_PORT} port."
 echo 'Phpmyadmin installed.'
 
 ## 
@@ -182,17 +187,26 @@ find "${loganalyzer_docroot}"/loganalyzer -type f -exec chmod 644 {} +
 
 cd "${script_dir}" || exit
 
-cp "${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
+cp -f "${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 
 if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}" ]]
 then
-   # Enable the and Loganalyzer site.  
    ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}"
 fi
 
+# Enable Loganalyzer HTTP port.
+sed -i "s/^#Listen \+${LOGANALYZER_HTTP_PORT}/Listen ${LOGANALYZER_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 rm -rf loganalyzer
 
+echo "Enabled Apache web server listen on ${LOGANALYZER_HTTP_PORT} port."
 echo 'Loganalyzer installed.'
+
+##
+## Apache web server
+##
+
+# Disable the default port.
+sed -i "s/^Listen \+${APACHE_DEFAULT_HTTP_PORT}$/#Listen ${APACHE_DEFAULT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
 ##
 ## Monit 
@@ -227,15 +241,23 @@ mkdir --parents "${monit_docroot}"
 touch "${monit_docroot}"/monit
 echo ok > "${monit_docroot}"/monit
 
+find "${monit_docroot}" -type d -exec chown root:root {} +
+find "${monit_docroot}" -type d -exec chmod 755 {} +
+find "${monit_docroot}" -type f -exec chown root:root {} +
+find "${monit_docroot}" -type f -exec chmod 644 {} +
+
 cd "${script_dir}" || exit
 
 # Enable the Monit site (Apache Web Server heartbeat).
-cp "${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
+cp -f "${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
 
 if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" ]]
 then
    ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" 
 fi
+
+# Enable Monit HTTP port.
+sed -i "s/^#Listen \+${MONIT_HTTP_PORT}/Listen ${MONIT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
 echo 'Monit installed.'
 
@@ -251,6 +273,7 @@ echo 'Monit installed.'
 ## SSH config
 ##
 
+# Set the allowed user.
 cd "${script_dir}" || exit
 cp sshd_config /etc/ssh/sshd_config
 chown root:root /etc/ssh/sshd_config

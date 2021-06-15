@@ -90,13 +90,14 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${SHAR_INSTANCE_SSH_PORT}" \
     "${SRV_ADMIN_USER_NM}"   
 
-sed -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
+sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+    -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
+    -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
     -e "s/SEDwebsite_archiveSED/${WEBSITE_ARCHIVE}/g" \
-    -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
-    -e "s/SEDwebsite_docroot_idSED/${WEBSITE_DOCROOT_ID}/g" \
-    -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDwebsite_http_virtualhost_fileSED/${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebsite_http_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
+    -e "s/SEDwebsite_docroot_idSED/${WEBSITE_DOCROOT_ID}/g" \
        "${TEMPLATE_DIR}"/admin/website/install_admin_website_template.sh > "${TMP_DIR}"/"${admin_dir}"/install_admin_website.sh  
 
 echo 'install_admin_website.sh ready.'
@@ -142,7 +143,7 @@ scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_
 
 echo "Installing Admin website ..."
 
-ssh_run_remote_command_as_root "chmod +x "${remote_dir}"/install_admin_website.sh" \
+ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin_website.sh" \
     "${key_pair_file}" \
     "${eip}" \
     "${SHAR_INSTANCE_SSH_PORT}" \
@@ -182,6 +183,8 @@ fi
 ## 
 ## SSH Access.
 ## 
+
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then

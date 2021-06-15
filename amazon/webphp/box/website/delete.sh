@@ -14,7 +14,7 @@ set +o xtrace
 # GLOBAL: webphp_id, required
 ###############################################
 
-WEBSITE_VIRTUALHOST_CONFIG_FILE='webphp.virtualhost.maxmin.it.conf'
+WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='webphp.http.virtualhost.maxmin.it.conf' 
 APACHE_DOCROOT_DIR='/var/www/html'
 APACHE_SITES_ENABLED_DIR='/etc/httpd/sites-enabled'
 WEBSITE_DOCROOT_ID='webphp<ID>.maxmin.it'
@@ -91,11 +91,11 @@ mkdir "${TMP_DIR}"/"${webphp_dir}"
 ## Load Balancer
 ##
 
-lbal_granted="$(check_access_from_security_group_is_granted "${sgp_id}" "${SRV_WEBPHP_APACHE_WEBSITE_PORT}" "${loadbalancer_sgp_id}")"
+lbal_granted="$(check_access_from_security_group_is_granted "${sgp_id}" "${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${loadbalancer_sgp_id}")"
 
 if [[ -n "${lbal_granted}" ]]
 then
-   revoke_access_from_security_group "${sgp_id}" "${SRV_WEBPHP_APACHE_WEBSITE_PORT}" "${loadbalancer_sgp_id}"
+   revoke_access_from_security_group "${sgp_id}" "${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${loadbalancer_sgp_id}"
      
    echo 'Load Balancer access to the website revoked.'
 fi
@@ -127,9 +127,11 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${SHAR_INSTANCE_SSH_PORT}" \
     "${SRV_WEBPHP_USER_NM}"  
 
-sed -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
+sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+    -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
-    -e "s/SEDvirtualhost_configSED/${WEBSITE_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebsite_http_virtualhost_configSED/${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebsite_http_portSED/${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}/g" \
     -e "s/SEDwebsite_docroot_idSED/${website_docroot_id}/g" \
        "${TEMPLATE_DIR}"/webphp/website/delete_webphp_website_template.sh > "${TMP_DIR}"/"${webphp_dir}"/delete_webphp_website.sh 
  
@@ -183,6 +185,8 @@ fi
 ## 
 ## SSH Access.
 ## 
+
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then

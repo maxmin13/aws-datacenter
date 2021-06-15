@@ -51,7 +51,9 @@ find "${APACHE_INSTALL_DIR}/conf.d" -type f -exec chmod 400 {} +
 # Check the syntax of configuration files.
 httpd -t
 systemctl restart httpd
-echo 'Apache Security module installed.'
+
+echo 'Apache web server restarted.'
+echo 'Apache security module installed.'
 
 echo '-------------------------------------------------'
 echo 'Directory modules:'

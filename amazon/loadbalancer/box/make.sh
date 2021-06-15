@@ -166,7 +166,7 @@ else
       mv server.crt "${CRT_FILE}"
 
       # Upload to IAM
-      echo 'Uploading the certificate to the Load Balancer to IAM ...'
+      echo 'Uploading certificate to IAM ...'
    
       upload_server_certificate "${CRT_NM}" \
           "${CRT_FILE}" \

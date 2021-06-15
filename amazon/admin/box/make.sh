@@ -218,21 +218,23 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${SHAR_INSTANCE_SSH_PORT}" \
     "${SRV_ADMIN_USER_NM}"  
 
-sed -e "s/SEDenvironmentSED/${ENV}/g" \
-    -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+    -e "s/SEDapache_default_http_portSED/${SRV_ADMIN_APACHE_DEFAULT_HTTP_PORT}/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
-    -e "s/SEDserver_admin_hostnameSED/${SRV_ADMIN_HOSTNAME}/g" \
     -e "s/SEDmmonit_archiveSED/${MMONIT_ARCHIVE}/g" \
     -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
+    -e "s/SEDmonit_http_portSED/${SRV_ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
     -e "s/SEDmonit_docroot_idSED/${MONIT_DOCROOT_ID}/g" \
     -e "s/SEDmonit_http_virtualhost_fileSED/${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDphpmyadmin_docroot_idSED/${PHPMYADMIN_DOCROOT_ID}/g" \
     -e "s/SEDphpmyadmin_http_virtualhost_fileSED/${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDphpmyadmin_http_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTP_PORT}/g" \
     -e "s/SEDloganalyzer_archiveSED/${LOGANALYZER_ARCHIVE}/g" \
     -e "s/SEDloganalyzer_docroot_idSED/${LOGANALYZER_DOCROOT_ID}/g" \
     -e "s/SEDloganalyzer_http_virtualhost_fileSED/${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDloganalyzer_http_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTP_PORT}/g" \
        "${TEMPLATE_DIR}"/admin/install_admin_template.sh > "${TMP_DIR}"/"${admin_dir}"/install_admin.sh
 
 echo 'install_admin.sh ready.'
@@ -255,10 +257,11 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
 echo 'extend_apache_web_server_with_FCGI.sh ready.'
  
 # Apache Web Server main configuration file.
-sed -e "s/SEDserver_admin_hostnameSED/${SRV_ADMIN_HOSTNAME}/g" \
+sed -e "s/SEDapache_default_http_portSED/${SRV_ADMIN_APACHE_DEFAULT_HTTP_PORT}/g" \
     -e "s/SEDapache_monit_http_portSED/${SRV_ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
     -e "s/SEDapache_phpmyadmin_http_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTP_PORT}/g" \
     -e "s/SEDapache_loganalyzer_http_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTP_PORT}/g" \
+    -e "s/SEDapache_admin_http_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
     -e "s/SEDadmin_emailSED/${SRV_ADMIN_EMAIL}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
@@ -269,7 +272,7 @@ sed -e "s/SEDserver_admin_hostnameSED/${SRV_ADMIN_HOSTNAME}/g" \
     -e "s/SEDdatabase_password_adminrwSED/${DB_MMDATA_ADMIN_USER_PWD}/g" \
        "${TEMPLATE_DIR}"/admin/httpd/httpd_template.conf > "${TMP_DIR}"/"${admin_dir}"/httpd.conf
 
-echo 'Apache httpd.conf ready.'
+echo 'httpd.conf ready.'
 
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/install_apache_web_server.sh \
@@ -295,7 +298,7 @@ scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_
 sed -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
        "${TEMPLATE_DIR}"/admin/mmonit/mmonit_template.service > "${TMP_DIR}"/"${admin_dir}"/mmonit.service 
        
-echo 'M/Monit mmonit.service ready.'
+echo 'mmonit.service ready.'
      
 # M/Monit website configuration file (only on the Admin server).
 sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
@@ -304,7 +307,7 @@ sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
     -e "s/SEDpublic_portSED/${SRV_ADMIN_MMONIT_HTTP_PORT}/g" \
        "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/"${admin_dir}"/server.xml
        
-echo 'M/Monit server.xml ready.' 
+echo 'server.xml ready.' 
 
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
     "${JAR_DIR}"/"${MMONIT_ARCHIVE}" \
@@ -320,7 +323,7 @@ sed -e "s/SEDhostnameSED/${SRV_ADMIN_NM}/g" \
     -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
        "${TEMPLATE_DIR}"/admin/monit/monitrc_template > "${TMP_DIR}"/"${admin_dir}"/monitrc 
        
-echo 'Monit monitrc ready.'
+echo 'monitrc ready.'
 
 # Monit Apache heartbeat virtualhost.           
 create_virtualhost_configuration_file "${TMP_DIR}"/"${admin_dir}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" \
@@ -336,7 +339,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${MONIT_HTTP_VIRTUALHOST_C
     "${MONIT_DOCROOT_ID}" \
     'monit' 
      
-echo "Monit ${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE} ready."
+echo "${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE} ready."
 
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/monitrc \
@@ -346,7 +349,7 @@ scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_
 sed -e "s/SEDdatabase_hostSED/${db_endpoint}/g" \
     "${TEMPLATE_DIR}"/admin/phpmyadmin/config_inc_template.php > "${TMP_DIR}"/"${admin_dir}"/config.inc.php
     
-echo 'Phpmyadmin config.inc.php ready.'     
+echo 'config.inc.php ready.'     
 
 # Phpmyadmin Virtual Host file.
 create_virtualhost_configuration_file "${TMP_DIR}"/"${admin_dir}"/"${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}" \
@@ -362,7 +365,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${PHPMYADMIN_HTTP_VIRTUALH
     "${PHPMYADMIN_DOCROOT_ID}" \
     'phpmyadmin'                  
 
-echo "Phpmyadmin ${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE} ready."    
+echo "${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE} ready."    
 
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/"${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}" \
@@ -382,7 +385,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${LOGANALYZER_HTTP_VIRTUAL
     "${LOGANALYZER_DOCROOT_ID}" \
     'loganalyzer'   
      
-echo "Loganalyzer ${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE} ready."  
+echo "${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE} ready."  
 
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
      "${JAR_DIR}"/"${LOGANALYZER_ARCHIVE}" \
@@ -393,7 +396,7 @@ scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_
 sed -e "s/SEDadmin_rsyslog_portSED/${SRV_ADMIN_RSYSLOG_PORT}/g" \
     "${TEMPLATE_DIR}"/admin/rsyslog/rsyslog_template.conf > "${TMP_DIR}"/"${admin_dir}"/rsyslog.conf   
     
-echo 'Rsyslog rsyslog.conf ready.'
+echo 'rsyslog.conf ready.'
 
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/rsyslog.conf  \
@@ -464,6 +467,8 @@ fi
 ## 
 ## SSH Access.
 ## 
+
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then

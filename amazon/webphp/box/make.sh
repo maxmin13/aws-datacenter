@@ -24,9 +24,9 @@ APACHE_INSTALL_DIR='/etc/httpd'
 APACHE_SITES_AVAILABLE_DIR='/etc/httpd/sites-available'
 APACHE_SITES_ENABLED_DIR='/etc/httpd/sites-enabled'
 APACHE_USER='apache'
-LOADBALANCER_VIRTUALHOST_CONFIG_FILE='loadbalancer.virtualhost.maxmin.it.conf' 
-LOADBALANCER_DOCROOT_ID='loadbalancer.maxmin.it'
-MONIT_VIRTUALHOST_CONFIG_FILE='monit.virtualhost.maxmin.it.conf'
+LBAL_HTTP_VIRTUALHOST_CONFIG_FILE='loadbalancer.http.virtualhost.maxmin.it.conf' 
+LBAL_DOCROOT_ID='loadbalancer.maxmin.it'
+MONIT_HTTP_VIRTUALHOST_CONFIG_FILE='monit.http.virtualhost.maxmin.it.conf'
 MONIT_DOCROOT_ID='monit.maxmin.it'
 
 if [[ $# -lt 1 ]]
@@ -303,13 +303,16 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
 
 # Prepare the scripts to run on the server.
 
-sed -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
+sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+    -e "s/SEDapache_default_http_portSED/${SRV_WEBPHP_APACHE_DEFAULT_HTTP_PORT}/g" \
+    -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
-    -e "s/SEDserver_webphp_hostnameSED/${webphp_hostname}/g" \
-    -e "s/SEDloadbalancer_virtualhost_configSED/${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDloadbalancer_docroot_idSED/${LOADBALANCER_DOCROOT_ID}/g" \
-    -e "s/SEDmonit_virtualhost_configSED/${MONIT_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDlbal_http_virtualhost_configSED/${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDlbal_docroot_idSED/${LBAL_DOCROOT_ID}/g" \
+    -e "s/SEDlbal_http_portSED/${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}/g" \
+    -e "s/SEDmonit_http_virtualhost_configSED/${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDmonit_http_portSED/${SRV_WEBPHP_APACHE_MONIT_HTTP_PORT}/g" \
     -e "s/SEDmonit_docroot_idSED/${MONIT_DOCROOT_ID}/g" \
        "${TEMPLATE_DIR}"/webphp/install_webphp_template.sh > "${TMP_DIR}"/"${webphp_dir}"/install_webphp.sh
     
@@ -332,9 +335,10 @@ aes3="$(echo "${aes2}" | tr '[:upper:]' '[:lower:]')"
 aes4="${aes3:0:64}"
 
 # Apache Web Server main configuration file.
-sed -e "s/SEDapache_loadbalancer_portSED/${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}/g" \
-    -e "s/SEDapache_website_portSED/${SRV_WEBPHP_APACHE_WEBSITE_PORT}/g" \
-    -e "s/SEDapache_monit_portSED/${SRV_WEBPHP_APACHE_MONIT_PORT}/g" \
+sed -e "s/SEDapache_default_http_portSED/${SRV_WEBPHP_APACHE_DEFAULT_HTTP_PORT}/g" \
+    -e "s/SEDapache_loadbalancer_portSED/${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}/g" \
+    -e "s/SEDapache_website_portSED/${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}/g" \
+    -e "s/SEDapache_monit_portSED/${SRV_WEBPHP_APACHE_MONIT_HTTP_PORT}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
     -e "s/SEDwebphp_emailSED/${SRV_WEBPHP_EMAIL}/g" \
@@ -403,57 +407,57 @@ scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_
 sed -e "s/SEDhostnameSED/${webphp_nm}/g" \
     -e "s/SEDserver_admin_private_ipSED/${SRV_ADMIN_PRIVATE_IP}/g" \
     -e "s/SEDmmonit_collector_portSED/${SRV_ADMIN_MMONIT_COLLECTOR_PORT}/g" \
-    -e "s/SEDapache_http_portSED/${SRV_WEBPHP_APACHE_MONIT_PORT}/g" \
+    -e "s/SEDapache_http_portSED/${SRV_WEBPHP_APACHE_MONIT_HTTP_PORT}/g" \
     -e "s/SEDadmin_emailSED/${SRV_ADMIN_EMAIL}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-       "${TEMPLATE_DIR}"/webphp/monitrc_template > "${TMP_DIR}"/"${webphp_dir}"/monitrc        
+       "${TEMPLATE_DIR}"/webphp/monit/monitrc_template > "${TMP_DIR}"/"${webphp_dir}"/monitrc        
 
 echo 'monitrc ready.'
     
 # Create Monit heartbeat virtualhost to check Apache Web Server.   
-create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"  \
+create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}"  \
     '127.0.0.1' \
-    "${SRV_WEBPHP_APACHE_MONIT_PORT}" \
+    "${SRV_WEBPHP_APACHE_MONIT_HTTP_PORT}" \
     "${monit_request_domain}" \
     "${APACHE_DOCROOT_DIR}" \
     "${MONIT_DOCROOT_ID}"     
  
 # Enable Apache Web Server Monit heartbeat endpoint.                                       
-add_alias_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}" \
+add_alias_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     'monit' \
     "${APACHE_DOCROOT_DIR}" \
     "${MONIT_DOCROOT_ID}" \
     'monit' 
    
-echo "${MONIT_VIRTUALHOST_CONFIG_FILE} ready."
+echo "${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE} ready."
 
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_WEBPHP_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/monitrc \
-    "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_VIRTUALHOST_CONFIG_FILE}"    
+    "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}"    
        
 # Create a Load Balancer healt-check virtualhost. 
-create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" \
+create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
-    "${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}" \
+    "${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" \
     "${loadbalancer_request_domain}" \
     "${APACHE_DOCROOT_DIR}" \
-    "${LOADBALANCER_DOCROOT_ID}"    
+    "${LBAL_DOCROOT_ID}"    
  
 # Enable the Load Balancer virtualhost.                                       
-add_loadbalancer_rule_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" \
+add_loadbalancer_rule_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     'elb.htm' \
     "${APACHE_DOCROOT_DIR}" \
-    "${LOADBALANCER_DOCROOT_ID}"  
+    "${LBAL_DOCROOT_ID}"  
 
-echo "${LOADBALANCER_VIRTUALHOST_CONFIG_FILE} ready." 
+echo "${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE} ready." 
 
 scp_upload_file "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_WEBPHP_USER_NM}" "${remote_dir}" \
-    "${TMP_DIR}"/"${webphp_dir}"/"${LOADBALANCER_VIRTUALHOST_CONFIG_FILE}" 
+    "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" 
                 
 # Rsyslog configuration file.    
 sed -e "s/SEDserver_admin_rsyslog_portSED/${SRV_ADMIN_RSYSLOG_PORT}/g" \
     -e "s/SEDserver_admin_private_ip_addressSED/${SRV_ADMIN_PRIVATE_IP}/g" \
-       "${TEMPLATE_DIR}"/webphp/rsyslog_template.conf > "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf    
+       "${TEMPLATE_DIR}"/webphp/rsyslog/rsyslog_template.conf > "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf    
 
 echo 'rsyslog.conf ready.'
 
@@ -536,20 +540,22 @@ else
    echo 'Registered Webphp box with the Load Balancer.'
 fi
        
-lbal_granted="$(check_access_from_security_group_is_granted "${sgp_id}" "${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}" "${lbal_sgp_id}")"
+lbal_granted="$(check_access_from_security_group_is_granted "${sgp_id}" "${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" "${lbal_sgp_id}")"
 
 if [[ -n "${lbal_granted}" ]]
 then
    echo 'WARN: Load Balancer access to the Admin box already granted.'
 else
-   allow_access_from_security_group "${sgp_id}" "${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_PORT}" "${lbal_sgp_id}"
+   allow_access_from_security_group "${sgp_id}" "${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" "${lbal_sgp_id}"
    
    echo 'Granted the Load Balancer access to the webphp instance (healt-check).'
 fi
 
 ## 
-## Security Group
+## SSH Access
 ## 
+
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
