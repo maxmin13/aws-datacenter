@@ -41,10 +41,7 @@ echo
    fi 
    
    
-
-   
-   
-   . "${PROJECT_DIR}"/amazon/admin/box/website/make.sh       
+. "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh     
 
     
    exit
@@ -80,8 +77,8 @@ echo
    # Create the hosted zone that handles the application DNS records.
    . "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh      
 
-   # Configure SSL in the Admin instance by installing the certificate
-   ## TODO . "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh     
+   # Configure SSL in the Admin instance.
+   . "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh     
               
 } ### >> "${log_file}" 2>&1  
 

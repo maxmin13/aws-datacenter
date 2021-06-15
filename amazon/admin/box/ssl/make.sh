@@ -22,10 +22,13 @@ APACHE_USER='apache'
 CERTBOT_DOCROOT_ID='admin.maxmin.it' 
 CERTBOT_VIRTUALHOST_CONFIG_FILE='certbot.virtualhost.maxmin.it.conf'
 PHPMYADMIN_DOCROOT_ID='phpmyadmin.maxmin.it'
+PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE='phpmyadmin.http.virtualhost.maxmin.it.conf'
 PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE='phpmyadmin.https.virtualhost.maxmin.it.conf'
 LOGANALYZER_DOCROOT_ID='loganalyzer.maxmin.it'
+LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE='loganalyzer.http.virtualhost.maxmin.it.conf'
 LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE='loganalyzer.https.virtualhost.maxmin.it.conf'
-ADMIN_DOCROOT_ID='SEDadmin_docroot_idSED'
+ADMIN_DOCROOT_ID='admin.maxmin.it'
+ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE='admin.http.virtualhost.maxmin.it.conf' 
 ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE='admin.https.virtualhost.maxmin.it.conf' 
 MMONIT_INSTALL_DIR='/opt/mmonit'
 ssl_dir='ssl/certbot'
@@ -65,6 +68,16 @@ else
    echo "* Admin public IP address: ${eip}."
 fi
 
+db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
+
+if [[ -z "${db_endpoint}" ]]
+then
+   echo '* ERROR: database not found.'
+   exit 1
+else
+   echo "* database Endpoint: ${db_endpoint}."
+fi
+
 echo
 
 # Removing old files
@@ -94,15 +107,18 @@ else
    
    echo 'Granted SSH access to the Admin box.'
 fi
-         
-granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" '80' '0.0.0.0/0')"  
-
-if [[ -z "${granted_certbot}" ]]
-then
-   allow_access_from_cidr "${sgp_id}" '80' '0.0.0.0/0'
    
-   echo 'Granted Certbot access to Admin box port 80.'
-fi  
+if [[ 'production' == "${ENV}" ]]
+then      
+   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" '80' '0.0.0.0/0')"  
+
+   if [[ -z "${granted_certbot}" ]]
+   then
+      allow_access_from_cidr "${sgp_id}" '80' '0.0.0.0/0'
+   
+      echo 'Granted Certbot access to Admin box port 80.'
+   fi  
+fi
 
 ##
 ## Upload scripts
@@ -123,10 +139,15 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
 sed -e "s/SEDenvironmentSED/${ENV}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
-    -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \       
+    -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
+    -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
+    -e "s/SEDphpmyadmin_http_virtualhost_fileSED/${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDphpmyadmin_https_virtualhost_fileSED/${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDloganalyzer_http_virtualhost_fileSED/${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDloganalyzer_https_virtualhost_fileSED/${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDadmin_https_virtualhost_fileSED/${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \         
+    -e "s/SEDadmin_http_virtualhost_fileSED/${ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDadmin_https_virtualhost_fileSED/${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDmonit_http_portSED/${SRV_ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
        "${TEMPLATE_DIR}"/admin/ssl/install_admin_ssl_template.sh > "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh
 
 echo 'install_admin_ssl.sh ready.'
@@ -139,7 +160,7 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
 echo 'extend_apache_web_server_with_SSL_module_template.sh ready.'   
 
 # Apache Web Server main configuration file.
-sed -e "s/SEDserver_admin_hostnameSED/${SRV_ADMIN_HOSTNAME}/g" \
+sed -e "s/SEDapache_default_http_portSED/${SRV_ADMIN_APACHE_DEFAULT_HTTP_PORT}/g" \
     -e "s/SEDapache_monit_http_portSED/${SRV_ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
     -e "s/SEDadmin_emailSED/${SRV_ADMIN_EMAIL}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
@@ -149,25 +170,14 @@ sed -e "s/SEDserver_admin_hostnameSED/${SRV_ADMIN_HOSTNAME}/g" \
     -e "s/SEDdatabase_portSED/${DB_MMDATA_PORT}/g" \
     -e "s/SEDdatabase_user_adminrwSED/${DB_MMDATA_ADMIN_USER_NM}/g" \
     -e "s/SEDdatabase_password_adminrwSED/${DB_MMDATA_ADMIN_USER_PWD}/g" \
-       "${TEMPLATE_DIR}"/admin/httpd/httpd_template.conf > "${TMP_DIR}"/"${ssl_dir}"/httpd.conf
+       "${TEMPLATE_DIR}"/admin/httpd/httpd_template.conf > "${TMP_DIR}"/"${ssl_dir}"/httpd.conf       
 
-echo 'Apache httpd.conf ready.'
-    
-# Apache Web Server SSL configuration file.
-sed -e "s/SEDwebsite_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
-    -e "s/SEDphpmyadmin_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
-    -e "s/SEDloganalyzer_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
-    -e "s/SEDkey_fileSED/${dev_key_file}/g" \
-    -e "s/SEDcert_fileSED/${dev_crt_file}/g" \
-       "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/"${ssl_dir}"/ssl.conf 
-          
-echo 'Apache ssl.conf ready.'   
-
+echo 'httpd.conf ready.'
+  
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh \
     "${TMP_DIR}"/"${ssl_dir}"/extend_apache_web_server_with_SSL_module_template.sh \
     "${TMP_DIR}"/"${ssl_dir}"/httpd.conf \
-    "${TMP_DIR}"/"${ssl_dir}"/ssl.conf  \
     "${TEMPLATE_DIR}"/common/httpd/00-ssl.conf      
    
 # Loganalyzer Virtual Host file.
@@ -184,7 +194,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${ssl_dir}"/"${LOGANALYZER_HTTPS_VIRTUALH
     "${LOGANALYZER_DOCROOT_ID}" \
     'loganalyzer'   
      
-echo "Loganalyzer ${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."     
+echo "${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."     
 
 # Phpmyadmin Virtual Host file.
 create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
@@ -200,7 +210,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHO
     "${PHPMYADMIN_DOCROOT_ID}" \
     'phpmyadmin'                  
 
-echo "Phpmyadmin ${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."     
+echo "${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."     
 
 # Website virtualhost file.
 create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
@@ -220,7 +230,7 @@ echo "${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."
 
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
-     "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \ 
+     "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}"
    
 if [[ 'development' == "${ENV}" ]]
@@ -245,7 +255,7 @@ then
        -e "s/SEDpublic_portSED/${SRV_ADMIN_MMONIT_HTTP_PORT}/g" \
           "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/"${ssl_dir}"/server.xml       
        
-   echo 'M/Monit server.xml ready.'    
+   echo 'server.xml ready.'    
 
    scp_upload_file "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${ssl_dir}"/server.xml     
@@ -255,7 +265,7 @@ then
        -e "s/SEDkey_pwdSED/secret@123/g" \
           "${TEMPLATE_DIR}"/common/ssl/self_signed/gen-rsa_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen-rsa.sh
 
-   echo 'Apache SSL gen-rsa.sh ready.'
+   echo 'gen-rsa.sh ready.'
 
    # Apache Web Server remove the password protection from the key script.
    sed -e "s/SEDkey_fileSED/${dev_key_file}/g" \
@@ -263,7 +273,7 @@ then
        -e "s/SEDkey_pwdSED/secret@123/g" \
           "${TEMPLATE_DIR}"/common/ssl/self_signed/remove-passphase_template.exp > "${TMP_DIR}"/"${ssl_dir}"/remove-passphase.sh   
 
-   echo 'Apache SSL remove-passphase.sh ready.'
+   echo 'remove-passphase.sh ready.'
 
    crt_dev_country='IE'
    crt_dev_city='Dublin'
@@ -283,14 +293,22 @@ then
           "${TEMPLATE_DIR}"/common/ssl/self_signed/gen-selfsign-cert_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen-selfsign-cert.sh
 
    echo 'gen-selfsign-cert.sh ready.'
-   
-
+       
+   # Apache Web Server SSL configuration file.
+   sed -e "s/SEDwebsite_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
+       -e "s/SEDphpmyadmin_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
+       -e "s/SEDloganalyzer_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
+       -e "s/SEDkey_fileSED/${dev_key_file}/g" \
+       -e "s/SEDcert_fileSED/${dev_crt_file}/g" \
+          "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/"${ssl_dir}"/ssl.conf 
+          
+   echo 'ssl.conf ready.'   
    
    scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${ssl_dir}"/gen-selfsign-cert.sh \
        "${TMP_DIR}"/"${ssl_dir}"/remove-passphase.sh \
-       "${TMP_DIR}"/"${ssl_dir}"/gen-rsa.sh
-       
+       "${TMP_DIR}"/"${ssl_dir}"/gen-rsa.sh \
+       "${TMP_DIR}"/"${ssl_dir}"/ssl.conf
 else
 
    # cert.pem
@@ -316,7 +334,7 @@ else
        -e "s/SEDcertificateSED/certificate=\"$(escape conf/${dev_crt_file})\"/g" \
           "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/"${ssl_dir}"/server.xml       
        
-   echo 'M/Monit server.xml ready.'
+   echo 'server.xml ready.'
    
    scp_upload_file "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${ssl_dir}"/server.xml         
@@ -347,7 +365,7 @@ else
        "${APACHE_DOCROOT_DIR}" \
        "${CERTBOT_DOCROOT_ID}"
 
-   echo "Certbot ${CERTBOT_VIRTUALHOST_CONFIG_FILE} ready."  
+   echo "${CERTBOT_VIRTUALHOST_CONFIG_FILE} ready."  
    
  ###### TODO fix cert paths
    
@@ -357,7 +375,7 @@ else
        -e "s/SEDloganalyzer_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
            "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/"${ssl_dir}"/ssl.conf 
    
-   echo 'Apache ssl.conf ready.'    
+   echo 'ssl.conf ready.'    
    
    scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${ssl_dir}"/ssl.conf \
@@ -424,9 +442,20 @@ then
    
    #####echo 'Revoked SSH access to the Admin box.' 
    
-   #####revoke_access_from_cidr "${sgp_id}" '80' "0.0.0.0/0"
+   echo  
+fi
+
+if [[ 'production' == "${ENV}" ]]
+then      
+   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" '80' '0.0.0.0/0')"  
    
-   echo 'Revoked Certbot access to the Admin server.'   
+   if [[ -n "${granted_ssh}" ]]
+   then
+      #####revoke_access_from_cidr "${sgp_id}" '80' "0.0.0.0/0"
+   
+      #####echo 'Revoked Certbot access to the Admin server.' 
+      echo  
+   fi
 fi
     
 # Removing local temp files

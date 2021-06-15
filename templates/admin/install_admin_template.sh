@@ -208,6 +208,8 @@ echo 'Loganalyzer installed.'
 # Disable the default port.
 sed -i "s/^Listen \+${APACHE_DEFAULT_HTTP_PORT}$/#Listen ${APACHE_DEFAULT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
+echo "Disabled Apache web server listen on port ${APACHE_DEFAULT_HTTP_PORT}." 
+
 ##
 ## Monit 
 ## 

@@ -25,25 +25,17 @@ set +o xtrace
 ENV='SEDenvironmentSED'
 APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
+APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
 MMONIT_INSTALL_DIR='SEDmmonit_install_dirSED'
+PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE='SEDphpmyadmin_http_virtualhost_fileSED'
 PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE='SEDphpmyadmin_https_virtualhost_fileSED'
+LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE='SEDloganalyzer_http_virtualhost_fileSED'
 LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE='SEDloganalyzer_https_virtualhost_fileSED'
 ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE='SEDadmin_https_virtualhost_fileSED' 
+ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE='SEDadmin_http_virtualhost_fileSED'
+MONIT_HTTP_PORT='SEDmonit_http_portSED'
 admin_log_file='/var/log/admin_ssl_install.log'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-## 
-## Apache SSL module 
-## 
-
-cd "${script_dir}" || exit
-
-echo 'Installing Apache SSL module ...'
-
-chmod +x extend_apache_web_server_with_SSL_module_template.sh 
-./extend_apache_web_server_with_SSL_module_template.sh >> "${admin_log_file}" 2>&1 
-
-echo 'Apache SSL module installed.'
 
 ##
 ## SSL certificates 
@@ -59,6 +51,8 @@ then
    #
    # In development, use a self-signed certificate.
    #
+   
+   echo 'Generating self-signed certificate ...'
 
    amazon-linux-extras install epel -y >> "${admin_log_file}" 2>&1
    yum install -y expect >> "${admin_log_file}" 2>&1
@@ -117,14 +111,25 @@ fi
 ##
 ## M/Monit
 ##
+
+echo 'Configuring M/Monit SSL ...'
+
+cp -f server.xml "${MMONIT_INSTALL_DIR}"/conf
+
+find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chown root:root {} +
+find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chmod 500 {} +
+find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chown root:root {} +
+find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chmod 400 {} + 
+
+echo 'M/Monit configuration file copied.' 
    
 cp "${cert_file_nm}" "${MMONIT_INSTALL_DIR}"/conf
 
-echo "Copied ${cert_file_nm} to Apache install directory"
+echo "Copied ${cert_file_nm} to M/Monit install directory"
 
-cp "${key_file_nm}" "${MMONIT_INSTALL_DIR}"/conf
+##cp "${key_file_nm}" "${MMONIT_INSTALL_DIR}"/conf
 
-echo "Copied ${key_file_nm} to Apache install directory"
+##echo "Copied ${key_file_nm} to Apache install directory"
 
 find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chown root:root {} +
 find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chmod 500 {} +
@@ -132,12 +137,6 @@ find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chown root:root {} +
 find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chmod 400 {} +  
 
 echo 'M/Monit certificate installed.'
- 
-cp -f server.xml "${MMONIT_INSTALL_DIR}"/conf/server.xml
-chown root:root "${MMONIT_INSTALL_DIR}"/conf/server.xml
-chmod 400 "${MMONIT_INSTALL_DIR}"/conf/server.xml
-
-echo 'M/Monit configuration file copied.' 
 
 systemctl restart mmonit
 
@@ -147,13 +146,37 @@ echo 'M/Monit restarted.'
 ## Apache web server
 ##
 
+echo 'Configuring Apache web server SSL ...'
+
 cp -f httpd.conf "${APACHE_INSTALL_DIR}"/conf
 
 find "${APACHE_INSTALL_DIR}"/conf -type d -exec chown root:root {} +
 find "${APACHE_INSTALL_DIR}"/conf -type d -exec chmod 500 {} +
 find "${APACHE_INSTALL_DIR}"/conf -type f -exec chown root:root {} +
-find "${APACHE_INSTALL_DIR}"/conf -type f -exec chmod 400 {} +   
-   
+find "${APACHE_INSTALL_DIR}"/conf -type f -exec chmod 400 {} +  
+
+echo 'Apache web server configuration file copied.' 
+
+# Enable Monit HTTP port.
+sed -i "s/^#Listen \+${MONIT_HTTP_PORT}/Listen ${MONIT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
+
+echo "Enabled Apache web server listen on port ${MONIT_HTTP_PORT}." 
+
+# Disable the default port.
+sed -i "s/^Listen \+${APACHE_DEFAULT_HTTP_PORT}$/#Listen ${APACHE_DEFAULT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
+
+echo "Disabled Apache web server listen on port ${APACHE_DEFAULT_HTTP_PORT}." 
+ 
+# Apache SSL module 
+cd "${script_dir}" || exit
+
+echo 'Installing Apache SSL module ...'
+
+chmod +x extend_apache_web_server_with_SSL_module_template.sh 
+./extend_apache_web_server_with_SSL_module_template.sh >> "${admin_log_file}" 2>&1 
+
+echo 'Apache SSL module installed.'
+
 cp "${cert_file_nm}" "${APACHE_INSTALL_DIR}"/ssl
 cp "${key_file_nm}" "${APACHE_INSTALL_DIR}"/ssl
    
@@ -167,22 +190,30 @@ sed -i "s/^#SSLCertificateKeyFile/SSLCertificateKeyFile/g" "${APACHE_INSTALL_DIR
 sed -i "s/^#SSLCertificateFile/SSLCertificateFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
 ### sed -i "s/^#SSLCertificateChainFile/SSLCertificateChainFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
 
-##
-## Virtualhosts
-##
+echo 'Apache web server certificate installed.'
 
-# Enable the phpmyadmin website.
+## Virtual hosts.
 
+# Enable the HTTPS phpmyadmin website.
+
+rm -f "${APACHE_SITES_ENABLED_DIR}"/"${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}"
+
+echo 'Phpmyadmin HTTP website disabled' >> "${admin_log_file}"
+ 
 cp "${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 
 if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" ]]
 then
    ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}"
    
-   echo 'Phpmyadmin website enabled' >> "${admin_log_file}"
+   echo 'Phpmyadmin HTPPS website enabled' >> "${admin_log_file}"
 fi
 
-# Enable the loganalyzer website.
+# Enable the HTTPS loganalyzer website.
+
+rm -f "${APACHE_SITES_ENABLED_DIR}"/"${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}"
+
+echo 'Loganalyzer HTTP website disabled' >> "${admin_log_file}"
 
 cp "${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 
@@ -191,23 +222,26 @@ then
    # Enable the and Loganalyzer site.  
    ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}"
    
-   echo 'Loganalyzer website enabled' >> "${admin_log_file}"
+   echo 'Loganalyzer HTTPS website enabled' >> "${admin_log_file}"
 fi
 
-# Enable the Admin website.
+# Enable the HTTPS Admin website.
 
+rm -f "${APACHE_SITES_ENABLED_DIR}"/"${ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}"
+
+echo 'Admin HTTP website disabled' >> "${admin_log_file}"
+
+cp -f "${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
+   
 if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" ]]
 then
-   cp -f "${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
    ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}"
    
-   echo 'Admin website enabled' >> "${admin_log_file}"
+   echo 'Admin HTTPS website enabled' >> "${admin_log_file}"
 fi
 
 # Check the syntax
 httpd -t
-   
-echo 'Apache web server certificate installed.' 
 
 systemctl restart httpd
 
