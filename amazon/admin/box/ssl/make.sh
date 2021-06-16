@@ -31,6 +31,7 @@ ADMIN_DOCROOT_ID='admin.maxmin.it'
 ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE='admin.http.virtualhost.maxmin.it.conf' 
 ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE='admin.https.virtualhost.maxmin.it.conf' 
 MMONIT_INSTALL_DIR='/opt/mmonit'
+WEBSITE_DOCROOT_ID='admin.maxmin.it'
 ssl_dir='ssl/certbot'
 
 echo '*************'
@@ -134,20 +135,29 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${key_pair_file}" \
     "${eip}" \
     "${SHAR_INSTANCE_SSH_PORT}" \
-    "${SRV_ADMIN_USER_NM}"   
-
+    "${SRV_ADMIN_USER_NM}"  
+    
 sed -e "s/SEDenvironmentSED/${ENV}/g" \
+    -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+    -e "s/SEDapache_default_http_portSED/${SRV_ADMIN_APACHE_DEFAULT_HTTP_PORT}/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
     -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
+    -e "s/SEDmonit_http_portSED/${SRV_ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
+    -e "s/SEDphpmyadmin_http_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTP_PORT}/g" \
+    -e "s/SEDphpmyadmin_https_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
     -e "s/SEDphpmyadmin_http_virtualhost_fileSED/${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDphpmyadmin_https_virtualhost_fileSED/${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDloganalyzer_http_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTP_PORT}/g" \
+    -e "s/SEDloganalyzer_https_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
     -e "s/SEDloganalyzer_http_virtualhost_fileSED/${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDloganalyzer_https_virtualhost_fileSED/${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDadmin_http_virtualhost_fileSED/${ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDadmin_https_virtualhost_fileSED/${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDmonit_http_portSED/${SRV_ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
+    -e "s/SEDwebsite_http_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
+    -e "s/SEDwebsite_https_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
+    -e "s/SEDwebsite_docroot_idSED/${WEBSITE_DOCROOT_ID}/g" \
+    -e "s/SEDwebsite_http_virtualhost_fileSED/${ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebsite_https_virtualhost_fileSED/${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
        "${TEMPLATE_DIR}"/admin/ssl/install_admin_ssl_template.sh > "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh
 
 echo 'install_admin_ssl.sh ready.'
@@ -159,25 +169,9 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
              
 echo 'extend_apache_web_server_with_SSL_module_template.sh ready.'   
 
-# Apache Web Server main configuration file.
-sed -e "s/SEDapache_default_http_portSED/${SRV_ADMIN_APACHE_DEFAULT_HTTP_PORT}/g" \
-    -e "s/SEDapache_monit_http_portSED/${SRV_ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
-    -e "s/SEDadmin_emailSED/${SRV_ADMIN_EMAIL}/g" \
-    -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-    -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
-    -e "s/SEDdatabase_hostSED/${db_endpoint}/g" \
-    -e "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
-    -e "s/SEDdatabase_portSED/${DB_MMDATA_PORT}/g" \
-    -e "s/SEDdatabase_user_adminrwSED/${DB_MMDATA_ADMIN_USER_NM}/g" \
-    -e "s/SEDdatabase_password_adminrwSED/${DB_MMDATA_ADMIN_USER_PWD}/g" \
-       "${TEMPLATE_DIR}"/admin/httpd/httpd_template.conf > "${TMP_DIR}"/"${ssl_dir}"/httpd.conf       
-
-echo 'httpd.conf ready.'
-  
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh \
     "${TMP_DIR}"/"${ssl_dir}"/extend_apache_web_server_with_SSL_module_template.sh \
-    "${TMP_DIR}"/"${ssl_dir}"/httpd.conf \
     "${TEMPLATE_DIR}"/common/httpd/00-ssl.conf      
    
 # Loganalyzer Virtual Host file.
@@ -243,16 +237,15 @@ then
    dev_key_file='server.dev.key'
    dev_key_file_no_pwd='server.dev.key_no.pass'
    dev_crt_file='server.dev.crt'
+   dev_crt_file_path="certificate=\"conf/${dev_crt_file}\""
 
-   ##### TODO $(escape conf/${dev_crt_file}) ugly
-   ###### TODO also mmonit doesn't work
-     #     -e "s/SEDssl_secureSED/true/g" \
-    #   -e "s/SEDcertificateSED/$(escape conf/${dev_crt_file})/g" \
-   
    sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
        -e "s/SEDserver_admin_private_ipSED/${SRV_ADMIN_PRIVATE_IP}/g" \
        -e "s/SEDcollector_portSED/${SRV_ADMIN_MMONIT_COLLECTOR_PORT}/g" \
-       -e "s/SEDpublic_portSED/${SRV_ADMIN_MMONIT_HTTP_PORT}/g" \
+       -e "s/SEDpublic_portSED/${SRV_ADMIN_MMONIT_HTTPS_PORT}/g" \
+       -e "s/SEDssl_secureSED/true/g" \
+       -e "s/SEDcertificate_fileSED/${dev_crt_file}/g" \
+       -e "s/SEDcertificateSED/$(escape "${dev_crt_file_path}")/g" \
           "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/"${ssl_dir}"/server.xml       
        
    echo 'server.xml ready.'    
@@ -390,7 +383,7 @@ echo 'Scripts uploaded.'
 ## By AWS default, sudo has not password.
 ## 
 
-echo 'Configuring SSL in the Admin box ...'
+echo 'Installing SSL in the Admin box ...'
     
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin_ssl.sh" \
     "${key_pair_file}" \
@@ -438,9 +431,9 @@ granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_S
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine
-   #####revoke_access_from_cidr "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0'
    
-   #####echo 'Revoked SSH access to the Admin box.' 
+   echo 'Revoked SSH access to the Admin box.' 
    
    echo  
 fi
@@ -451,9 +444,9 @@ then
    
    if [[ -n "${granted_ssh}" ]]
    then
-      #####revoke_access_from_cidr "${sgp_id}" '80' "0.0.0.0/0"
+      revoke_access_from_cidr "${sgp_id}" '80' "0.0.0.0/0"
    
-      #####echo 'Revoked Certbot access to the Admin server.' 
+      echo 'Revoked Certbot access to the Admin server.' 
       echo  
    fi
 fi
@@ -462,5 +455,5 @@ fi
 rm -rf "${TMP_DIR:?}"/"${ssl_dir}"  
 
 echo
-echo 'SSL configured in the Admin box.' 
+echo 'SSL installed in the Admin box.' 
 echo

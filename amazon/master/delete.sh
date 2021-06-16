@@ -40,10 +40,6 @@ echo
       echo '****************' 
    fi
    
-   exit
-   exit
-   exit
-
    echo 
 
    ### TODO mysqldump: command not found

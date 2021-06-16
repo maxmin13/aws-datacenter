@@ -263,9 +263,20 @@ echo 'cloud_init.yml ready.'
 
 instance_id="$(get_instance_id "${webphp_nm}")"
 
-if [[ -n "${instance_id}" ]]; 
+if [[ -n "${instance_id}" ]]
 then
-   echo 'WARN: Webphp box already created.'
+   instance_state="$(get_instance_state "${webphp_nm}")"
+   
+   if [[ 'running' == "${instance_state}" || \
+         'stopped' == "${instance_state}" || \
+         'pending' == "${instance_state}" ]]
+   then
+      echo "WARN: Webphp box already created (${instance_state})."
+   else
+      echo "ERROR: Webphp box already created (${instance_state})."
+      
+      exit 1
+   fi
 else
    echo "Creating the Webphp box ..."
 
@@ -278,7 +289,7 @@ else
        "${TMP_DIR}"/"${webphp_dir}"/cloud_init.yml)"
 
    echo "Webphp box created."
-fi  
+fi
 
 # Get the public IP address assigned to the instance. 
 eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"

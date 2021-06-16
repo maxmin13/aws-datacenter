@@ -9,42 +9,59 @@ APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='SEDwebsite_http_virtualhost_fileSED' 
+WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE='SEDwebsite_https_virtualhost_fileSED' 
 WEBSITE_HTTP_PORT='SEDwebsite_http_portSED'
+WEBSITE_HTTPS_PORT='SEDwebsite_https_portSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
-
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 admin_log_file='/var/log/admin_website_delete.log'
 
-echo 'Removing Admin website ...' >> "${admin_log_file}" 2>&1
+# Check if SSL is installed.
+ssl_enabled='false'
+
+if [[ -f "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf ]]
+then
+   ssl_enabled='true'
+fi
+
+echo "SSL enabled ${ssl_enabled}." >> "${admin_log_file}"
 
 #
-# Apache HTTP port.
-#
-
-sed -i "s/^Listen \+${WEBSITE_HTTP_PORT}$/#Listen ${WEBSITE_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
-
-echo "Disabled Apache listen on port ${WEBSITE_HTTP_PORT}."
-
-#
-# Apache virtualhost.
+# Apache virtualhosts.
 #
 
 rm -f "${APACHE_SITES_ENABLED_DIR:?}"/"${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE:?}" 
-echo 'Admin website virtualhost disabled.' >> "${admin_log_file}" 2>&1
+rm -f "${APACHE_SITES_ENABLED_DIR:?}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE:?}" 
+
+echo 'Admin website virtualhosts disabled.' >> "${admin_log_file}" 2>&1
+
+#
+# Apache ports.
+#
+
+if [[ 'true' == "${ssl_enabled}" ]]
+then
+   sed -i "s/^Listen \+${WEBSITE_HTTPS_PORT}/#Listen ${WEBSITE_HTTPS_PORT}/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+
+   echo "Apache web server disabled listen on ${WEBSITE_HTTPS_PORT} port." >> "${admin_log_file}" 2>&1
+else
+   sed -i "s/^#Listen \+${WEBSITE_HTTP_PORT}/Listen ${WEBSITE_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+
+   echo "Apache web server disabled listen on ${WEBSITE_HTTP_PORT} port." >> "${admin_log_file}" 2>&1
+fi
 
 #
 # Website sources.
 #
-website_domain_dir="${APACHE_DOCROOT_DIR}"/"${WEBSITE_DOCROOT_ID}"
-rm -rf "${website_domain_dir:?}"
 
-echo 'Admin sources deleted.' >> "${admin_log_file}" 2>&1
+website_dir="${APACHE_DOCROOT_DIR}"/"${WEBSITE_DOCROOT_ID}"
+rm -rf "${website_dir:?}"
 
-httpd -t
+echo 'Admin website sources deleted.' >> "${admin_log_file}" 2>&1
+
+httpd -t >> "${admin_log_file}" 2>&1
 systemctl restart httpd >> "${admin_log_file}" 2>&1
 
-echo 'Apache web server restarted' >> "${admin_log_file}" 2>&1
-echo 'Admin website removed.'
+echo 'Apache web server restarted.' >> "${admin_log_file}" 2>&1
 
 exit 0
 

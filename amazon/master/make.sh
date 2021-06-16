@@ -40,16 +40,6 @@ echo
       echo '****************' 
    fi 
    
-   
-. "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh     
-
-    
-   exit
-   exit
-   exit   
-   
-   echo
-   
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
 
@@ -64,11 +54,11 @@ echo
    . "${PROJECT_DIR}"/amazon/admin/box/make.sh               
    . "${PROJECT_DIR}"/amazon/webphp/box/make.sh 1                   
 
-   # Deploy Database objects
+   # Deploy Database objects.
    . "${PROJECT_DIR}"/amazon/database/box/data/make.sh       
 
    # Deploy admin website and public webphp websites.
-   . "${PROJECT_DIR}"/amazon/admin/box/website/make.sh       
+   . "${PROJECT_DIR}"/amazon/admin/box/website/make.sh      
    . "${PROJECT_DIR}"/amazon/webphp/box/website/make.sh 1   
    
    # Register 'maxmin.it' domain with the AWS registrar.

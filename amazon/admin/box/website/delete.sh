@@ -5,12 +5,16 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+###############################################
+# # Removes the Admin website.
+###############################################
+
 APACHE_INSTALL_DIR='/etc/httpd'
 APACHE_DOCROOT_DIR='/var/www/html'
 APACHE_SITES_ENABLED_DIR='/etc/httpd/sites-enabled'
 WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='admin.http.virtualhost.maxmin.it.conf'  
+WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE='admin.https.virtualhost.maxmin.it.conf'  
 WEBSITE_DOCROOT_ID='admin.maxmin.it'
-
 admin_dir='admin'
 
 echo '*************'
@@ -93,7 +97,9 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDwebsite_docroot_idSED/${WEBSITE_DOCROOT_ID}/g" \
     -e "s/SEDwebsite_http_virtualhost_fileSED/${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebsite_https_virtualhost_fileSED/${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDwebsite_http_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
+    -e "s/SEDwebsite_https_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
        "${TEMPLATE_DIR}"/admin/website/delete_admin_website_template.sh > "${TMP_DIR}"/"${admin_dir}"/delete_admin_website.sh
           
 echo 'delete_admin_website.sh ready' 
@@ -144,7 +150,6 @@ fi
 ## 
 ## SSH Access.
 ## 
-
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine

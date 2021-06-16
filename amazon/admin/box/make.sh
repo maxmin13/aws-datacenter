@@ -34,7 +34,6 @@ LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE='loganalyzer.http.virtualhost.maxmin.it
 MONIT_DOCROOT_ID='monit.maxmin.it'
 MONIT_HTTP_VIRTUALHOST_CONFIG_FILE='monit.http.virtualhost.maxmin.it.conf'
 MMONIT_INSTALL_DIR='/opt/mmonit'
-
 admin_dir='admin'
 
 echo '*********'
@@ -178,12 +177,21 @@ echo 'cloud_init.yml ready.'
 
 instance_id="$(get_instance_id "${SRV_ADMIN_NM}")"
 
-if [[ -n "${instance_id}" ]]; 
+if [[ -n "${instance_id}" ]]
 then
-   echo
-   echo 'WARN: Admin box already created.'
+   instance_state="$(get_instance_state "${SRV_ADMIN_NM}")"
+   
+   if [[ 'running' == "${instance_state}" || \
+         'stopped' == "${instance_state}" || \
+         'pending' == "${instance_state}" ]] 
+   then
+      echo "WARN: Admin box already created (${instance_state})."
+   else
+      echo "ERROR: Admin box already created (${instance_state})."
+      
+      exit 1
+   fi
 else
-   echo
    echo "Creating the Admin box ..."
 
    instance_id="$(run_instance \
@@ -195,7 +203,7 @@ else
        "${TMP_DIR}"/"${admin_dir}"/cloud_init.yml)"
 
    echo "Admin box created."
-fi  
+fi
 
 # Get the public IP address assigned to the instance. 
 eip="$(get_public_ip_address_associated_with_instance "${SRV_ADMIN_NM}")"
@@ -305,6 +313,8 @@ sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
     -e "s/SEDserver_admin_private_ipSED/${SRV_ADMIN_PRIVATE_IP}/g" \
     -e "s/SEDcollector_portSED/${SRV_ADMIN_MMONIT_COLLECTOR_PORT}/g" \
     -e "s/SEDpublic_portSED/${SRV_ADMIN_MMONIT_HTTP_PORT}/g" \
+    -e "s/SEDssl_secureSED/false/g" \
+    -e "s/SEDcertificateSED//g" \
        "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/"${admin_dir}"/server.xml
        
 echo 'server.xml ready.' 

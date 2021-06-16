@@ -13,7 +13,6 @@ WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
 WEBSITE_ARCHIVE='SEDwebsite_archiveSED'
 WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='SEDwebphp_virtual_host_configSED'
 WEBSITE_HTTP_PORT='SEDwebsite_http_portSED'
-
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 webphp_log_file='/var/log/website_install.log'
 
@@ -67,7 +66,7 @@ sed -i "s/^#Listen \+${WEBSITE_HTTP_PORT}/Listen ${WEBSITE_HTTP_PORT}/g" "${APAC
 
 echo "Apache web server listen on ${WEBSITE_HTTP_PORT} port."
 
-httpd -t
+httpd -t >> "${webphp_log_file}" 2>&1
 systemctl restart httpd >> "${webphp_log_file}" 2>&1
 
 echo 'Apache web server restarted' >> "${webphp_log_file}" 2>&1

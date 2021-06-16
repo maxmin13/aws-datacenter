@@ -5,16 +5,18 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-# Deploy the Admin website on port 80
+###############################################
+# # Deploy the Admin website.
+###############################################
 
 APACHE_INSTALL_DIR='/etc/httpd'
 APACHE_DOCROOT_DIR='/var/www/html'
 APACHE_SITES_AVAILABLE_DIR='/etc/httpd/sites-available'
 APACHE_SITES_ENABLED_DIR='/etc/httpd/sites-enabled'
 WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='admin.http.virtualhost.maxmin.it.conf' 
+WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE='admin.https.virtualhost.maxmin.it.conf'
 WEBSITE_DOCROOT_ID='admin.maxmin.it'
 WEBSITE_ARCHIVE='admin.zip'
-
 admin_dir='admin'
 
 echo '*************'
@@ -96,7 +98,9 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
     -e "s/SEDwebsite_archiveSED/${WEBSITE_ARCHIVE}/g" \
     -e "s/SEDwebsite_http_virtualhost_fileSED/${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebsite_https_virtualhost_fileSED/${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDwebsite_http_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
+    -e "s/SEDwebsite_https_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
     -e "s/SEDwebsite_docroot_idSED/${WEBSITE_DOCROOT_ID}/g" \
        "${TEMPLATE_DIR}"/admin/website/install_admin_website_template.sh > "${TMP_DIR}"/"${admin_dir}"/install_admin_website.sh  
 
@@ -122,7 +126,7 @@ echo "${WEBSITE_ARCHIVE} ready."
 scp_upload_file "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_ARCHIVE}"  
 
-# Website virtualhost file.
+# Website HTTP virtualhost file.
 create_virtualhost_configuration_file "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
     "${SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT}" \
@@ -137,9 +141,26 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTP_VIRTUALHOST
     'index.php' 
                       
 echo "${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE} ready."  
+
+# Website HTTPS virtualhost file.
+create_virtualhost_configuration_file "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
+    '*' \
+    "${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}" \
+    "${SRV_ADMIN_HOSTNAME}" \
+    "${APACHE_DOCROOT_DIR}" \
+    "${WEBSITE_DOCROOT_ID}"        
+     
+add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
+    'admin' \
+    "${APACHE_DOCROOT_DIR}" \
+    "${WEBSITE_DOCROOT_ID}" \
+    'index.php' 
+                      
+echo "${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE} ready." 
                              
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
-    "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}" 
+    "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}" \
+    "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}"
 
 echo "Installing Admin website ..."
 

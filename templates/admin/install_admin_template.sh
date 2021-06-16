@@ -11,7 +11,7 @@ APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
 MMONIT_ARCHIVE='SEDmmonit_archiveSED'
-MMONIT_DIR='SEDmmonit_install_dirSED'
+MMONIT_INSTALL_DIR='SEDmmonit_install_dirSED'
 MONIT_DOCROOT_ID='SEDmonit_docroot_idSED'
 MONIT_HTTP_VIRTUALHOST_CONFIG_FILE='SEDmonit_http_virtualhost_fileSED'
 MONIT_HTTP_PORT='SEDmonit_http_portSED'
@@ -92,12 +92,18 @@ cd "${script_dir}" || exit
 
 echo 'Installing M/Monit ...'
 
-rm -rf "${MMONIT_DIR:?}"
-mkdir "${MMONIT_DIR}"
-tar -xvf "${MMONIT_ARCHIVE}" --directory "${MMONIT_DIR}" --strip-components 1 >> "${admin_log_file}" 2>&1
-cp -f server.xml "${MMONIT_DIR}"/conf/server.xml
-chown root:root "${MMONIT_DIR}"/conf/server.xml
-chmod 400 "${MMONIT_DIR}"/conf/server.xml
+rm -rf "${MMONIT_INSTALL_DIR:?}"
+mkdir "${MMONIT_INSTALL_DIR}"
+tar -xvf "${MMONIT_ARCHIVE}" --directory "${MMONIT_INSTALL_DIR}" --strip-components 1 >> "${admin_log_file}" 2>&1
+
+cp -f server.xml "${MMONIT_INSTALL_DIR}"/conf
+
+find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chown root:root {} +
+find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chmod 500 {} +
+find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chown root:root {} +
+find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chmod 400 {} + 
+
+echo 'M/Monit configuration file copied.'
 
 cd "${script_dir}" || exit
 

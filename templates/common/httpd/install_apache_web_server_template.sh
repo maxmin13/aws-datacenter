@@ -59,6 +59,7 @@ find "${APACHE_DOCROOT_DIR}" -type f -exec chown root:root {} +
 find "${APACHE_DOCROOT_DIR}" -type f -exec chmod 400 {} +
 
 # Don't load SSL module.
+rm -f "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
 rm -f "${APACHE_INSTALL_DIR}"/conf.modules.d/00-ssl.conf
 
 # Check the syntax

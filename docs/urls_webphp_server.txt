@@ -29,5 +29,4 @@ WebPhp website:
 # Through the Load Balancer
 https://www.maxmin.it
 
-# No Load Balancer, enable Security Group access on port 8070
-http://34.240.230.25:8070
+

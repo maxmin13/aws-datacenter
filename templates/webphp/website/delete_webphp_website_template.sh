@@ -11,7 +11,6 @@ APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='SEDwebsite_http_virtualhost_configSED'
 WEBSITE_HTTP_PORT='SEDwebsite_http_portSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
-
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 webphp_log_file='/var/log/webphp_website_delete.log'
 
@@ -42,7 +41,7 @@ rm -rf "${webphp_domain_dir:?}"
 
 echo 'Webphp sources deleted.' >> "${webphp_log_file}" 2>&1
 
-httpd -t
+httpd -t >> "${webphp_log_file}" 2>&1
 systemctl restart httpd >> "${webphp_log_file}" 2>&1
 
 echo 'Apache web server restarted.' >> "${webphp_log_file}" 2>&1
