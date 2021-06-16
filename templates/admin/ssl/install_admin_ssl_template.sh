@@ -25,7 +25,6 @@ set +o xtrace
 ENV='SEDenvironmentSED'
 APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
-APACHE_DEFAULT_HTTP_PORT='SEDapache_default_http_portSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
 MMONIT_INSTALL_DIR='SEDmmonit_install_dirSED'
@@ -201,11 +200,6 @@ fi
 sed -i "s/^Listen \+${MONIT_HTTP_PORT}$/#Listen ${MONIT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
 echo "Enabled Apache web server listen on port ${MONIT_HTTP_PORT}." 
-
-# Disable Apache default port.
-sed -i "s/^Listen \+${APACHE_DEFAULT_HTTP_PORT}$/#Listen ${APACHE_DEFAULT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
-
-echo "Disabled Apache web server listen on port ${APACHE_DEFAULT_HTTP_PORT}." 
 
 ##
 ## Admin website

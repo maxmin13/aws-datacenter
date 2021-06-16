@@ -1,5 +1,16 @@
 
 
+check the delete.sh scripts,
+do not exit if the instance is not there, 
+go on and try to delete security groups .....
+
+###############################################
+
+when deleting the load balancer, set a trap and catch the error,
+wait 10 more seconds before trying to delete it again.
+
+###############################################
+
 why in Admin box the dir /home/shared-user is still there?
 it should be delete by cloud init
 

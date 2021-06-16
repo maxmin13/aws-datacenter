@@ -140,7 +140,6 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
 sed -e "s/SEDenvironmentSED/${ENV}/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-    -e "s/SEDapache_default_http_portSED/${SRV_ADMIN_APACHE_DEFAULT_HTTP_PORT}/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
     -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
