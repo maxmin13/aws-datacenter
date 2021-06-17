@@ -52,11 +52,11 @@ echo
 
    # Delete the websites.
    . "${PROJECT_DIR}"/amazon/admin/box/website/delete.sh      
-   . "${PROJECT_DIR}"/amazon/webphp/box/website/delete.sh 1   
+   . "${PROJECT_DIR}"/amazon/webphp/box/website/delete.sh 2   
 
    # Delete the server instances.
    . "${PROJECT_DIR}"/amazon/shared/box/delete.sh             
-   . "${PROJECT_DIR}"/amazon/webphp/box/delete.sh 1 
+   . "${PROJECT_DIR}"/amazon/webphp/box/delete.sh 2 
    . "${PROJECT_DIR}"/amazon/admin/box/delete.sh 
             
    . "${PROJECT_DIR}"/amazon/loadbalancer/box/delete.sh       

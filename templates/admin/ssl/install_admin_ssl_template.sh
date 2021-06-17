@@ -85,15 +85,15 @@ then
             remove-passphase.sh \
             gen-selfsign-cert.sh
 
-   key_file_nm="$(./gen-rsa.sh)" 
-   new_key_file_nm="$(./remove-passphase.sh)" 
+   key_file="$(./gen-rsa.sh)" 
+   new_key_file="$(./remove-passphase.sh)" 
    
-   rm "${key_file_nm}"
-   mv "${new_key_file_nm}" "${key_file_nm}"
+   rm "${key_file}"
+   mv "${new_key_file}" "${key_file}"
    
    echo 'No-password private key generated.'
 
-   cert_file_nm="$(./gen-selfsign-cert.sh)"
+   cert_file="$(./gen-selfsign-cert.sh)"
    
    echo 'Self-signed certificate created.'
     
@@ -121,17 +121,15 @@ else
       echo "ERROR: running Certbot."
       
       exit 1
-   fi  
+   fi 
+
+   cert_dir='/etc/letsencrypt/live/admin.maxmin.it'
+   cert_file='cert.pem'
+   key_file='privkey.pem'   
+   chain_file='chain.pem' 
+   full_chain_file='fullchain.pem'
    
-   # /etc/letsencrypt/live/admin.maxmin.it/
-# cert.pem
-# chain.pem
-# fullchain.pem
-# privkey.pem
-   
-   ### TODO create links to these files in apache
-   
-        
+   echo 'Certbot certificates generated.'
 fi
 
 
@@ -148,8 +146,8 @@ echo 'Configuring Apache web server SSL ...'
 ## Apache web server
 ##
 
-cp "${cert_file_nm}" "${APACHE_INSTALL_DIR}"/ssl
-cp "${key_file_nm}" "${APACHE_INSTALL_DIR}"/ssl
+cp "${cert_file}" "${APACHE_INSTALL_DIR}"/ssl
+cp "${key_file}" "${APACHE_INSTALL_DIR}"/ssl
    
 find "${APACHE_INSTALL_DIR}"/ssl -type d -exec chown root:root {} +
 find "${APACHE_INSTALL_DIR}"/ssl -type d -exec chmod 500 {} +
@@ -272,8 +270,8 @@ find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chmod 400 {} +
 
 echo 'M/Monit configuration file copied.' 
 
-cat "${key_file_nm}" > "${MMONIT_INSTALL_DIR}"/conf/"${cert_file_nm}"
-cat "${cert_file_nm}" >> "${MMONIT_INSTALL_DIR}"/conf/"${cert_file_nm}"
+cat "${key_file}" > "${MMONIT_INSTALL_DIR}"/conf/"${cert_file}"
+cat "${cert_file}" >> "${MMONIT_INSTALL_DIR}"/conf/"${cert_file}"
 
 find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chown root:root {} +
 find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chmod 500 {} +
