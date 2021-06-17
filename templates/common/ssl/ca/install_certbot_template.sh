@@ -7,34 +7,32 @@ set +o xtrace
 
 ###################################################################
 # The script installs Certbot ACME client and runs the 'certbot' 
-# command to request a certificate for the 'maxmin.it' domain.
-# The certificate is stored in /etc/letsencrypt/live directory.
-# It is not not installed in Apache web server.
-# The script configures also the automatc certificate renewal as a 
-# Cron job. 
-#
-# /etc/letsencrypt/live/admin.maxmin.it
-# cert.pem
-# chain.pem
-# fullchain.pem
-# privkey.pem
-#
+# command to request a certificate for the 'maxmin.it' domain to
+# Let’s Encrypt CA.
+# Let’s Encrypt CA issues short-lived certificates (90 days). 
+# Most Certbot installations come with automatic renewals 
+# preconfigured. This is done by means of a scheduled task which 
+# runs 'certbot renew' periodically.
+# All generated keys and issued certificates can be found in 
+# /etc/letsencrypt/live/$domain, where $domain is the certificate 
+# name. 
 ###################################################################
 
+APACHE_CERTBOT_HTTP_PORT='SEDapache_certbot_portSED'
 APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
 CERTBOT_VIRTUALHOST_CONFIG_FILE='SEDcertbot_virtualhost_fileSED'
 CERTBOT_DOCROOT_ID='SEDcertbot_docroot_idSED'
-EMAIL_ADDRESS='SEDemail_addressSED'
-DNS_DOMAIN='SEDdns_domainSED'
+CRT_EMAIL_ADDRESS='SEDcrt_email_addressSED'
+CRT_DOMAIN='SEDcrt_domainSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Make Apache listen on port 80
-sed -i "s/^#SEDlisten_port_80SED/Listen 80/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
+# Make Apache listen on Certbot port by adding a new Listen directive to httpd.conf file.
+sed -i "/^##certboot_anchor##/i Listen ${APACHE_CERTBOT_HTTP_PORT}" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
-echo 'Enabled Apache Listen on port 80.'
+echo "Enabled Apache Listen on Certbot port ${APACHE_CERTBOT_HTTP_PORT}."
 
 cd "${script_dir}" || exit
 
@@ -44,35 +42,48 @@ find "${certbot_docroot}" -type d -exec chown root:root {} +
 find "${certbot_docroot}" -type d -exec chmod 755 {} +
 
 # Enable Certbot HTTP virtual host.
+cp "${CERTBOT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 
 if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" ]]
-then
-   cp "${CERTBOT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
+then   
    ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}"
 
    echo 'Certbot HTTP virtual host enabled.'
 fi
 
+httpd -t 
 systemctl restart httpd 
 
-echo 'Apache web server restarted.'
+echo 'Apache web server restarted and ready for Certbot.'
 
 # Install and run Certbot
+
+echo 'Installing Certbot SSL agent ...'
+
 yum remove -y certbot 
 yum install -y certbot python2-certbot-apache
 
 echo 'Certbot SSL agent installed.'
 echo "Requesting a certificate to Let's Encrypt Certification Autority ..."
 
+## If you’re running a local webserver for which you have the ability to modify the content being 
+## served, and you’d prefer not to stop the webserver during the certificate issuance process, 
+## you can use the webroot plugin to obtain a certificate by including 'certonly' and '--webroot' on  
+## the command line. 
+## In addition, you’ll need to specify '--webroot-path' or '-w' with the top-level directory 
+## (“web root”) containing the files served by your webserver.
+
 set +e 
 
 ## TODO remove test mode
 certbot certonly \
+    --cert-name "${CRT_DOMAIN}" \
+    -d "${CRT_DOMAIN}" \
+    -m "${CRT_EMAIL_ADDRESS}" \
     --webroot \
     -w "${certbot_docroot}" \
-    -d "${DNS_DOMAIN}" \
-    -m "${EMAIL_ADDRESS}" \
     --agree-tos \
+    --non-interactive \
     --test-cert
 
 exit_code=$?
@@ -83,11 +94,12 @@ rm "${APACHE_SITES_ENABLED_DIR}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}"
 
 echo 'Certbot virtual hosts disabled.'
 
-# Disable Apache listen on port 80
-sed -i "s/Listen 80/#SEDlisten_port_80SED/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
+# Disable Apache listen on Certbot port.
+sed -i "s/^#Listen \+${APACHE_CERTBOT_HTTP_PORT}$/Listen ${APACHE_CERTBOT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
-echo 'Disabled Apache Listen on port 80.'
+echo "Disabled Apache Listen on Certbot port ${APACHE_CERTBOT_HTTP_PORT}."
 
+httpd -t
 systemctl restart httpd 
 
 if [[ ! 0 -eq "${exit_code}" ]]
@@ -98,6 +110,8 @@ then
 else
    echo "Certificate successfully obtained from Let's Encrypted certification authority."
 fi
+
+
 
 #####
 ##### TODO

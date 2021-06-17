@@ -267,19 +267,14 @@ then
 
    echo 'remove-passphase.sh ready.'
 
-   crt_dev_country='IE'
-   crt_dev_city='Dublin'
-   crt_dev_organization='Maxmin'
-   crt_dev_unit='web'
-   
    # Apache Web Server create self-signed Certificate script.
    sed -e "s/SEDkey_fileSED/${dev_key_file}/g" \
        -e "s/SEDcert_fileSED/${dev_crt_file}/g" \
-       -e "s/SEDcountrySED/${crt_dev_country}/g" \
-       -e "s/SEDstate_or_provinceSED/${crt_dev_city}/g" \
-       -e "s/SEDcitySED/${crt_dev_city}/g" \
-       -e "s/SEDorganizationSED/${crt_dev_organization}/g" \
-       -e "s/SEDunit_nameSED/${crt_dev_unit}/g" \
+       -e "s/SEDcountrySED/${CRT_DEV_COUNTRY}/g" \
+       -e "s/SEDstate_or_provinceSED/${CRT_DEV_CITY}/g" \
+       -e "s/SEDcitySED/${CRT_DEV_CITY}/g" \
+       -e "s/SEDorganizationSED/${CRT_DEV_ORGANIZATION}/g" \
+       -e "s/SEDunit_nameSED/${CRT_DEV_UNIT}/g" \
        -e "s/SEDcommon_nameSED/${SRV_ADMIN_HOSTNAME}/g" \
        -e "s/SEDemail_addressSED/${SRV_ADMIN_EMAIL}/g" \
           "${TEMPLATE_DIR}"/common/ssl/self_signed/gen-selfsign-cert_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen-selfsign-cert.sh
@@ -312,19 +307,18 @@ else
 #SSLCertificateFile       ssl/SEDssl_certificate_fileSED
 #SSLCertificateChainFile  ssl/SEDssl_certificate_chain_fileSED   
 
-   #
-   # In Production use Certbot SSL agent to get a certificate from Let's Encrypt.
-   #
+   prod_key_file='server.prod.key'
+   prod_crt_file='server.prod.crt'
+   prod_chain_file='server.prod.chain.crt'
+   prod_crt_file_path="certificate=\"conf/${prod_crt_file}\""
 
- ###### TODO fix cert paths
-   
    sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
        -e "s/SEDserver_admin_private_ipSED/${SRV_ADMIN_PRIVATE_IP}/g" \
        -e "s/SEDcollector_portSED/${SRV_ADMIN_MMONIT_COLLECTOR_PORT}/g" \
-       -e "s/SEDpublic_portSED/${SRV_ADMIN_MMONIT_HTTP_PORT}/g" \
+       -e "s/SEDpublic_portSED/${SRV_ADMIN_MMONIT_HTTPS_PORT}/g" \
        -e "s/SEDssl_secureSED/true/g" \
-       -e "s/SEDcertificateSED/certificate=\"$(escape conf/${dev_crt_file})\"/g" \
-          "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/"${ssl_dir}"/server.xml       
+       -e "s/SEDcertificateSED/$(escape "${prod_crt_file_path}")/g" \
+          "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/"${ssl_dir}"/server.xml           
        
    echo 'server.xml ready.'
    
@@ -332,22 +326,23 @@ else
        "${TMP_DIR}"/"${ssl_dir}"/server.xml         
    
    sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+       -e "s/SEDapache_certbot_portSED/${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}/g" \
        -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
        -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
        -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
        -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
        -e "s/SEDcertbot_virtualhost_fileSED/${CERTBOT_VIRTUALHOST_CONFIG_FILE}/g" \
        -e "s/SEDcertbot_docroot_idSED/${CERTBOT_DOCROOT_ID}/g" \
-       -e "s/SEDemail_addressSED/${SRV_ADMIN_EMAIL}/g" \
-       -e "s/SEDdns_domainSED/${SRV_ADMIN_DNS_SUB_DOMAIN}.${MAXMIN_TLD}/g" \
-          "${TEMPLATE_DIR}"/ssl/ca/install_certbot_template.sh > "${TMP_DIR}"/"${ssl_dir}"/install_certbot.sh 
+       -e "s/SEDcrt_email_addressSED/${SRV_ADMIN_EMAIL}/g" \
+       -e "s/SEDcrt_domainSED/${SRV_ADMIN_DNS_SUB_DOMAIN}.${MAXMIN_TLD}/g" \
+          "${TEMPLATE_DIR}"/common/ssl/ca/install_certbot_template.sh > "${TMP_DIR}"/"${ssl_dir}"/install_certbot.sh 
           
    echo 'install_certbot.sh ready.'     
 
    # Certboot HTTP virtualhost file.
    create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" \
        '*' \
-       '80' \
+       "${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}" \
        "${MAXMIN_TLD}" \
        "${APACHE_DOCROOT_DIR}" \
        "${CERTBOT_DOCROOT_ID}"
@@ -358,14 +353,15 @@ else
        "${CERTBOT_DOCROOT_ID}"
 
    echo "${CERTBOT_VIRTUALHOST_CONFIG_FILE} ready."  
-   
- ###### TODO fix cert paths
-   
+
    # Apache Web Server SSL configuration file.
    sed -e "s/SEDwebsite_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
        -e "s/SEDphpmyadmin_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
        -e "s/SEDloganalyzer_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
-           "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/"${ssl_dir}"/ssl.conf 
+       -e "s/SEDkey_fileSED/${prod_key_file}/g" \
+       -e "s/SEDcert_fileSED/${prod_crt_file}/g" \
+       -e "s/SEDchain_fileSED/${prod_chain_file}/g" \
+          "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/"${ssl_dir}"/ssl.conf 
    
    echo 'ssl.conf ready.'    
    
@@ -425,12 +421,14 @@ fi
 ## SSH Access.
 ##
 
+######################### TODO enable
+
 granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')" 
 
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0'
+ ##############################  revoke_access_from_cidr "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Admin box.' 
    
@@ -443,7 +441,7 @@ then
    
    if [[ -n "${granted_ssh}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" '80' "0.0.0.0/0"
+  ##############################    revoke_access_from_cidr "${sgp_id}" '80' "0.0.0.0/0"
    
       echo 'Revoked Certbot access to the Admin server.' 
       echo  

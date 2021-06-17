@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+# shellcheck disable=SC2034
+
 # Recaptcha keys:
 # for the key to work via the ELB domain name
 # you need to add amazonaws.com to the domains list

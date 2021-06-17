@@ -52,18 +52,18 @@ echo
 
    # Delete the websites.
    . "${PROJECT_DIR}"/amazon/admin/box/website/delete.sh      
-   . "${PROJECT_DIR}"/amazon/webphp/box/website/delete.sh 2   
+   . "${PROJECT_DIR}"/amazon/webphp/box/website/delete.sh 1   
 
    # Delete the server instances.
    . "${PROJECT_DIR}"/amazon/shared/box/delete.sh             
-   . "${PROJECT_DIR}"/amazon/webphp/box/delete.sh 2 
+   . "${PROJECT_DIR}"/amazon/webphp/box/delete.sh 1 
    . "${PROJECT_DIR}"/amazon/admin/box/delete.sh 
             
    . "${PROJECT_DIR}"/amazon/loadbalancer/box/delete.sh       
 
    ### TODO: /home/admin-user/script/delete_database.sh: line 17: mysql: command not found
    # Delete the Database objects.
-  ## . "${PROJECT_DIR}"/amazon/database/box/data/delete.sh
+   ## . "${PROJECT_DIR}"/amazon/database/box/data/delete.sh
 
    # Delete the Database instance.
    . "${PROJECT_DIR}"/amazon/database/box/delete.sh              

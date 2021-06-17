@@ -46,6 +46,22 @@ admin_log_file='/var/log/admin_ssl_install.log'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ##
+## Apache web server
+##
+
+echo 'Configuring Apache web server SSL ...'
+ 
+# Apache SSL module 
+cd "${script_dir}" || exit
+
+echo 'Installing Apache SSL module ...'
+
+chmod +x extend_apache_web_server_with_SSL_module_template.sh 
+./extend_apache_web_server_with_SSL_module_template.sh >> "${admin_log_file}" 2>&1 
+
+echo 'Apache SSL module installed.'
+
+##
 ## SSL certificates 
 ## 
 
@@ -59,7 +75,7 @@ then
    #
    # In development, use a self-signed certificate.
    #
-   
+
    echo 'Generating self-signed certificate ...'
 
    amazon-linux-extras install epel -y >> "${admin_log_file}" 2>&1
@@ -71,6 +87,7 @@ then
 
    key_file_nm="$(./gen-rsa.sh)" 
    new_key_file_nm="$(./remove-passphase.sh)" 
+   
    rm "${key_file_nm}"
    mv "${new_key_file_nm}" "${key_file_nm}"
    
@@ -102,10 +119,11 @@ else
    if [[ ! 0 -eq "${exit_code}" ]]
    then
       echo "ERROR: running Certbot."
+      
       exit 1
    fi  
    
-   # /etc/letsencrypt/live/admin.maxmin.it
+   # /etc/letsencrypt/live/admin.maxmin.it/
 # cert.pem
 # chain.pem
 # fullchain.pem
@@ -116,23 +134,19 @@ else
         
 fi
 
+
+   
+
+
+exit
+exit
+exit
+
+echo 'Configuring Apache web server SSL ...'
+
 ##
 ## Apache web server
 ##
-
-echo 'Configuring Apache web server SSL ...'
- 
-# Apache SSL module 
-cd "${script_dir}" || exit
-
-echo 'Installing Apache SSL module ...'
-
-chmod +x extend_apache_web_server_with_SSL_module_template.sh 
-./extend_apache_web_server_with_SSL_module_template.sh >> "${admin_log_file}" 2>&1 
-
-echo 'Apache SSL module installed.'
-
-# Copy the certificates.
 
 cp "${cert_file_nm}" "${APACHE_INSTALL_DIR}"/ssl
 cp "${key_file_nm}" "${APACHE_INSTALL_DIR}"/ssl
@@ -143,24 +157,31 @@ find "${APACHE_INSTALL_DIR}"/ssl -type f -exec chown root:root {} +
 find "${APACHE_INSTALL_DIR}"/ssl -type f -exec chmod 400 {} +   
 
 # Enable the certificate paths.
+
+# Enable the certificate paths.
 sed -i "s/^#SSLCertificateKeyFile/SSLCertificateKeyFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
 sed -i "s/^#SSLCertificateFile/SSLCertificateFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
-### sed -i "s/^#SSLCertificateChainFile/SSLCertificateChainFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
 
-echo 'Apache web server certificate installed.'
+if [[ 'production' == "${ENV}" ]]
+then
+   sed -i "s/^#SSLCertificateChainFile/SSLCertificateChainFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+fi
+
+echo 'Certificate paths enabled.' 
+echo 'Apache web server certificates installed.'
 
 ##
-## Phpmyadmin website
+## Phpmyadmin website.
 ##
 
 sed -i "s/^Listen \+${PHPMYADMIN_HTTP_PORT}$/#Listen ${PHPMYADMIN_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 sed -i "s/^#Listen \+${PHPMYADMIN_HTTPS_PORT}/Listen ${PHPMYADMIN_HTTPS_PORT}/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
 
-echo "Phpmyadmin listen on ${PHPMYADMIN_HTTPS_PORT} port enabled."
+echo "Apache web server listen on ${PHPMYADMIN_HTTPS_PORT} Phpmyadmin website port enabled."
 
 rm -f "${APACHE_SITES_ENABLED_DIR}"/"${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}"
 
-echo 'Phpmyadmin HTTP website disabled' >> "${admin_log_file}"
+echo 'Phpmyadmin HTTP virtual host disabled' >> "${admin_log_file}"
  
 cp "${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 
@@ -168,21 +189,21 @@ if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_
 then
    ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}"
    
-   echo 'Phpmyadmin HTPPS website enabled' >> "${admin_log_file}"
+   echo 'Phpmyadmin HTPPS virtual host enabled' >> "${admin_log_file}"
 fi
 
 ##
-## Loganalyzer website
+## Loganalyzer website.
 ##
 
 sed -i "s/^Listen \+${LOGANALYZER_HTTP_PORT}$/#Listen ${LOGANALYZER_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 sed -i "s/^#Listen \+${LOGANALYZER_HTTPS_PORT}/Listen ${LOGANALYZER_HTTPS_PORT}/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
 
-echo "Loganalyzer listen on ${LOGANALYZER_HTTPS_PORT} port enabled."
+echo "Apache web server listen on ${LOGANALYZER_HTTPS_PORT} Loganalyzer website port enabled."
 
 rm -f "${APACHE_SITES_ENABLED_DIR}"/"${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}"
 
-echo 'Loganalyzer HTTP website disabled' >> "${admin_log_file}"
+echo 'Loganalyzer HTTP virtual host disabled' >> "${admin_log_file}"
 
 cp "${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 
@@ -190,19 +211,18 @@ if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG
 then 
    ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}"
    
-   echo 'Loganalyzer HTTPS website enabled' >> "${admin_log_file}"
+   echo 'Loganalyzer HTTPS virtual host enabled' >> "${admin_log_file}"
 fi
 
 ##
-## Monit
+## Monit.
 ##
-
-sed -i "s/^Listen \+${MONIT_HTTP_PORT}$/#Listen ${MONIT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
-
-echo "Enabled Apache web server listen on port ${MONIT_HTTP_PORT}." 
+#
+#sed -i "s/^Listen \+${MONIT_HTTP_PORT}$/#Listen ${MONIT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
+#echo "Enabled Apache web server listen on port ${MONIT_HTTP_PORT}." 
 
 ##
-## Admin website
+## Admin website.
 ##
 
 https_virhost="${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}"
@@ -214,11 +234,11 @@ then
    sed -i "s/^Listen \+${WEBSITE_HTTP_PORT}$/#Listen ${WEBSITE_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
    sed -i "s/^#Listen \+${WEBSITE_HTTPS_PORT}/Listen ${WEBSITE_HTTPS_PORT}/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
    
-   echo "Admin website listen on ${WEBSITE_HTTPS_PORT} port enabled."
+   echo "Apache web server listen on ${WEBSITE_HTTPS_PORT} Admin website port enabled."
    
    rm -f "${APACHE_SITES_ENABLED_DIR}"/"${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}"
 
-   echo 'Admin HTTP website disabled' >> "${admin_log_file}"   
+   echo 'Admin HTTP virtual host disabled' >> "${admin_log_file}"   
 
    cp -f "${https_virhost}" "${APACHE_SITES_AVAILABLE_DIR}"
    
@@ -226,7 +246,7 @@ then
    then
       ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${https_virhost}" "${APACHE_SITES_ENABLED_DIR}"/"${https_virhost}"
    
-      echo 'Admin HTTPS website enabled' >> "${admin_log_file}"
+      echo 'Admin HTTPS virtual host enabled' >> "${admin_log_file}"
    fi
 fi
 

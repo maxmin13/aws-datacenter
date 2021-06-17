@@ -2,8 +2,8 @@
 
 # shellcheck disable=SC2034
 
-ENV='development'
-#ENV='production'
+#ENV='development'
+ENV='production'
 
 ## Amazon EBS-backed image:
 ## By default, the root volume is deleted when the instance terminates.
@@ -85,7 +85,8 @@ SRV_ADMIN_HOSTNAME='admin.maxmin.it'
 SRV_ADMIN_USER_NM='admin-user'
 # In dev, ip-base virtual hosting, in prod name-base virtual hosting with only one ip and port for
 # website, phpmyadmin and loganalyzer.
-SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT='80'
+SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT='80'
+SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT='8060'
 SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT='443'
 SRV_ADMIN_APACHE_DEFAULT_HTTP_PORT='8070'
 SRV_ADMIN_APACHE_PHPMYADMIN_HTTP_PORT='8080'
