@@ -40,12 +40,6 @@ echo
       echo '****************' 
    fi 
    
-    . "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh 
-    exit
-   
-   
-   
-   
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
 
