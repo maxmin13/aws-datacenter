@@ -41,18 +41,6 @@ echo
       echo '****************' 
    fi 
    
-
-# . "${PROJECT_DIR}"/amazon/admin/box/delete.sh   
-#exit
-
-
-  # . "${PROJECT_DIR}"/amazon/admin/box/make.sh   
-   #. "${PROJECT_DIR}"/amazon/admin/box/website/make.sh   
- 
-   
-   . "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh 
-   exit
-   
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
 
@@ -81,7 +69,7 @@ echo
    . "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh      
 
    # Configure SSL in the Admin instance.
-   ######. "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh     
+   . "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh     
               
 } ### >> "${log_file}" 2>&1  
 

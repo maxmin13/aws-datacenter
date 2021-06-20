@@ -111,13 +111,13 @@ fi
    
 if [[ 'production' == "${ENV}" ]]
 then      
-   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" '80' '0.0.0.0/0')"  
+   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0')"  
 
    if [[ -z "${granted_certbot}" ]]
    then
-      allow_access_from_cidr "${sgp_id}" '80' '0.0.0.0/0'
+      allow_access_from_cidr "${sgp_id}" "${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0'
    
-      echo 'Granted Certbot access to Admin box port 80.'
+      echo 'Granted Certbot access to Admin box'
    fi  
 fi
 
@@ -399,30 +399,25 @@ fi
 ## SSH Access.
 ##
 
-######################### TODO enable
-
 granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')" 
 
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine
- ##############################  revoke_access_from_cidr "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Admin box.' 
-   
-   echo  
 fi
 
 if [[ 'production' == "${ENV}" ]]
 then      
-   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" '80' '0.0.0.0/0')"  
+   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0')"  
    
    if [[ -n "${granted_ssh}" ]]
    then
-  ##############################    revoke_access_from_cidr "${sgp_id}" '80' "0.0.0.0/0"
+      revoke_access_from_cidr "${sgp_id}" "${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}" "0.0.0.0/0"
    
-      echo 'Revoked Certbot access to the Admin server.' 
-      echo  
+      echo 'Revoked Certbot access to the Admin server.'  
    fi
 fi
     

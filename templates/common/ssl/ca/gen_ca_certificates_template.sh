@@ -122,11 +122,4 @@ fi
 
 echo 'Let''s Encrypt certificates successfully requested.'
 
-#####
-##### TODO
-##### AUTOMATIC RENEWAL
-#####
-##### echo 'Certificate authomatic renewal tested.'
-#####
-
 exit 0
