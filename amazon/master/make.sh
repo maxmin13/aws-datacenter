@@ -41,12 +41,14 @@ echo
       echo '****************' 
    fi 
    
-      
-   
-   
-   . "${PROJECT_DIR}"/amazon/admin/box/delete.sh 
-   exit
-   exit
+
+# . "${PROJECT_DIR}"/amazon/admin/box/delete.sh   
+#exit
+
+
+  # . "${PROJECT_DIR}"/amazon/admin/box/make.sh   
+   #. "${PROJECT_DIR}"/amazon/admin/box/website/make.sh   
+ 
    
    . "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh 
    exit

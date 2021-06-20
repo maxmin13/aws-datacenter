@@ -13,7 +13,7 @@ SSH Session:
 ------------
 
 # Enable Security Group access on port 38142
-rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-admin-kp.pem' -p 38142 admin-user@54.171.217.195
+rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-admin-kp.pem' -p 38142 admin-user@34.251.57.230
 
 ------------
 LogAnalizer:

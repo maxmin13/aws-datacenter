@@ -6,8 +6,8 @@ set -o nounset
 set +o xtrace
 
 ###################################################################
-# Generates and installs a self-signed certificate in Apache web
-# server.
+# Generates a private-key with no password and self-signed 
+# certificate in the current directory.
 #
 # Dependencies:
 # gen-rsa.sh 
@@ -16,7 +16,6 @@ set +o xtrace
 #
 ###################################################################
 
-APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo 'Generating self-signed certificate ...'
@@ -42,19 +41,5 @@ echo "Self-signed ${cert_file} certificate created."
  
 yum remove -y expect 
 amazon-linux-extras disable epel -y 
-
-cp "${cert_file}" "${APACHE_INSTALL_DIR}"/ssl
-cp "${key_file}" "${APACHE_INSTALL_DIR}"/ssl
-
-find "${APACHE_INSTALL_DIR}"/ssl -type d -exec chown root:root {} +
-find "${APACHE_INSTALL_DIR}"/ssl -type d -exec chmod 500 {} +
-find "${APACHE_INSTALL_DIR}"/ssl -type f -exec chown root:root {} +
-find "${APACHE_INSTALL_DIR}"/ssl -type f -exec chmod 400 {} +
-
-# Enable the certificate paths.
-sed -i "s/^#SSLCertificateKeyFile/SSLCertificateKeyFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
-sed -i "s/^#SSLCertificateFile/SSLCertificateFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf 
-
-echo 'Self-signed Certificate successfully installed in Apache web server.'
 
 exit 0

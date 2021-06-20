@@ -20,6 +20,7 @@ set +o xtrace
 #
 ############################################################
 
+ENV='SEDenvironmentSED'
 APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
@@ -38,18 +39,19 @@ WEBSITE_HTTPS_PORT='SEDwebsite_https_portSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
 WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='SEDwebsite_http_virtualhost_fileSED' 
 WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE='SEDwebsite_https_virtualhost_fileSED' 
-SSL_CERT_FILE='SEDcert_fileSED'
-SSL_KEY_FILE='SEDkey_fileSED'
+CERTBOT_DOCROOT_ID='SEDcertbot_docroot_idSED'
+KEY_FILE='SEDkey_fileSED'
+CERT_FILE='SEDcert_fileSED'
+CHAIN_FILE='SEDchain_fileSED'
 admin_log_file='/var/log/admin_ssl_install.log'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+echo 'Configuring Admin SSL ...'
+ 
 ##
 ## Apache web server SSL module.
 ##
 
-echo 'Configuring Apache web server SSL ...'
- 
-# Apache SSL module 
 cd "${script_dir}" || exit 1
 
 echo 'Installing Apache SSL module ...'
@@ -60,28 +62,88 @@ chmod +x extend_apache_web_server_with_SSL_module_template.sh
 echo 'Apache SSL module installed.'
 
 ##
-## Apache Web server certificates. 
+## SSL certifcates 
 ## 
 
 cd "${script_dir}" || exit 1
 
-chmod +x install_apache_web_server_certificates.sh
+chmod +x gen_certificates.sh
    
-echo 'Installing Apache web server certificates ...'
+echo 'Generating certificates ...'
    
 set +e 
-./install_apache_web_server_certificates.sh >> "${admin_log_file}" 2>&1
+./gen_certificates.sh >> "${admin_log_file}" 2>&1
 exit_code=$?
 set -e 
    
 if [[ ! 0 -eq "${exit_code}" ]]
 then
-   echo "ERROR: installing Apache web server certificates."     
+   echo "ERROR: generating certificates."     
    exit 1
 fi 
-  
-echo 'Certificates installed in Apache web server.'
 
+echo 'Certificates successfully generated.'
+
+##
+## Apache web server 
+## 
+
+echo 'Configuring Apache web server SSL ...'
+
+if [[ 'development' == "${ENV}" ]]
+then
+
+   # Self-signed certificate and key are in the current directory.
+
+   cp "${CERT_FILE}" "${APACHE_INSTALL_DIR}"/ssl
+   cp "${KEY_FILE}" "${APACHE_INSTALL_DIR}"/ssl
+   
+   echo 'Certificate and key copied in Apache web server directory.' >> "${admin_log_file}" 2>&1
+
+   find "${APACHE_INSTALL_DIR}"/ssl -type d -exec chown root:root {} +
+   find "${APACHE_INSTALL_DIR}"/ssl -type d -exec chmod 500 {} +
+   find "${APACHE_INSTALL_DIR}"/ssl -type f -exec chown root:root {} +
+   find "${APACHE_INSTALL_DIR}"/ssl -type f -exec chmod 400 {} +
+
+   # Enable the certificate paths.
+   sed -i "s/^#SSLCertificateKeyFile/SSLCertificateKeyFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+   sed -i "s/^#SSLCertificateFile/SSLCertificateFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf 
+
+   echo 'Certificate and key paths enabled in ssl.conf.' >> "${admin_log_file}" 2>&1
+
+else
+
+   # Let''s Encrypt certificates are in /etc/letsencrypt/live/admin.maxmin.it directory.
+
+   # Link the certificate paths with certificates obtained from Let's Encrypt.
+   if [[ ! -f "${APACHE_INSTALL_DIR}"/ssl/"${KEY_FILE}" ]]
+   then
+      ln -s /etc/letsencrypt/live/"${CERTBOT_DOCROOT_ID}"/privkey.pem "${APACHE_INSTALL_DIR}"/ssl/"${KEY_FILE}"
+   fi
+   
+   if [[ ! -f "${APACHE_INSTALL_DIR}"/ssl/"${CERT_FILE}" ]]
+   then
+      ln -s /etc/letsencrypt/live/"${CERTBOT_DOCROOT_ID}"/cert.pem "${APACHE_INSTALL_DIR}"/ssl/"${CERT_FILE}"
+   fi
+   
+   if [[ ! -f "${APACHE_INSTALL_DIR}"/ssl/"${CHAIN_FILE}" ]]
+   then
+      ln -s /etc/letsencrypt/live/"${CERTBOT_DOCROOT_ID}"/chain.pem "${APACHE_INSTALL_DIR}"/ssl/"${CHAIN_FILE}"
+   fi
+
+   echo 'ssl.conf paths linked with the certificates obtained from Let''s Encrypt.' >> "${admin_log_file}" 2>&1
+
+   # Enable the certificate paths.
+   sed -i "s/^#SSLCertificateKeyFile/SSLCertificateKeyFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+   sed -i "s/^#SSLCertificateFile/SSLCertificateFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+   sed -i "s/^#SSLCertificateChainFile/SSLCertificateChainFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+
+   echo 'Certificate, key and chain paths enabled in ssl.conf.' >> "${admin_log_file}" 2>&1
+
+fi
+
+echo 'Apache web server SSL successfully configured.'
+  
 ##
 ## Phpmyadmin website.
 ##
@@ -104,7 +166,7 @@ then
    echo 'Phpmyadmin HTPPS virtual host enabled' >> "${admin_log_file}"
 fi
 
-echo 'Phpmyadmin SSL configured.'
+echo 'Phpmyadmin SSL successfully configured.'
 
 ##
 ## Loganalyzer website.
@@ -128,7 +190,7 @@ then
    echo 'Loganalyzer HTTPS virtual host enabled' >> "${admin_log_file}"
 fi
 
-echo 'Loganalyzer SSL configured.'
+echo 'Loganalyzer SSL successfully configured.'
 
 https_virhost="${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}"
 website_dir="${APACHE_DOCROOT_DIR}"/"${WEBSITE_DOCROOT_ID}"
@@ -154,7 +216,7 @@ then
       echo 'Admin HTTPS virtual host enabled' >> "${admin_log_file}"
    fi
    
-   echo 'Admin website SSL configured.'
+   echo 'Admin website SSL successfully configured.'
 fi
 
 # Check the syntax
@@ -168,7 +230,7 @@ echo 'Apache web server restarted.' >> "${admin_log_file}" 2>&1
 ## M/Monit
 ##
 
-echo 'Configuring M/Monit SSL ...' >> "${admin_log_file}" 2>&1
+echo 'Configuring M/Monit SSL ...'
 
 cp -f server.xml "${MMONIT_INSTALL_DIR}"/conf
 
@@ -179,21 +241,32 @@ find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chmod 400 {} +
 
 echo 'M/Monit configuration file copied.' >> "${admin_log_file}" 2>&1 
 
-cat "${SSL_KEY_FILE}" > "${MMONIT_INSTALL_DIR}"/conf/cert.pem
-cat "${SSL_CERT_FILE}" >> "${MMONIT_INSTALL_DIR}"/conf/cert.pem
-mv "${MMONIT_INSTALL_DIR}"/conf/cert.pem "${MMONIT_INSTALL_DIR}"/conf/"${SSL_CERT_FILE}"
+if [[ 'development' == "${ENV}" ]]
+then
 
-find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chown root:root {} +
-find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chmod 500 {} +
-find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chown root:root {} +
-find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chmod 400 {} +  
+   cat "${KEY_FILE}" > "${MMONIT_INSTALL_DIR}"/conf/"${CERT_FILE}"
+   cat "${CERT_FILE}" >> "${MMONIT_INSTALL_DIR}"/conf/"${CERT_FILE}"
+   
+   find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chown root:root {} +
+   find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chmod 500 {} +
+   find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chown root:root {} +
+   find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chmod 400 {} +    
 
-echo 'M/Monit certificate installed.' >> "${admin_log_file}" 2>&1
+   echo 'M/Monit development certificate installed.' >> "${admin_log_file}" 2>&1
+   
+else
+
+   cat /etc/letsencrypt/live/"${CERTBOT_DOCROOT_ID}"/privkey.pem > "${MMONIT_INSTALL_DIR}"/conf/"${CERT_FILE}"
+   cat /etc/letsencrypt/live/"${CERTBOT_DOCROOT_ID}"/fullchain.pem >> "${MMONIT_INSTALL_DIR}"/conf/"${CERT_FILE}"
+
+   echo 'M/Monit production certificate installed.' >> "${admin_log_file}" 2>&1
+   
+fi
 
 systemctl restart mmonit
 
 echo 'M/Monit restarted.' >> "${admin_log_file}" 2>&1 
-echo 'M/Monit SSL configured.'
+echo 'M/Monit SSL successfully configured.'
 
 exit 0
 

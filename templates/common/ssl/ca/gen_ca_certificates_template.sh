@@ -16,6 +16,13 @@ set +o xtrace
 # All generated keys and issued certificates can be found in 
 # /etc/letsencrypt/live/$domain, where $domain is the certificate 
 # name. 
+#
+# /etc/letsencrypt/live/admin.maxmin.it
+# cert.pem
+# chain.pem
+# fullchain.pem
+# privkey.pem
+#
 ###################################################################
 
 APACHE_CERTBOT_HTTP_PORT='SEDapache_certbot_portSED'
@@ -29,8 +36,10 @@ CRT_EMAIL_ADDRESS='SEDcrt_email_addressSED'
 CRT_DOMAIN='SEDcrt_domainSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Make Apache listen on Certbot port by adding a new Listen directive to httpd.conf file.
-sed -i "/^##certboot_anchor##/i Listen ${APACHE_CERTBOT_HTTP_PORT}" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
+echo 'Requesting SSL certificates to Let''Encrypt.'
+
+# Make Apache listen on Certbot port.
+sed -i "s/^##certboot_anchor##/Listen ${APACHE_CERTBOT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
 echo "Enabled Apache Listen on Certbot port ${APACHE_CERTBOT_HTTP_PORT}."
 
@@ -75,7 +84,7 @@ echo "Requesting a certificate to Let's Encrypt Certification Autority ..."
 
 set +e 
 
-## TODO remove test mode
+## TODO remove Certbot test mode
 certbot certonly \
     --cert-name "${CRT_DOMAIN}" \
     -d "${CRT_DOMAIN}" \
@@ -111,28 +120,7 @@ else
    echo "Certificate successfully obtained from Let's Encrypted certification authority."
 fi
 
-
-##### TODO links
-#cert_dir='/etc/letsencrypt/live/admin.maxmin.it'
-#cert_file='cert.pem'
-#key_file='privkey.pem'
-#chain_file='chain.pem' 
-#full_chain_file='fullchain.pem'
-
-echo 'Certbot certificates generated.'
-echo 'Configuring Apache web server SSL ...'
-
-
-
-
-# Enable the certificate paths.
-sed -i "s/^#SSLCertificateKeyFile/SSLCertificateKeyFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
-sed -i "s/^#SSLCertificateFile/SSLCertificateFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
-sed -i "s/^#SSLCertificateChainFile/SSLCertificateChainFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
-
-echo 'Certificate paths enabled.' 
-echo 'Apache web server SSL configured.'  
-
+echo 'Let''s Encrypt certificates successfully requested.'
 
 #####
 ##### TODO

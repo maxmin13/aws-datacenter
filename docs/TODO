@@ -1,5 +1,23 @@
 
 
+
+
+before requesting a new cert to lets encrypt check if it  is expired
+otherwise after a few deploy lets encrypt block for too many requests
+
+############################################################
+
+
+
+configure automatic certificate renew
+for Apache and Monit
+production and development
+
+M/Monit certificate needs to be manually copied together with the private key in /opt/mmonit/conf
+
+
+#####################################################
+
 check the delete.sh scripts,
 do not exit if the instance is not there, 
 go on and try to delete security groups .....
