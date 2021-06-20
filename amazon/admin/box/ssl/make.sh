@@ -122,7 +122,7 @@ then
 fi
 
 ##
-## Upload scripts
+## Upload scripts.
 ## 
 
 echo 'Uploading the scripts to the Admin box ...'
@@ -136,30 +136,6 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${eip}" \
     "${SHAR_INSTANCE_SSH_PORT}" \
     "${SRV_ADMIN_USER_NM}"  
-    
-sed -e "s/SEDenvironmentSED/${ENV}/g" \
-    -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
-    -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-    -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
-    -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
-    -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
-    -e "s/SEDmonit_http_portSED/${SRV_ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
-    -e "s/SEDphpmyadmin_http_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTP_PORT}/g" \
-    -e "s/SEDphpmyadmin_https_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
-    -e "s/SEDphpmyadmin_http_virtualhost_fileSED/${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDphpmyadmin_https_virtualhost_fileSED/${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDloganalyzer_http_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTP_PORT}/g" \
-    -e "s/SEDloganalyzer_https_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
-    -e "s/SEDloganalyzer_http_virtualhost_fileSED/${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDloganalyzer_https_virtualhost_fileSED/${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDwebsite_http_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
-    -e "s/SEDwebsite_https_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
-    -e "s/SEDwebsite_docroot_idSED/${WEBSITE_DOCROOT_ID}/g" \
-    -e "s/SEDwebsite_http_virtualhost_fileSED/${ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDwebsite_https_virtualhost_fileSED/${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
-       "${TEMPLATE_DIR}"/admin/ssl/install_admin_ssl_template.sh > "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh
-
-echo 'install_admin_ssl.sh ready.'
 
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDenvironmentSED/${ENV}/g" \
@@ -169,7 +145,6 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
 echo 'extend_apache_web_server_with_SSL_module_template.sh ready.'   
 
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
-    "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh \
     "${TMP_DIR}"/"${ssl_dir}"/extend_apache_web_server_with_SSL_module_template.sh \
     "${TEMPLATE_DIR}"/common/httpd/00-ssl.conf      
    
@@ -232,44 +207,44 @@ then
    #
    # In development use a self-signed certificate.
    #
+
+   key_file='server.dev.key'
+   key_file_no_pwd='server.dev.key_no.pass'
+   crt_file='server.dev.crt'
    
-   dev_key_file='server.dev.key'
-   dev_key_file_no_pwd='server.dev.key_no.pass'
-   dev_crt_file='server.dev.crt'
-   dev_crt_file_path="certificate=\"conf/${dev_crt_file}\""
-
-   sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
-       -e "s/SEDserver_admin_private_ipSED/${SRV_ADMIN_PRIVATE_IP}/g" \
-       -e "s/SEDcollector_portSED/${SRV_ADMIN_MMONIT_COLLECTOR_PORT}/g" \
-       -e "s/SEDpublic_portSED/${SRV_ADMIN_MMONIT_HTTPS_PORT}/g" \
-       -e "s/SEDssl_secureSED/true/g" \
-       -e "s/SEDcertificate_fileSED/${dev_crt_file}/g" \
-       -e "s/SEDcertificateSED/$(escape "${dev_crt_file_path}")/g" \
-          "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/"${ssl_dir}"/server.xml       
-       
-   echo 'server.xml ready.'    
-
-   scp_upload_file "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
-       "${TMP_DIR}"/"${ssl_dir}"/server.xml     
+   # Apache Web Server SSL configuration file.
+   sed -e "s/SEDwebsite_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
+       -e "s/SEDphpmyadmin_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
+       -e "s/SEDloganalyzer_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
+       -e "s/SEDkey_fileSED/${key_file}/g" \
+       -e "s/SEDcert_fileSED/${crt_file}/g" \
+          "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/"${ssl_dir}"/ssl.conf 
+          
+   echo 'ssl.conf ready.'          
+ 
+   sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+          "${TEMPLATE_DIR}"/common/httpd/install_apache_web_server_selfsigned_certificates_template.sh > "${TMP_DIR}"/"${ssl_dir}"/install_apache_web_server_certificates.sh
+          
+   echo 'install_apache_web_server_certificates.sh ready'
          
    # Apache Web Server SSL key generation script.
-   sed -e "s/SEDkey_fileSED/${dev_key_file}/g" \
+   sed -e "s/SEDkey_fileSED/${key_file}/g" \
        -e "s/SEDkey_pwdSED/secret@123/g" \
           "${TEMPLATE_DIR}"/common/ssl/self_signed/gen-rsa_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen-rsa.sh
 
    echo 'gen-rsa.sh ready.'
 
    # Apache Web Server remove the password protection from the key script.
-   sed -e "s/SEDkey_fileSED/${dev_key_file}/g" \
-       -e "s/SEDnew_key_fileSED/${dev_key_file_no_pwd}/g" \
+   sed -e "s/SEDkey_fileSED/${key_file}/g" \
+       -e "s/SEDnew_key_fileSED/${key_file_no_pwd}/g" \
        -e "s/SEDkey_pwdSED/secret@123/g" \
           "${TEMPLATE_DIR}"/common/ssl/self_signed/remove-passphase_template.exp > "${TMP_DIR}"/"${ssl_dir}"/remove-passphase.sh   
 
    echo 'remove-passphase.sh ready.'
 
    # Apache Web Server create self-signed Certificate script.
-   sed -e "s/SEDkey_fileSED/${dev_key_file}/g" \
-       -e "s/SEDcert_fileSED/${dev_crt_file}/g" \
+   sed -e "s/SEDkey_fileSED/${key_file}/g" \
+       -e "s/SEDcert_fileSED/${crt_file}/g" \
        -e "s/SEDcountrySED/${CRT_DEV_COUNTRY}/g" \
        -e "s/SEDstate_or_provinceSED/${CRT_DEV_CITY}/g" \
        -e "s/SEDcitySED/${CRT_DEV_CITY}/g" \
@@ -280,51 +255,24 @@ then
           "${TEMPLATE_DIR}"/common/ssl/self_signed/gen-selfsign-cert_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen-selfsign-cert.sh
 
    echo 'gen-selfsign-cert.sh ready.'
-       
-   # Apache Web Server SSL configuration file.
-   sed -e "s/SEDwebsite_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
-       -e "s/SEDphpmyadmin_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
-       -e "s/SEDloganalyzer_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
-       -e "s/SEDkey_fileSED/${dev_key_file}/g" \
-       -e "s/SEDcert_fileSED/${dev_crt_file}/g" \
-          "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/"${ssl_dir}"/ssl.conf 
-          
-   echo 'ssl.conf ready.'   
-   
+         
    scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
+       "${TMP_DIR}"/"${ssl_dir}"/install_apache_web_server_certificates.sh \
        "${TMP_DIR}"/"${ssl_dir}"/gen-selfsign-cert.sh \
        "${TMP_DIR}"/"${ssl_dir}"/remove-passphase.sh \
        "${TMP_DIR}"/"${ssl_dir}"/gen-rsa.sh \
        "${TMP_DIR}"/"${ssl_dir}"/ssl.conf
 else
 
-   # cert.pem
-# chain.pem
-# fullchain.pem
-# privkey.pem
+   #
+   # In production get a certificate from Let's Encrypt CA.
+   #
 
-#SSLCertificateKeyFile    ssl/SEDssl_certificate_key_fileSED
-#SSLCertificateFile       ssl/SEDssl_certificate_fileSED
-#SSLCertificateChainFile  ssl/SEDssl_certificate_chain_fileSED   
+   key_file="/etc/letsencrypt/live/${ADMIN_DOCROOT_ID}/privkey.pem"
+   crt_file="/etc/letsencrypt/live/${ADMIN_DOCROOT_ID}/cert.pem"
+   chain_file="/etc/letsencrypt/live/${ADMIN_DOCROOT_ID}/chain.pem"
+   full_chain_file="/etc/letsencrypt/live/${ADMIN_DOCROOT_ID}/fullchain.pem"
 
-   prod_key_file='server.prod.key'
-   prod_crt_file='server.prod.crt'
-   prod_chain_file='server.prod.chain.crt'
-   prod_crt_file_path="certificate=\"conf/${prod_crt_file}\""
-
-   sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
-       -e "s/SEDserver_admin_private_ipSED/${SRV_ADMIN_PRIVATE_IP}/g" \
-       -e "s/SEDcollector_portSED/${SRV_ADMIN_MMONIT_COLLECTOR_PORT}/g" \
-       -e "s/SEDpublic_portSED/${SRV_ADMIN_MMONIT_HTTPS_PORT}/g" \
-       -e "s/SEDssl_secureSED/true/g" \
-       -e "s/SEDcertificateSED/$(escape "${prod_crt_file_path}")/g" \
-          "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/"${ssl_dir}"/server.xml           
-       
-   echo 'server.xml ready.'
-   
-   scp_upload_file "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
-       "${TMP_DIR}"/"${ssl_dir}"/server.xml         
-   
    sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
        -e "s/SEDapache_certbot_portSED/${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}/g" \
        -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
@@ -335,9 +283,9 @@ else
        -e "s/SEDcertbot_docroot_idSED/${CERTBOT_DOCROOT_ID}/g" \
        -e "s/SEDcrt_email_addressSED/${SRV_ADMIN_EMAIL}/g" \
        -e "s/SEDcrt_domainSED/${SRV_ADMIN_DNS_SUB_DOMAIN}.${MAXMIN_TLD}/g" \
-          "${TEMPLATE_DIR}"/common/ssl/ca/install_certbot_template.sh > "${TMP_DIR}"/"${ssl_dir}"/install_certbot.sh 
+          "${TEMPLATE_DIR}"/common/httpd/install_apache_web_server_ca_certificates_template.sh > "${TMP_DIR}"/"${ssl_dir}"/install_apache_web_server_certificates.sh
           
-   echo 'install_certbot.sh ready.'     
+   echo 'install_apache_web_server_certificates.sh ready.'     
 
    # Certboot HTTP virtualhost file.
    create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" \
@@ -358,18 +306,68 @@ else
    sed -e "s/SEDwebsite_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
        -e "s/SEDphpmyadmin_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
        -e "s/SEDloganalyzer_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
-       -e "s/SEDkey_fileSED/${prod_key_file}/g" \
-       -e "s/SEDcert_fileSED/${prod_crt_file}/g" \
-       -e "s/SEDchain_fileSED/${prod_chain_file}/g" \
+       -e "s/SEDkey_fileSED/${key_file}/g" \
+       -e "s/SEDcert_fileSED/${crt_file}/g" \
+       -e "s/SEDchain_fileSED/${chain_file}/g" \
           "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/"${ssl_dir}"/ssl.conf 
    
    echo 'ssl.conf ready.'    
    
    scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
+       "${TMP_DIR}"/"${ssl_dir}"/install_apache_web_server_certificates.sh \
        "${TMP_DIR}"/"${ssl_dir}"/ssl.conf \
-       "${TMP_DIR}"/"${ssl_dir}"/install_certbot.sh \
        "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" 
 fi  
+
+sed -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
+    -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+    -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
+    -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
+    -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
+    -e "s/SEDmonit_http_portSED/${SRV_ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
+    -e "s/SEDphpmyadmin_http_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTP_PORT}/g" \
+    -e "s/SEDphpmyadmin_https_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
+    -e "s/SEDphpmyadmin_http_virtualhost_fileSED/${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDphpmyadmin_https_virtualhost_fileSED/${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDloganalyzer_http_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTP_PORT}/g" \
+    -e "s/SEDloganalyzer_https_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
+    -e "s/SEDloganalyzer_http_virtualhost_fileSED/${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDloganalyzer_https_virtualhost_fileSED/${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebsite_http_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
+    -e "s/SEDwebsite_https_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
+    -e "s/SEDwebsite_docroot_idSED/${WEBSITE_DOCROOT_ID}/g" \
+    -e "s/SEDwebsite_http_virtualhost_fileSED/${ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebsite_https_virtualhost_fileSED/${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDcert_fileSED/${crt_file}/g" \
+    -e "s/SEDkey_fileSED/${key_file}/g" \
+          "${TEMPLATE_DIR}"/admin/ssl/install_admin_ssl_template.sh > "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh
+
+echo 'install_admin_ssl.sh ready.'
+   
+       
+# M/Monit configuration file
+  
+# Insert the certificate='conf/server.dev.crt' attribute.       
+xmlstarlet ed -i "Server/Service/Engine/Host[@name='SEDserver_admin_public_ipSED']" \
+    -t attr -n 'certificate' -v "conf/${crt_file}" \
+    "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/"${ssl_dir}"/server.xml  
+
+# Insert the secure='true' attribute.
+xmlstarlet ed --inplace -i "Server/Service/Connector[@address='SEDserver_admin_private_ipSED']" \
+    -t attr -n 'secure' -v 'true' \
+    "${TMP_DIR}"/"${ssl_dir}"/server.xml  
+       
+sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
+    -e "s/SEDserver_admin_private_ipSED/${SRV_ADMIN_PRIVATE_IP}/g" \
+    -e "s/SEDcollector_portSED/${SRV_ADMIN_MMONIT_COLLECTOR_PORT}/g" \
+    -e "s/SEDpublic_portSED/${SRV_ADMIN_MMONIT_HTTPS_PORT}/g" \
+    -i "${TMP_DIR}"/"${ssl_dir}"/server.xml                         
+       
+echo 'server.xml ready.'
+   
+scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
+       "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh \
+       "${TMP_DIR}"/"${ssl_dir}"/server.xml  
                   
 echo 'Scripts uploaded.'
      

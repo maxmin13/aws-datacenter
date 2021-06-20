@@ -112,6 +112,27 @@ else
 fi
 
 
+##### TODO links
+#cert_dir='/etc/letsencrypt/live/admin.maxmin.it'
+#cert_file='cert.pem'
+#key_file='privkey.pem'
+#chain_file='chain.pem' 
+#full_chain_file='fullchain.pem'
+
+echo 'Certbot certificates generated.'
+echo 'Configuring Apache web server SSL ...'
+
+
+
+
+# Enable the certificate paths.
+sed -i "s/^#SSLCertificateKeyFile/SSLCertificateKeyFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+sed -i "s/^#SSLCertificateFile/SSLCertificateFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+sed -i "s/^#SSLCertificateChainFile/SSLCertificateChainFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+
+echo 'Certificate paths enabled.' 
+echo 'Apache web server SSL configured.'  
+
 
 #####
 ##### TODO

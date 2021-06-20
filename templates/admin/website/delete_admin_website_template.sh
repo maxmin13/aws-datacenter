@@ -44,7 +44,7 @@ then
 
    echo "Apache web server disabled listen on ${WEBSITE_HTTPS_PORT} port." >> "${admin_log_file}" 2>&1
 else
-   sed -i "s/^#Listen \+${WEBSITE_HTTP_PORT}/Listen ${WEBSITE_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+   sed -i "s/^Listen \+${WEBSITE_HTTP_PORT}/#Listen ${WEBSITE_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
    echo "Apache web server disabled listen on ${WEBSITE_HTTP_PORT} port." >> "${admin_log_file}" 2>&1
 fi

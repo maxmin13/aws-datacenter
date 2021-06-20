@@ -22,6 +22,7 @@ source "${PROJECT_DIR}"/amazon/lib/aws/route53.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
 source "${PROJECT_DIR}"/amazon/credential/recaptcha.sh
 source "${PROJECT_DIR}"/amazon/credential/passwords.sh
+source "${PROJECT_DIR}"/amazon/credential/ssl.sh
 
 log_file="${LOG_DIR}"/make-$(date +"%d-%m-%Y-%H.%M"."%S")
  
@@ -40,6 +41,16 @@ echo
       echo '****************' 
    fi 
    
+      
+   
+   
+   . "${PROJECT_DIR}"/amazon/admin/box/delete.sh 
+   exit
+   exit
+   
+   . "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh 
+   exit
+   
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
 
@@ -52,14 +63,14 @@ echo
    . "${PROJECT_DIR}"/amazon/database/box/make.sh            
    . "${PROJECT_DIR}"/amazon/loadbalancer/box/make.sh        
    . "${PROJECT_DIR}"/amazon/admin/box/make.sh               
-   . "${PROJECT_DIR}"/amazon/webphp/box/make.sh 2                   
+   . "${PROJECT_DIR}"/amazon/webphp/box/make.sh 1                  
 
    # Deploy Database objects.
    . "${PROJECT_DIR}"/amazon/database/box/data/make.sh       
 
    # Deploy admin website and public webphp websites.
    . "${PROJECT_DIR}"/amazon/admin/box/website/make.sh      
-   . "${PROJECT_DIR}"/amazon/webphp/box/website/make.sh 2   
+   . "${PROJECT_DIR}"/amazon/webphp/box/website/make.sh 1   
    
    # Register 'maxmin.it' domain with the AWS registrar.
    . "${PROJECT_DIR}"/amazon/dns/domain/registration/make.sh 
@@ -68,7 +79,7 @@ echo
    . "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh      
 
    # Configure SSL in the Admin instance.
-   . "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh     
+   ######. "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh     
               
 } ### >> "${log_file}" 2>&1  
 

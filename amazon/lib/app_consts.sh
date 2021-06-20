@@ -2,8 +2,8 @@
 
 # shellcheck disable=SC2034
 
-#ENV='development'
-ENV='production'
+ENV='development'
+#ENV='production'
 
 ## Amazon EBS-backed image:
 ## By default, the root volume is deleted when the instance terminates.
@@ -33,9 +33,9 @@ DTC_SUBNET_BACKUP_CIDR='10.0.10.0/24'
 DTC_INTERNET_GATEWAY_NM='maxmin-gate'
 DTC_ROUTE_TABLE_NM='maxmin-route-tb'
 
-## ******************* ##
-## Relational Database ##
-## ******************* ##
+## ******** ##
+## Database ##
+## ******** ##
 
 DB_MMDATA_INSTANCE_NM='mmdatainstance'
 DB_MMDATA_PORT='3306'
@@ -79,7 +79,7 @@ LBAL_DNS_SUB_DOMAIN='www'
 ## Admin box ##
 ## ********* ##
 
-SRV_ADMIN_NM='maxmin-admin-instance'
+SRV_ADMIN_NM='maxmin-admin-instance1'
 SRV_ADMIN_PRIVATE_IP='10.0.0.10'
 SRV_ADMIN_HOSTNAME='admin.maxmin.it'
 SRV_ADMIN_USER_NM='admin-user'
