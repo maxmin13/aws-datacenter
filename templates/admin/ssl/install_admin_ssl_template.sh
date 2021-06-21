@@ -15,8 +15,7 @@ set +o xtrace
 # Dependencies:
 #
 # extend_apache_web_server_with_SSL_module_template.sh
-# install_selfsigned_certificates_template.sh
-# install_letsencrypt_ca_certificates_template.sh
+# gen_certificates.sh
 #
 ############################################################
 

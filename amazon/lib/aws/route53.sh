@@ -537,9 +537,16 @@ function create_alias_record()
    local request_id
    local domain
    
+   echo target_hosted_zone_id $target_hosted_zone_id
+   echo target_domain_nm $target_domain_nm 
+   echo hosted_zone_nm $hosted_zone_nm
+   
    if [[ $# -eq 4 ]]
    then
       sub_domain_nm="${4}"
+      
+      echo sub_domain_nm $sub_domain_nm
+      
       domain="${sub_domain_nm}"."${hosted_zone_nm}"
    else
       # TLD
@@ -692,7 +699,6 @@ function __get_change_batch_request_status()
 # Creates the change batch request to create, delete or update a record type A.
 # A-records are the DNS server equivalent of the hosts file - a simple domain 
 # name to IP-address mapping. 
-# Changes generally propagate to all Route 53 name servers within 60 seconds. 
 #
 # Globals:
 #  None
@@ -752,9 +758,8 @@ function __create_type_A_change_batch()
 }
 
 #===============================================================================
-# Creates the change batch request to create, delete or update a record type for
-# an alias.
-# Changes generally propagate to all Route 53 name servers within 60 seconds.  
+# Creates the change batch request body to create, delete or update an alias 
+# record type.  
 #
 # Globals:
 #  None
@@ -912,10 +917,10 @@ function __get_hosted_zone_id()
 ## get_record_request_status '/change/C08567412987M8ULD7QKI'
 ## check_hosted_zone_has_record 'maxmin.it' 'admin'
 
-## create_alias_record 'Z32O12XQLNTSW2' 'elbmaxmin-1203266565.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'www'
-## delete_alias_record 'Z32O12XQLNTSW2' 'elbmaxmin-1203266565.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'www'
-## create_alias_record 'Z32O12XQLNTSW2' 'elbmaxmin-1203266565.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'abc' 
-## delete_alias_record 'Z32O12XQLNTSW2' 'elbmaxmin-1203266565.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'abc'
+## create_alias_record 'Z32O12XQLNTSW2' '1203266565.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'www'
+## delete_alias_record 'Z32O12XQLNTSW2' '1203266565.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'www'
+## create_alias_record 'Z32O12XQLNTSW2' 'elbmaxmin-458631052.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'abc' 
+## delete_alias_record 'Z32O12XQLNTSW2' 'elbmaxmin-458631052.eu-west-1.elb.amazonaws.com' 'maxmin.it' 'abc'
 
 ## get_record_request_status '/change/C08567412987M8ULD7QKI'
 ## check_hosted_zone_has_record 'maxmin.it' 'www' 

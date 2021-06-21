@@ -40,7 +40,7 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi 
-   
+      
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
 

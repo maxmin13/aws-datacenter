@@ -22,7 +22,7 @@ if [[ -z "${lbal_dns_nm}" ]]
 then
    echo '* WARN: Load Balancer DNS name not found.'
 else
-   echo "* Load Balancer DNS name: ${lbal_dns_nm}."
+   echo "* Load Balancer DNS name: ${lbal_dns_nm}"
 fi
 
 lbal_dns_hosted_zone_id="$(get_record_hosted_zone_id "${MAXMIN_TLD}" "${LBAL_DNS_SUB_DOMAIN}")"

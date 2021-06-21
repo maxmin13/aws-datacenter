@@ -79,7 +79,7 @@ LBAL_DNS_SUB_DOMAIN='www'
 ## Admin box ##
 ## ********* ##
 
-SRV_ADMIN_NM='maxmin-admin-instance2'
+SRV_ADMIN_NM='maxmin-admin-instance'
 SRV_ADMIN_PRIVATE_IP='10.0.0.10'
 SRV_ADMIN_HOSTNAME='admin.maxmin.it'
 SRV_ADMIN_USER_NM='admin-user'

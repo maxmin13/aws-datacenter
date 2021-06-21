@@ -5,9 +5,11 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-# Uploads Database files to the admin server,
-# then runs the dump script on the server, enventually
-# download the result of the dump from the server in the Download directory.
+##############################################################
+# Uploads Database files to the Admin server,
+# then runs the dump script on the server, 
+# download the result of the dump in the Download directory.
+##############################################################
 
 database_dir='database'
 
