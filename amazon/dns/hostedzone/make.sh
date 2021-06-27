@@ -90,48 +90,49 @@ fi
 # Load Balancer www.admin.it
 #
 
-lbal_alias_record="$(check_hosted_zone_has_record "${MAXMIN_TLD}" "${LBAL_DNS_SUB_DOMAIN}")"
+has_lbal_record="$(check_hosted_zone_has_record "${LBAL_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
 
-## TODO IF the record exists, get its data and delete, than recreate it with the upated data 
-                             
-if [[ -z "${lbal_alias_record}" ]]
+if [[ 'true' == "${has_lbal_record}" ]]
 then
 
-   ## Create an alias that points to the Load Balancer 
-   request_id="$(create_alias_record "${lbal_dns_hosted_zone_id}" \
-                                     "${lbal_dns_nm}" \
-                                     "${MAXMIN_TLD}" \
-                                     "${LBAL_DNS_SUB_DOMAIN}")" 
-                                     
-   status="$(get_record_request_status "${request_id}")"
+   echo 'WARN: found load balance record, deleting ...'
    
-   echo "Created a DNS record ${LBAL_DNS_SUB_DOMAIN}.${MAXMIN_TLD} that points to the Load Balancer IP address (${status})."
-else
-   echo "WARN: DNS record ${LBAL_DNS_SUB_DOMAIN}.${MAXMIN_TLD} already created."
+   request_id="$(delete_alias_record "${LBAL_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" \
+       "${lbal_dns_nm}" "${lbal_dns_hosted_zone_id}")"                                   
+   status="$(get_record_request_status "${request_id}")"
+
+   echo "Load balance record, deleted (${status})"
 fi
+
+## Create an alias that points to the Load Balancer 
+request_id="$(create_alias_record "${LBAL_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" \
+    "${lbal_dns_nm}" "${lbal_dns_hosted_zone_id}")"                                      
+status="$(get_record_request_status "${request_id}")"
+   
+echo "Created a DNS record ${LBAL_DNS_SUB_DOMAIN}.${MAXMIN_TLD} that points to the Load Balancer IP address (${status})."
 
 ##
 ## Admin website admin.maxmin.it
 ##
 
-admin_record="$(check_hosted_zone_has_record "${MAXMIN_TLD}" "${SRV_ADMIN_DNS_SUB_DOMAIN}")"
+has_admin_record="$(check_hosted_zone_has_record "${SRV_ADMIN_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
 
-## TODO IF the record exists, get its data and delete, than recreate it with the upated data 
-
-if [[ -z "${admin_record}" ]]
+if [[ 'true' == "${has_admin_record}" ]]
 then
 
-   ## Create a record that points to the Admin website
-   request_id="$(create_record "${admin_eip}" \
-                               "${MAXMIN_TLD}" \
-                               "${SRV_ADMIN_DNS_SUB_DOMAIN}")"
-                               
+   echo 'WARN: found Admin web site record, deleting ...'
+
+   request_id="$(delete_record "${SRV_ADMIN_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" "${admin_eip}")"                            
    status="$(get_record_request_status "${request_id}")"  
    
-   echo "Created a DNS record ${SRV_ADMIN_DNS_SUB_DOMAIN}.${MAXMIN_TLD} that points to the Admin web site IP address (${status})."
-else
-   echo "WARN: DNS record ${SRV_ADMIN_DNS_SUB_DOMAIN}.${MAXMIN_TLD} already created."
+   echo "Admin record, deleted (${status})"
 fi
+
+## Create a record that points to the Admin website
+request_id="$(create_record "${SRV_ADMIN_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" "${admin_eip}")"                              
+status="$(get_record_request_status "${request_id}")"  
+   
+echo "Created a DNS record ${SRV_ADMIN_DNS_SUB_DOMAIN}.${MAXMIN_TLD} that points to the Admin web site IP address (${status})."
 
 echo
 echo 'Hosted Zone created.'

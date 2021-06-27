@@ -44,7 +44,7 @@ function scp_upload_file()
    if [[ $# -lt 6 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local key_pair_file="${1}"
@@ -90,7 +90,7 @@ function scp_upload_files()
    if [[ $# -lt 6 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
 
    local key_pair_file="${1}"
@@ -136,7 +136,7 @@ function scp_download_file()
    if [[ $# -lt 7 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local key_pair_file="${1}"
@@ -178,7 +178,7 @@ function ssh_run_remote_command()
    if [[ $# -lt 5 ]]
    then
       echo 'Error' 'Missing mandatory arguments'
-      exit 1
+      return 1
    fi
 
    local cmd="${1}"
@@ -190,7 +190,7 @@ function ssh_run_remote_command()
    if [[ "${cmd}" == *sudo* ]]
    then
      echo 'ERROR: command not allowed'
-     exit 1
+     return 1
    fi     
 
    ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 -o BatchMode=yes -i "${key_pair_file}" -p "${ssh_port}" -t "${user}"@"${server_ip}" "${cmd}"
@@ -231,7 +231,7 @@ function ssh_run_remote_command_as_root()
    if [[ $# -lt 5 ]]
    then
       echo 'Error' 'Missing mandatory arguments'
-      exit 1
+      return 1
    fi
 
    local cmd="${1}"
@@ -239,7 +239,7 @@ function ssh_run_remote_command_as_root()
    if [[ "${cmd}" == *rm* ]]
    then
      echo 'ERROR: command not allowed as root'
-     exit 1
+     return 1
    fi     
    
    local key_pair_file="${2}"
@@ -313,7 +313,7 @@ function wait_ssh_started()
    if [[ $# -lt 4 ]]
    then
       echo 'Error' 'Missing mandatory arguments'
-      exit 1
+      return 1
    fi
 
    local private_key="${1}"
@@ -360,7 +360,7 @@ function get_ssh_port()
    if [[ $# -lt 4 ]]
    then
       echo 'Error' 'Missing mandatory arguments'
-      exit 1
+      return 1
    fi
 
    local key_pair_file="${1}"
@@ -415,7 +415,7 @@ function generate_keypair()
    if [[ $# -lt 2 ]]
    then
       echo 'Error' 'Missing mandatory arguments'
-      exit 1
+      return 1
    fi
 
    local key_file="${1}"
@@ -424,7 +424,7 @@ function generate_keypair()
    if [[ -f "${key_file}" ]]
    then
       echo 'ERROR: key-pair already exists.'
-      exit 1
+      return 1
    fi
 
    ssh-keygen -N '' -q -t rsa -b 4096 -C "${email_add}" -f "${key_file}"
@@ -447,7 +447,7 @@ function get_public_key()
    if [[ $# -lt 1 ]]
    then
       echo 'Error' 'Missing mandatory arguments'
-      exit 1
+      return 1
    fi
 
    local key_file="${1}"
@@ -475,7 +475,7 @@ function delete_keypair()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local key_file="${1}"
@@ -507,7 +507,7 @@ function get_keypair_file_path()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local keypair_nm="${1}"

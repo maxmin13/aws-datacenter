@@ -43,7 +43,7 @@ function get_db_subnet_group_status()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local dbsubnetg_nm="${1}"
@@ -79,7 +79,7 @@ function create_db_subnet_group()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local dbsubnetg_nm="${1}"
@@ -110,7 +110,7 @@ function delete_db_subnet_group()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local dbsubnetg_nm="${1}"
@@ -142,7 +142,7 @@ function create_log_slow_queries_db_parameter_group()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
    
    local db_pgp_nm="${1}"
@@ -181,7 +181,7 @@ function delete_log_slow_queries_db_parameter_group()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
    
    local db_pgp_nm="${1}"
@@ -207,7 +207,7 @@ function check_log_slow_queries_db_parameter_group_exists()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
    
    local db_pgp_nm="${1}"
@@ -237,7 +237,7 @@ function get_database_state()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local db_nm="${1}"
@@ -270,7 +270,7 @@ function get_database_endpoint()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local db_nm="${1}"
@@ -305,7 +305,7 @@ function create_database()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local db_nm="${1}"
@@ -318,7 +318,7 @@ function create_database()
    then
       echo 'ERROR: slow query parameter group not found.'
       
-      exit 1
+      return 1
    fi
 
    ## No multi availability zone
@@ -361,7 +361,7 @@ function delete_database()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local db_nm="${1}"
@@ -392,7 +392,7 @@ function get_database_snapshot_ids()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local db_nm="${1}"
@@ -425,7 +425,7 @@ function delete_database_snapshot()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local db_snapshot_id="${1}"

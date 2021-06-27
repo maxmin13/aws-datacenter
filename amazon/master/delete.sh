@@ -18,7 +18,7 @@ source "${PROJECT_DIR}"/amazon/lib/aws/ec2.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/elb.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/iam.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
-source "${PROJECT_DIR}"/amazon/lib/aws/route53.sh
+source "${PROJECT_DIR}"/amazon/lib/aws/route53/route53.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
 source "${PROJECT_DIR}"/amazon/credential/recaptcha.sh
 source "${PROJECT_DIR}"/amazon/credential/passwords.sh

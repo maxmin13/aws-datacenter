@@ -31,7 +31,7 @@ function delete_server_certificate()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local crt_nm="${1}"
@@ -58,7 +58,7 @@ function get_server_certificate_arn()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local crt_nm="${1}"
@@ -96,7 +96,7 @@ function upload_server_certificate()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
    
    local crt_nm="${1}"

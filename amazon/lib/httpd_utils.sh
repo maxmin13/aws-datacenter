@@ -101,7 +101,7 @@ function create_virtualhost_configuration_file()
    if [[ $# -lt 6 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -136,7 +136,7 @@ function add_server_alias_to_virtualhost()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -155,7 +155,7 @@ function remove_server_alias_from_virtualhost()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -199,7 +199,7 @@ function add_alias_to_virtualhost()
    if [[ $# -lt 5 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -219,7 +219,7 @@ function remove_alias_from_virtualhost()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -263,7 +263,7 @@ function add_loadbalancer_rule_to_virtualhost()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -290,7 +290,7 @@ function remove_loadbalancer_rule_from_virtualhost()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -319,7 +319,7 @@ function __add_virtualhost_element()
    if [[ $# -lt 6 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
 
    local virtual_host_file="${1}"
@@ -354,7 +354,7 @@ function __add_directory_element()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -374,7 +374,7 @@ function __remove_directory_element()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -392,7 +392,7 @@ function __add_rewrite_rule_directive()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}" 
@@ -414,7 +414,7 @@ function __add_rewrite_cond_directive()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -436,7 +436,7 @@ function __add_rewrite_engine_directive()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
 
    local virtual_host_file="${1}"       
@@ -453,7 +453,7 @@ function __add_log_level_directive()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
 
    local virtual_host_file="${1}"       
@@ -472,7 +472,7 @@ function __add_server_alias_directive()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -495,7 +495,7 @@ function __add_alias_directive()
    if [[ $# -lt 5 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -523,7 +523,7 @@ function __remove_directive()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local virtual_host_file="${1}"
@@ -539,7 +539,7 @@ function __build_directory_element()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
 
    local base_docroot="${1}"
@@ -562,7 +562,7 @@ function __build_server_alias_directive()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local server_alias_nm="${1}"
@@ -580,7 +580,7 @@ function __build_alias_directive()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local alias_nm="${1}"
@@ -605,7 +605,7 @@ function __build_rewrite_cond_directive()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local test_string="${1}"
@@ -626,7 +626,7 @@ function __build_rewrite_rule_directive()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local pattern="${1}"
@@ -652,7 +652,7 @@ function __build_directive()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local directive_template="${1}"

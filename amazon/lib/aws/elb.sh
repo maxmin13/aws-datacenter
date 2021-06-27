@@ -31,7 +31,7 @@ function get_loadbalancer_dns_name()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local loadbalancer_nm="${1}"
@@ -62,7 +62,7 @@ function get_loadbalancer_dns_hosted_zone_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local loadbalancer_nm="${1}"
@@ -98,7 +98,7 @@ function create_loadbalancer()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local loadbalancer_nm="${1}"
@@ -136,7 +136,7 @@ function configure_loadbalancer_health_check()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local loadbalancer_nm="${1}"
@@ -167,7 +167,7 @@ function delete_loadbalancer()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local loadbalancer_nm="${1}"
@@ -196,7 +196,7 @@ function register_instance_with_loadbalancer()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
    
    local loadbalancer_nm="${1}"
@@ -227,7 +227,7 @@ function deregister_instance_from_loadbalancer()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
    
    local loadbalancer_nm="${1}"
@@ -256,7 +256,7 @@ function check_instance_is_registered_with_loadbalancer()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local loadbalancer_nm="${1}"

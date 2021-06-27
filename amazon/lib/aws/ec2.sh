@@ -30,7 +30,7 @@ function get_datacenter_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local dtc_nm="${1}"
@@ -62,7 +62,7 @@ function create_datacenter()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
   
    local dtc_nm="${1}"
@@ -98,7 +98,7 @@ function delete_datacenter()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
   
    local dtc_id="${1}"
@@ -132,7 +132,7 @@ function get_subnet_ids()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local dtc_id="${1}"
@@ -162,7 +162,7 @@ function get_subnet_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local subnet_nm="${1}"
@@ -199,7 +199,7 @@ function create_subnet()
    if [[ $# -lt 5 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local subnet_nm="${1}"
@@ -245,7 +245,7 @@ function delete_subnet()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local subnet_id="${1}"
@@ -269,7 +269,7 @@ function get_internet_gateway_id()
    if [[ $# -lt 1 ]]
    then
      echo 'ERROR: missing mandatory arguments.'
-     exit 1
+     return 1
   fi
 
    local igw_nm="${1}"
@@ -304,7 +304,7 @@ function get_internet_gateway_attachment_status()
    if [[ $# -lt 2 ]]
    then
      echo 'ERROR: missing mandatory arguments.'
-     exit 1
+     return 1
   fi
 
    local igw_nm="${1}"
@@ -338,7 +338,7 @@ function create_internet_gateway()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
   
    local igw_nm="${1}"
@@ -370,7 +370,7 @@ function delete_internet_gateway()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
   
    local igw_id="${1}"
@@ -396,7 +396,7 @@ function attach_internet_gateway()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
   
    local igw_id="${1}"
@@ -422,7 +422,7 @@ function get_route_table_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local rtb_nm="${1}"
@@ -456,7 +456,7 @@ function create_route_table()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local rtb_nm="${1}"
@@ -490,7 +490,7 @@ function delete_route_table()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local rtb_id="${1}"
@@ -519,7 +519,7 @@ function set_route()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local rtb_id="${1}"
@@ -548,7 +548,7 @@ function get_security_group_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local sgp_nm="${1}"
@@ -582,7 +582,7 @@ function create_security_group()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local dtc_id="${1}" 
@@ -618,7 +618,7 @@ function delete_security_group()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local sgp_id="${1}"
@@ -645,7 +645,7 @@ function allow_access_from_cidr()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local sgp_id="${1}"
@@ -679,7 +679,7 @@ function allow_access_from_security_group()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local sgp_id="${1}"
@@ -713,7 +713,7 @@ function revoke_access_from_security_group()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local sgp_id="${1}"
@@ -747,7 +747,7 @@ function revoke_access_from_cidr()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local sgp_id="${1}"
@@ -781,7 +781,7 @@ function check_access_from_security_group_is_granted()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local sgp_id="${1}"
@@ -818,7 +818,7 @@ function check_access_from_cidr_is_granted()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local sgp_id="${1}"
@@ -852,7 +852,7 @@ function get_instance_state()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local instance_nm="${1}"
@@ -884,7 +884,7 @@ function get_public_ip_address_associated_with_instance()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local instance_nm="${1}"
@@ -916,7 +916,7 @@ function get_private_ip_address_associated_with_instance()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local instance_nm="${1}"
@@ -948,7 +948,7 @@ function get_instance_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local instance_nm="${1}"
@@ -985,7 +985,7 @@ function run_instance()
    if [[ $# -lt 6 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
    
    local instance_nm="${1}"
@@ -1032,7 +1032,7 @@ function stop_instance()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local instance_id="${1}"
@@ -1061,7 +1061,7 @@ function delete_instance()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local instance_id="${1}"
@@ -1089,7 +1089,7 @@ function create_image()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local instance_id="${1}"
@@ -1125,7 +1125,7 @@ function get_image_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local img_nm="${1}"
@@ -1155,7 +1155,7 @@ function get_image_state()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local img_nm="${1}"
@@ -1187,7 +1187,7 @@ function get_image_snapshot_ids()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local img_nm="${1}"
@@ -1221,7 +1221,7 @@ function delete_image()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local img_id="${1}"
@@ -1247,7 +1247,7 @@ function delete_image_snapshot()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local img_snapshot_id="${1}"
@@ -1274,7 +1274,7 @@ function get_allocation_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local eip="${1}"
@@ -1389,7 +1389,7 @@ function release_public_ip_address()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local allocation_id="${1}"
@@ -1417,7 +1417,7 @@ function release_all_public_ip_addresses()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
    
    local allocation_ids="${1}"
@@ -1448,7 +1448,7 @@ function associate_public_ip_address_to_instance()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local eip="${1}"

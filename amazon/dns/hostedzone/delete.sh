@@ -16,31 +16,37 @@ echo 'DNS hosted zone'
 echo '***************'
 echo
 
-lbal_dns_nm="$(get_record_dns_name "${MAXMIN_TLD}" "${LBAL_DNS_SUB_DOMAIN}")"
+lbal_dns_nm="$(get_loadbalancer_dns_name "${LBAL_NM}")"
 
 if [[ -z "${lbal_dns_nm}" ]]
 then
-   echo '* WARN: Load Balancer DNS name not found.'
+   echo '* ERROR: Load Balancer not found.'
+   
+   exit 1
 else
-   echo "* Load Balancer DNS name: ${lbal_dns_nm}"
+   echo "* Load Balancer: ${lbal_dns_nm}."
 fi
 
-lbal_dns_hosted_zone_id="$(get_record_hosted_zone_id "${MAXMIN_TLD}" "${LBAL_DNS_SUB_DOMAIN}")"
+lbal_dns_hosted_zone_id="$(get_loadbalancer_dns_hosted_zone_id "${LBAL_NM}")"
 
 if [[ -z "${lbal_dns_hosted_zone_id}" ]]
 then
-   echo '* WARN: Load Balancer Hosted Zone ID not found.'
+   echo '* ERROR: Load Balancer hosted zone not found.'
+   
+   exit 1
 else
-   echo "* Load Balancer Hosted Zone ID: ${lbal_dns_hosted_zone_id}."
+   echo "* Load Balancer hosted zone: ${lbal_dns_hosted_zone_id}."
 fi
 
-admin_eip="$(get_record_ip_address "${MAXMIN_TLD}" "${SRV_ADMIN_DNS_SUB_DOMAIN}")"
+admin_eip="$(get_public_ip_address_associated_with_instance "${SRV_ADMIN_NM}")"
 
 if [[ -z "${admin_eip}" ]]
 then
-   echo '* WARN: Admin IP address not found.'
+   echo '* ERROR: Admin public IP address not found.'
+   
+   exit 1
 else
-   echo "* Admin IP address: ${admin_eip}."
+   echo "* Admin public IP address: ${admin_eip}."
 fi
 
 echo
@@ -49,24 +55,38 @@ echo
 ## DNS records 
 ##
 
-# Load Balancer: www.maxmin.it
+#
+# Load Balancer www.admin.it
+#
 
-if [[ -n "${lbal_dns_nm}" && -n "${lbal_dns_hosted_zone_id}" ]]
+has_lbal_record="$(check_hosted_zone_has_record "${LBAL_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+
+if [[ 'true' == "${has_lbal_record}" ]]
 then
-   ## Delete the Load Balancer alias 
-   delete_alias_record "${lbal_dns_hosted_zone_id}" "${lbal_dns_nm}" "${MAXMIN_TLD}" "${LBAL_DNS_SUB_DOMAIN}" >> /dev/null
+   echo 'Deleting load balance record ...'
    
-   echo "DNS record ${LBAL_DNS_SUB_DOMAIN}.${MAXMIN_TLD} deleted."
+   request_id="$(delete_alias_record "${LBAL_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" \
+       "${lbal_dns_nm}" "${lbal_dns_hosted_zone_id}")"                                   
+   status="$(get_record_request_status "${request_id}")"
+
+   echo "Load balance record, deleted (${status})"
 fi
 
-# Admin website: admin.maxmin.it
+##
+## Admin website admin.maxmin.it
+##
 
-if [[ -n "${admin_eip}" ]]
+has_admin_record="$(check_hosted_zone_has_record "${SRV_ADMIN_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+
+if [[ 'true' == "${has_admin_record}" ]]
 then
-   ## Delete the Admin website DNS record.
-   delete_record "${admin_eip}" "${MAXMIN_TLD}" "${SRV_ADMIN_DNS_SUB_DOMAIN}" >> /dev/null
+
+   echo 'Deleting Admin web site record ...'
+
+   request_id="$(delete_record "${SRV_ADMIN_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" "${admin_eip}")"                            
+   status="$(get_record_request_status "${request_id}")"  
    
-   echo "DNS record ${SRV_ADMIN_DNS_SUB_DOMAIN}.${MAXMIN_TLD} deleted."
+   echo "Admin record, deleted (${status})"
 fi
 
 ## 
@@ -79,13 +99,9 @@ fi
 if false
 then
    delete_hosted_zone "${MAXMIN_TLD}"
-   
-   echo
+
    echo "Hosted zone ${MAXMIN_TLD} deleted."
-   echo
 else
-   echo
    echo "Hosted zone ${MAXMIN_TLD} not deleted."
-   echo
 fi
 

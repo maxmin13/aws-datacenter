@@ -29,7 +29,7 @@ function escape()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      exit 1
+      return 1
    fi
    
    local str="${1}"
@@ -42,10 +42,10 @@ function escape()
 }
 
 ## Start tests: ##
-escaped="$(escape 'abc/efg')"
-if [[ "${escaped}" != 'abc\/efg' ]]
-then
-   echo "ERROR: escaping 'abc/efg'"
-   exit 1 
-fi
+##escaped="$(escape 'abc/efg')"
+##if [[ "${escaped}" != 'abc\/efg' ]]
+##then
+##   echo "ERROR: escaping 'abc/efg'"
+##   return 1 
+##fi
 ## End tests. ##

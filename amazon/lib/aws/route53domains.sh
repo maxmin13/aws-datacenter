@@ -45,7 +45,7 @@ function check_domain_availability()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local hosted_zone_nm="${1}"
@@ -78,7 +78,7 @@ function check_domain_is_registered_with_the_account()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local hosted_zone_nm="${1}"
@@ -110,7 +110,7 @@ function register_domain()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local request_file="${1}"
@@ -148,7 +148,7 @@ function update_domain_registration_name_servers()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
 
    local hosted_zone_nm="${1}"
@@ -186,7 +186,7 @@ function get_request_status()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
    
    local request_name="${1}"
@@ -219,7 +219,7 @@ function __create_update_name_servers_request()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      exit 1
+      return 1
    fi
    
    local name_server_list="${1}"
@@ -253,7 +253,7 @@ function __create_update_name_servers_request()
    if [[ ! 4 -eq "${size}" ]]
    then
       echo 'ERROR: not a list of 4 name servers'
-      exit 1
+      return 1
    fi
    
    change_batch="$(printf '%b\n' "${template}" \
