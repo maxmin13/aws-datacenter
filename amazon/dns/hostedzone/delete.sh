@@ -16,48 +16,46 @@ echo 'DNS hosted zone'
 echo '***************'
 echo
 
-lbal_dns_nm="$(get_loadbalancer_dns_name "${LBAL_NM}")"
-
-if [[ -z "${lbal_dns_nm}" ]]
+lbal_dns_nm="${LBAL_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+target_lbal_dns_nm="$(get_alias_record_dns_name_value \
+   "${LBAL_DNS_SUB_DOMAIN}" \
+   "${MAXMIN_TLD}")" 
+       
+if [[ -z "${target_lbal_dns_nm}" ]]
 then
-   echo '* ERROR: Load Balancer not found.'
-   
-   exit 1
+   echo '* WARN: Load Balancer DNS record not found.'
 else
-   echo "* Load Balancer: ${lbal_dns_nm}."
+   echo "* Load balancer DNS name: ${lbal_dns_nm}"
+   echo "* Target load balancer name: ${target_lbal_dns_nm}"
 fi
 
-lbal_dns_hosted_zone_id="$(get_loadbalancer_dns_hosted_zone_id "${LBAL_NM}")"
+target_lbal_dns_hosted_zone_id="$(get_alias_record_hosted_zone_value \
+   "${LBAL_DNS_SUB_DOMAIN}" \
+   "${MAXMIN_TLD}")" 
 
-if [[ -z "${lbal_dns_hosted_zone_id}" ]]
+if [[ -z "${target_lbal_dns_hosted_zone_id}" ]]
 then
-   echo '* ERROR: Load Balancer hosted zone not found.'
-   
-   exit 1
+   echo '* WARN: Load Balancer hosted zone DNS record not found.'
 else
-   echo "* Load Balancer hosted zone: ${lbal_dns_hosted_zone_id}."
+   echo "* Target load balancer hosted zone ID: ${target_lbal_dns_hosted_zone_id}."
 fi
 
-admin_eip="$(get_public_ip_address_associated_with_instance "${SRV_ADMIN_NM}")"
+admin_dns_nm="${SRV_ADMIN_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+target_admin_eip="$(get_record_value "${SRV_ADMIN_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
 
-if [[ -z "${admin_eip}" ]]
+if [[ -z "${target_admin_eip}" ]]
 then
-   echo '* ERROR: Admin public IP address not found.'
-   
-   exit 1
+   echo '* WARN: Admin DNS record not found.'
 else
-   echo "* Admin public IP address: ${admin_eip}."
+   echo "* Admin DNS name: ${admin_dns_nm}."
+   echo "* Target Admin IP address: ${target_admin_eip}."
 fi
 
 echo
 
 ##
-## DNS records 
+## Load Balancer www.admin.it record.
 ##
-
-#
-# Load Balancer www.admin.it
-#
 
 has_lbal_record="$(check_hosted_zone_has_record "${LBAL_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
 
@@ -65,8 +63,11 @@ if [[ 'true' == "${has_lbal_record}" ]]
 then
    echo 'Deleting load balance record ...'
    
-   request_id="$(delete_alias_record "${LBAL_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" \
-       "${lbal_dns_nm}" "${lbal_dns_hosted_zone_id}")"                                   
+   request_id="$(delete_alias_record \
+       "${LBAL_DNS_SUB_DOMAIN}" \
+       "${MAXMIN_TLD}" \
+       "${target_lbal_dns_nm}" \
+       "${target_lbal_dns_hosted_zone_id}")"                                   
    status="$(get_record_request_status "${request_id}")"
 
    echo "Load balance record, deleted (${status})"
@@ -80,10 +81,12 @@ has_admin_record="$(check_hosted_zone_has_record "${SRV_ADMIN_DNS_SUB_DOMAIN}" "
 
 if [[ 'true' == "${has_admin_record}" ]]
 then
-
    echo 'Deleting Admin web site record ...'
 
-   request_id="$(delete_record "${SRV_ADMIN_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" "${admin_eip}")"                            
+   request_id="$(delete_record \
+       "${SRV_ADMIN_DNS_SUB_DOMAIN}" \
+       "${MAXMIN_TLD}" \
+       "${target_admin_eip}")"                            
    status="$(get_record_request_status "${request_id}")"  
    
    echo "Admin record, deleted (${status})"

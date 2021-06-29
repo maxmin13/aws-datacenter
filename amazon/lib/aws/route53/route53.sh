@@ -310,11 +310,10 @@ function get_record_value()
 }
 
 #===============================================================================
+# Returns the DNS address targeted by an alias record.
 # An Alias record is used to route traffic to selected AWS resources, such as 
 # CloudFront distributions and Amazon S3 buckets, AWS load balancer, or to route 
 # traffic from one record in a hosted zone to another record.
-# The function returns the DNS address where the alias record routes the 
-# traffic.
 #
 # Globals:
 #  None
@@ -356,10 +355,10 @@ function get_alias_record_dns_name_value()
 }
 
 #===============================================================================
+# Returns the targeted hosted zone ID of an alias record.
 # An Alias record is used to route traffic to selected AWS resources, such as 
 # CloudFront distributions and Amazon S3 buckets, AWS load balancer, or to route 
 # traffic from one record in a hosted zone to another record.
-# The function returns the targeted hosted zone ID.
 #
 # Globals:
 #  None
@@ -543,6 +542,52 @@ function __create_delete_record()
 }
 
 #===============================================================================
+# Creates a load balancer record.
+# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+#
+# Globals:
+#  None
+# Arguments:
+# +sub_domain_nm         -- the load balancer sub-domain name, eg. www.
+# +hosted_zone_nm        -- the hosted zone name, this is the name you have 
+#                           registered with the DNS registrar.
+# +target_domain_nm      -- the targeted load balancer domain name.
+# +target_hosted_zone_id -- the targeted load balancer hosted zone identifier. 
+# Returns:      
+#  the ID of the request of a blanc string if the request is not submitted.  
+#===============================================================================
+function create_loadbalancer_alias_record()
+{
+   if [[ $# -lt 4 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 1
+   fi
+   
+   local sub_domain_nm="${1}"
+   local hosted_zone_nm="${2}"
+   local target_domain_nm="${3}"
+   local target_hosted_zone_id="${4}"
+   local modified_target_domain_nm="${target_domain_nm}"
+   local request_id=''
+   
+   if [[ "${target_domain_nm}" != 'dualstack'* ]]
+   then
+      modified_target_domain_nm="dualstack.${target_domain_nm}"
+   fi
+   
+   request_id="$(create_alias_record \
+       "${sub_domain_nm}" \
+       "${hosted_zone_nm}" \
+       "${modified_target_domain_nm}" \
+       "${target_hosted_zone_id}")"
+       
+   echo "${request_id}"
+   
+   return 0
+}
+
+#===============================================================================
 # Adds an alias record to a hosted zone.
 # An Alias record is used to route traffic to selected AWS resources, such as 
 # CloudFront distributions and Amazon S3 buckets, AWS load balancer, or to route 
@@ -582,6 +627,52 @@ function create_alias_record()
        "${target_domain_nm}" \
        "${target_hosted_zone_id}")"
        
+   echo "${request_id}"
+   
+   return 0
+}
+
+#===============================================================================
+# Deletes a load balancer record.
+# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+#
+# Globals:
+#  None
+# Arguments:
+# +sub_domain_nm         -- the load balancer sub-domain name, eg. www.
+# +hosted_zone_nm        -- the hosted zone name, this is the name you have 
+#                           registered with the DNS registrar.
+# +target_domain_nm      -- the targeted load balancer domain name.
+# +target_hosted_zone_id -- the targeted load balancer hosted zone identifier. 
+# Returns:      
+#  the ID of the request of a blanc string if the request is not submitted. 
+#===============================================================================
+function delete_loadbalancer_alias_record()
+{
+   if [[ $# -lt 4 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 1
+   fi
+   
+   local sub_domain_nm="${1}"
+   local hosted_zone_nm="${2}"
+   local target_domain_nm="${3}"
+   local target_hosted_zone_id="${4}"
+   local modified_target_domain_nm="${target_domain_nm}"
+   local request_id=''
+     
+   if [[ "${target_domain_nm}" != 'dualstack'* ]]
+   then
+      modified_target_domain_nm="dualstack.${target_domain_nm}"
+   fi
+     
+   request_id="$(delete_alias_record \
+       "${sub_domain_nm}" \
+       "${hosted_zone_nm}" \
+       "${modified_target_domain_nm}" \
+       "${target_hosted_zone_id}")"
+         
    echo "${request_id}"
    
    return 0
@@ -685,7 +776,7 @@ function __create_delete_alias_record()
             'DELETE' == "${action}" && 'true' == "${has_record}" ]]
       then
          request_body="$(__create_alias_record_change_batch "${domain}" \
-             "dualstack.${target_domain_nm}" \
+             "${target_domain_nm}" \
              "${target_hosted_zone_id}" \
              "${action}" \
              "Alias record for ${sub_domain_nm}.${hosted_zone_nm}")"
