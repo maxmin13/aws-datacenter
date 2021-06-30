@@ -450,7 +450,7 @@ then
    counter=$((counter +1))
 fi
          
-# Check the hosted zone has been cleared.               
+# Check the hosted zone has been cleared.
 if [[ -n "$(aws route53 list-resource-record-sets \
    --hosted-zone-id "${HOSTED_ZONE_ID}" \
    --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].Name" \
@@ -1222,12 +1222,4 @@ then
 else
    echo 'route53.sh script test successful.'
 fi
-
-
-
-
-
-
-
-
 
