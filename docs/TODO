@@ -1,5 +1,13 @@
 
 
+###############################
+
+
+Deploy one certificate on the Load Balancer, and add a Subject Alternative Name (SAN) for each additional website. 
+SANs enable you to protect multiple host names using a single certificate. 
+Check with your certificate provider for more information about the number of SANs they support per certificate and how to add and remove SANs.
+
+##################################
 
 
 before requesting a new cert to lets encrypt check if it  is expired
@@ -37,30 +45,6 @@ it should be delete by cloud init
 use Cloud Init to run all the scripts instead of uploading and ssh them.
 maybe install Chef with Cloud Init and run recepies instead of the scripts.
 
-
-###############################
-
-
-/amazon/dns/hostedzone/make.sh
-
-check if the records are alredy created,
-if so delete them and recreate them or update the ip address
-
-
-/amazon/dns/hostedzone/delete.sh
-get the value of hosted zone and loadbalancer dns name
-not from the current running Load Balancer but from the hosted zone
-
-
-###############################
-
-get DNS name and support from AWS, use:
-https://letsencrypt.org/getting-started/
-to generate the certificate.
-
-Deploy one certificate on the Load Balancer, and add a Subject Alternative Name (SAN) for each additional website. 
-SANs enable you to protect multiple host names using a single certificate. 
-Check with your certificate provider for more information about the number of SANs they support per certificate and how to add and remove SANs.
 
 
 ###########################
