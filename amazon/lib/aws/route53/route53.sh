@@ -542,53 +542,8 @@ function __create_delete_record()
 }
 
 #===============================================================================
-# Creates a load balancer record.
-# Changes generally propagate to all Route 53 name servers within 60 seconds. 
-#
-# Globals:
-#  None
-# Arguments:
-# +sub_domain_nm         -- the load balancer sub-domain name, eg. www.
-# +hosted_zone_nm        -- the hosted zone name, this is the name you have 
-#                           registered with the DNS registrar.
-# +target_domain_nm      -- the targeted load balancer domain name.
-# +target_hosted_zone_id -- the targeted load balancer hosted zone identifier. 
-# Returns:      
-#  the ID of the request of a blanc string if the request is not submitted.  
-#===============================================================================
-function create_loadbalancer_alias_record()
-{
-   if [[ $# -lt 4 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 1
-   fi
-   
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
-   local target_domain_nm="${3}"
-   local target_hosted_zone_id="${4}"
-   local modified_target_domain_nm="${target_domain_nm}"
-   local request_id=''
-   
-   if [[ "${target_domain_nm}" != 'dualstack'* ]]
-   then
-      modified_target_domain_nm="dualstack.${target_domain_nm}"
-   fi
-   
-   request_id="$(create_alias_record \
-       "${sub_domain_nm}" \
-       "${hosted_zone_nm}" \
-       "${modified_target_domain_nm}" \
-       "${target_hosted_zone_id}")"
-       
-   echo "${request_id}"
-   
-   return 0
-}
-
-#===============================================================================
 # Adds an alias record to a hosted zone.
+# A trailing '.' dot is appendend to the target domain name.
 # An Alias record is used to route traffic to selected AWS resources, such as 
 # CloudFront distributions and Amazon S3 buckets, AWS load balancer, or to route 
 # traffic from one record in a hosted zone to another record.
@@ -633,53 +588,9 @@ function create_alias_record()
 }
 
 #===============================================================================
-# Deletes a load balancer record.
-# Changes generally propagate to all Route 53 name servers within 60 seconds. 
-#
-# Globals:
-#  None
-# Arguments:
-# +sub_domain_nm         -- the load balancer sub-domain name, eg. www.
-# +hosted_zone_nm        -- the hosted zone name, this is the name you have 
-#                           registered with the DNS registrar.
-# +target_domain_nm      -- the targeted load balancer domain name.
-# +target_hosted_zone_id -- the targeted load balancer hosted zone identifier. 
-# Returns:      
-#  the ID of the request of a blanc string if the request is not submitted. 
-#===============================================================================
-function delete_loadbalancer_alias_record()
-{
-   if [[ $# -lt 4 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 1
-   fi
-   
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
-   local target_domain_nm="${3}"
-   local target_hosted_zone_id="${4}"
-   local modified_target_domain_nm="${target_domain_nm}"
-   local request_id=''
-     
-   if [[ "${target_domain_nm}" != 'dualstack'* ]]
-   then
-      modified_target_domain_nm="dualstack.${target_domain_nm}"
-   fi
-     
-   request_id="$(delete_alias_record \
-       "${sub_domain_nm}" \
-       "${hosted_zone_nm}" \
-       "${modified_target_domain_nm}" \
-       "${target_hosted_zone_id}")"
-         
-   echo "${request_id}"
-   
-   return 0
-}
-
-#===============================================================================
 # Deletes an alias record from a hosted zone.
+# If the target domain name or the target hosted zone id are not equal to the
+# values stored in the record, an error is returned.
 # An Alias record is used to route traffic to selected AWS resources, such as 
 # CloudFront distributions and Amazon S3 buckets, AWS load balancer, or to route 
 # traffic from one record in a hosted zone to another record.
@@ -711,6 +622,23 @@ function delete_alias_record()
    local target_hosted_zone_id="${4}"
    local request_id=''
    
+   ## Get the target values in the record and check if the values passed to the method are equal.
+   local hz_value
+   hz_value="$(get_alias_record_hosted_zone_value "${sub_domain_nm}" "${hosted_zone_nm}")"
+   local domain_value
+   domain_value="$(get_alias_record_dns_name_value "${sub_domain_nm}" "${hosted_zone_nm}")"
+
+   if [[ "${target_hosted_zone_id}" != "${hz_value}" ]]
+   then
+      echo 'ERROR: deleting load balancer record, the target hosted zone ID doesn''t equal the record''s.'
+      return 1
+   fi
+   if [[ "${target_domain_nm}" != "${domain_value}" ]]
+   then
+      echo 'ERROR: deleting load balancer record, the target domain name doesn''t equal the record''s.'
+      return 1
+   fi   
+   
    request_id="$(__create_delete_alias_record \
        'DELETE' \
        "${sub_domain_nm}" \
@@ -718,6 +646,54 @@ function delete_alias_record()
        "${target_domain_nm}" \
        "${target_hosted_zone_id}")"
 
+   echo "${request_id}"
+   
+   return 0
+}
+
+#===============================================================================
+# Creates a load balancer record. 
+# If the target domain name doesn't have the 'dualstack' prefix, appends it.
+# If the target domain name doesn't have a trailing '.' dot, appends it.
+# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+#
+# Globals:
+#  None
+# Arguments:
+# +sub_domain_nm         -- the load balancer sub-domain name, eg. www.
+# +hosted_zone_nm        -- the hosted zone name, this is the name you have 
+#                           registered with the DNS registrar.
+# +target_domain_nm      -- the targeted load balancer domain name.
+# +target_hosted_zone_id -- the targeted load balancer hosted zone identifier. 
+# Returns:      
+#  the ID of the request of a blanc string if the request is not submitted.  
+#===============================================================================
+function create_loadbalancer_alias_record()
+{
+   if [[ $# -lt 4 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 1
+   fi
+   
+   local sub_domain_nm="${1}"
+   local hosted_zone_nm="${2}"
+   local target_domain_nm="${3}"
+   local target_hosted_zone_id="${4}"
+   local modified_target_domain_nm="${target_domain_nm}"
+   local request_id=''
+   
+   if [[ "${target_domain_nm}" != 'dualstack'* ]]
+   then
+      modified_target_domain_nm="dualstack.${target_domain_nm}"
+   fi
+   
+   request_id="$(create_alias_record \
+       "${sub_domain_nm}" \
+       "${hosted_zone_nm}" \
+       "${modified_target_domain_nm}" \
+       "${target_hosted_zone_id}")"
+       
    echo "${request_id}"
    
    return 0
@@ -817,8 +793,11 @@ function get_record_request_status()
    local request_id="${1}"
    local status=''
 
+   set +e
    status="$(aws route53 get-change --id "${request_id}" \
        --query ChangeInfo.Status --output text 2> /dev/null)"
+   exit_code=$?
+   set -e
    
    echo "${status}"
    
@@ -939,11 +918,11 @@ function __create_alias_record_change_batch()
    )
   
    change_batch="$(printf '%b\n' "${template}" \
-                    | sed -e "s/SEDdomain_nmSED/${domain_nm}/g" \
-                          -e "s/SEDtarget_domain_nmSED/${target_domain_nm}/g" \
-                          -e "s/SEDtarget_hosted_zone_idSED/${target_hosted_zone_id}/g" \
-                          -e "s/SEDcommentSED/${comment}/g" \
-                          -e "s/SEDactionSED/${action}/g")" 
+       | sed -e "s/SEDdomain_nmSED/${domain_nm}/g" \
+             -e "s/SEDtarget_domain_nmSED/${target_domain_nm}/g" \
+             -e "s/SEDtarget_hosted_zone_idSED/${target_hosted_zone_id}/g" \
+             -e "s/SEDcommentSED/${comment}/g" \
+             -e "s/SEDactionSED/${action}/g")" 
    
    echo "${change_batch}"
    
@@ -1018,9 +997,4 @@ function __get_hosted_zone_id()
    
    return 0
 }
-
-
-
-
-
 
