@@ -452,9 +452,9 @@ fi
          
 # Check the hosted zone has been cleared.               
 if [[ -n "$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].Name" \
-          --output text)" ]]
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].Name" \
+   --output text)" ]]
 then
    echo 'ERROR: testing __create_delete_record DELETE record found in the hosted zone.'
    counter=$((counter +1))
@@ -485,9 +485,9 @@ fi
 
 # Check the record target value.
 ip5a="$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].ResourceRecords[*].Value" \
-          --output text)"
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].ResourceRecords[*].Value" \
+   --output text)"
       
 if [[ "${ip5a}" != '18.203.73.111' ]]
 then
@@ -519,11 +519,11 @@ then
    counter=$((counter +1))
 fi
 
-# Check the hosted zone has been cleared.               
+# Check the hosted zone has been cleared.        
 if [[ -n "$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].Name" \
-          --output text)" ]]
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].Name" \
+   --output text)" ]]
 then
    echo 'ERROR: testing delete_record DELETE record found in the hosted zone.'
    counter=$((counter +1))
@@ -669,10 +669,10 @@ fi
 
 # Check the alias record target DNS name value.
 value9b="$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.DNSName" \
-          --output text)"
-          
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.DNSName" \
+   --output text)"
+   
 if [[ "${value9b}" != '1203266565.eu-west-1.elb.amazonaws.com.' ]]
 then
    echo 'ERROR: testing __create_delete_alias_record retriving alias record target DNS name.'
@@ -681,10 +681,10 @@ fi
 
 # Check the alias record target hosted zone ID.
 value9c="$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.HostedZoneId" \
-          --output text)"
-          
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.HostedZoneId" \
+   --output text)"
+   
 if [[ "${value9c}" != 'Z32O12XQLNTSW2' ]]
 then
    echo 'ERROR: testing __create_delete_alias_record retriving alias record target hosted zone.'
@@ -1027,11 +1027,11 @@ fi
 
 # Check the alias record target domain name value.
 value16b="$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.DNSName" \
-          --output text)"
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.DNSName" \
+   --output text)"
 
-# Check that a trailing '.' dot has been appended to the target domain name          
+# Check that a trailing '.' dot has been appended to the target domain name   
 if [[ "${value16b}" != '1203266565.eu-west-1.elb.amazonaws.com.' ]]
 then
    echo 'ERROR: testing create_alias_record retriving alias record target DNS name.'
@@ -1054,11 +1054,11 @@ fi
 
 # Check the alias record target domain name value.
 value16d="$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.DNSName" \
-          --output text)"
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.DNSName" \
+   --output text)"
 
-# Check that a trailing '.' dot has been appended to the target domain name          
+# Check that a trailing '.' dot has been appended to the target domain name   
 if [[ "${value16d}" != '1203266565.eu-west-1.elb.amazonaws.com.' ]]
 then
    echo 'ERROR: testing create_alias_record retriving alias record target DNS name.'
@@ -1067,10 +1067,10 @@ fi
 
 # Check the alias record target hosted zone ID.
 value16e="$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.HostedZoneId" \
-          --output text)"
-          
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.HostedZoneId" \
+   --output text)"
+   
 if [[ "${value16e}" != 'Z32O12XQLNTSW2' ]]
 then
    echo 'ERROR: testing create_alias_record retriving alias record target hosted zone.'
@@ -1125,7 +1125,7 @@ then
    counter=$((counter +1))
 fi
 
-# Clear the hosted zone.          
+# Clear the hosted zone.   
 __test_delete_alias_record 'www.maxmin.it' '1203266565.eu-west-1.elb.amazonaws.com.' 'Z32O12XQLNTSW2' > /dev/null
 
 echo 'delete_alias_record tests completed.'
@@ -1134,7 +1134,7 @@ echo 'delete_alias_record tests completed.'
 ## TEST 18: create_loadbalancer_alias_record
 #############################################
 
-# Clear the hosted zone.          
+# Clear the hosted zone.   
 __test_delete_alias_record 'www.maxmin.it' '1203266565.eu-west-1.elb.amazonaws.com.' 'Z32O12XQLNTSW2' > /dev/null
 
 # Insert www.maxmin.it record successfully, valid request id expected.
@@ -1149,10 +1149,10 @@ fi
 
 # Check the alias record target DNS name value.
 value18b="$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.DNSName" \
-          --output text)"
-          
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.DNSName" \
+   --output text)"
+   
 # Check that the target DNS name has the 'dualstack' prefix appended and a '.' suffix appendend.
 if [[ "${value18b}" != 'dualstack.1203266565.eu-west-1.elb.amazonaws.com.' ]]
 then
@@ -1162,10 +1162,10 @@ fi
 
 # Check the alias record target hosted zone ID.
 value18c="$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.HostedZoneId" \
-          --output text)"
-          
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.HostedZoneId" \
+   --output text)"
+   
 if [[ "${value18c}" != 'Z32O12XQLNTSW2' ]]
 then
    echo 'ERROR: testing create_loadbalancer_alias_record retriving alias record target hosted zone.'
@@ -1188,10 +1188,10 @@ fi
 
 # Check the alias record target DNS name value.
 value18c="$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.DNSName" \
-          --output text)"
-          
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.DNSName" \
+   --output text)"
+   
 # Check that the target DNS name has the 'dualstack' prefix appended and a '.' suffix appendend.
 if [[ "${value18c}" != 'dualstack.1203266565.eu-west-1.elb.amazonaws.com.' ]]
 then
@@ -1201,10 +1201,10 @@ fi
 
 # Check the alias record target hosted zone ID.
 value18d="$(aws route53 list-resource-record-sets \
-          --hosted-zone-id "${HOSTED_ZONE_ID}" \
-          --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.HostedZoneId" \
-          --output text)"
-          
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[?contains(Name,'www.maxmin.it')].AliasTarget.HostedZoneId" \
+   --output text)"
+   
 if [[ "${value18d}" != 'Z32O12XQLNTSW2' ]]
 then
    echo 'ERROR: testing create_loadbalancer_alias_record retriving alias record target hosted zone.'
