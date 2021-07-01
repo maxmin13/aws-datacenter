@@ -3,14 +3,14 @@
               "DurationInYears": 1,
               "AutoRenew": true,
               "AdminContact": {
-                  "FirstName": "Massimiliano",
-                  "LastName": "Minardi",
+                  "FirstName": "Max",
+                  "LastName": "Min",
                   "ContactType": "PERSON",
-                  "AddressLine1": "40 Blessington Street",
-                  "City": "Dublin",
-                  "CountryCode": "IE",
-                  "ZipCode": "D07 T2H0",
-                  "PhoneNumber": "+353.838146399",
+                  "AddressLine1": "XX XXXXXX Street",
+                  "City": "XXXXX",
+                  "CountryCode": "XX",
+                  "ZipCode": "XXX XXXX",
+                  "PhoneNumber": "+XXX.XXXXXXXXX",
                   "ExtraParams": [ 
                      { 
                         "Name": "IT_NATIONALITY",
@@ -18,20 +18,20 @@
                      },
                      { 
                         "Name": "IT_PIN",
-                        "Value": "AY9195328"
+                        "Value": "NATIONAL ID CARD NUMBER"
                      }
                   ],                  
-                  "Email": "minardi.massimiliano@libero.it"
+                  "Email": "max.min@libero.it"
               },
               "RegistrantContact": {
-                  "FirstName": "Massimiliano",
-                  "LastName": "Minardi",
+                  "FirstName": "Max",
+                  "LastName": "Min",
                   "ContactType": "PERSON",
-                  "AddressLine1": "40 Blessington Street",
-                  "City": "Dublin",
-                  "CountryCode": "IE",
-                  "ZipCode": "D07 T2H0",
-                  "PhoneNumber": "+353.838146399",
+                  "AddressLine1": "XX XXXXXX Street",
+                  "City": "XXXXX",
+                  "CountryCode": "XX",
+                  "ZipCode": "XXX XXXX",
+                  "PhoneNumber": "+XXX.XXXXXXXXX",
                   "ExtraParams": [ 
                      { 
                         "Name": "IT_NATIONALITY",
@@ -39,20 +39,20 @@
                      },
                      { 
                         "Name": "IT_PIN",
-                        "Value": "AY9195328"
+                        "Value": "NATIONAL ID CARD NUMBER"
                      }
                   ],                  
-                  "Email": "minardi.massimiliano@libero.it"
+                  "Email": "max.min@libero.it"
               },
               "TechContact": {
-                  "FirstName": "Massimiliano",
-                  "LastName": "Minardi",
+                  "FirstName": "Max",
+                  "LastName": "Min",
                   "ContactType": "PERSON",
-                  "AddressLine1": "40 Blessington Street",
-                  "City": "Dublin",     
-                  "CountryCode": "IE",
-                  "ZipCode": "D07 T2H0",
-                  "PhoneNumber": "+353.838146399",
+                  "AddressLine1": "XX XXXXXX Street",
+                  "City": "XXXXX",
+                  "CountryCode": "XX",
+                  "ZipCode": "XXX XXXX",
+                  "PhoneNumber": "+XXX.XXXXXXXXX",
                   "ExtraParams": [ 
                      { 
                         "Name": "IT_NATIONALITY",
@@ -60,10 +60,10 @@
                      },
                      { 
                         "Name": "IT_PIN",
-                        "Value": "AY9195328"
+                        "Value": "NATIONAL ID CARD NUMBER"
                      }
                   ],                  
-                  "Email": "minardi.massimiliano@libero.it"
+                  "Email": "max.min@libero.it"
               },
               "PrivacyProtectAdminContact": true,
               "PrivacyProtectRegistrantContact": true,
