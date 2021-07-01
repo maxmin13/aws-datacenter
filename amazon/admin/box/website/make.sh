@@ -28,20 +28,21 @@ instance_id="$(get_instance_id "${SRV_ADMIN_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* ERROR: Admin instance not found.'
+   echo '* ERROR: Admin box not found.'
    exit 1
 else
-   echo "* Admin instance ID: ${instance_id}."
+   instance_st="$(get_instance_state "${SRV_ADMIN_NM}")"
+   echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
 sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* ERROR: Admin Security Group not found.'
+   echo '* ERROR: Admin security group not found.'
    exit 1
 else
-   echo "* Admin Security Group ID: ${sgp_id}."
+   echo "* Admin security group ID: ${sgp_id}."
 fi
 
 eip="$(get_public_ip_address_associated_with_instance "${SRV_ADMIN_NM}")"

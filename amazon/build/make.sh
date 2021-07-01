@@ -42,7 +42,7 @@ echo
    
    echo
 
-   # Route 53 tests.
+   # route 53 tests.
    . "${PROJECT_DIR}"/amazon/lib/aws/route53/test/make.sh  
    
 } ### >> "${log_file}" 2>&1  

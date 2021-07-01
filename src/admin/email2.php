@@ -25,7 +25,7 @@ Sent to <?php echo $to;?>
 
 <br><br>
 
-Check the sendemails Database table.
+Check the sendemails database table.
 
 <br><br>
 

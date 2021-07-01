@@ -19,17 +19,18 @@ if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Shared box not found.'
 else
-   echo "* Shared box ID: ${instance_id}."
+   instance_st="$(get_instance_state "${SHAR_INSTANCE_NM}")"
+   echo "* Shared box ID: ${instance_id} (${instance_st})."
 fi
 
-# The temporary Security Group used to build the image, it should be already deleted.
+# The temporary security group used to build the image, it should be already deleted.
 sgp_id="$(get_security_group_id "${SHAR_INSTANCE_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: Security Group not found.'
+   echo '* WARN: security group not found.'
 else
-   echo "* Security Group: ${sgp_id}."
+   echo "* security group. ${sgp_id}."
 fi
 
 image_id="$(get_image_id "${SHAR_IMAGE_NM}")"
@@ -78,11 +79,9 @@ then
       delete_image_snapshot "${id}"
       
       echo 'Snapshot deleted.'
+      echo
    done
 fi
 
-echo
-echo 'Shared image deleted'
-echo
 
 

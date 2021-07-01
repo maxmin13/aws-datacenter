@@ -52,28 +52,28 @@ https://www.maxmin.it
 
 ## Access the Admin website:
 
-Enable access to the Admin website's 443 port in the Security Group.
+Enable access to the Admin website's 443 port in the security group.
 
 https://admin.maxmin.it
 (password is admin)
 
 ## Access the M/Monit website:
 
-Enable access to the M/Monit website's 8443 port in the Security Group.
+Enable access to the M/Monit website's 8443 port in the security group.
 
 https://admin.maxmin.it:8443
 (admin/swordfish)
 
 ## Access to PhpMyAdmin website:
 
-Enable access to the PhpMyAdmin website's 7443 port in the Security Group.
+Enable access to the PhpMyAdmin website's 7443 port in the security group.
 
 https://admin.maxmin.it:7443/phpmyadmin/index.php
 (maxmin/fognamarcia11)
 
 ## Access to Loganalyzer website:
 
-Enable access to the Loganalyzer website's 9443 port in the Security Group.
+Enable access to the Loganalyzer website's 9443 port in the security group.
 
 https://admin.maxmin.it:9443/loganalyzer/index.php
 

@@ -24,39 +24,30 @@ dtc_id="$(get_datacenter_id "${DTC_NM}")"
   
 if [[ -z "${dtc_id}" ]]
 then
-   echo '* ERROR: Data Center not found.'
+   echo '* ERROR: data center not found.'
    exit 1
 else
-   echo "* Data Center ID: ${dtc_id}."
+   echo "* data center ID: ${dtc_id}."
 fi
 
 subnet_id="$(get_subnet_id "${DTC_SUBNET_MAIN_NM}")"
 
 if [[ -z "${subnet_id}" ]]
 then
-   echo '* ERROR: main Subnet not found.'
+   echo '* ERROR: main subnet not found.'
    exit 1
 else
-   echo "* main Subnet ID: ${subnet_id}."
+   echo "* main subnet ID: ${subnet_id}."
 fi
 
 image_id="$(get_image_id "${SHAR_IMAGE_NM}")"
-image_state="$(get_image_state "${SHAR_IMAGE_NM}")"
 
-if [[ -n "${image_id}" ]]
+if [[ -z "${image_id}" ]]
 then
-   if [[ 'available' == "${image_state}" ]]
-   then
-      # If the image is alredy available, no need to run the script.
-      echo "* WARN: the image is already created (${image_state}), skipping creating the Shared box." 
-      echo
-      
-      return
-   else
-      echo "* ERROR: the image is already created (${image_state})."
-      
-      exit 1 
-   fi
+   echo '* WARN: Shared image not found.'
+else
+   image_state="$(get_image_state "${SHAR_IMAGE_NM}")"
+   echo "* Shared image ID: ${image_id} (${image_state})."
 fi
 
 echo
@@ -66,18 +57,18 @@ rm -rf "${TMP_DIR:?}"/"${shared_dir}"
 mkdir "${TMP_DIR}"/"${shared_dir}"
 
 ## 
-## Security Group
+## Security group
 ##
 
 sgp_id="$(get_security_group_id "${SHAR_INSTANCE_SEC_GRP_NM}")"
 
 if [[ -n "${sgp_id}" ]]
 then
-   echo 'WARN: the Shared Security Group is already created.'
+   echo 'WARN: the Shared security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${SHAR_INSTANCE_SEC_GRP_NM}" 'Shared Security Group')"  
+   sgp_id="$(create_security_group "${dtc_id}" "${SHAR_INSTANCE_SEC_GRP_NM}" 'Shared security group.')"  
 
-   echo 'Created Shared Security Group.'
+   echo 'Created Shared security group.'
 fi
 
 granted_ssh_22="$(check_access_from_cidr_is_granted  "${sgp_id}" '22' '0.0.0.0/0')"
@@ -105,7 +96,6 @@ fi
 ## Removes the default user, creates the admin-user user and sets the instance's hostname.     
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${SHAR_INSTANCE_USER_PWD}")" 
-
 key_pair_file="$(get_keypair_file_path "${SHAR_INSTANCE_KEY_PAIR_NM}" "${SHAR_INSTANCE_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
@@ -134,19 +124,26 @@ echo 'cloud_init.yml ready.'
 ## Shared box
 ## 
 
+instance_id="$(get_instance_id "${SHAR_INSTANCE_NM}")"
 instance_state="$(get_instance_state "${SHAR_INSTANCE_NM}")"
 
-if [[ -n "${instance_state}" && 'running' == "${instance_state}" ]]
-then
-   instance_id="$(get_instance_id "${SHAR_INSTANCE_NM}")"
-
-   echo "WARN: Shared box already created (${instance_state})."
+if [[ -n "${image_id}" && 'available' == "${image_state}" ]]
+then    
+   echo 'Shared image already created, skipping creating Shared box.'
+   return
    
-elif [[ -n "${instance_state}" && 'running' != "${instance_state}" ]]
+elif [[ -n "${instance_id}" ]]
 then
-   echo "ERROR: Shared box already created (${instance_state})."
-   
-   exit
+   if [[ 'running' == "${instance_state}" || 'stopped' == "${instance_state}" ]]
+   then
+      echo "WARN: Shared box already created (${instance_state})."
+      echo
+      return
+   else
+      # An istance lasts in terminated status for about an hour, before that change name.
+      echo "ERROR: Shared box already created (${instance_state})."
+      exit 1
+   fi
 else
    echo 'Creating the Shared box ...'
    
@@ -294,11 +291,8 @@ then
    revoke_access_from_cidr "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Shared box.' 
+   echo
 fi
 
 # Removing old files
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"
-
-echo
-echo "Shared box created."
-echo

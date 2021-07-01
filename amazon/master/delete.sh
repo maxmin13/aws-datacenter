@@ -39,7 +39,7 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi
-
+   
    echo 
 
    # Make a backup of the database.
@@ -48,9 +48,9 @@ echo
    # Delete the application hosted zone
    . "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh         
 
-   # Delete the websites. TODO ERROR REMOVING ADMIN WS
-   #. "${PROJECT_DIR}"/amazon/admin/box/website/delete.sh      
-   #. "${PROJECT_DIR}"/amazon/webphp/box/website/delete.sh 1  
+   # Delete the websites. 
+   . "${PROJECT_DIR}"/amazon/admin/box/website/delete.sh      
+   . "${PROJECT_DIR}"/amazon/webphp/box/website/delete.sh 1  
    
    # Delete the server instances.
    . "${PROJECT_DIR}"/amazon/shared/box/delete.sh             
@@ -58,11 +58,10 @@ echo
    . "${PROJECT_DIR}"/amazon/admin/box/delete.sh 
    . "${PROJECT_DIR}"/amazon/loadbalancer/box/delete.sh       
 
-   ### TODO: /home/admin-user/script/delete_database.sh: line 17: mysql: command not found
-   # Delete the Database objects.
-   ## . "${PROJECT_DIR}"/amazon/database/box/data/delete.sh
+   # Delete the database objects.
+   . "${PROJECT_DIR}"/amazon/database/box/data/delete.sh
 
-   # Delete the Database instance.
+   # Delete the database instance.
    . "${PROJECT_DIR}"/amazon/database/box/delete.sh              
 
    # Delete the Shared instance.

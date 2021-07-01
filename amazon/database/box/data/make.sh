@@ -5,7 +5,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-# Uploads Database files to the Admin server and runs them.
+# Uploads database files to the Admin server and runs them.
 
 database_dir='database'
 
@@ -18,20 +18,20 @@ instance_id="$(get_instance_id "${SRV_ADMIN_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* ERROR: Admin instance not found.' 
-   exit 1
+   echo '* WARN: Admin box not found.'
 else
-   echo "* Admin instance ID: ${instance_id}."
+   instance_st="$(get_instance_state "${SRV_ADMIN_NM}")"
+   echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
 sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* ERROR: Admin Security Group not found.'
+   echo '* ERROR: Admin security group not found.'
    exit 1
 else
-   echo "* Admin Security Group ID: ${sgp_id}."
+   echo "* Admin security group ID: ${sgp_id}."
 fi
 
 eip="$(get_public_ip_address_associated_with_instance "${SRV_ADMIN_NM}")"
@@ -112,16 +112,16 @@ sed -e "s/SEDdatabase_hostSED/${db_endpoint}/g" \
 
 echo 'install_database.sh ready.' 
 
-echo "Uploading Database scripts ..."    
+echo "Uploading database scripts ..."    
 scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${database_dir}"/dbs.sql \
     "${TMP_DIR}"/"${database_dir}"/dbusers.sql \
     "${TMP_DIR}"/"${database_dir}"/install_database.sh     
        
 echo 'Scripts uploaded.'
-echo "Installing Database objects ..."
+echo "Installing database objects ..."
  
-# Run the install Database script uploaded in the Admin server. 
+# Run the install database script uploaded in the Admin server. 
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_database.sh" \
     "${key_pair_file}" \
     "${eip}" \

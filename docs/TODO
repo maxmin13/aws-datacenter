@@ -24,12 +24,6 @@ production and development
 M/Monit certificate needs to be manually copied together with the private key in /opt/mmonit/conf
 
 
-#####################################################
-
-check the delete.sh scripts,
-do not exit if the instance is not there, 
-go on and try to delete security groups .....
-
 ###############################################
 
 when deleting the load balancer, set a trap and catch the error,
@@ -49,7 +43,7 @@ maybe install Chef with Cloud Init and run recepies instead of the scripts.
 
 ###########################
 
-add tag or desc to Security Group in/out rules
+add tag or desc to security group in/out rules
 
 ############################
 fix SC2001 in httpd_utils.sh

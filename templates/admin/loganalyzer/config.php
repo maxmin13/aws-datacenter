@@ -5,7 +5,7 @@
 	* -----------------------------------------------------------------
 	* Main Configuration File
 	*
-	* -> Configuration need variables for the Database connection
+	* -> Configuration need variables for the database connection
 	*
 	* Copyright (C) 2008-2010 Adiscon GmbH.
 	*

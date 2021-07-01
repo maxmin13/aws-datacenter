@@ -167,7 +167,7 @@ find "${lbal_docroot}" -type d -exec chmod 755 {} +
 find "${lbal_docroot}" -type f -exec chown root:root {} +
 find "${lbal_docroot}" -type f -exec chmod 644 {} +
 
-# Enable the Load Balancer endopoint.
+# Enable the load balancer endopoint.
 cp -f "${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
 
 if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" ]]
@@ -177,7 +177,7 @@ then
    echo 'Load Balancer healt-check endpoint enabled.'
 fi 
 
-# Enable Load Balancer HTTP port.
+# Enable load balancer HTTP port.
 sed -i "s/^#Listen \+${LBAL_HTTP_PORT}/Listen ${LBAL_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
 echo "Enabled Apache web server listen on ${LBAL_HTTP_PORT} port."

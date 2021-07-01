@@ -13,7 +13,7 @@ set +o xtrace
 # Creates a DNS record 'admin.maxmin.it' that 
 # points to the Admin website IP address and a 
 # DNS record (alias) 'www.maxmin.it' that points 
-# to the Load Balancer DNS name.
+# to the load balancer DNS name.
 ################################################
 
 echo '***************'
@@ -28,7 +28,7 @@ target_lbal_dns_nm="$(get_alias_record_dns_name_value \
        
 if [[ -z "${target_lbal_dns_nm}" ]]
 then
-   echo '* WARN: Load Balancer DNS record not found.'
+   echo '* WARN: load balancer DNS record not found.'
 else
    echo "* Load balancer DNS name: ${lbal_dns_nm}"
    echo "* Target load balancer name: ${target_lbal_dns_nm}"
@@ -40,7 +40,7 @@ target_lbal_dns_hosted_zone_id="$(get_alias_record_hosted_zone_value \
 
 if [[ -z "${target_lbal_dns_hosted_zone_id}" ]]
 then
-   echo '* WARN: Load Balancer hosted zone DNS record not found.'
+   echo '* WARN: load balancer hosted zone DNS record not found.'
 else
    echo "* Target load balancer hosted zone ID: ${target_lbal_dns_hosted_zone_id}."
 fi
@@ -85,7 +85,7 @@ else
 fi
 
 ##
-## Load Balancer www.admin.it record.
+## load balancer www.admin.it record.
 ##
 
 has_lbal_record="$(check_hosted_zone_has_record "${LBAL_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
@@ -94,7 +94,7 @@ if [[ 'true' == "${has_lbal_record}" ]]
 then
    echo 'WARN: found load balance record, deleting ...'
    
-   request_id="$(delete_loadbalancer_alias_record \
+   request_id="$(delete_alias_record \
        "${LBAL_DNS_SUB_DOMAIN}" \
        "${MAXMIN_TLD}" \
        "${target_lbal_dns_nm}" \
@@ -104,7 +104,7 @@ then
    echo "Load balancer record deleted (${status})"
 fi
 
-## Create an alias that points to the Load Balancer 
+## Create an alias that points to the load balancer 
 
 target_lbal_dns_nm="$(get_loadbalancer_dns_name "${LBAL_NM}")"
 target_lbal_dns_hosted_zone_id="$(get_loadbalancer_dns_hosted_zone_id "${LBAL_NM}")"
@@ -113,7 +113,8 @@ request_id="$(create_loadbalancer_alias_record \
     "${LBAL_DNS_SUB_DOMAIN}" \
     "${MAXMIN_TLD}" \
     "${target_lbal_dns_nm}" \
-    "${target_lbal_dns_hosted_zone_id}")"                                      
+    "${target_lbal_dns_hosted_zone_id}")"   
+                                       
 status="$(get_record_request_status "${request_id}")"
    
 echo "Load balancer record "${lbal_dns_nm}" created (${status})."

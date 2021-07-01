@@ -18,7 +18,7 @@ set +o xtrace
 # for a domain, such as example.com, and its subdomains (apex.example.com, 
 # acme.example.com). 
 # You can't create a hosted zone for a top-level domain (TLD) such as .com.
-# For public hosted zones, Route 53 automatically creates a default SOA record 
+# For public hosted zones, route 53 automatically creates a default SOA record 
 # and four NS records for the zone. 
 # If you want to use the same name servers for multiple public hosted zones, 
 # you can optionally associate a reusable delegation set with the hosted zone.
@@ -64,7 +64,7 @@ set +o xtrace
 # Creates a new public or private hosted zone. 
 # When you submit a CreateHostedZone request, the initial status of the hosted 
 # zone is PENDING . For public hosted zones, this means that the NS and SOA 
-# records are not yet available on all Route 53 DNS servers. 
+# records are not yet available on all route 53 DNS servers. 
 # When the NS and SOA records are available, the status of the zone changes to 
 # INSYNC .
 #
@@ -402,7 +402,7 @@ function get_alias_record_hosted_zone_value()
 # Adds a type A record to a hosted zone.
 # Type A-records are the DNS server equivalent of the hosts file, a simple 
 # domain name to IP-address mapping. 
-# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+# Changes generally propagate to all route 53 name servers within 60 seconds. 
 #
 # Globals:
 #  None
@@ -441,7 +441,7 @@ function create_record()
 #===============================================================================
 # Deletes a type A record from a hosted zone.
 # If the subdomain is not passed, the domain is considered a top level domain.
-# Changes to a hosted zoned generally propagate to all Route 53 name servers 
+# Changes to a hosted zoned generally propagate to all route 53 name servers 
 # within 60 seconds. 
 #
 # Globals:
@@ -482,7 +482,7 @@ function delete_record()
 # Adds/remove a type A record to/from a hosted zone.
 # Type A-records are the DNS server equivalent of the hosts file, a simple 
 # domain name to IP-address mapping. 
-# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+# Changes generally propagate to all route 53 name servers within 60 seconds. 
 #
 # Globals:
 #  None
@@ -547,7 +547,7 @@ function __create_delete_record()
 # An Alias record is used to route traffic to selected AWS resources, such as 
 # CloudFront distributions and Amazon S3 buckets, AWS load balancer, or to route 
 # traffic from one record in a hosted zone to another record.
-# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+# Changes generally propagate to all route 53 name servers within 60 seconds. 
 #
 # Globals:
 #  None
@@ -594,7 +594,7 @@ function create_alias_record()
 # An Alias record is used to route traffic to selected AWS resources, such as 
 # CloudFront distributions and Amazon S3 buckets, AWS load balancer, or to route 
 # traffic from one record in a hosted zone to another record.
-# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+# Changes generally propagate to all route 53 name servers within 60 seconds. 
 #
 # Globals:
 #  None
@@ -655,7 +655,7 @@ function delete_alias_record()
 # Creates a load balancer record. 
 # If the target domain name doesn't have the 'dualstack' prefix, appends it.
 # If the target domain name doesn't have a trailing '.' dot, appends it.
-# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+# Changes generally propagate to all route 53 name servers within 60 seconds. 
 #
 # Globals:
 #  None
@@ -704,7 +704,7 @@ function create_loadbalancer_alias_record()
 # An Alias record is used to route traffic to selected AWS resources, such as 
 # CloudFront distributions and Amazon S3 buckets, AWS load balancer, or to route 
 # traffic from one record in a hosted zone to another record.
-# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+# Changes generally propagate to all route 53 name servers within 60 seconds. 
 #
 # Globals:
 #  None
@@ -771,9 +771,9 @@ function __create_delete_alias_record()
 # zone.
 # The status is one of the following values:
 # PENDING indicates that the changes in this request have not propagated to 
-# all Amazon Route 53 DNS servers. This is the initial status of all change 
+# all Amazon route 53 DNS servers. This is the initial status of all change 
 # batch requests.
-# INSYNC indicates that the changes have propagated to all Route 53 DNS servers.
+# INSYNC indicates that the changes have propagated to all route 53 DNS servers.
 #
 # Globals:
 #  None
@@ -931,7 +931,7 @@ function __create_alias_record_change_batch()
 
 #===============================================================================
 # Submit the change batch request.
-# Changes generally propagate to all Route 53 name servers within 60 seconds.  
+# Changes generally propagate to all route 53 name servers within 60 seconds.  
 #
 # Globals:
 #  None

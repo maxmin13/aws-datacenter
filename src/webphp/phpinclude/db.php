@@ -2,7 +2,7 @@
 
 /**
  * You can edit dbconnect function to provide more users.
- * Using several users with restricted permissions is key to Database security.
+ * Using several users with restricted permissions is key to database security.
  * So, if you have a section of your website which only reads data from one or two
  * tables, set a user up who can only read from those tables - no other permissions.
  * */

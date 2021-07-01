@@ -45,30 +45,30 @@ dtc_id="$(get_datacenter_id "${DTC_NM}")"
   
 if [[ -z "${dtc_id}" ]]
 then
-   echo '* ERROR: Data Center not found.'
+   echo '* ERROR: data center not found.'
    exit 1
 else
-   echo "* Data Center ID: ${dtc_id}."
+   echo "* data center ID: ${dtc_id}."
 fi
 
 subnet_id="$(get_subnet_id "${DTC_SUBNET_MAIN_NM}")"
 
 if [[ -z "${subnet_id}" ]]
 then
-   echo '* ERROR: main Subnet not found.'
+   echo '* ERROR: main subnet not found.'
    exit 1
 else
-   echo "* main Subnet ID: ${subnet_id}."
+   echo "* main subnet ID: ${subnet_id}."
 fi
 
 db_sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
   
 if [[ -z "${db_sgp_id}" ]]
 then
-   echo '* ERROR: database Security Group not found.'
+   echo '* ERROR: database security group not found.'
    exit 1
 else
-   echo "* database Security Group ID: ${db_sgp_id}."
+   echo "* database security group ID: ${db_sgp_id}."
 fi
 
 db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
@@ -98,18 +98,18 @@ rm -rf "${TMP_DIR:?}"/"${admin_dir}"
 mkdir "${TMP_DIR}"/"${admin_dir}"
 
 ## 
-## Security Group 
+## security group 
 ## 
 
 sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
 
 if [[ -n "${sgp_id}" ]]
 then
-   echo 'WARN: the Admin Security Group is already created.'
+   echo 'WARN: the Admin security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${SRV_ADMIN_SEC_GRP_NM}" 'Admin Security Group')"  
+   sgp_id="$(create_security_group "${dtc_id}" "${SRV_ADMIN_SEC_GRP_NM}" 'Admin security group.')"  
 
-   echo 'Created Admin Security Group.'
+   echo 'Created Admin security group.'
 fi
 
 granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
@@ -124,14 +124,14 @@ else
 fi
  
 ##
-## Database access 
+## database access 
 ##
 
 granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_MMDATA_PORT}" "${sgp_id}")"
 
 if [[ -n "${granted_db}" ]]
 then
-   echo 'WARN: Database access already granted.'
+   echo 'WARN: database access already granted.'
 else
    allow_access_from_security_group "${db_sgp_id}" "${DB_MMDATA_PORT}" "${sgp_id}"
    
@@ -145,7 +145,6 @@ fi
 ## Removes the default user, creates the admin-user user and sets the instance's hostname.     
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${SRV_ADMIN_USER_PWD}")" 
-
 key_pair_file="$(get_keypair_file_path "${SRV_ADMIN_KEY_PAIR_NM}" "${SRV_ADMIN_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
@@ -188,7 +187,6 @@ then
       echo "WARN: Admin box already created (${instance_state})."
    else
       echo "ERROR: Admin box already created (${instance_state})."
-      
       exit 1
    fi
 else
@@ -426,7 +424,7 @@ echo 'Scripts uploaded.'
 # TODO 
 # Rotate log files cron job files
 # Java mail
-# Phpmyadmin (MySQL remote Database administration)
+# Phpmyadmin (MySQL remote database administration)
 # TODO
 
 echo 'Installing the Admin modules ...'

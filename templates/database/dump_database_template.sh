@@ -10,7 +10,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo 'Installing Mysql client ...' >> "${dump_log_file}" 2>&1
 
-yum install -y mysql
+yum install -y mysql >> "${dump_log_file}" 2>&1
 
 echo 'Mysql client installed.' >> "${dump_log_file}" 2>&1
 echo 'Dumping the database:' >> "${dump_log_file}" 2>&1

@@ -14,42 +14,42 @@ db_state="$(get_database_state "${DB_MMDATA_NM}")"
 
 if [[ -z "${db_state}" ]]
 then
-   echo '* WARN: Database box not found.'
+   echo '* WARN: database box not found.'
 else
-   echo "* Database status: ${db_state}."
+   echo "* database status: ${db_state}."
 fi
 
 sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: Database Security Group not found.'
+   echo '* WARN: database security group not found.'
 else
-   echo "* Database Security Group ID: ${sgp_id}."
+   echo "* database security group ID: ${sgp_id}."
 fi
 
 db_subnet_group_status="$(get_db_subnet_group_status "${DB_MMDATA_SUB_GRP_NM}")"
 
 if [[ -z "${db_subnet_group_status}" ]]
 then
-   echo '* WARN: Database Subnet group not found.'
+   echo '* WARN: database subnet group not found.'
 else
-   echo "* Database Subnet group status: ${db_subnet_group_status}."
+   echo "* database subnet group status: ${db_subnet_group_status}."
 fi
 
 db_snapshot_ids="$(get_database_snapshot_ids "${DB_MMDATA_NM}")"
 
 if [[ -z "${db_snapshot_ids}" ]]
 then
-   echo '* WARN: Database snapshots not found'
+   echo '* WARN: database snapshots not found'
 else
-   echo "* Database snapshots identifiers: ${db_snapshot_ids}."
+   echo "* database snapshots identifiers: ${db_snapshot_ids}."
 fi
 
 echo
 
 ## 
-## Database box
+## database box
 ##
 if [[ -n "${db_state}" ]]
 then
@@ -57,7 +57,7 @@ then
    
    if [[ 'deleting' != "${db_state}" ]]
    then
-      echo 'Deleting Database instance ...' 
+      echo 'Deleting database instance ...' 
         
       delete_database "${DB_MMDATA_INSTANCE_NM}"
       
@@ -66,12 +66,12 @@ then
 fi
 
 ## 
-## Database snapshots
+## database snapshots
 ##
 
 if [[ -n "${db_snapshot_ids}" ]]
 then
-   echo 'Deleting Database snapshots ...'  
+   echo 'Deleting database snapshots ...'  
     
    for id in ${db_snapshot_ids}
    do
@@ -89,18 +89,18 @@ if [[ -n "${sgp_id}" ]]
 then
    delete_security_group "${sgp_id}" 
       
-   echo 'Database Security Group deleted.'
+   echo 'Database security group deleted.'
 fi
 
 ## 
-## Database Subnet Group
+## database subnet Group
 ## 
 
 if [[ -n "${db_subnet_group_status}" ]]
 then
    delete_db_subnet_group "${DB_MMDATA_SUB_GRP_NM}"
    
-   echo 'Database Subnet group deleted.'
+   echo 'Database subnet group deleted.'
 fi
 
 ##
@@ -116,6 +116,3 @@ then
    echo 'Log slow queries database parameter group deleted.'
 fi
 
-echo
-echo 'Database box deleted.'
-echo

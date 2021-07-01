@@ -5,12 +5,12 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-# Install Database from Admin server 
+# Install database from Admin server 
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 database_log_file=/var/log/database_install.log
 
-echo 'Installing Database ...' >> "${database_log_file}" 2>&1
+echo 'Installing database ...' >> "${database_log_file}" 2>&1
 
 yum install -y mysql >> "${database_log_file}" 2>&1
 
@@ -32,7 +32,7 @@ mysql --host=SEDdatabase_hostSED \
 
 echo 'Users created' >> "${database_log_file}" 2>&1
 
-echo 'Verifing Database ...' >> "${database_log_file}" 2>&1
+echo 'Verifing database ...' >> "${database_log_file}" 2>&1
 
 mysql --host=SEDdatabase_hostSED \
       --user=SEDdatabase_main_userSED \

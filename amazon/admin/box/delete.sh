@@ -16,16 +16,17 @@ if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Admin box not found.'
 else
-   echo "* Admin box ID: ${instance_id}."
+   instance_st="$(get_instance_state "${SRV_ADMIN_NM}")"
+   echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
 sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: Admin Security Group not found.'
+   echo '* WARN: Admin security group not found.'
 else
-   echo "* Admin Security Group ID: ${sgp_id}."
+   echo "* Admin security group ID: ${sgp_id}."
 fi
 
 eip="$(get_public_ip_address_associated_with_instance "${SRV_ADMIN_NM}")"
@@ -41,9 +42,9 @@ db_sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
 
 if [[ -z "${db_sgp_id}" ]]
 then
-   echo '* WARN: Database Security Group not found.'
+   echo '* WARN: database security group not found.'
 else
-   echo "* Database Security Group ID: ${db_sgp_id}."
+   echo "* database security group ID: ${db_sgp_id}."
 fi
 
 echo
@@ -59,12 +60,8 @@ rm -rf "${TMP_DIR:?}"/admin
 
 if [[ -n "${instance_id}" ]]
 then
-   instance_st="$(get_instance_state "${SRV_ADMIN_NM}")"
-
-   if [[ 'terminated' == "${instance_st}" ]]
+   if [[ 'terminated' != "${instance_st}" ]]
    then
-      echo 'Instance status is terminated.'
-   else
       echo "Deleting Admin box ..."
       
       delete_instance "${instance_id}"
@@ -74,7 +71,7 @@ then
 fi
 
 ## 
-## Database grants 
+## database grants 
 ## 
 
 db_sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
@@ -87,19 +84,19 @@ then
    then
    	revoke_access_from_security_group "${db_sgp_id}" "${DB_MMDATA_PORT}" "${sgp_id}"
    	
-   	echo 'Access to Database revoked.'
+   	echo 'Access to database revoked.'
    fi
 fi
 
 ## 
-## Security Group 
+## security group 
 ## 
   
 if [[ -n "${sgp_id}" ]]
 then
    delete_security_group "${sgp_id}" 
       
-   echo 'Admin Security Group deleted.'
+   echo 'Admin security group deleted.'
 fi
 
 ## 
@@ -129,11 +126,9 @@ then
    delete_keypair "${key_pair_file}"
    
    echo 'The SSH access key-pair have been deleted.'
+   echo
 fi
 
 ## Clearing
 rm -rf "${TMP_DIR:?}"/admin
 
-echo
-echo 'Admin box deleted.'
-echo

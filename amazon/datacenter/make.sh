@@ -20,7 +20,7 @@ dtc_id="$(get_datacenter_id "${DTC_NM}")"
 
 if [[ -n "${dtc_id}" ]]
 then
-   echo 'WARN: the Data Center has already been created.'
+   echo 'WARN: the data center has already been created.'
 else
    ## Make a new VPC with a master 10.0.0.0/16 subnet
    dtc_id="$(create_datacenter "${DTC_NM}")"
@@ -44,7 +44,7 @@ else
    echo 'Internet gateway created.' 
 fi
   
-## Check if the Internet Gateway is already attached to the VPC.
+## Check if the internet gateway is already attached to the VPC.
 attach_status="$(get_internet_gateway_attachment_status "${DTC_INTERNET_GATEWAY_NM}" "${dtc_id}")"
 
 if [[ 'available' != "${attach_status}" ]]
@@ -55,7 +55,7 @@ then
 fi
 
 ## 
-## Route table
+## route table
 ## 
 
 rtb_id="$(get_route_table_id "${DTC_ROUTE_TABLE_NM}")"
@@ -71,17 +71,17 @@ fi
 
 set_route "${rtb_id}" "${internet_gate_id}" '0.0.0.0/0'
 
-echo 'Created Route that points all traffic to the internet gateway.'
+echo 'Created route that points all traffic to the internet gateway.'
 
 ## 
-## Main Subnet 
+## Main subnet 
 ## 
 
 main_subnet_id="$(get_subnet_id "${DTC_SUBNET_MAIN_NM}")"
 
 if [[ -n "${main_subnet_id}" ]]
 then
-   echo 'WARN: the main Subnet has already been created.'
+   echo 'WARN: the main subnet has already been created.'
 else
    main_subnet_id="$(create_subnet "${DTC_SUBNET_MAIN_NM}" \
        "${DTC_SUBNET_MAIN_CIDR}" \
@@ -89,18 +89,18 @@ else
        "${dtc_id}" \
        "${rtb_id}")"
    
-   echo "The main Subnet has been created in the ${DTC_DEPLOY_ZONE_1} availability zone and associated to the route table."    
+   echo "The main subnet has been created in the ${DTC_DEPLOY_ZONE_1} availability zone and associated to the route table."    
 fi
 
 ## 
-## Backup Subnet 
+## Backup subnet 
 ## 
 
 backup_subnet_id="$(get_subnet_id "${DTC_SUBNET_BACKUP_NM}")"	                
 	                
 if [[ -n "${backup_subnet_id}" ]]
 then
-   echo 'WARN: the main Subnet has already been created.'
+   echo 'WARN: the main subnet has already been created.'
 else
    backup_subnet_id="$(create_subnet "${DTC_SUBNET_BACKUP_NM}" \
        "${DTC_SUBNET_BACKUP_CIDR}" \
@@ -108,7 +108,7 @@ else
        "${dtc_id}" \
        "${rtb_id}")"
 
-   echo "The backup Subnet has been created in the ${DTC_DEPLOY_ZONE_2} availability zone and associated to the route table."
+   echo "The backup subnet has been created in the ${DTC_DEPLOY_ZONE_2} availability zone and associated to the route table."
 fi
 
 echo

@@ -32,7 +32,7 @@ set +o xtrace
 #     Require all granted
 #  </Directory>
 #
-# Ex: to create a Load Balancer virtual host for the heal-check of an instance:
+# Ex: to create a load balancer virtual host for the heal-check of an instance:
 #
 #  create_virtualhost_configuration_file './virtual.conf' '127,0.0.1' '8090' 'admin.maxmin.it' '/var/www/html' 'elb.maxmin.it' 
 #  add_loadbalancer_rule_to_virtualhost './virtual.conf' 'elb.htm' '/var/www/html' 'elb.maxmin.it' 

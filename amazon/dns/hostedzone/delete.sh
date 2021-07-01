@@ -8,7 +8,7 @@ set +o xtrace
 ###############################################
 # Creates the DNS record that points to the 
 # Admin website and a DNS record alias that 
-# points to the Load Balancer 
+# points to the load balancer 
 ###############################################
 
 echo '***************'
@@ -23,7 +23,7 @@ target_lbal_dns_nm="$(get_alias_record_dns_name_value \
        
 if [[ -z "${target_lbal_dns_nm}" ]]
 then
-   echo '* WARN: Load Balancer DNS record not found.'
+   echo '* WARN: load balancer DNS record not found.'
 else
    echo "* Load balancer DNS name: ${lbal_dns_nm}"
    echo "* Target load balancer name: ${target_lbal_dns_nm}"
@@ -35,7 +35,7 @@ target_lbal_dns_hosted_zone_id="$(get_alias_record_hosted_zone_value \
 
 if [[ -z "${target_lbal_dns_hosted_zone_id}" ]]
 then
-   echo '* WARN: Load Balancer hosted zone DNS record not found.'
+   echo '* WARN: load balancer hosted zone DNS record not found.'
 else
    echo "* Target load balancer hosted zone ID: ${target_lbal_dns_hosted_zone_id}."
 fi
@@ -54,7 +54,7 @@ fi
 echo
 
 ##
-## Load Balancer www.admin.it record.
+## load balancer www.admin.it record.
 ##
 
 has_lbal_record="$(check_hosted_zone_has_record "${LBAL_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
@@ -107,4 +107,6 @@ then
 else
    echo "Hosted zone ${MAXMIN_TLD} not deleted."
 fi
+
+echo
 

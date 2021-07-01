@@ -16,15 +16,15 @@ set +o xtrace
 #===============================================================================
 
 #===============================================================================
-# Returns the Load Balancer DNS name or, if the Load Balancer doesn't exist, an
+# Returns the load balancer DNS name or, if the load balancer doesn't exist, an
 # empty string.
 #
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm     -- The Load Balancer name.
+# +loadbalancer_nm     -- The load balancer name.
 # Returns:      
-#  The Load Balancer DNS name, or blanc if the Looad Balancer is not found.  
+#  The load balancer DNS name, or blanc if the Looad Balancer is not found.  
 #===============================================================================
 function get_loadbalancer_dns_name()
 {
@@ -47,13 +47,13 @@ function get_loadbalancer_dns_name()
 }
 
 #===============================================================================
-# Returns the Load Balancer DNS hosted zone identifier or, if the Load Balancer 
+# Returns the load balancer DNS hosted zone identifier or, if the load balancer 
 # doesn't exist, an empty string.
 #
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm     -- The Load Balancer name.
+# +loadbalancer_nm     -- The load balancer name.
 # Returns:      
 #  The ELB hosted zone identifier, or blanc if the ELB is not found.  
 #===============================================================================
@@ -85,11 +85,11 @@ function get_loadbalancer_dns_hosted_zone_id()
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm     -- The Load Balancer name.
+# +loadbalancer_nm     -- The load balancer name.
 # +cert_arn            -- The Amazon Resource Name (ARN) specifying the server
 #                         certificate.
-# +sg_id               -- The Loadbalancer's Security Group identifier.
-# +subnet_id           -- The Loadbalancer's Subnet identifier.
+# +sg_id               -- The Loadbalancer's security group identifier.
+# +subnet_id           -- The Loadbalancer's subnet identifier.
 # Returns:      
 #  None  
 #===============================================================================
@@ -121,13 +121,13 @@ function create_loadbalancer()
 # your EC2 instances. Each monitored instance is expected to provide a 
 # endpoint receable by the Load Balancer, ex: HTTP:8090/elb.htm.
 # The endpoint must return 'ok' response.
-# Each registered instance must allow access to the Load Balancer ping in the 
-# Security Group.
+# Each registered instance must allow access to the load balancer ping in the 
+# security group.
 #
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm     -- The Load Balancer name.
+# +loadbalancer_nm     -- The load balancer name.
 # Returns:      
 #  None  
 #===============================================================================
@@ -150,15 +150,15 @@ function configure_loadbalancer_health_check()
 
 #===============================================================================
 # Deletes the specified Load Balancer. 
-# The DNS name associated with a deleted Load Balancer is no longer usable. 
-# The name and associated DNS record of the deleted Load Balancer no longer 
+# The DNS name associated with a deleted load balancer is no longer usable. 
+# The name and associated DNS record of the deleted load balancer no longer 
 # exist and traffic sent to any of its IP addresses is no longer delivered to
 # your instances.
 #
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm     -- The Load Balancer name.
+# +loadbalancer_nm     -- The load balancer name.
 # Returns:      
 #  None  
 #===============================================================================
@@ -186,7 +186,7 @@ function delete_loadbalancer()
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm      -- Load Balancer name.
+# +loadbalancer_nm      -- load balancer name.
 # +instance_id          -- the instance ID.
 # Returns:      
 #  None  
@@ -217,7 +217,7 @@ function register_instance_with_loadbalancer()
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm      -- Load Balancer name.
+# +loadbalancer_nm      -- load balancer name.
 # +instance_id          -- the instance ID.
 # Returns:      
 #  None  
@@ -246,10 +246,10 @@ function deregister_instance_from_loadbalancer()
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm      -- Load Balancer name.
+# +loadbalancer_nm      -- load balancer name.
 # +instance_id          -- the instance ID.
 # Returns:      
-#  The Load Balancer name if the instance is registered, blanc otherwise.  
+#  The load balancer name if the instance is registered, blanc otherwise.  
 #===============================================================================
 function check_instance_is_registered_with_loadbalancer()
 {

@@ -8,10 +8,10 @@ set -o nounset
 set +o xtrace
 
 #===============================================================================
-# When you register a domain, Amazon Route 53 does the following:
+# When you register a domain, Amazon route 53 does the following:
 #
-# Creates a Route 53 hosted zone that has the same name as the domain. 
-# Route 53 assigns four name servers to your hosted zone and automatically 
+# Creates a route 53 hosted zone that has the same name as the domain. 
+# route 53 assigns four name servers to your hosted zone and automatically 
 # updates your domain registration with the names of these name servers.
 # Enables autorenew, so your domain registration will renew automatically each 
 # year. 
@@ -205,7 +205,7 @@ function get_request_status()
 # Creates the change batch request to create, delete or update a record type A.
 # A-records are the DNS server equivalent of the hosts file - a simple domain 
 # name to IP-address mapping. 
-# Changes generally propagate to all Route 53 name servers within 60 seconds. 
+# Changes generally propagate to all route 53 name servers within 60 seconds. 
 #
 # Globals:
 #  None

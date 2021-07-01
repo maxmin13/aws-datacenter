@@ -59,7 +59,7 @@ echo
    . "${PROJECT_DIR}"/amazon/admin/box/make.sh               
    . "${PROJECT_DIR}"/amazon/webphp/box/make.sh 1                  
 
-   # Deploy Database objects.
+   # Deploy database objects.
    . "${PROJECT_DIR}"/amazon/database/box/data/make.sh       
 
    # Deploy admin website and public webphp websites.

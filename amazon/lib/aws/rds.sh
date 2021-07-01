@@ -10,7 +10,7 @@ set +o xtrace
 #===============================================================================
 #          FILE: rds.sh
 #   DESCRIPTION: The script contains functions that use AWS AMI client to make 
-#                calls to Amazon Relational Database Service (Amazon RDS).
+#                calls to Amazon Relational database Service (Amazon RDS).
 #       GLOBALS: None
 #        AUTHOR: MaxMin, minardi.massimiliano@libero.it
 #===============================================================================
@@ -25,18 +25,18 @@ DB_ENGINE='MYSQL'
 DB_INSTANCE_TYPE='db.t3.micro'
 DB_VOLUME_SIZE='10' # in GB
 # 1=use multi-az, 0=don't
-# Disable automated Database backups
+# Disable automated database backups
 DB_BACKUP_RET_PERIOD='0'
 
 #===============================================================================
-# Returns the the DB Subnet Group status by name.
+# Returns the the DB subnet Group status by name.
 #
 # Globals:
 #  None
 # Arguments:
-# +dbsubnetg_nm     -- DB Subnet Group name.
+# +dbsubnetg_nm     -- DB subnet Group name.
 # Returns:      
-#  The DB Subnet Group status, or blanc if the DB Subnet Group is not found.  
+#  The DB subnet Group status, or blanc if the DB subnet Group is not found.  
 #===============================================================================
 function get_db_subnet_group_status()
 {
@@ -61,14 +61,14 @@ function get_db_subnet_group_status()
 }
 
 #===============================================================================
-# Creates a DB Subnet Group.
+# Creates a DB subnet Group.
 #
 # Globals:
 #  None
 # Arguments:
-# +dbsubnetg_nm     -- DB Subnet Group name.
-# +dbsubnetg_desc   -- DB Subnet Group description.
-# +subnet_ids       -- List of Subnet identifiers in the group.
+# +dbsubnetg_nm     -- DB subnet Group name.
+# +dbsubnetg_desc   -- DB subnet Group description.
+# +subnet_ids       -- List of subnet identifiers in the group.
 #                      The list must be in JSON format, ex: 
 #                      ["subnet-0d2ef22b8fea993c2","subnet-0e5eb1bfb7da6c56c"]
 # Returns:      
@@ -96,12 +96,12 @@ function create_db_subnet_group()
 }
 
 #===============================================================================
-# Deletes a DB Subnet Group.
+# Deletes a DB subnet Group.
 #
 # Globals:
 #  None
 # Arguments:
-# +dbsubnetg_nm     -- DB Subnet Group name.
+# +dbsubnetg_nm     -- DB subnet Group name.
 # Returns:      
 #  None
 #===============================================================================
@@ -223,7 +223,7 @@ function check_log_slow_queries_db_parameter_group_exists()
 }
 
 #===============================================================================
-# Returns the Database status by Database name.
+# Returns the database status by database name.
 #
 # Globals:
 #  None
@@ -256,7 +256,7 @@ function get_database_state()
 }
 
 #===============================================================================
-# Returns the Database endpoint by Database name.
+# Returns the database endpoint by database name.
 #
 # Globals:
 #  None
@@ -289,13 +289,13 @@ function get_database_endpoint()
 }
 
 #===============================================================================
-# Creates a Database Instance.
+# Creates a database Instance.
 #
 # Globals:
 #  None
 # Arguments:
 # +db_nm             -- DB name.
-# +sg_id             -- Security Group identifier.
+# +sg_id             -- security group identifier.
 # +db_pgp_nm         -- the name of a DB parameter group.
 # Returns:      
 #  None  
@@ -347,7 +347,7 @@ function create_database()
 }
 
 #===============================================================================
-# Deletes a Database Instance whithout creating a backup copy.
+# Deletes a database Instance whithout creating a backup copy.
 #
 # Globals:
 #  None
@@ -377,7 +377,7 @@ function delete_database()
 }
 
 #===============================================================================
-# Returns the list of Database Snapshot identifiers by Database name.
+# Returns the list of database Snapshot identifiers by database name.
 # The returned list is a string where the identifiers are separated by space. 
 #
 # Globals:
@@ -385,7 +385,7 @@ function delete_database()
 # Arguments:
 # +db_nm     -- DB name.
 # Returns:      
-#  The list of Database Snapshot identifiers, or blanc if no Snapshot is found.  
+#  The list of database Snapshot identifiers, or blanc if no Snapshot is found.  
 #===============================================================================
 function get_database_snapshot_ids()
 {
@@ -411,12 +411,12 @@ function get_database_snapshot_ids()
 }
 
 #===============================================================================
-# Deletes a Database Snapshot.
+# Deletes a database Snapshot.
 #
 # Globals:
 #  None
 # Arguments:
-# +db_snapshot_id   -- The Database Snapshot identifier.
+# +db_snapshot_id   -- The database Snapshot identifier.
 # Returns:      
 #  None  
 #===============================================================================

@@ -18,7 +18,7 @@ AWS_CHECK_IP_URL='http://checkip.amazonaws.com'
 MAXMIN_TLD='maxmin.it'
 
 ## *********** ##
-## Data Center ##
+## data center ##
 ## *********** ##
 
 DTC_NM='maxmin-datacenter'
@@ -34,7 +34,7 @@ DTC_INTERNET_GATEWAY_NM='maxmin-gate'
 DTC_ROUTE_TABLE_NM='maxmin-route-tb'
 
 ## ******** ##
-## Database ##
+## database ##
 ## ******** ##
 
 DB_MMDATA_INSTANCE_NM='mmdatainstance'
@@ -43,7 +43,7 @@ DB_MMDATA_NM='mmdata'
 DB_MMDATA_LOG_SLOW_QUERIES_PARAM_GRP_NM='logslowqueries' ## can't have capitals
 DB_MMDATA_LOG_SLOW_QUERIES_PARAM_GRP_DESC='Log slow queries database parameter group'
 DB_MMDATA_SUB_GRP_NM='maxmin-rds-subgp'
-DB_MMDATA_SUB_GRP_DESC='Database Subnet Group that spans multiple subnets'
+DB_MMDATA_SUB_GRP_DESC='Database subnet Group that spans multiple subnets'
 DB_MMDATA_SEC_GRP_NM='maxmin-rds-sgp'
 # The db main user is set when the db is created, see: rds.sh
 DB_MMDATA_MAIN_USER_NM='maxmin'
@@ -55,7 +55,7 @@ DB_MMDATA_JAVAMAIL_USER_NM='javamail'
 ## Shared image ##
 ## ************ ##
 
-SHAR_INSTANCE_NM='maxmin-shared-instance'
+SHAR_INSTANCE_NM='maxmin-shared-instance1'
 SHAR_INSTANCE_HOSTNAME='shared.maxmin.it'
 SHAR_INSTANCE_USER_NM='shared-user'
 SHAR_INSTANCE_PRIVATE_IP='10.0.0.8'
@@ -66,7 +66,7 @@ SHAR_IMAGE_NM='maxmin-shared-ami'
 SHAR_IMAGE_DESC='Linux secured Image'
 
 ## ************* ##
-## Load Balancer ##
+## load balancer ##
 ## ************* ##
 
 LBAL_NM='elbmaxmin'
@@ -79,7 +79,7 @@ LBAL_DNS_SUB_DOMAIN='www'
 ## Admin box ##
 ## ********* ##
 
-SRV_ADMIN_NM='maxmin-admin-instance'
+SRV_ADMIN_NM='maxmin-admin-instance1'
 SRV_ADMIN_PRIVATE_IP='10.0.0.10'
 SRV_ADMIN_HOSTNAME='admin.maxmin.it'
 SRV_ADMIN_USER_NM='admin-user'

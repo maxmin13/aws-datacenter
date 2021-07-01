@@ -19,17 +19,18 @@ if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Shared box not found.'
 else
-   echo "* Shared box ID: ${instance_id}."
+   instance_st="$(get_instance_state "${SHAR_INSTANCE_NM}")"
+   echo "* Shared box ID: ${instance_id} (${instance_st})."
 fi
 
-# The temporary Security Group used to build the image may already be gone
+# The temporary security group used to build the image may already be gone
 sgp_id="$(get_security_group_id "${SHAR_INSTANCE_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: Security Group not found.'
+   echo '* WARN: security group not found.'
 else
-   echo "* Security Group: ${sgp_id}."
+   echo "* security group. ${sgp_id}."
 fi
 
 echo
@@ -41,10 +42,8 @@ echo
 if [[ -n "${instance_id}" ]]
 then
    instance_st="$(get_instance_state "${SHAR_INSTANCE_NM}")"
-   if [[ 'terminated' == "${instance_st}" ]]
+   if [[ 'terminated' != "${instance_st}" ]]
    then
-      echo 'Shared box already deleted.'
-   else
       echo 'Deleting Shared box ...' 
       
       delete_instance "${instance_id}"
@@ -54,14 +53,14 @@ then
 fi
 
 ## 
-## Security Group 
+## security group 
 ## 
   
 if [[ -n "${sgp_id}" ]]
 then
    delete_security_group "${sgp_id}" 
       
-   echo 'Shared box Security Group deleted.'
+   echo 'Shared box security group deleted.'
 fi
 
 ## 
@@ -93,13 +92,11 @@ then
    delete_keypair "${key_pair_file}"
    
    echo 'The SSH access key-pair have been deleted.'
+   echo
 fi
 
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"
 
-echo
-echo 'Shared box deleted.'
-echo
 
 
 

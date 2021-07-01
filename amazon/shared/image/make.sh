@@ -24,21 +24,22 @@ dtc_id="$(get_datacenter_id "${DTC_NM}")"
   
 if [[ -z "${dtc_id}" ]]
 then
-   echo '* ERROR: Data Center not found.'
+   echo '* ERROR: data center not found.'
    exit 1
 else
-   echo "* Data Center ID: ${dtc_id}."
+   echo "* data center ID: ${dtc_id}."
 fi
 
 image_id="$(get_image_id "${SHAR_IMAGE_NM}")"
-image_state="$(get_image_state "${SHAR_IMAGE_NM}")"
 
 if [[ -n "${image_id}" ]]
 then
+   image_state="$(get_image_state "${SHAR_IMAGE_NM}")"
+   
    if [[ 'available' == "${image_state}" ]]
    then
       echo "* WARN: the image is already created (${image_state})"
-      echo 
+      echo
       return
    else
       # This is the case the image is in 'terminated' state, it takes about an hour to disappear,

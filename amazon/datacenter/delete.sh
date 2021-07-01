@@ -14,45 +14,45 @@ dtc_id="$(get_datacenter_id "${DTC_NM}")"
 
 if [[ -z "${dtc_id}" ]]
 then
-   echo '* WARN: Data Center not found.'
+   echo '* WARN: data center not found.'
 else
-   echo "* Data Center ID: ${dtc_id}"
+   echo "* data center ID: ${dtc_id}"
 fi
 
 internet_gate_id="$(get_internet_gateway_id "${DTC_INTERNET_GATEWAY_NM}")"
 
 if [[ -z "${internet_gate_id}" ]]
 then
-   echo '* WARN: Internet Gateway not found.'
+   echo '* WARN: internet gateway not found.'
 else
-   echo "* Internet Gateway ID: ${internet_gate_id}."
+   echo "* internet gateway ID: ${internet_gate_id}."
 fi
 
 main_subnet_id="$(get_subnet_id "${DTC_SUBNET_MAIN_NM}")"
 
 if [[ -z "${main_subnet_id}" ]]
 then
-   echo '* WARN: main Subnet not found.'
+   echo '* WARN: main subnet not found.'
 else
-   echo "* main Subnet ID: ${main_subnet_id}."
+   echo "* main subnet ID: ${main_subnet_id}."
 fi
 
 backup_subnet_id="$(get_subnet_id "${DTC_SUBNET_BACKUP_NM}")"
 
 if [[ -z "${backup_subnet_id}" ]]
 then
-   echo '* WARN: backup Subnet not found.'
+   echo '* WARN: backup subnet not found.'
 else
-   echo "* backup Subnet ID: ${backup_subnet_id}."
+   echo "* backup subnet ID: ${backup_subnet_id}."
 fi
 
 route_table_id="$(get_route_table_id "${DTC_ROUTE_TABLE_NM}")"
 
 if [[ -z "${route_table_id}" ]]
 then
-   echo '* WARN: Route Table not found.'
+   echo '* WARN: route table not found.'
 else
-   echo "* Route Table ID: ${route_table_id}."
+   echo "* route table ID: ${route_table_id}."
 fi
 
 echo
@@ -72,36 +72,40 @@ then
    fi
     
    delete_internet_gateway "${internet_gate_id}"
+   
    echo 'Internet Gateway deleted.'
 fi
 
 ## 
-## Main Subnet 
+## Main subnet 
 ## 	
 
 if [[ -n "${main_subnet_id}" ]]
 then
    delete_subnet "${main_subnet_id}"
-   echo 'Main Subnet deleted.'
+   
+   echo 'Main subnet deleted.'
 fi
 
 ## 
-## Backup Subnet 
+## Backup subnet 
 ## 
 
 if [[ -n "${backup_subnet_id}" ]]
 then
    delete_subnet "${backup_subnet_id}"
-   echo 'Backup Subnet deleted.'
+   
+   echo 'Backup subnet deleted.'
 fi		
 
 ## 
-## Route table
+## route table
 ## 
 
 if [[ -n "${route_table_id}" ]]
 then
    delete_route_table "${route_table_id}"
+   
    echo 'Route Table deleted.'
 fi
 
@@ -109,13 +113,13 @@ fi
 ## Data center 
 ## 
 
-## We can finally delete the VPC, all remaining assets are also deleted (eg route table, default Security Group).
+## We can finally delete the VPC, all remaining assets are also deleted (eg route table, default security group..
 ## Tags are deleted automatically when associated resource dies.
                    
 if [[ -n "${dtc_id}" ]]
 then
    delete_datacenter "${dtc_id}" 
+   
    echo 'Data Center deleted.'
 fi                     
 
-echo

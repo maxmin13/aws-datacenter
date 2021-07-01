@@ -16,14 +16,14 @@ set +o xtrace
 #===============================================================================
 
 #===============================================================================
-# Returns the Data Center identifier.
+# Returns the data center identifier.
 #
 # Globals:
 #  None
 # Arguments:
-# +dtc_nm     -- the Data Center name.
+# +dtc_nm     -- the data center name.
 # Returns:      
-#  the Data Center identifier, or blanc if the Data Center is not found.  
+#  the data center identifier, or blanc if the data center is not found.  
 #===============================================================================
 function get_datacenter_id()
 {
@@ -48,14 +48,14 @@ function get_datacenter_id()
 }
 
 #===============================================================================
-# Creates a Data Center and waits for it to become available.
+# Creates a data center and waits for it to become available.
 #
 # Globals:
 #  None
 # Arguments:
-# +dtc_nm     -- the Data Center name.
+# +dtc_nm     -- the data center name.
 # Returns:      
-#  the Data Center identifier.  
+#  the data center identifier.  
 #===============================================================================
 function create_datacenter()
 {
@@ -89,7 +89,7 @@ function create_datacenter()
 # Globals:
 #  None
 # Arguments:
-# +dtc_nm     -- the Data Center name.
+# +dtc_nm     -- the data center name.
 # Returns:      
 #  None.  
 #===============================================================================
@@ -109,23 +109,23 @@ function delete_datacenter()
 }
 
 #===============================================================================
-# Returns a JSON string representing the list of the Subnet 
+# Returns a JSON string representing the list of the subnet 
 # identifiers in a Data Center. Ex:
 #
-# Subnet ids: '[
+# subnet ids: '[
 #     "subnet-016a221d033705c44",
 #     "subnet-0861aef5e928a45bd"
 # ]'
 #
-# If the Data Center is not found or if the Data Center doesn't have any subnet, the string
+# If the data center is not found or if the data center doesn't have any subnet, the string
 # '[]' is returned. 
 #
 # Globals:
 #  None
 # Arguments:
-# +dtc_id     -- the Data Center identifier.
+# +dtc_id     -- the data center identifier.
 # Returns:      
-#  A JSON string containing the list of Subnet identifiers in a Data Center.
+#  A JSON string containing the list of subnet identifiers in a Data Center.
 #===============================================================================
 function get_subnet_ids()
 {
@@ -148,14 +148,14 @@ function get_subnet_ids()
 }
 
 #===============================================================================
-# Returns the the Subnet identifyer.
+# Returns the the subnet identifyer.
 #
 # Globals:
 #  None
 # Arguments:
-# +subnet_nm     -- the Subnet name.
+# +subnet_nm     -- the subnet name.
 # Returns:      
-#  the Subnet identifier, or blanc if it is not found.  
+#  the subnet identifier, or blanc if it is not found.  
 #===============================================================================
 function get_subnet_id()
 {
@@ -180,19 +180,19 @@ function get_subnet_id()
 }
 
 #===============================================================================
-# Creates a Subnet and waits until it becomes available. the Subnet is 
-# associated with the Route Table.
+# Creates a subnet and waits until it becomes available. the subnet is 
+# associated with the route Table.
 #
 # Globals:
 #  None
 # Arguments:
-# +subnet_nm       -- the Subnet name.
-# +subnet_cidr     -- the Subnet CIDR.
-# +subnet_az       -- the Subnet Availability Zone.
-# +dtc_id          -- the Data Center identifier.
-# +rtb_id          -- the Route Table identifier.
+# +subnet_nm       -- the subnet name.
+# +subnet_cidr     -- the subnet CIDR.
+# +subnet_az       -- the subnet Availability Zone.
+# +dtc_id          -- the data center identifier.
+# +rtb_id          -- the route table identifier.
 # Returns:      
-#  the Subnet identifier.  
+#  the subnet identifier.  
 #===============================================================================
 function create_subnet()
 {
@@ -222,7 +222,7 @@ function create_subnet()
   
   ####################### TODO ASSOCIATE THE SUBNET IN ANOTHER FUNCTION FOR ATOMICITY ############################## 
   
-   ## Associate this Subnet with our route table 
+   ## Associate this subnet with our route table 
    aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" >> /dev/null
   
    echo "${subnet_id}"
@@ -236,7 +236,7 @@ function create_subnet()
 # Globals:
 #  None
 # Arguments:
-# +subnet_id       -- the Subnet identifier.
+# +subnet_id       -- the subnet identifier.
 # Returns:      
 #  None.  
 #===============================================================================
@@ -260,9 +260,9 @@ function delete_subnet()
 # Globals:
 #  None
 # Arguments:
-# +igw_nm     -- the Internet Gateway name.
+# +igw_nm     -- the internet gateway name.
 # Returns:      
-#  the Internet Gateway identifier, or blanc if it is not found.  
+#  the internet gateway identifier, or blanc if it is not found.  
 #===============================================================================
 function get_internet_gateway_id()
 {
@@ -287,16 +287,16 @@ function get_internet_gateway_id()
 }
 
 #============================================================================
-# Returns the status of the attachement of the Internet Gateway to the VPD,
+# Returns the status of the attachement of the internet gateway to the VPD,
 # eg. 'available', 
 #
 # Globals:
 #  None
 # Arguments:
-# +igw_nm     -- the Internet Gateway name.
-# +dtc_id     -- the Data Center identifier.
+# +igw_nm     -- the internet gateway name.
+# +dtc_id     -- the data center identifier.
 # Returns:      
-#  the attachment status, or blanc if the Data Center or the Internet Gateway  
+#  the attachment status, or blanc if the data center or the internet gateway  
 #  are not found.  
 #===============================================================================
 function get_internet_gateway_attachment_status()
@@ -323,15 +323,15 @@ function get_internet_gateway_attachment_status()
 }
 
 #===============================================================================
-# Creates an Internet Gateway in detached status.
+# Creates an internet gateway in detached status.
 #
 # Globals:
 #  None
 # Arguments:
-# +igw_nm     -- the Internet Gateway name.
-# +dtc_id     -- the Data Center id.
+# +igw_nm     -- the internet gateway name.
+# +dtc_id     -- the data center id.
 # Returns:      
-#  the Internet Gateway identifier.  
+#  the internet gateway identifier.  
 #===============================================================================
 function create_internet_gateway()
 {
@@ -361,7 +361,7 @@ function create_internet_gateway()
 # Globals:
 #  None
 # Arguments:
-# +igw_id     -- the Internet Gateway identifier.
+# +igw_id     -- the internet gateway identifier.
 # Returns:      
 #  None  
 #===============================================================================
@@ -381,13 +381,13 @@ function delete_internet_gateway()
 }
 
 #===============================================================================
-# Attaches an Internet Gateway to a Data Center.
+# Attaches an internet gateway to a Data Center.
 #
 # Globals:
 #  None
 # Arguments:
-# +igw_id     -- the Internet Gateway identifier.
-# +dtc_id     -- the Data Center id.
+# +igw_id     -- the internet gateway identifier.
+# +dtc_id     -- the data center id.
 # Returns:      
 #  None
 #===============================================================================
@@ -408,14 +408,14 @@ function attach_internet_gateway()
 }
 
 #===============================================================================
-# Returns the the Route Table identifyer.
+# Returns the the route table identifyer.
 #
 # Globals:
 #  None
 # Arguments:
-# +rtb_nm     -- the Route Table name.
+# +rtb_nm     -- the route table name.
 # Returns:      
-#  the Route Table identifier, or blanc if it is not found.  
+#  the route table identifier, or blanc if it is not found.  
 #===============================================================================
 function get_route_table_id()
 {
@@ -440,16 +440,16 @@ function get_route_table_id()
 }
 
 #===============================================================================
-# Creates a custom Route Table.
+# Creates a custom route Table.
 #
 # Globals:
 #  None
 # Arguments:
-# +rtb_nm     -- the Route Table name.
-# +dtc_id     -- the Data Center identifier.
+# +rtb_nm     -- the route table name.
+# +dtc_id     -- the data center identifier.
 
 # Returns:      
-#  the Route Table identifier, or blanc if it is not found.  
+#  the route table identifier, or blanc if it is not found.  
 #===============================================================================
 function create_route_table()
 {
@@ -475,7 +475,7 @@ function create_route_table()
 }
 
 #===============================================================================
-# Delete a Route Table.
+# Delete a route Table.
 #
 # Globals:
 #  None
@@ -501,13 +501,13 @@ function delete_route_table()
 }
 
 #===============================================================================
-# Creates a route in a Route Table: the incoming traffic with destination the
+# Creates a route in a route Table: the incoming traffic with destination the
 # specified cidr block is routed to the target.
 #
 # Globals:
 #  None
 # Arguments:
-# +rtb_id               -- the Route Table identifier.
+# +rtb_id               -- the route table identifier.
 # +target_id            -- the target identifier, for ex: an Internet Gateway.
 # +destination_cidr     -- the CIDR address block used to match the destination
 #           of the incoming traffic.
@@ -534,14 +534,14 @@ function set_route()
 }
 
 #===============================================================================
-# Returns the the Security Group identifyer.
+# Returns the the security group identifyer.
 #
 # Globals:
 #  None
 # Arguments:
-# +sgp_nm         -- the Security Group name.
+# +sgp_nm         -- the security group name.
 # Returns:      
-#  the Security Group identifier, or blanc if it is not found.  
+#  the security group identifier, or blanc if it is not found.  
 #===============================================================================
 function get_security_group_id()
 {
@@ -566,16 +566,16 @@ function get_security_group_id()
 }
 
 #===============================================================================
-# Creates a Security Group.
+# Creates a security group.
 #
 # Globals:
 #  None
 # Arguments:
-# +dtc_id        -- the Data Center identifier.
-# +sgp_nm         -- the Security Group name.
-# +sgp_desc       -- the Security Group description.
+# +dtc_id        -- the data center identifier.
+# +sgp_nm         -- the security group name.
+# +sgp_desc       -- the security group description.
 # Returns:      
-#  the Security Group identifier.  
+#  the security group identifier.  
 #===============================================================================
 function create_security_group()
 {
@@ -604,12 +604,12 @@ function create_security_group()
 }
 
 #===============================================================================
-# Deletes a Security Group.
+# Deletes a security group.
 #
 # Globals:
 #  None
 # Arguments:
-# +sgp_id     -- the Security Group identifier.
+# +sgp_id     -- the security group identifier.
 # Returns:      
 #  None    
 #===============================================================================
@@ -634,7 +634,7 @@ function delete_security_group()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id          -- the Security Group identifier.
+# +sgp_id          -- the security group identifier.
 # +port            -- the TCP port
 # +cidr            -- the CIDR block from which incoming traffic is allowed.
 # Returns:      
@@ -662,14 +662,14 @@ function allow_access_from_cidr()
 }
 
 #===============================================================================
-# Allows access to the traffic incoming from another Security Group.
+# Allows access to the traffic incoming from another security group.
 #
 # Globals:
 #  None
 # Arguments:
-# +sgp_id           -- the Security Group identifier.
+# +sgp_id           -- the security group identifier.
 # +port            -- the TCP port.
-# +from_sgp_id      -- the Security Group identifier from which incoming traffic 
+# +from_sgp_id      -- the security group identifier from which incoming traffic 
 #                     is allowed.
 # Returns:      
 #  None
@@ -696,14 +696,14 @@ function allow_access_from_security_group()
 }
 
 #===============================================================================
-# Revokes access to the traffic incoming from another Security Group.  
+# Revokes access to the traffic incoming from another security group.  
 #
 # Globals:
 #  None
 # Arguments:
-# +sgp_id           -- the Security Group identifier.
+# +sgp_id           -- the security group identifier.
 # +port            -- the TCP port.
-# +from_sgp_id      -- the Security Group identifier from which incoming traffic 
+# +from_sgp_id      -- the security group identifier from which incoming traffic 
 #                     is revoked.
 # Returns:      
 #  None
@@ -735,7 +735,7 @@ function revoke_access_from_security_group()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id           -- the Security Group identifier.
+# +sgp_id           -- the security group identifier.
 # +port            -- the TCP port.
 # +src_cidr        -- the CIDR block from which incoming traffic 
 #                     is revoked.
@@ -765,14 +765,14 @@ function revoke_access_from_cidr()
 
 #===============================================================================
 # Checks if a access on a TCP port is granted to traffic incoming from a 
-# specific Security Group. 
+# specific security group. 
 #
 # Globals:
 #  None
 # Arguments:
-# +sgp_id          -- Security Group identifier.
+# +sgp_id          -- security group identifier.
 # +port            -- the TCP port.
-# +from_sgp_id     -- the Security Group from which incoming traffic is allowed.
+# +from_sgp_id     -- the security group from which incoming traffic is allowed.
 # Returns:      
 #  the group identifier if the access is granted, blanc otherwise.
 #===============================================================================
@@ -807,7 +807,7 @@ function check_access_from_security_group_is_granted()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id           -- the Security Group identifier.
+# +sgp_id           -- the security group identifier.
 # +port            -- the TCP port.
 # +src_cidr        -- the CIDR block from which incoming is allowed.
 # Returns:      
@@ -971,8 +971,8 @@ function get_instance_id()
 #  None
 # Arguments:
 # +instance_nm     -- name assigned to the instance.
-# +sgp_id           -- Security Group identifier.
-# +subnet_id       -- Subnet identifier.
+# +sgp_id           -- security group identifier.
+# +subnet_id       -- subnet identifier.
 # +private_ip      -- private IP address assigned to the instance.
 # +image_id        -- identifier of the image from which the instance is
 #                     derived.

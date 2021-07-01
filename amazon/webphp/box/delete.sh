@@ -22,23 +22,23 @@ echo
 webphp_nm="${SRV_WEBPHP_NM/<ID>/"${webphp_id}"}"
 keypair_nm="${SRV_WEBPHP_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
 webphp_sgp_nm="${SRV_WEBPHP_SEC_GRP_NM/<ID>/"${webphp_id}"}"
-
 instance_id="$(get_instance_id "${webphp_nm}")"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: Webphp instance not found.'
+   echo '* WARN: Webphp box not found.'
 else
-   echo "* Webphp instance ID: ${instance_id}."
+   instance_st="$(get_instance_state "${webphp_nm}")"
+   echo "* Webphp box ID: ${instance_id} (${instance_st})."
 fi
 
 sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: Webphp Security Group not found.'
+   echo '* WARN: Webphp security group not found.'
 else
-   echo "* Webphp Security Group ID: ${sgp_id}."
+   echo "* Webphp security group ID: ${sgp_id}."
 fi
 
 eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"
@@ -54,18 +54,18 @@ db_sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
 
 if [[ -z "${db_sgp_id}" ]]
 then
-   echo '* WARN: Database Security Group not found.'
+   echo '* WARN: database security group not found.'
 else
-   echo "* Database Security Group ID: ${db_sgp_id}."
+   echo "* database security group ID: ${db_sgp_id}."
 fi
 
 adm_sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
 
 if [[ -z "${adm_sgp_id}" ]]
 then
-   echo '* WARN: admin Security Group not found.'
+   echo '* WARN: admin security group not found.'
 else
-   echo "* Admin Security Group ID: ${adm_sgp_id}."
+   echo "* Admin security group ID: ${adm_sgp_id}."
 fi
 
 echo
@@ -74,7 +74,7 @@ echo
 rm -rf "${TMP_DIR:?}"/webphp
 
 ## 
-## Load Balancer 
+## load balancer 
 ## 
 
 lbal_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_NM}" "${instance_id}")"
@@ -92,10 +92,8 @@ if [[ -n "${instance_id}" ]]
 then
    instance_st="$(get_instance_state "${webphp_nm}")"
 
-   if [[ 'terminated' == "${instance_st}" ]]
+   if [[ 'terminated' != "${instance_st}" ]]
    then
-      echo 'Instance status is terminated.'
-   else
       echo "Deleting Webphp box ..."
       
       delete_instance "${instance_id}"
@@ -105,7 +103,7 @@ then
 fi
 
 ## 
-## Database grants 
+## database grants 
 ## 
 
 db_sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
@@ -118,7 +116,7 @@ then
    then
    	revoke_access_from_security_group "${db_sgp_id}" "${DB_MMDATA_PORT}" "${sgp_id}"
    	
-   	echo 'Access to Database revoked.'
+   	echo 'Access to database revoked.'
    fi
 fi
 
@@ -150,14 +148,14 @@ then
 fi
 
 ## 
-## Security Group 
+## security group 
 ## 
   
 if [[ -n "${sgp_id}" ]]
 then
    delete_security_group "${sgp_id}" 
       
-   echo 'Webphp Security Group deleted.'
+   echo 'Webphp security group deleted.'
 fi
 
 ## 
@@ -192,4 +190,3 @@ fi
 ## Clearing
 rm -rf "${TMP_DIR:?}"/webphp
 
-echo

@@ -20,9 +20,9 @@ registered="$(check_domain_is_registered_with_the_account "${MAXMIN_TLD}")"
 
 if [[ -n "${registered}" ]]
 then
-   echo "The ${MAXMIN_TLD} domain is registered with the account."
+   echo "The ${MAXMIN_TLD} domain is already registered with the account."
 else
-   echo "* WARN: the '${MAXMIN_TLD}' domain is not registered with the account."
+   echo "* WARN: the ${MAXMIN_TLD} domain is not registered with the account."
    
    status="$(get_request_status 'REGISTER_DOMAIN')" 
 

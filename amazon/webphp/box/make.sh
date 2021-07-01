@@ -56,20 +56,20 @@ dtc_id="$(get_datacenter_id "${DTC_NM}")"
   
 if [[ -z "${dtc_id}" ]]
 then
-   echo '* ERROR, Data Center not found.'
+   echo '* ERROR, data center not found.'
    exit 1
 else
-   echo "* Data Center ID: ${dtc_id}."
+   echo "* data center ID: ${dtc_id}."
 fi
 
 subnet_id="$(get_subnet_id "${DTC_SUBNET_MAIN_NM}")"
 
 if [[ -z "${subnet_id}" ]]
 then
-   echo '* ERROR, Subnet not found.'
+   echo '* ERROR, subnet not found.'
    exit 1
 else
-   echo "* main Subnet ID: ${subnet_id}."
+   echo "* main subnet ID: ${subnet_id}."
 fi
 
 shared_image_id="$(get_image_id "${SHAR_IMAGE_NM}")"
@@ -86,10 +86,10 @@ db_sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
   
 if [[ -z "${db_sgp_id}" ]]
 then
-   echo '* ERROR: database Security Group not found' 
+   echo '* ERROR: database security group not found' 
    exit 1
 else
-   echo "* database Security Group ID: ${db_sgp_id}."
+   echo "* database security group ID: ${db_sgp_id}."
 fi
 
 db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
@@ -109,17 +109,18 @@ then
    echo '* ERROR: Admin box not found.'
    exit 1
 else
-   echo "* Admin box ID: ${adm_instance_id}."
+   adm_instance_id="$(get_instance_id "${SRV_ADMIN_NM}")"
+   echo "* Admin box ID: ${adm_instance_id} (${adm_instance_id})."
 fi
 
 adm_sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
 
 if [[ -z "${adm_sgp_id}" ]]
 then
-   echo '* ERROR: Admin Security Group not found.'
+   echo '* ERROR: Admin security group not found.'
    exit 1
 else
-   echo "* Admin Security Group ID: ${adm_sgp_id}."
+   echo "* Admin security group ID: ${adm_sgp_id}."
 fi
 
 adm_pip="$(get_private_ip_address_associated_with_instance "${SRV_ADMIN_NM}")"
@@ -135,20 +136,20 @@ fi
 loadbalancer_dns_nm="$(get_loadbalancer_dns_name "${LBAL_NM}")"
 if [[ -z "${loadbalancer_dns_nm}" ]]
 then
-   echo '* ERROR: Load Balancer not found.'
+   echo '* ERROR: load balancer not found.'
    exit 1
 else
-   echo "* Load Balancer: ${loadbalancer_dns_nm}."
+   echo "* load balancer: ${loadbalancer_dns_nm}."
 fi
 
 lbal_sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
 
 if [[ -z "${lbal_sgp_id}" ]]
 then
-   echo '* ERROR: Load Balancer Security Group not found.'
+   echo '* ERROR: load balancer security group not found.'
    exit 1
 else
-   echo "* Load Balancer Security Group ID: ${adm_sgp_id}."
+   echo "* load balancer security group ID: ${adm_sgp_id}."
 fi
 
 # Removing old files
@@ -159,18 +160,18 @@ mkdir "${TMP_DIR}"/"${webphp_dir}"
 echo
 
 ## 
-## Security Group 
+## security group 
 ## 
 
 sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
 
 if [[ -n "${sgp_id}" ]]
 then
-   echo 'WARN: the Webphp Security Group is already created.'
+   echo 'WARN: the Webphp security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${webphp_sgp_nm}" "${webphp_sgp_nm} Security Group")"  
+   sgp_id="$(create_security_group "${dtc_id}" "${webphp_sgp_nm}" "${webphp_sgp_nm}")"  
    
-   echo 'Created Webphp Security Group.'
+   echo 'Created Webphp security group.'
 fi
 
 granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
@@ -185,14 +186,14 @@ else
 fi
 
 ##
-## Database access 
+## database access 
 ##
 
 granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_MMDATA_PORT}" "${sgp_id}")"
 
 if [[ -n "${granted_db}" ]]
 then
-   echo 'WARN: access to the Database already granted.'
+   echo 'WARN: access to the database already granted.'
 else
    allow_access_from_security_group "${db_sgp_id}" "${DB_MMDATA_PORT}" "${sgp_id}"
    
@@ -446,7 +447,7 @@ scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_
     "${TMP_DIR}"/"${webphp_dir}"/monitrc \
     "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}"    
        
-# Create a Load Balancer healt-check virtualhost. 
+# Create a load balancer healt-check virtualhost. 
 create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
     "${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" \
@@ -454,7 +455,7 @@ create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_HTTP_
     "${APACHE_DOCROOT_DIR}" \
     "${LBAL_DOCROOT_ID}"    
  
-# Enable the Load Balancer virtualhost.                                       
+# Enable the load balancer virtualhost.                                       
 add_loadbalancer_rule_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     'elb.htm' \
     "${APACHE_DOCROOT_DIR}" \
@@ -537,7 +538,7 @@ else
 fi
 
 ## 
-## Load Balancer 
+## load balancer 
 ## 
 
 lbal_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_NM}" "${instance_id}")"
@@ -555,11 +556,11 @@ lbal_granted="$(check_access_from_security_group_is_granted "${sgp_id}" "${SRV_W
 
 if [[ -n "${lbal_granted}" ]]
 then
-   echo 'WARN: Load Balancer access to the Admin box already granted.'
+   echo 'WARN: load balancer access to the Admin box already granted.'
 else
    allow_access_from_security_group "${sgp_id}" "${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" "${lbal_sgp_id}"
    
-   echo 'Granted the Load Balancer access to the webphp instance (healt-check).'
+   echo 'Granted the load balancer access to the webphp instance (healt-check).'
 fi
 
 ## 

@@ -48,16 +48,19 @@ if [[ -z "${instance_id}" ]]
 then
    echo '* ERROR: Webphp box not found.'
    exit 1
+else
+   instance_st="$(get_instance_state "${webphp_nm}")"
+   echo "* Webphp box ID: ${instance_id} (${instance_st})."
 fi
 
 sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* ERROR: Webphp Security Group not found.'
+   echo '* ERROR: Webphp security group not found.'
    exit 1
 else
-   echo "* Webphp Security Group ID: ${sgp_id}."
+   echo "* Webphp security group ID: ${sgp_id}."
 fi
 
 eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"
@@ -74,10 +77,10 @@ loadbalancer_sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
 
 if [[ -z "${loadbalancer_sgp_id}" ]]
 then
-   echo '* ERROR: Load Balancer Security Group not found'
+   echo '* ERROR: load balancer security group not found'
    exit 1
 else
-   echo "* Load Balancer Security Group ID: ${loadbalancer_sgp_id}."
+   echo "* load balancer security group ID: ${loadbalancer_sgp_id}."
 fi
 
 echo
@@ -240,9 +243,9 @@ loadbalancer_granted="$(check_access_from_security_group_is_granted "${sgp_id}" 
 
 if [[ -z "${loadbalancer_granted}" ]]
 then
-   # Allow Load Balancer access to the instance.
+   # Allow load balancer access to the instance.
    allow_access_from_security_group "${sgp_id}" "${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${loadbalancer_sgp_id}"
-   echo 'Granted the Load Balancer access to the Webphp instance.'
+   echo 'Granted the load balancer access to the Webphp box.'
 fi
     
 ## 

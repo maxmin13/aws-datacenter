@@ -5,7 +5,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-# Uploads Database files to the admin server
+# Uploads database files to the admin server
 # then runs the delete script on the server
 
 database_dir='database'
@@ -23,18 +23,19 @@ instance_id="$(get_instance_id "${SRV_ADMIN_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
-   echo '* WARN: admin instance not found.'
+   echo '* WARN: Admin box not found.'
 else
-   echo "* Admin instance ID: ${instance_id}."
+   instance_st="$(get_instance_state "${SRV_ADMIN_NM}")"
+   echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
 sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
-   echo '* WARN: admin Security Group not found.'
+   echo '* WARN: admin security group not found.'
 else
-   echo "* Admin Security Group ID: ${sgp_id}."
+   echo "* Admin security group ID: ${sgp_id}."
 fi
 
 eip="$(get_public_ip_address_associated_with_instance "${SRV_ADMIN_NM}")"
@@ -57,10 +58,23 @@ fi
 
 echo
 
-if [[ -n "${instance_id}" && -n "${sgp_id}" && -n "${eip}" && -n "${db_endpoint}" ]]
+if [[ -z "${db_endpoint}" ]]
 then
 
-   ## Retrieve Database scripts
+   echo 'Database box not found, skipping deleting database data.'
+
+elif [[ -z "${instance_id}" ]]
+then
+
+   echo 'Admin box not found, skipping deleting database data.'
+
+elif [[ 'running' != "${instance_st}" ]]
+then
+
+   echo 'Admin box not running, skipping deleting database data.'
+else
+
+   ## Retrieve database scripts
    sed "s/SEDdatabase_nameSED/${DB_MMDATA_NM}/g" \
        "${TEMPLATE_DIR}"/database/sql/delete_dbs_template.sql > "${TMP_DIR}"/"${database_dir}"/delete_dbs.sql
 
@@ -80,7 +94,7 @@ then
 
    ## SSH access 
   
-   # Check if the Admin Security Group grants access from the development machine through SSH port
+   # Check if the Admin security group grants access from the development machine through SSH port
    access_granted="$(check_access_from_cidr_is_granted "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
    
    if [[ -z "${access_granted}" ]]
@@ -109,7 +123,7 @@ then
        "${TMP_DIR}"/database/delete_dbusers.sql \
        "${TMP_DIR}"/database/delete_database.sh
 
-   echo "Deleting Database objects ..."
+   echo "Deleting database objects ..."
    
    ssh_run_remote_command_as_root "chmod +x ${remote_dir}/delete_database.sh" \
        "${key_pair_file}" \

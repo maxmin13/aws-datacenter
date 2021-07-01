@@ -106,7 +106,7 @@ function sessionuse()
         return;
     }
 
-    // get Database values and check they match
+    // get database values and check they match
     $result = doSQL("select userID, email, sessiontoken1, sessiontoken2, sessionipaddress, sessionuseragent, timestampdiff(second, sessionlastdateSQL, now()) as inactivetime from users where userID=?;", $userID) or die("ERR");
 
     // userID found?
