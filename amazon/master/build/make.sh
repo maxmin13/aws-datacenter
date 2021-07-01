@@ -7,7 +7,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-export PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../../datacenter && pwd)"
+export PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../../../datacenter && pwd)"
 
 source "${PROJECT_DIR}"/amazon/lib/project_dirs.sh
 source "${PROJECT_DIR}"/amazon/lib/app_consts.sh

@@ -185,6 +185,7 @@ then
    delete_keypair "${key_pair_file}"
    
    echo 'The SSH access key-pair have been deleted.'
+   echo
 fi
 
 ## Clearing

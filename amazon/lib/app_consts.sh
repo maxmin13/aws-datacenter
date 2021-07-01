@@ -55,7 +55,7 @@ DB_MMDATA_JAVAMAIL_USER_NM='javamail'
 ## Shared image ##
 ## ************ ##
 
-SHAR_INSTANCE_NM='maxmin-shared-instance1'
+SHAR_INSTANCE_NM='maxmin-shared-instance'
 SHAR_INSTANCE_HOSTNAME='shared.maxmin.it'
 SHAR_INSTANCE_USER_NM='shared-user'
 SHAR_INSTANCE_PRIVATE_IP='10.0.0.8'
@@ -79,7 +79,7 @@ LBAL_DNS_SUB_DOMAIN='www'
 ## Admin box ##
 ## ********* ##
 
-SRV_ADMIN_NM='maxmin-admin-instance1'
+SRV_ADMIN_NM='maxmin-admin-instance'
 SRV_ADMIN_PRIVATE_IP='10.0.0.10'
 SRV_ADMIN_HOSTNAME='admin.maxmin.it'
 SRV_ADMIN_USER_NM='admin-user'
