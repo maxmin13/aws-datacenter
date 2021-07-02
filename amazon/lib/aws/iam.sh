@@ -22,7 +22,7 @@ set +o xtrace
 # Globals:
 #  None
 # Arguments:
-# +crt_nm     -- The Certificate name.
+# +crt_nm -- the certificate name.
 # Returns:      
 #  None  
 #===============================================================================
@@ -49,9 +49,9 @@ function delete_server_certificate()
 # Globals:
 #  None
 # Arguments:
-# +crt_nm     -- the Certificate name.
+# +crt_nm -- the certificate name.
 # Returns:      
-#  The Server Certificate ARN.
+#  the server certificate ARN.
 #===============================================================================
 function get_server_certificate_arn()
 {
@@ -72,22 +72,22 @@ function get_server_certificate_arn()
    return 0
 }
 #===============================================================================
-# Uploads a Server Certificate to IAM.
-# Before you can upload a Certificate to IAM, you must make sure that the 
-# Certificate, Private Key, and Certificate Chain are all PEM-encoded. 
-# You must also ensure that the Private Key is not protected by a passphrase. 
+# Uploads a server certificate to IAM.
+# Before you can upload a certificate to IAM, you must make sure that the 
+# certificate, private-key and certificate chain are all PEM-encoded. 
+# You must also ensure that the private-key is not protected by a passphrase. 
 #
 # Globals:
 #  None
 # Arguments:
-# +crt_nm       -- The Certificate name.
-# +crt_file     -- The contents of the Public Key Certificate in PEM-encoded
-#                  format.
-# +key_file     -- The contents of the Private Key in PEM-encoded format.
-# +chain_file   -- The contents of the Certificate Chain (optional). This is typically a 
-#                  concatenation of the PEM-encoded public key certificates 
-#                  of the chain.
-# +cert_dir     -- The directory where the certificates are stored.
+# +crt_nm     -- the certificate name.
+# +crt_file   -- the contents of the public-key certificate in PEM-encoded 
+#                format.
+# +key_file   -- the contents of the private-key in PEM-encoded format.
+# +chain_file -- the contents of the certificate chain (optional). This is  
+#                typically a concatenation of the PEM-encoded public key  
+#                certificates of the chain.
+# +cert_dir   -- the directory where the certificates are stored.
 # Returns:      
 #  None
 #===============================================================================
@@ -108,8 +108,6 @@ function upload_server_certificate()
    if [[ $# -gt 4 ]]; then
       chain_file="${5}"
    fi
-   
-   local cert_arn
  
    if [[ -z "${chain_file}" ]]; then
       aws iam upload-server-certificate \

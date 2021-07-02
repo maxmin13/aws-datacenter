@@ -2,7 +2,7 @@
 
 
 
-find ./ -type f -exec sed -i 's/ load balancer:/ load balancer:/g' {} \;
+find ./ -type f -exec sed -i 's/{sgp_id}/{sgp_id}/g' {} \;
 
 ################
 xml manipulation

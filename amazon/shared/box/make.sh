@@ -153,7 +153,7 @@ else
        "${sgp_id}" \
        "${subnet_id}" \
        "${SHAR_INSTANCE_PRIVATE_IP}" \
-       "${AWS_BASE_AMI_ID}" \
+       "${AWS_BASE_IMG_ID}" \
        "${TMP_DIR}"/"${shared_dir}"/cloud_init.yml)"
 
    echo "Shared box created."

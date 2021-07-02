@@ -107,7 +107,7 @@ fi
 ## Create an alias that points to the load balancer 
 
 target_lbal_dns_nm="$(get_loadbalancer_dns_name "${LBAL_NM}")"
-target_lbal_dns_hosted_zone_id="$(get_loadbalancer_dns_hosted_zone_id "${LBAL_NM}")"
+target_lbal_dns_hosted_zone_id="$(get_loadbalancer_hosted_zone_id "${LBAL_NM}")"
 
 request_id="$(create_loadbalancer_alias_record \
     "${LBAL_DNS_SUB_DOMAIN}" \

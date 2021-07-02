@@ -77,9 +77,9 @@ rm -rf "${TMP_DIR:?}"/webphp
 ## load balancer 
 ## 
 
-lbal_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_NM}" "${instance_id}")"
+is_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_NM}" "${instance_id}")"
 
-if [[ -n "${lbal_registered}" ]]
+if [[ 'true' == "${is_registered}" ]]
 then
    deregister_instance_from_loadbalancer "${LBAL_NM}" "${instance_id}"
 fi

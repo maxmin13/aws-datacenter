@@ -309,7 +309,7 @@ function create_database()
    fi
 
    local db_nm="${1}"
-   local sg_id="${2}"
+   local sgp_id="${2}"
    local db_pgp_nm="${3}"
 
    exists="$(check_log_slow_queries_db_parameter_group_exists "${db_pgp_nm}")"
@@ -337,7 +337,7 @@ function create_database()
        --no-publicly-accessible \
        --region "${DTC_DEPLOY_REGION}" \
        --availability-zone "${DTC_DEPLOY_ZONE_1}"  \
-       --vpc-security-group-ids "${sg_id}" \
+       --vpc-security-group-ids "${sgp_id}" \
        --db-subnet-group-name "${DB_MMDATA_SUB_GRP_NM}" \
        --db-parameter-group-name "${db_pgp_nm}" >> /dev/null
 

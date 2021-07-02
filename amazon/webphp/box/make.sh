@@ -109,8 +109,8 @@ then
    echo '* ERROR: Admin box not found.'
    exit 1
 else
-   adm_instance_id="$(get_instance_id "${SRV_ADMIN_NM}")"
-   echo "* Admin box ID: ${adm_instance_id} (${adm_instance_id})."
+   adm_instance_st="$(get_instance_state "${SRV_ADMIN_NM}")"
+   echo "* Admin box ID: ${adm_instance_id} (${adm_instance_st})."
 fi
 
 adm_sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
@@ -160,7 +160,7 @@ mkdir "${TMP_DIR}"/"${webphp_dir}"
 echo
 
 ## 
-## security group 
+## Security group 
 ## 
 
 sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
@@ -186,7 +186,7 @@ else
 fi
 
 ##
-## database access 
+## Database access 
 ##
 
 granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_MMDATA_PORT}" "${sgp_id}")"
@@ -233,7 +233,6 @@ fi
 ## Removes the default user, creates the webphp-user user and sets the instance's hostname.     
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${SRV_WEBPHP_USER_PWD}")" 
-
 key_pair_file="$(get_keypair_file_path "${webphp_keypair_nm}" "${SRV_WEBPHP_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
@@ -541,9 +540,9 @@ fi
 ## load balancer 
 ## 
 
-lbal_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_NM}" "${instance_id}")"
+is_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_NM}" "${instance_id}")"
 
-if [[ -n "${lbal_registered}" ]]
+if [[ 'true' == "${is_registered}" ]]
 then
    echo 'WARN: Webphp box already registered with the Load Balancer.'
 else

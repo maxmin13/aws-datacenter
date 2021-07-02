@@ -8,7 +8,7 @@ ENV='production'
 ## Amazon EBS-backed image:
 ## By default, the root volume is deleted when the instance terminates.
 ## Data on any other EBS volumes persists after instance termination by default.
-AWS_BASE_AMI_ID='ami-0bb3fad3c0286ebd5'
+AWS_BASE_IMG_ID='ami-0bb3fad3c0286ebd5'
 AWS_CHECK_IP_URL='http://checkip.amazonaws.com'
 
 ## ********** ##
@@ -42,9 +42,9 @@ DB_MMDATA_PORT='3306'
 DB_MMDATA_NM='mmdata'
 DB_MMDATA_LOG_SLOW_QUERIES_PARAM_GRP_NM='logslowqueries' ## can't have capitals
 DB_MMDATA_LOG_SLOW_QUERIES_PARAM_GRP_DESC='Log slow queries database parameter group'
-DB_MMDATA_SUB_GRP_NM='maxmin-rds-subgp'
-DB_MMDATA_SUB_GRP_DESC='Database subnet Group that spans multiple subnets'
-DB_MMDATA_SEC_GRP_NM='maxmin-rds-sgp'
+DB_MMDATA_SUB_GRP_NM='maxmin-db-subgp'
+DB_MMDATA_SUB_GRP_DESC='Database subnet group that spans multiple subnets'
+DB_MMDATA_SEC_GRP_NM='maxmin-db-sgp'
 # The db main user is set when the db is created, see: rds.sh
 DB_MMDATA_MAIN_USER_NM='maxmin'
 DB_MMDATA_ADMIN_USER_NM='adminrw'
@@ -55,24 +55,24 @@ DB_MMDATA_JAVAMAIL_USER_NM='javamail'
 ## Shared image ##
 ## ************ ##
 
-SHAR_INSTANCE_NM='maxmin-shared-instance'
+SHAR_INSTANCE_NM='maxmin-shared-box'
 SHAR_INSTANCE_HOSTNAME='shared.maxmin.it'
 SHAR_INSTANCE_USER_NM='shared-user'
 SHAR_INSTANCE_PRIVATE_IP='10.0.0.8'
 SHAR_INSTANCE_SSH_PORT='38142'
 SHAR_INSTANCE_KEY_PAIR_NM='maxmin-shared-kp'
-SHAR_INSTANCE_SEC_GRP_NM='maxmin-shared-instance-sgp'
-SHAR_IMAGE_NM='maxmin-shared-ami'
+SHAR_INSTANCE_SEC_GRP_NM='maxmin-shared-box-sgp'
+SHAR_IMAGE_NM='maxmin-shared-img'
 SHAR_IMAGE_DESC='Linux secured Image'
 
 ## ************* ##
 ## Load balancer ##
 ## ************* ##
 
-LBAL_NM='elbmaxmin'
+LBAL_NM='lbalmaxmin'
 LBAL_HTTPS_PORT='443'
 LBAL_HTTP_PORT='80'
-LBAL_SEC_GRP_NM='maxmin-elb-sgp'
+LBAL_SEC_GRP_NM='maxmin-lbal-sgp'
 LBAL_DNS_SUB_DOMAIN='www'
 LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 
@@ -80,7 +80,7 @@ LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 ## Admin box ##
 ## ********* ##
 
-SRV_ADMIN_NM='maxmin-admin-instance'
+SRV_ADMIN_NM='maxmin-admin-box'
 SRV_ADMIN_PRIVATE_IP='10.0.0.10'
 SRV_ADMIN_HOSTNAME='admin.maxmin.it'
 SRV_ADMIN_USER_NM='admin-user'
@@ -101,14 +101,14 @@ SRV_ADMIN_MMONIT_COLLECTOR_PORT='8084'
 SRV_ADMIN_RSYSLOG_PORT='514'
 SRV_ADMIN_EMAIL='minardi.massimiliano@libero.it'
 SRV_ADMIN_KEY_PAIR_NM='maxmin-admin-kp'
-SRV_ADMIN_SEC_GRP_NM='maxmin-admin-instance-sgp'
+SRV_ADMIN_SEC_GRP_NM='maxmin-admin-box-sgp'
 SRV_ADMIN_DNS_SUB_DOMAIN='admin'
 
 ## ********** ##
 ## WebPhp box ##
 ## ********** ##
 
-SRV_WEBPHP_NM='maxmin-webphp<ID>-instance'
+SRV_WEBPHP_NM='maxmin-webphp<ID>-box'
 SRV_WEBPHP_PRIVATE_IP='10.0.0.2<ID>'
 SRV_WEBPHP_HOSTNAME='webphp<ID>.maxmin.it'
 SRV_WEBPHP_USER_NM='webphp-user'
@@ -119,7 +119,7 @@ SRV_WEBPHP_APACHE_MONIT_HTTP_PORT='8060'
 SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT='8070'
 SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT='8080'
 SRV_WEBPHP_RSYSLOG_PORT='514'
-SRV_WEBPHP_SEC_GRP_NM='maxmin-webphp<ID>-instance-sgp'
+SRV_WEBPHP_SEC_GRP_NM='maxmin-webphp<ID>-box-sgp'
 SRV_WEBPHP_KEY_PAIR_NM='maxmin-webphp<ID>-kp'
 SRV_WEBPHP_EMAIL='minardi.massimiliano@libero.it'
 

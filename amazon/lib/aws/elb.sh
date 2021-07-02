@@ -16,15 +16,15 @@ set +o xtrace
 #===============================================================================
 
 #===============================================================================
-# Returns the load balancer DNS name or, if the load balancer doesn't exist, an
-# empty string.
+# Returns the load balancer DNS name, or an empty string if the load balancer 
+# doesn't exist.
 #
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm     -- The load balancer name.
+# +lbal_nm -- the name of the load balancer.
 # Returns:      
-#  The load balancer DNS name, or blanc if the Looad Balancer is not found.  
+#  the load balancer DNS name, or blanc if the load balancer is not found.  
 #===============================================================================
 function get_loadbalancer_dns_name()
 {
@@ -34,30 +34,30 @@ function get_loadbalancer_dns_name()
       return 1
    fi
 
-   local loadbalancer_nm="${1}"
-   local elb_dns
+   local lbal_nm="${1}"
+   local lbal_dns_nm
  
-   elb_dns="$(aws elb describe-load-balancers \
-       --query "LoadBalancerDescriptions[?LoadBalancerName=='${loadbalancer_nm}'].DNSName" \
+   lbal_dns_nm="$(aws elb describe-load-balancers \
+       --query "LoadBalancerDescriptions[?LoadBalancerName=='${lbal_nm}'].DNSName" \
        --output text)"
  
-   echo "${elb_dns}"
+   echo "${lbal_dns_nm}"
  
    return 0
 }
 
 #===============================================================================
-# Returns the load balancer DNS hosted zone identifier or, if the load balancer 
-# doesn't exist, an empty string.
+# Returns the load balancer hosted zone ID or an empty string if the load 
+# balancer isn't found.
 #
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm     -- The load balancer name.
+# +lbal_nm -- the name of the load balancer.
 # Returns:      
-#  The ELB hosted zone identifier, or blanc if the ELB is not found.  
+#  the load balancer hosted zone ID, or blanc if the load balancer is not found.  
 #===============================================================================
-function get_loadbalancer_dns_hosted_zone_id()
+function get_loadbalancer_hosted_zone_id()
 {
    if [[ $# -lt 1 ]]
    then
@@ -65,53 +65,49 @@ function get_loadbalancer_dns_hosted_zone_id()
       return 1
    fi
 
-   local loadbalancer_nm="${1}"
-   local elb_dns
+   local lbal_nm="${1}"
+   local lbal_dns_nm_nm=''
  
-   elb_dns="$(aws elb describe-load-balancers \
-       --query "LoadBalancerDescriptions[?LoadBalancerName=='${loadbalancer_nm}'].CanonicalHostedZoneNameID" \
+   lbal_dns_nm_nm="$(aws elb describe-load-balancers \
+       --query "LoadBalancerDescriptions[?LoadBalancerName=='${lbal_nm}'].CanonicalHostedZoneNameID" \
        --output text)"
  
-   echo "${elb_dns}"
+   echo "${lbal_dns_nm_nm}"
  
    return 0
 }
 
 #===============================================================================
-# Creates a Classic Load Balancer. 
-# The Load Balander listens on 443 port and forwards the requests to 8070 port.
-# Elastic Load Balancers support sticky sessions.  
+# Creates a classic load balancer that listens on HTTP 80 port and forwards the 
+# requests to the instances on port 8070.  
 #
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm     -- The load balancer name.
-# +cert_arn            -- The Amazon Resource Name (ARN) specifying the server
-#                         certificate.
-# +sg_id               -- The Loadbalancer's security group identifier.
-# +subnet_id           -- The Loadbalancer's subnet identifier.
+# +lbal_nm   -- the load balancer name.
+# +sg_id     -- the load balancer's security group identifier.
+# +subnet_id -- the load balancer's subnet identifier.
 # Returns:      
 #  None  
 #===============================================================================
-function create_loadbalancer()
+function create_http_loadbalancer()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
 
-   local loadbalancer_nm="${1}"
-   local cert_arn="${2}"
-   local sg_id="${3}"
-   local subnet_id="${4}"
+   local lbal_nm="${1}"
+   local sgp_id="${2}"
+   local subnet_id="${3}"
  
    aws elb create-load-balancer \
-       --load-balancer-name "${loadbalancer_nm}" \
-       --security-groups "${sg_id}" \
+       --load-balancer-name "${lbal_nm}" \
+       --security-groups "${sgp_id}" \
        --subnets "${subnet_id}" \
        --region "${DTC_DEPLOY_REGION}" \
-       --listener LoadBalancerPort="${LBAL_HTTPS_PORT}",InstancePort="${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}",Protocol=https,InstanceProtocol=http,SSLCertificateId="${cert_arn}" >> /dev/null
+       --listener LoadBalancerPort="${LBAL_HTTP_PORT}",InstancePort="${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}",Protocol=http,InstanceProtocol=http > /dev/null
  
    return 0
 }
@@ -127,7 +123,7 @@ function create_loadbalancer()
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm     -- The load balancer name.
+# +lbal_nm -- the load balancer name.
 # Returns:      
 #  None  
 #===============================================================================
@@ -139,26 +135,24 @@ function configure_loadbalancer_health_check()
       return 1
    fi
 
-   local loadbalancer_nm="${1}"
+   local lbal_nm="${1}"
  
    aws elb configure-health-check \
-       --load-balancer-name "${loadbalancer_nm}" \
-       --health-check Target=HTTP:"${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 >> /dev/null
+       --load-balancer-name "${lbal_nm}" \
+       --health-check Target=HTTP:"${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 > /dev/null
  
    return 0
 }
 
 #===============================================================================
-# Deletes the specified Load Balancer. 
-# The DNS name associated with a deleted load balancer is no longer usable. 
-# The name and associated DNS record of the deleted load balancer no longer 
-# exist and traffic sent to any of its IP addresses is no longer delivered to
-# your instances.
+# Deletes the specified load balancer. After deletion, the name and associated 
+# DNS record of the load balancer no longer exist and traffic sent to any of its 
+# IP addresses is no longer delivered to the instances.
 #
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm     -- The load balancer name.
+# +lbal_nm -- the load balancer name.
 # Returns:      
 #  None  
 #===============================================================================
@@ -170,9 +164,9 @@ function delete_loadbalancer()
       return 1
    fi
 
-   local loadbalancer_nm="${1}"
+   local lbal_nm="${1}"
  
-   aws elb delete-load-balancer --load-balancer-name "${loadbalancer_nm}" 
+   aws elb delete-load-balancer --load-balancer-name "${lbal_nm}" 
 
    return 0
 }
@@ -186,8 +180,8 @@ function delete_loadbalancer()
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm      -- load balancer name.
-# +instance_id          -- the instance ID.
+# +lbal_nm     -- load balancer name.
+# +instance_id -- the instance ID of the box under load balancer.
 # Returns:      
 #  None  
 #===============================================================================
@@ -199,26 +193,25 @@ function register_instance_with_loadbalancer()
       return 1
    fi
    
-   local loadbalancer_nm="${1}"
+   local lbal_nm="${1}"
    local instance_id="${2}"
    
    aws elb register-instances-with-load-balancer \
-       --load-balancer-name "${loadbalancer_nm}" \
-       --instances "${instance_id}" >> /dev/null
+       --load-balancer-name "${lbal_nm}" \
+       --instances "${instance_id}" > /dev/null
    
    return 0
 }
 
 #===============================================================================
-# Deregisters  the  specified instances from the specified Load Balancer. After 
-# the instance is deregistered, it no longer receives traffic from the load 
-# balancer.
+# Deregisters the specified instance from the load balancer. The deregistered
+# instance no longer receives traffic from the load balancer.
 #
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm      -- load balancer name.
-# +instance_id          -- the instance ID.
+# +lbal_nm     -- load balancer name.
+# +instance_id -- the instance ID.
 # Returns:      
 #  None  
 #===============================================================================
@@ -230,12 +223,12 @@ function deregister_instance_from_loadbalancer()
       return 1
    fi
    
-   local loadbalancer_nm="${1}"
+   local lbal_nm="${1}"
    local instance_id="${2}"
    
    aws elb deregister-instances-from-load-balancer \
-       --load-balancer-name "${loadbalancer_nm}" \
-       --instances "${instance_id}" >> /dev/null
+       --load-balancer-name "${lbal_nm}" \
+       --instances "${instance_id}" > /dev/null
    
    return 0
 }
@@ -246,10 +239,10 @@ function deregister_instance_from_loadbalancer()
 # Globals:
 #  None
 # Arguments:
-# +loadbalancer_nm      -- load balancer name.
-# +instance_id          -- the instance ID.
+# +lbal_nm     -- load balancer name.
+# +instance_id -- the instance ID.
 # Returns:      
-#  The load balancer name if the instance is registered, blanc otherwise.  
+#  true/false value.  
 #===============================================================================
 function check_instance_is_registered_with_loadbalancer()
 {
@@ -259,15 +252,21 @@ function check_instance_is_registered_with_loadbalancer()
       return 1
    fi
 
-   local loadbalancer_nm="${1}"
+   local lbal_nm="${1}"
    local instance_id="${2}"
+   local is_registered='false'
+   local lbal_name=''
    
-   local loadbalancer_name
-   loadbalancer_name="$(aws elb describe-load-balancers \
-       --query "LoadBalancerDescriptions[?contains(LoadBalancerName, '${loadbalancer_nm}') && contains(Instances[].InstanceId, '${instance_id}')].{LoadBalancerName: LoadBalancerName}" \
-       --output text)"                     
+   lbal_name="$(aws elb describe-load-balancers \
+       --query "LoadBalancerDescriptions[?contains(LoadBalancerName, '${lbal_nm}') && contains(Instances[].InstanceId, '${instance_id}')].{LoadBalancerName: LoadBalancerName}" \
+       --output text)"  
+       
+   if [[ -n "${lbal_name}" ]]  
+   then
+      is_registered='true'
+   fi                     
             
-   echo "${loadbalancer_name}"
+   echo "${lbal_name}"
    
    return 0
 }

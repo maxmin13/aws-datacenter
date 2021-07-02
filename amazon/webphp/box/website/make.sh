@@ -14,6 +14,7 @@ set +o xtrace
 # GLOBAL: webphp_id, required
 ###############################################
 
+APACHE_INSTALL_DIR='/etc/httpd'
 APACHE_DOCROOT_DIR='/var/www/html'
 APACHE_SITES_AVAILABLE_DIR='/etc/httpd/sites-available'
 APACHE_SITES_ENABLED_DIR='/etc/httpd/sites-enabled'

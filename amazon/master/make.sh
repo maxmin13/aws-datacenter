@@ -42,7 +42,7 @@ echo
    fi 
    
    echo
-
+   
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
 

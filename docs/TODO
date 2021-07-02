@@ -90,13 +90,13 @@ make ssh_run_command that runs multiple commands
 
 this call in a script:
 
-instance_id="$(run_instance "${INSTANCE_NM}" "${sg_id}" "${subnet_id}")"
+instance_id="$(run_instance "${INSTANCE_NM}" "${sgp_id}" "${subnet_id}")"
 
 swallow the error.
 
 better make two calls:
 
-run_instance "${INSTANCE_NM}" "${sg_id}" "${subnet_id}"
+run_instance "${INSTANCE_NM}" "${sgp_id}" "${subnet_id}"
 instance_id="$(get_instance_id "${INSTANCE_NM}")"
 
 ########################################################################

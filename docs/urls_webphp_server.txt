@@ -12,14 +12,14 @@ Establish SSH Session:
 ----------------------
 
 # Enable security group access on port 38142
-rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-webphp1-kp.pem' -p 38142 webphp-user@34.240.230.25
+rm -f ~/.ssh/known_hosts && ssh -i 'maxmin-webphp1-kp.pem' -p 38142 webphp-user@52.212.133.195
 
 ------
 Monit:
 ------
 
 # No Load Balancer, enable security group access on port 2812
-http://34.240.230.25:2812 
+http://52.212.133.195:2812 
 (monit/monit)
 
 ---------------
