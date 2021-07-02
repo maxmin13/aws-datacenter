@@ -12,7 +12,7 @@ set +o xtrace
 ##
 
 echo '***********'
-echo 'Data Center'
+echo 'Data center'
 echo '***********'
 echo
 

@@ -6,7 +6,7 @@ set -o nounset
 set +o xtrace
 
 echo '***********'
-echo 'Data Center'
+echo 'Data center'
 echo '***********'
 echo
 
@@ -73,7 +73,7 @@ then
     
    delete_internet_gateway "${internet_gate_id}"
    
-   echo 'Internet Gateway deleted.'
+   echo 'Internet gateway deleted.'
 fi
 
 ## 
@@ -99,14 +99,14 @@ then
 fi		
 
 ## 
-## route table
+## Route table
 ## 
 
 if [[ -n "${route_table_id}" ]]
 then
    delete_route_table "${route_table_id}"
    
-   echo 'Route Table deleted.'
+   echo 'Route table deleted.'
 fi
 
 ## 
@@ -120,6 +120,6 @@ if [[ -n "${dtc_id}" ]]
 then
    delete_datacenter "${dtc_id}" 
    
-   echo 'Data Center deleted.'
+   echo 'Data center deleted.'
 fi                     
 

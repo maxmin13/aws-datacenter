@@ -8,7 +8,7 @@ set +o xtrace
 function __wait()
 {
    count=0
-   while [[ ${count} -lt 70 ]]; do
+   while [[ ${count} -lt 90 ]]; do
       count=$((count+3))
       printf '.'
       sleep 3
@@ -51,10 +51,6 @@ then
    
    delete_loadbalancer "${LBAL_NM}"
    
-   ## Not found any other way to wait, it takes a lot to disappear,
-   ## not able to delete the certificate until then.
-   __wait  
-
    echo 'Load balancer deleted.'
 fi
 
@@ -77,6 +73,7 @@ then
    	echo 'No internet access to the load balancer found.'
    fi
    
+   __wait 
    delete_security_group "${sgp_id}" 
    
    echo 'Load balancer security group deleted.'

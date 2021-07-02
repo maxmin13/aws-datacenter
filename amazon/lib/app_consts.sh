@@ -55,7 +55,7 @@ DB_MMDATA_JAVAMAIL_USER_NM='javamail'
 ## Shared image ##
 ## ************ ##
 
-SHAR_INSTANCE_NM='maxmin-shared-box'
+SHAR_INSTANCE_NM='maxmin-shared-box1'
 SHAR_INSTANCE_HOSTNAME='shared.maxmin.it'
 SHAR_INSTANCE_USER_NM='shared-user'
 SHAR_INSTANCE_PRIVATE_IP='10.0.0.8'
@@ -80,7 +80,7 @@ LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 ## Admin box ##
 ## ********* ##
 
-SRV_ADMIN_NM='maxmin-admin-box'
+SRV_ADMIN_NM='maxmin-admin-box1'
 SRV_ADMIN_PRIVATE_IP='10.0.0.10'
 SRV_ADMIN_HOSTNAME='admin.maxmin.it'
 SRV_ADMIN_USER_NM='admin-user'

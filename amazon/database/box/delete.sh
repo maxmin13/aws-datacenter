@@ -10,13 +10,14 @@ echo 'Database box'
 echo '************'
 echo
 
-db_state="$(get_database_state "${DB_MMDATA_NM}")"
+db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
 
-if [[ -z "${db_state}" ]]
+if [[ -z "${db_endpoint}" ]]
 then
    echo '* WARN: database box not found.'
 else
-   echo "* database status: ${db_state}."
+   db_state="$(get_database_state "${DB_MMDATA_NM}")"
+   echo "* database endpoint: "${db_endpoint}" (${db_state})."
 fi
 
 sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
