@@ -30,11 +30,11 @@ else
    echo "* data center ID: ${dtc_id}."
 fi
 
-image_id="$(get_image_id "${SHAR_IMAGE_NM}")"
+image_id="$(get_image_id "${SHARED_IMG_NM}")"
 
 if [[ -n "${image_id}" ]]
 then
-   image_state="$(get_image_state "${SHAR_IMAGE_NM}")"
+   image_state="$(get_image_state "${SHARED_IMG_NM}")"
    
    if [[ 'available' == "${image_state}" ]]
    then
@@ -53,8 +53,8 @@ fi
 # Amazon EC2 powers down the instance before creating the AMI to ensure that everything on the 
 # instance is stopped and in a consistent state during the creation process.
 
-instance_id="$(get_instance_id "${SHAR_INSTANCE_NM}")"
-instance_state="$(get_instance_state "${SHAR_INSTANCE_NM}")"
+instance_id="$(get_instance_id "${SHARED_BOX_NM}")"
+instance_state="$(get_instance_state "${SHARED_BOX_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
@@ -76,7 +76,7 @@ mkdir "${TMP_DIR}"/"${shared_dir}"
 
 echo 'Creating the Shared image ...'
 
-create_image "${instance_id}" "${SHAR_IMAGE_NM}" "${SHAR_IMAGE_DESC}" >> /dev/null	
+create_image "${instance_id}" "${SHARED_IMG_NM}" "${SHARED_IMG_DESC}" >> /dev/null	
 
 # Removing old files
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"

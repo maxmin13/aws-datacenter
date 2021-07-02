@@ -19,9 +19,9 @@ echo "Webphp box ${webphp_id}"
 echo '************'
 echo
 
-webphp_nm="${SRV_WEBPHP_NM/<ID>/"${webphp_id}"}"
-keypair_nm="${SRV_WEBPHP_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
-webphp_sgp_nm="${SRV_WEBPHP_SEC_GRP_NM/<ID>/"${webphp_id}"}"
+webphp_nm="${WEBPHP_BOX_NM/<ID>/"${webphp_id}"}"
+keypair_nm="${WEBPHP_BOX_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
+webphp_sgp_nm="${WEBPHP_BOX_SEC_GRP_NM/<ID>/"${webphp_id}"}"
 instance_id="$(get_instance_id "${webphp_nm}")"
 
 if [[ -z "${instance_id}" ]]
@@ -50,7 +50,7 @@ else
    echo "* Webphp public IP address: ${eip}."
 fi
 
-db_sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
+db_sgp_id="$(get_security_group_id "${DB_BOX_SEC_GRP_NM}")"
 
 if [[ -z "${db_sgp_id}" ]]
 then
@@ -59,7 +59,7 @@ else
    echo "* database security group ID: ${db_sgp_id}."
 fi
 
-adm_sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
+adm_sgp_id="$(get_security_group_id "${ADMIN_BOX_SEC_GRP_NM}")"
 
 if [[ -z "${adm_sgp_id}" ]]
 then
@@ -77,11 +77,11 @@ rm -rf "${TMP_DIR:?}"/webphp
 ## load balancer 
 ## 
 
-is_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_NM}" "${instance_id}")"
+is_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_BOX_NM}" "${instance_id}")"
 
 if [[ 'true' == "${is_registered}" ]]
 then
-   deregister_instance_from_loadbalancer "${LBAL_NM}" "${instance_id}"
+   deregister_instance_from_loadbalancer "${LBAL_BOX_NM}" "${instance_id}"
 fi
 
 ## 
@@ -106,15 +106,15 @@ fi
 ## database grants 
 ## 
 
-db_sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
+db_sgp_id="$(get_security_group_id "${DB_BOX_SEC_GRP_NM}")"
 
 if [[ -n "${db_sgp_id}" && -n ${sgp_id} ]]
 then
-   granted="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_MMDATA_PORT}" "${sgp_id}")"
+   granted="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_PORT}" "${sgp_id}")"
    
    if [[ -n "${granted}" ]]
    then
-   	revoke_access_from_security_group "${db_sgp_id}" "${DB_MMDATA_PORT}" "${sgp_id}"
+   	revoke_access_from_security_group "${db_sgp_id}" "${DB_PORT}" "${sgp_id}"
    	
    	echo 'Access to database revoked.'
    fi
@@ -127,28 +127,28 @@ fi
 if [[ -n "${adm_sgp_id}" && -n ${sgp_id} ]]
 then
    # Check if access to Admin rsyslog is granted.
-   rsyslog_granted="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${SRV_ADMIN_RSYSLOG_PORT}" "${sgp_id}")"
+   rsyslog_granted="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" "${sgp_id}")"
    
    if [[ -n "${rsyslog_granted}" ]]
    then
-   	revoke_access_from_security_group "${adm_sgp_id}" "${SRV_ADMIN_RSYSLOG_PORT}" "${sgp_id}"
+   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" "${sgp_id}"
    	
    	echo "Access to Admin Rsyslog revoked."
    fi
 
    # Check if the Webphp box is granted access to admin instance M/Monit
-   mmonit_granted="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${SRV_ADMIN_MMONIT_COLLECTOR_PORT}" "${sgp_id}")"
+   mmonit_granted="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" "${sgp_id}")"
    
    if [[ -n "${mmonit_granted}" ]]
    then
-   	revoke_access_from_security_group "${adm_sgp_id}" "${SRV_ADMIN_MMONIT_COLLECTOR_PORT}" "${sgp_id}"
+   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" "${sgp_id}"
    	
    	echo "Access to Admin MMonit revoked."
    fi   
 fi
 
 ## 
-## security group 
+## Security group 
 ## 
   
 if [[ -n "${sgp_id}" ]]
@@ -175,10 +175,10 @@ then
 fi
 
 ## 
-## SSH Key-pair
+## SSH key-pair
 ## 
 
-key_pair_file="$(get_keypair_file_path "${keypair_nm}" "${SRV_WEBPHP_ACCESS_DIR}")"
+key_pair_file="$(get_keypair_file_path "${keypair_nm}" "${WEBPHP_BOX_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
 then

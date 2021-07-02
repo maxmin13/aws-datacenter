@@ -12,9 +12,9 @@ APACHE_DEFAULT_HTTP_PORT='SEDapache_default_http_portSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
-LBAL_HTTP_VIRTUALHOST_CONFIG_FILE='SEDlbal_http_virtualhost_configSED'
-LBAL_HTTP_PORT='SEDlbal_http_portSED'
-LBAL_DOCROOT_ID='SEDlbal_docroot_idSED'
+LBAL_BOX_HTTP_VIRTUALHOST_CONFIG_FILE='SEDlbal_http_virtualhost_configSED'
+LBAL_BOX_HTTP_PORT='SEDlbal_http_portSED'
+LBAL_BOX_DOCROOT_ID='SEDlbal_docroot_idSED'
 MONIT_HTTP_VIRTUALHOST_CONFIG_FILE='SEDmonit_http_virtualhost_configSED'
 MONIT_HTTP_PORT='SEDmonit_http_portSED'
 MONIT_DOCROOT_ID='SEDmonit_docroot_idSED'
@@ -156,7 +156,7 @@ cd "${script_dir}" || exit
 
 # Create an heart-beat endpoint targeted by the Load Balancer.
 
-lbal_docroot="${APACHE_DOCROOT_DIR}"/"${LBAL_DOCROOT_ID}"/public_html
+lbal_docroot="${APACHE_DOCROOT_DIR}"/"${LBAL_BOX_DOCROOT_ID}"/public_html
 mkdir --parents "${lbal_docroot}"
 touch "${lbal_docroot}"/elb.htm
 echo ok > "${lbal_docroot}"/elb.htm
@@ -168,19 +168,19 @@ find "${lbal_docroot}" -type f -exec chown root:root {} +
 find "${lbal_docroot}" -type f -exec chmod 644 {} +
 
 # Enable the load balancer endopoint.
-cp -f "${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
+cp -f "${LBAL_BOX_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}" 
 
-if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" ]]
+if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${LBAL_BOX_HTTP_VIRTUALHOST_CONFIG_FILE}" ]]
 then
-   ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" 
+   ln -s "${APACHE_SITES_AVAILABLE_DIR}"/"${LBAL_BOX_HTTP_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_ENABLED_DIR}"/"${LBAL_BOX_HTTP_VIRTUALHOST_CONFIG_FILE}" 
    
    echo 'Load Balancer healt-check endpoint enabled.'
 fi 
 
 # Enable load balancer HTTP port.
-sed -i "s/^#Listen \+${LBAL_HTTP_PORT}/Listen ${LBAL_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
+sed -i "s/^#Listen \+${LBAL_BOX_HTTP_PORT}/Listen ${LBAL_BOX_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
-echo "Enabled Apache web server listen on ${LBAL_HTTP_PORT} port."
+echo "Enabled Apache web server listen on ${LBAL_BOX_HTTP_PORT} port."
 echo 'Load balancer Apache endpoint enabled.' 
 
 ##

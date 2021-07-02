@@ -21,106 +21,103 @@ MAXMIN_TLD='maxmin.it'
 ## Data center ##
 ## *********** ##
 
-DTC_NM='maxmin-datacenter'
+DTC_NM='maxmin-dtc'
 DTC_CDIR='10.0.0.0/16'
 DTC_DEPLOY_REGION='eu-west-1'
 DTC_DEPLOY_ZONE_1='eu-west-1a'
 DTC_DEPLOY_ZONE_2='eu-west-1b'
-DTC_SUBNET_MAIN_NM='maxmin-main-sbn'
+DTC_SUBNET_MAIN_NM='main-sbn'
 DTC_SUBNET_MAIN_CIDR='10.0.0.0/24'
-DTC_SUBNET_BACKUP_NM='maxmin-backup-sbn'
+DTC_SUBNET_BACKUP_NM='backup-sbn'
 DTC_SUBNET_BACKUP_CIDR='10.0.10.0/24'
-DTC_INTERNET_GATEWAY_NM='maxmin-gate'
-DTC_ROUTE_TABLE_NM='maxmin-route-tb'
+DTC_INTERNET_GATEWAY_NM='internet-gate'
+DTC_ROUTE_TABLE_NM='route-tab'
 
 ## ******** ##
 ## Database ##
 ## ******** ##
 
-DB_MMDATA_INSTANCE_NM='mmdatainstance'
-DB_MMDATA_PORT='3306'
-DB_MMDATA_NM='mmdata'
-DB_MMDATA_LOG_SLOW_QUERIES_PARAM_GRP_NM='logslowqueries' ## can't have capitals
-DB_MMDATA_LOG_SLOW_QUERIES_PARAM_GRP_DESC='Log slow queries database parameter group'
-DB_MMDATA_SUB_GRP_NM='maxmin-db-subgp'
-DB_MMDATA_SUB_GRP_DESC='Database subnet group that spans multiple subnets'
-DB_MMDATA_SEC_GRP_NM='maxmin-db-sgp'
-# The db main user is set when the db is created, see: rds.sh
-DB_MMDATA_MAIN_USER_NM='maxmin'
-DB_MMDATA_ADMIN_USER_NM='adminrw'
-DB_MMDATA_WEBPHP_USER_NM='webphprw'
-DB_MMDATA_JAVAMAIL_USER_NM='javamail'
+DB_BOX_NM='mmdatainstance'
+DB_BOX_SUBNET_GRP_NM='db-sbng'
+DB_BOX_SUBNET_GRP_DESC='Database subnet group that spans multiple subnets'
+DB_BOX_SEC_GRP_NM='db-sgp'
+DB_PORT='3306'
+DB_NM='mmdata'
+DB_MAIN_USER_NM='maxmin'
+DB_ADMIN_USER_NM='adminrw'
+DB_WEBPHP_USER_NM='webphprw'
+DB_JAVAMAIL_USER_NM='javamail'
+DB_LOG_SLOW_QUERIES_PARAM_GRP_NM='logslowqueries' ## can't have capitals
+DB_LOG_SLOW_QUERIES_PARAM_GRP_DESC='Log slow queries database parameter group'
 
 ## ************ ##
 ## Shared image ##
 ## ************ ##
 
-SHAR_INSTANCE_NM='maxmin-shared-box1'
-SHAR_INSTANCE_HOSTNAME='shared.maxmin.it'
-SHAR_INSTANCE_USER_NM='shared-user'
-SHAR_INSTANCE_PRIVATE_IP='10.0.0.8'
-SHAR_INSTANCE_SSH_PORT='38142'
-SHAR_INSTANCE_KEY_PAIR_NM='maxmin-shared-kp'
-SHAR_INSTANCE_SEC_GRP_NM='maxmin-shared-box-sgp'
-SHAR_IMAGE_NM='maxmin-shared-img'
-SHAR_IMAGE_DESC='Linux secured Image'
+SHARED_BOX_NM='shared-box'
+SHARED_BOX_HOSTNAME='shared.maxmin.it'
+SHARED_BOX_USER_NM='shared-user'
+SHARED_BOX_PRIVATE_IP='10.0.0.8'
+SHARED_BOX_SSH_PORT='38142'
+SHARED_BOX_KEY_PAIR_NM='shared-keys'
+SHARED_BOX_SEC_GRP_NM='shared-box-sgp'
+SHARED_IMG_NM='shared-img'
+SHARED_IMG_DESC='Linux secured Image'
 
 ## ************* ##
 ## Load balancer ##
 ## ************* ##
 
-LBAL_NM='lbalmaxmin'
-LBAL_HTTPS_PORT='443'
-LBAL_HTTP_PORT='80'
-LBAL_SEC_GRP_NM='maxmin-lbal-sgp'
-LBAL_DNS_SUB_DOMAIN='www'
-LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
+LBAL_BOX_NM='lbalmaxmin'
+LBAL_BOX_HTTPS_PORT='443'
+LBAL_BOX_HTTP_PORT='80'
+LBAL_BOX_SEC_GRP_NM='lbal-sgp'
+LBAL_BOX_DNS_SUB_DOMAIN='www'
+LBAL_BOX_EMAIL_ADD='minardi.massimiliano@libero.it'
 
 ## ********* ##
 ## Admin box ##
 ## ********* ##
 
-SRV_ADMIN_NM='maxmin-admin-box1'
-SRV_ADMIN_PRIVATE_IP='10.0.0.10'
-SRV_ADMIN_HOSTNAME='admin.maxmin.it'
-SRV_ADMIN_USER_NM='admin-user'
-# In dev, ip-base virtual hosting, in prod name-base virtual hosting with only one ip and port for
-# website, phpmyadmin and loganalyzer.
-SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT='80'
-SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT='8060'
-SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT='443'
-SRV_ADMIN_APACHE_DEFAULT_HTTP_PORT='8070'
-SRV_ADMIN_APACHE_PHPMYADMIN_HTTP_PORT='8080'
-SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT='9443'
-SRV_ADMIN_APACHE_LOGANALYZER_HTTP_PORT='8081'
-SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT='9444'
-SRV_ADMIN_APACHE_MONIT_HTTP_PORT='8082'
-SRV_ADMIN_MMONIT_HTTP_PORT='8083'
-SRV_ADMIN_MMONIT_HTTPS_PORT='9445'
-SRV_ADMIN_MMONIT_COLLECTOR_PORT='8084'
-SRV_ADMIN_RSYSLOG_PORT='514'
-SRV_ADMIN_EMAIL='minardi.massimiliano@libero.it'
-SRV_ADMIN_KEY_PAIR_NM='maxmin-admin-kp'
-SRV_ADMIN_SEC_GRP_NM='maxmin-admin-box-sgp'
-SRV_ADMIN_DNS_SUB_DOMAIN='admin'
+ADMIN_BOX_NM='admin-box'
+ADMIN_BOX_PRIVATE_IP='10.0.0.10'
+ADMIN_BOX_HOSTNAME='admin.maxmin.it'
+ADMIN_BOX_USER_NM='admin-user'
+ADMIN_BOX_EMAIL='minardi.massimiliano@libero.it'
+ADMIN_BOX_KEY_PAIR_NM='admin-keys'
+ADMIN_BOX_SEC_GRP_NM='admin-box-sgp'
+ADMIN_BOX_DNS_SUB_DOMAIN='admin'
+ADMIN_APACHE_CERTBOT_HTTP_PORT='80'
+ADMIN_APACHE_WEBSITE_HTTP_PORT='8060'
+ADMIN_APACHE_WEBSITE_HTTPS_PORT='443'
+ADMIN_APACHE_DEFAULT_HTTP_PORT='8070'
+ADMIN_APACHE_PHPMYADMIN_HTTP_PORT='8080'
+ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT='9443'
+ADMIN_APACHE_LOGANALYZER_HTTP_PORT='8081'
+ADMIN_APACHE_LOGANALYZER_HTTPS_PORT='9444'
+ADMIN_APACHE_MONIT_HTTP_PORT='8082'
+ADMIN_MMONIT_HTTP_PORT='8083'
+ADMIN_MMONIT_HTTPS_PORT='9445'
+ADMIN_MMONIT_COLLECTOR_PORT='8084'
+ADMIN_RSYSLOG_PORT='514'
+
 
 ## ********** ##
 ## WebPhp box ##
 ## ********** ##
 
-SRV_WEBPHP_NM='maxmin-webphp<ID>-box'
-SRV_WEBPHP_PRIVATE_IP='10.0.0.2<ID>'
-SRV_WEBPHP_HOSTNAME='webphp<ID>.maxmin.it'
-SRV_WEBPHP_USER_NM='webphp-user'
-# In dev, ip-base virtual hosting, in prod name-base virtual hosting with only one ip and port for
-# website, loadbalancer (instance healt heart-bit) and monit (httpd healt heart-bit).
-SRV_WEBPHP_APACHE_DEFAULT_HTTP_PORT='8050'
-SRV_WEBPHP_APACHE_MONIT_HTTP_PORT='8060'
-SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT='8070'
-SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT='8080'
-SRV_WEBPHP_RSYSLOG_PORT='514'
-SRV_WEBPHP_SEC_GRP_NM='maxmin-webphp<ID>-box-sgp'
-SRV_WEBPHP_KEY_PAIR_NM='maxmin-webphp<ID>-kp'
-SRV_WEBPHP_EMAIL='minardi.massimiliano@libero.it'
+WEBPHP_BOX_NM='webphp<ID>-box'
+WEBPHP_BOX_PRIVATE_IP='10.0.0.2<ID>'
+WEBPHP_BOX_HOSTNAME='webphp<ID>.maxmin.it'
+WEBPHP_BOX_USER_NM='webphp-user'
+WEBPHP_BOX_SEC_GRP_NM='webphp<ID>-box-sgp'
+WEBPHP_BOX_KEY_PAIR_NM='webphp<ID>-keys'
+WEBPHP_BOX_EMAIL='minardi.massimiliano@libero.it'
+WEBPHP_APACHE_DEFAULT_HTTP_PORT='8050'
+WEBPHP_APACHE_MONIT_HTTP_PORT='8060'
+WEBPHP_APACHE_WEBSITE_HTTP_PORT='8070'
+WEBPHP_APACHE_LBAL_BOX_HEALTCHECK_HTTP_PORT='8080'
+WEBPHP_RSYSLOG_PORT='514'
+
 
 

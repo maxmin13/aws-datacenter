@@ -41,6 +41,37 @@ function escape()
    echo "${escaped_str}"
 }
 
+#===============================================================================
+# Makes the program sleep for a number of seconds.
+# Globals:
+#  None
+# Arguments:
+# +seconds -- the number of seconds the program sleeps.
+# Returns:      
+#  None.  
+#===============================================================================
+function __wait()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments'
+      return 1
+   fi
+   
+   local seconds="${1}"
+   local count=0
+   
+   while [[ "${count}" -lt "${seconds}" ]]; do
+      printf '.'
+      sleep 1
+      count=$((count+1))
+   done
+   
+   printf '\n'
+   
+   return 0
+}
+
 ## Start tests: ##
 ##escaped="$(escape 'abc/efg')"
 ##if [[ "${escaped}" != 'abc\/efg' ]]

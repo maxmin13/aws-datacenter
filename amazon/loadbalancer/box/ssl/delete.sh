@@ -5,6 +5,14 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+## TODO
+## TODO
+## TODO
+## TODO do not remove SSL cert here, remove it from the box/delete.sh so you are sure that
+## it is not forgotten on aws.
+## TODO
+
+
 CRT_NM='maxmin-dev-elb-cert'
 
 echo '*****************'

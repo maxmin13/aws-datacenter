@@ -75,8 +75,8 @@ function create_datacenter()
        --output text)"
             
    aws ec2 wait vpc-available \
-            --filters Name=tag-key,Values='Name' \
-            --filters Name=tag-value,Values="${dtc_nm}"  
+       --filters Name=tag-key,Values='Name' \
+       --filters Name=tag-value,Values="${dtc_nm}"  
  
    echo "${dtc_id}"
   
@@ -84,12 +84,12 @@ function create_datacenter()
 }
 
 #===============================================================================
-# Delete a Data Center.
+# Delete a data center.
 #
 # Globals:
 #  None
 # Arguments:
-# +dtc_nm     -- the data center name.
+# +dtc_nm -- the data center name.
 # Returns:      
 #  None.  
 #===============================================================================
@@ -123,9 +123,9 @@ function delete_datacenter()
 # Globals:
 #  None
 # Arguments:
-# +dtc_id     -- the data center identifier.
+# +dtc_id -- the data center identifier.
 # Returns:      
-#  A JSON string containing the list of subnet identifiers in a Data Center.
+#  A JSON string containing the list of subnet identifiers in a data center.
 #===============================================================================
 function get_subnet_ids()
 {
@@ -153,7 +153,7 @@ function get_subnet_ids()
 # Globals:
 #  None
 # Arguments:
-# +subnet_nm     -- the subnet name.
+# +subnet_nm -- the subnet name.
 # Returns:      
 #  the subnet identifier, or blanc if it is not found.  
 #===============================================================================
@@ -223,7 +223,7 @@ function create_subnet()
   ####################### TODO ASSOCIATE THE SUBNET IN ANOTHER FUNCTION FOR ATOMICITY ############################## 
   
    ## Associate this subnet with our route table 
-   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" >> /dev/null
+   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" > /dev/null
   
    echo "${subnet_id}"
  
@@ -231,7 +231,7 @@ function create_subnet()
 }
 
 #===============================================================================
-# Deletes a Subnet.
+# Deletes a subnet.
 #
 # Globals:
 #  None
@@ -528,7 +528,7 @@ function set_route()
    
    aws ec2 create-route --route-table-id "${rtb_id}" \
        --destination-cidr-block "${destination_cidr}" \
-       --gateway-id "${target_id}" >> /dev/null
+       --gateway-id "${target_id}" > /dev/null
 
    return 0
 }
@@ -609,7 +609,7 @@ function create_security_group()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id     -- the security group identifier.
+# +sgp_id -- the security group identifier.
 # Returns:      
 #  None    
 #===============================================================================
@@ -622,10 +622,14 @@ function delete_security_group()
    fi
 
    local sgp_id="${1}"
-  
-   aws ec2 delete-security-group --group-id "${sgp_id}" >> /dev/null 
-  
-   return 0
+   local exit_code=0
+   
+   set +e
+   aws ec2 delete-security-group --group-id "${sgp_id}" > /dev/null
+   exit_code=$?
+   set -e
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -634,9 +638,9 @@ function delete_security_group()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id          -- the security group identifier.
-# +port            -- the TCP port
-# +cidr            -- the CIDR block from which incoming traffic is allowed.
+# +sgp_id -- the security group identifier.
+# +port   -- the TCP port
+# +cidr   -- the CIDR block from which incoming traffic is allowed.
 # Returns:      
 #  None
 #===============================================================================
@@ -656,7 +660,7 @@ function allow_access_from_cidr()
        --group-id "${sgp_id}" \
        --protocol tcp \
        --port "${port}" \
-       --cidr "${cidr}" >> /dev/null
+       --cidr "${cidr}" > /dev/null
  
    return 0
 }
@@ -690,7 +694,7 @@ function allow_access_from_security_group()
        --group-id "${sgp_id}" \
        --protocol tcp \
        --port "${port}" \
-       --source-group "${from_sgp_id}" >> /dev/null 
+       --source-group "${from_sgp_id}" > /dev/null 
 
    return 0
 }
@@ -724,7 +728,7 @@ function revoke_access_from_security_group()
        --group-id "${sgp_id}" \
        --protocol tcp \
        --port "${port}" \
-       --source-group "${from_sgp_id}" >> /dev/null
+       --source-group "${from_sgp_id}" > /dev/null
 
    return 0
 }
@@ -758,7 +762,7 @@ function revoke_access_from_cidr()
        --group-id "${sgp_id}" \
        --protocol tcp \
        --port "${port}" \
-       --cidr "${src_cidr}" >> /dev/null
+       --cidr "${src_cidr}" > /dev/null
 
    return 0
 }
@@ -1037,7 +1041,7 @@ function stop_instance()
 
    local instance_id="${1}"
 
-   aws ec2 stop-instances --instance-ids "${instance_id}" >> /dev/null
+   aws ec2 stop-instances --instance-ids "${instance_id}" > /dev/null
    aws ec2 wait instance-stopped --instance-ids "${instance_id}" 
 
    return 0
@@ -1066,7 +1070,7 @@ function delete_instance()
 
    local instance_id="${1}"
 
-   aws ec2 terminate-instances --instance-ids "${instance_id}" >> /dev/null
+   aws ec2 terminate-instances --instance-ids "${instance_id}" > /dev/null
    aws ec2 wait instance-terminated --instance-ids "${instance_id}"
    
    return 0
@@ -1102,7 +1106,7 @@ function create_image()
         --name "${img_nm}" \
         --description "${img_desc}" \
         --query 'ImageId' \
-        --output text)" >> /dev/null
+        --output text)" > /dev/null
   
    aws ec2 wait image-available --image-ids "${img_id}"
  
@@ -1252,7 +1256,7 @@ function delete_image_snapshot()
 
    local img_snapshot_id="${1}"
 
-   aws ec2 delete-snapshot --snapshot-id "${img_snapshot_id}" >> /dev/null
+   aws ec2 delete-snapshot --snapshot-id "${img_snapshot_id}" > /dev/null
 
    return 0
 }
@@ -1394,7 +1398,7 @@ function release_public_ip_address()
 
    local allocation_id="${1}"
 
-   aws ec2 release-address --allocation-id "${allocation_id}" >> /dev/null
+   aws ec2 release-address --allocation-id "${allocation_id}" > /dev/null
 
    return 0
 }
@@ -1424,7 +1428,7 @@ function release_all_public_ip_addresses()
           
    for id in ${allocation_ids}
    do
-      aws ec2 release-address --allocation-id "${id}" >> /dev/null
+      aws ec2 release-address --allocation-id "${id}" > /dev/null
    done
 
    return 0
@@ -1456,7 +1460,7 @@ function associate_public_ip_address_to_instance()
   
    aws ec2 associate-address \
        --instance-id "${instance_id}" \
-       --public-ip "${eip}" >> /dev/null
+       --public-ip "${eip}" > /dev/null
 
    return 0
 }

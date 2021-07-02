@@ -37,7 +37,7 @@ echo
 
 echo
 
-elb_dns="$(get_loadbalancer_dns_name "${LBAL_NM}")"
+elb_dns="$(get_loadbalancer_dns_name "${LBAL_BOX_NM}")"
 
 if [[ -z "${elb_dns}" ]]
 then
@@ -47,7 +47,7 @@ else
    echo "* Load balancer DNS name: ${elb_dns}."
 fi
 
-sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${LBAL_BOX_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -88,7 +88,7 @@ else
 
       # Generate RSA encrypted private key, protected with a passphrase.
       sed -e "s/SEDkey_fileSED/server.key/g" \
-          -e "s/SEDkey_pwdSED/${LBAL_PK_PWD}/g" \
+          -e "s/SEDkey_pwdSED/${LBAL_BOX_PK_PWD}/g" \
              "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_rsa_template.exp > gen_rsa.sh
 
       chmod +x gen_rsa.sh
@@ -100,7 +100,7 @@ else
       # Remove the password protection from the key file.
       sed -e "s/SEDkey_fileSED/server.key/g" \
           -e "s/SEDnew_key_fileSED/server.key.org/g" \
-          -e "s/SEDkey_pwdSED/${LBAL_PK_PWD}/g" \
+          -e "s/SEDkey_pwdSED/${LBAL_BOX_PK_PWD}/g" \
              "${TEMPLATE_DIR}"/common/ssl/selfsigned/remove_passphase_template.exp > remove_passphase.sh   
       
       chmod +x remove_passphase.sh
@@ -121,7 +121,7 @@ else
           -e "s/SEDorganizationSED/${CRT_ORGANIZATION_NM}/g" \
           -e "s/SEDunit_nameSED/${CRT_UNIT_NM}/g" \
           -e "s/SEDcommon_nameSED/${CRT_COMMON_NM}/g" \
-          -e "s/SEDemail_addressSED/${LBAL_EMAIL_ADD}/g" \
+          -e "s/SEDemail_addressSED/${LBAL_BOX_EMAIL_ADD}/g" \
              "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.exp > gen_certificate.sh
       
       chmod +x gen_certificate.sh
@@ -165,7 +165,7 @@ else
 fi
 
 
-loadbalancer_dns="$(get_loadbalancer_dns_name "${LBAL_NM}")"
+loadbalancer_dns="$(get_loadbalancer_dns_name "${LBAL_BOX_NM}")"
 
 # Removing old local files
 rm -rf "${TMP_DIR:?}"/"${loadbalancer_dir}"

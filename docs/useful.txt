@@ -1,9 +1,14 @@
 
-find ./ -type f -exec sed -i 's/SHAR_INSTANCE_/SHAR_BOX_/g' {} \;
-find ./ -type f -exec sed -i 's/DB_MMDATA_INSTANCE_NM/DB_BOX_NM/g' {} \;
-find ./ -type f -exec sed -i 's/LBAL_/LBAL_BOX_/g' {} \;
-find ./ -type f -exec sed -i 's/SRV_ADMIN_/ADMIN_BOX_/g' {} \;
-find ./ -type f -exec sed -i 's/SRV_WEBPHP_/WEBPHP_BOX_/g' {} \;
+find ./ -type f -exec sed -i 's/DB_/DB_/g' {} \;
+find ./ -type f -exec sed -i 's/DB_BOX_SUBNET_GRP_DESC/DB_BOX_SUBNET_GRP_DESC/g' {} \;
+find ./ -type f -exec sed -i 's/DB_BOX_SEC_GRP_NM/DB_BOX_SEC_GRP_NM/g' {} \;
+
+
+
+
+DB_BOX_SUBNET_GRP_NM='maxmin-db-subgp'
+DB_BOX_SUBNET_GRP_DESC='Database subnet group that spans multiple subnets'
+DB_BOX_SEC_GRP_NM='maxmin-db-sgp'
 
 ################
 xml manipulation

@@ -13,18 +13,18 @@ echo
 shared_dir='shared'
 
 # The temporary box used to build the image, it should be already deleted.
-instance_id="$(get_instance_id "${SHAR_INSTANCE_NM}")"
+instance_id="$(get_instance_id "${SHARED_BOX_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Shared box not found.'
 else
-   instance_st="$(get_instance_state "${SHAR_INSTANCE_NM}")"
+   instance_st="$(get_instance_state "${SHARED_BOX_NM}")"
    echo "* Shared box ID: ${instance_id} (${instance_st})."
 fi
 
 # The temporary security group used to build the image, it should be already deleted.
-sgp_id="$(get_security_group_id "${SHAR_INSTANCE_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${SHARED_BOX_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -33,7 +33,7 @@ else
    echo "* security group. ${sgp_id}."
 fi
 
-image_id="$(get_image_id "${SHAR_IMAGE_NM}")"
+image_id="$(get_image_id "${SHARED_IMG_NM}")"
 
 if [[ -z "${image_id}" ]]
 then
@@ -42,7 +42,7 @@ else
    echo "* Shared image ID: ${image_id}."
 fi
 
-snapshot_ids="$(get_image_snapshot_ids "${SHAR_IMAGE_NM}")"
+snapshot_ids="$(get_image_snapshot_ids "${SHARED_IMG_NM}")"
 
 if [[ -z "${snapshot_ids}" ]]
 then

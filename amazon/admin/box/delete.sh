@@ -10,17 +10,17 @@ echo 'Admin box'
 echo '*********'
 echo
 
-instance_id="$(get_instance_id "${SRV_ADMIN_NM}")"
+instance_id="$(get_instance_id "${ADMIN_BOX_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Admin box not found.'
 else
-   instance_st="$(get_instance_state "${SRV_ADMIN_NM}")"
+   instance_st="$(get_instance_state "${ADMIN_BOX_NM}")"
    echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
-sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${ADMIN_BOX_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -29,7 +29,7 @@ else
    echo "* Admin security group ID: ${sgp_id}."
 fi
 
-eip="$(get_public_ip_address_associated_with_instance "${SRV_ADMIN_NM}")"
+eip="$(get_public_ip_address_associated_with_instance "${ADMIN_BOX_NM}")"
 
 if [[ -z "${eip}" ]]
 then
@@ -38,7 +38,7 @@ else
    echo "* Admin public IP address: ${eip}."
 fi
 
-db_sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
+db_sgp_id="$(get_security_group_id "${DB_BOX_SEC_GRP_NM}")"
 
 if [[ -z "${db_sgp_id}" ]]
 then
@@ -74,15 +74,15 @@ fi
 ## database grants 
 ## 
 
-db_sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
+db_sgp_id="$(get_security_group_id "${DB_BOX_SEC_GRP_NM}")"
 
 if [[ -n "${db_sgp_id}" && -n ${sgp_id} ]]
 then
-   granted="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_MMDATA_PORT}" "${sgp_id}")"
+   granted="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_PORT}" "${sgp_id}")"
    
    if [[ -n "${granted}" ]]
    then
-   	revoke_access_from_security_group "${db_sgp_id}" "${DB_MMDATA_PORT}" "${sgp_id}"
+   	revoke_access_from_security_group "${db_sgp_id}" "${DB_PORT}" "${sgp_id}"
    	
    	echo 'Access to database revoked.'
    fi
@@ -119,7 +119,7 @@ fi
 ## SSH Access 
 ## 
 
-key_pair_file="$(get_keypair_file_path "${SRV_ADMIN_KEY_PAIR_NM}" "${SRV_ADMIN_ACCESS_DIR}")"
+key_pair_file="$(get_keypair_file_path "${ADMIN_BOX_KEY_PAIR_NM}" "${ADMIN_BOX_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
 then

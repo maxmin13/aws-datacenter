@@ -10,17 +10,17 @@ echo 'Database box'
 echo '************'
 echo
 
-db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
+db_endpoint="$(get_database_endpoint "${DB_NM}")"
 
 if [[ -z "${db_endpoint}" ]]
 then
    echo '* WARN: database box not found.'
 else
-   db_state="$(get_database_state "${DB_MMDATA_NM}")"
+   db_state="$(get_database_state "${DB_NM}")"
    echo "* database endpoint: "${db_endpoint}" (${db_state})."
 fi
 
-sgp_id="$(get_security_group_id "${DB_MMDATA_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${DB_BOX_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -29,7 +29,7 @@ else
    echo "* database security group ID: ${sgp_id}."
 fi
 
-db_subnet_group_status="$(get_db_subnet_group_status "${DB_MMDATA_SUB_GRP_NM}")"
+db_subnet_group_status="$(get_db_subnet_group_status "${DB_BOX_SUBNET_GRP_NM}")"
 
 if [[ -z "${db_subnet_group_status}" ]]
 then
@@ -38,7 +38,7 @@ else
    echo "* database subnet group status: ${db_subnet_group_status}."
 fi
 
-db_snapshot_ids="$(get_database_snapshot_ids "${DB_MMDATA_NM}")"
+db_snapshot_ids="$(get_database_snapshot_ids "${DB_NM}")"
 
 if [[ -z "${db_snapshot_ids}" ]]
 then
@@ -50,19 +50,19 @@ fi
 echo
 
 ## 
-## database box
+## Database box
 ##
-if [[ -n "${db_state}" ]]
+if [[ -n "${db_endpoint}" ]]
 then
-   db_state="$(get_database_state "${DB_MMDATA_NM}")"
+   db_state="$(get_database_state "${DB_NM}")"
    
    if [[ 'deleting' != "${db_state}" ]]
    then
-      echo 'Deleting database instance ...' 
+      echo 'Deleting database box ...' 
         
-      delete_database "${DB_MMDATA_INSTANCE_NM}"
+      delete_database "${DB_BOX_NM}"
       
-      echo 'Database Instance deleted.'
+      echo 'Database box deleted.'
    fi
 fi
 
@@ -83,7 +83,7 @@ then
 fi
 
 ## 
-## DB Security Group
+## DB security group
 ## 
   
 if [[ -n "${sgp_id}" ]]
@@ -94,25 +94,25 @@ then
 fi
 
 ## 
-## database subnet Group
+## database subnet group
 ## 
 
 if [[ -n "${db_subnet_group_status}" ]]
 then
-   delete_db_subnet_group "${DB_MMDATA_SUB_GRP_NM}"
+   delete_db_subnet_group "${DB_BOX_SUBNET_GRP_NM}"
    
    echo 'Database subnet group deleted.'
 fi
 
 ##
-## Parameter Group
+## Parameter group
 ##
 
-pg_exists="$(check_log_slow_queries_db_parameter_group_exists "${DB_MMDATA_LOG_SLOW_QUERIES_PARAM_GRP_NM}")"
+pg_exists="$(check_log_slow_queries_db_parameter_group_exists "${DB_LOG_SLOW_QUERIES_PARAM_GRP_NM}")"
 
 if [[ -n "${pg_exists}" ]]
 then
-   delete_log_slow_queries_db_parameter_group "${DB_MMDATA_LOG_SLOW_QUERIES_PARAM_GRP_NM}"
+   delete_log_slow_queries_db_parameter_group "${DB_LOG_SLOW_QUERIES_PARAM_GRP_NM}"
    
    echo 'Log slow queries database parameter group deleted.'
    echo

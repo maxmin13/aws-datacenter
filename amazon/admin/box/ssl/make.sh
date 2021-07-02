@@ -39,17 +39,17 @@ echo 'SSL Admin box'
 echo '*************'
 echo
 
-instance_id="$(get_instance_id "${SRV_ADMIN_NM}")"
+instance_id="$(get_instance_id "${ADMIN_BOX_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Admin box not found.'
 else
-   instance_st="$(get_instance_state "${SRV_ADMIN_NM}")"
+   instance_st="$(get_instance_state "${ADMIN_BOX_NM}")"
    echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
-sgp_id="$(get_security_group_id "${SRV_ADMIN_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${ADMIN_BOX_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -59,7 +59,7 @@ else
    echo "* Admin security group ID: ${sgp_id}."   
 fi
 
-eip="$(get_public_ip_address_associated_with_instance "${SRV_ADMIN_NM}")"
+eip="$(get_public_ip_address_associated_with_instance "${ADMIN_BOX_NM}")"
 
 if [[ -z "${eip}" ]]
 then
@@ -79,7 +79,7 @@ mkdir -p "${TMP_DIR}"/"${ssl_dir}"
 ## SSH access
 ## 
 
-key_pair_file="$(get_keypair_file_path "${SRV_ADMIN_KEY_PAIR_NM}" "${SRV_ADMIN_ACCESS_DIR}")"
+key_pair_file="$(get_keypair_file_path "${ADMIN_BOX_KEY_PAIR_NM}" "${ADMIN_BOX_ACCESS_DIR}")"
 
 if [[ -z "${key_pair_file}" ]] 
 then
@@ -88,24 +88,24 @@ then
    exit 1
 fi
     
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
    echo 'WARN: SSH access to the Admin box already granted.'
 else
-   allow_access_from_cidr "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
    
    echo 'Granted SSH access to the Admin box.'
 fi
    
 if [[ 'production' == "${ENV}" ]]
 then      
-   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0')"  
+   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0')"  
 
    if [[ -z "${granted_certbot}" ]]
    then
-      allow_access_from_cidr "${sgp_id}" "${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0'
+      allow_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0'
    
       echo 'Granted Certbot access to Admin box'
    fi  
@@ -117,15 +117,15 @@ fi
 
 echo 'Uploading the scripts to the Admin box ...'
 
-remote_dir=/home/"${SRV_ADMIN_USER_NM}"/script
+remote_dir=/home/"${ADMIN_BOX_USER_NM}"/script
 
-wait_ssh_started "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}"
+wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHAR_INSTANCE_SSH_PORT}" \
-    "${SRV_ADMIN_USER_NM}"  
+    "${SHARED_BOX_SSH_PORT}" \
+    "${ADMIN_BOX_USER_NM}"  
 
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDenvironmentSED/${ENV}/g" \
@@ -134,15 +134,15 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
              
 echo 'extend_apache_web_server_with_SSL_module_template.sh ready.'   
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${ssl_dir}"/extend_apache_web_server_with_SSL_module_template.sh \
     "${TEMPLATE_DIR}"/common/httpd/00-ssl.conf      
    
 # Loganalyzer Virtual Host file.
 create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
-    "${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}" \
-    "${SRV_ADMIN_HOSTNAME}" \
+    "${ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}" \
+    "${ADMIN_BOX_HOSTNAME}" \
     "${APACHE_DOCROOT_DIR}" \
     "${LOGANALYZER_DOCROOT_ID}"        
      
@@ -157,8 +157,8 @@ echo "${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."
 # Phpmyadmin Virtual Host file.
 create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
-    "${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}" \
-    "${SRV_ADMIN_HOSTNAME}" \
+    "${ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}" \
+    "${ADMIN_BOX_HOSTNAME}" \
     "${APACHE_DOCROOT_DIR}" \
     "${PHPMYADMIN_DOCROOT_ID}"    
            
@@ -173,8 +173,8 @@ echo "${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."
 # Website virtualhost file.
 create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
-    "${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}" \
-    "${SRV_ADMIN_HOSTNAME}" \
+    "${ADMIN_APACHE_WEBSITE_HTTPS_PORT}" \
+    "${ADMIN_BOX_HOSTNAME}" \
     "${APACHE_DOCROOT_DIR}" \
     "${ADMIN_DOCROOT_ID}"        
      
@@ -186,7 +186,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${ssl_dir}"/"${ADMIN_HTTPS_VIRTUALHOST_CO
                       
 echo "${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."  
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}"
@@ -227,13 +227,13 @@ then
        -e "s/SEDcitySED/${CRT_DEV_CITY}/g" \
        -e "s/SEDorganizationSED/${CRT_DEV_ORGANIZATION}/g" \
        -e "s/SEDunit_nameSED/${CRT_DEV_UNIT}/g" \
-       -e "s/SEDcommon_nameSED/${SRV_ADMIN_HOSTNAME}/g" \
-       -e "s/SEDemail_addressSED/${SRV_ADMIN_EMAIL}/g" \
+       -e "s/SEDcommon_nameSED/${ADMIN_BOX_HOSTNAME}/g" \
+       -e "s/SEDemail_addressSED/${ADMIN_BOX_EMAIL}/g" \
           "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh
 
    echo 'gen_selfsigned_certificate.sh ready.'
          
-   scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
+   scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
        "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_selfsigned_certificate.sh \
        "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh \
        "${TMP_DIR}"/"${ssl_dir}"/remove_passphase.sh \
@@ -245,15 +245,15 @@ else
    #
 
    sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-       -e "s/SEDapache_certbot_portSED/${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}/g" \
+       -e "s/SEDapache_certbot_portSED/${ADMIN_APACHE_CERTBOT_HTTP_PORT}/g" \
        -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
        -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
        -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
        -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
        -e "s/SEDcertbot_virtualhost_fileSED/${CERTBOT_VIRTUALHOST_CONFIG_FILE}/g" \
        -e "s/SEDcertbot_docroot_idSED/${CERTBOT_DOCROOT_ID}/g" \
-       -e "s/SEDcrt_email_addressSED/${SRV_ADMIN_EMAIL}/g" \
-       -e "s/SEDcrt_domainSED/${SRV_ADMIN_DNS_SUB_DOMAIN}.${MAXMIN_TLD}/g" \
+       -e "s/SEDcrt_email_addressSED/${ADMIN_BOX_EMAIL}/g" \
+       -e "s/SEDcrt_domainSED/${ADMIN_BOX_DNS_SUB_DOMAIN}.${MAXMIN_TLD}/g" \
           "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate.sh
           
    echo 'request_ca_certificate.sh ready.'     
@@ -261,7 +261,7 @@ else
    # Certboot HTTP virtualhost file.
    create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" \
        '*' \
-       "${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}" \
+       "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" \
        "${MAXMIN_TLD}" \
        "${APACHE_DOCROOT_DIR}" \
        "${CERTBOT_DOCROOT_ID}"
@@ -273,7 +273,7 @@ else
 
    echo "${CERTBOT_VIRTUALHOST_CONFIG_FILE} ready."  
    
-   scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
+   scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate.sh \
        "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" 
 fi  
@@ -284,17 +284,17 @@ sed -e "s/SEDenvironmentSED/${ENV}/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
     -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
-    -e "s/SEDmonit_http_portSED/${SRV_ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
-    -e "s/SEDphpmyadmin_http_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTP_PORT}/g" \
-    -e "s/SEDphpmyadmin_https_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
+    -e "s/SEDmonit_http_portSED/${ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
+    -e "s/SEDphpmyadmin_http_portSED/${ADMIN_APACHE_PHPMYADMIN_HTTP_PORT}/g" \
+    -e "s/SEDphpmyadmin_https_portSED/${ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
     -e "s/SEDphpmyadmin_http_virtualhost_fileSED/${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDphpmyadmin_https_virtualhost_fileSED/${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDloganalyzer_http_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTP_PORT}/g" \
-    -e "s/SEDloganalyzer_https_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
+    -e "s/SEDloganalyzer_http_portSED/${ADMIN_APACHE_LOGANALYZER_HTTP_PORT}/g" \
+    -e "s/SEDloganalyzer_https_portSED/${ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
     -e "s/SEDloganalyzer_http_virtualhost_fileSED/${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDloganalyzer_https_virtualhost_fileSED/${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDwebsite_http_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
-    -e "s/SEDwebsite_https_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
+    -e "s/SEDwebsite_http_portSED/${ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
+    -e "s/SEDwebsite_https_portSED/${ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
     -e "s/SEDwebsite_docroot_idSED/${WEBSITE_DOCROOT_ID}/g" \
     -e "s/SEDwebsite_http_virtualhost_fileSED/${ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDwebsite_https_virtualhost_fileSED/${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
@@ -307,9 +307,9 @@ sed -e "s/SEDenvironmentSED/${ENV}/g" \
 echo 'install_admin_ssl.sh ready.'
  
 # Apache Web Server SSL configuration file.
-sed -e "s/SEDwebsite_portSED/${SRV_ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
-    -e "s/SEDphpmyadmin_portSED/${SRV_ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
-    -e "s/SEDloganalyzer_portSED/${SRV_ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
+sed -e "s/SEDwebsite_portSED/${ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
+    -e "s/SEDphpmyadmin_portSED/${ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
+    -e "s/SEDloganalyzer_portSED/${ADMIN_APACHE_LOGANALYZER_HTTPS_PORT}/g" \
        "${TEMPLATE_DIR}"/admin/httpd/ssl_template.conf > "${TMP_DIR}"/"${ssl_dir}"/ssl.conf 
           
    echo 'ssl.conf ready.'   
@@ -327,14 +327,14 @@ xmlstarlet ed --inplace -i "Server/Service/Connector[@address='SEDserver_admin_p
     "${TMP_DIR}"/"${ssl_dir}"/server.xml  
        
 sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
-    -e "s/SEDserver_admin_private_ipSED/${SRV_ADMIN_PRIVATE_IP}/g" \
-    -e "s/SEDcollector_portSED/${SRV_ADMIN_MMONIT_COLLECTOR_PORT}/g" \
-    -e "s/SEDpublic_portSED/${SRV_ADMIN_MMONIT_HTTPS_PORT}/g" \
+    -e "s/SEDserver_admin_private_ipSED/${ADMIN_BOX_PRIVATE_IP}/g" \
+    -e "s/SEDcollector_portSED/${ADMIN_MMONIT_COLLECTOR_PORT}/g" \
+    -e "s/SEDpublic_portSED/${ADMIN_MMONIT_HTTPS_PORT}/g" \
     -i "${TMP_DIR}"/"${ssl_dir}"/server.xml                         
        
 echo 'server.xml ready.'
    
-scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh \
     "${TMP_DIR}"/"${ssl_dir}"/ssl.conf \
     "${TMP_DIR}"/"${ssl_dir}"/server.xml  
@@ -351,18 +351,18 @@ echo 'Installing SSL in the Admin box ...'
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin_ssl.sh" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHAR_INSTANCE_SSH_PORT}" \
-    "${SRV_ADMIN_USER_NM}" \
-    "${SRV_ADMIN_USER_PWD}"
+    "${SHARED_BOX_SSH_PORT}" \
+    "${ADMIN_BOX_USER_NM}" \
+    "${ADMIN_BOX_USER_PWD}"
 
 set +e   
           
 ssh_run_remote_command_as_root "${remote_dir}/install_admin_ssl.sh" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHAR_INSTANCE_SSH_PORT}" \
-    "${SRV_ADMIN_USER_NM}" \
-    "${SRV_ADMIN_USER_PWD}"   
+    "${SHARED_BOX_SSH_PORT}" \
+    "${ADMIN_BOX_USER_NM}" \
+    "${ADMIN_BOX_USER_PWD}"   
                      
 exit_code=$?
 set -e
@@ -375,8 +375,8 @@ then
    ssh_run_remote_command "rm -rf ${remote_dir:?}" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHAR_INSTANCE_SSH_PORT}" \
-       "${SRV_ADMIN_USER_NM}"   
+       "${SHARED_BOX_SSH_PORT}" \
+       "${ADMIN_BOX_USER_NM}"   
                    
    echo 'Cleared remote directory.'
 else
@@ -389,23 +389,23 @@ fi
 ## SSH Access.
 ##
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0')" 
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')" 
 
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHAR_INSTANCE_SSH_PORT}" '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Admin box.' 
 fi
 
 if [[ 'production' == "${ENV}" ]]
 then      
-   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0')"  
+   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0')"  
    
    if [[ -n "${granted_ssh}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}" "0.0.0.0/0"
+      revoke_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" "0.0.0.0/0"
    
       echo 'Revoked Certbot access to the Admin server.'  
       echo

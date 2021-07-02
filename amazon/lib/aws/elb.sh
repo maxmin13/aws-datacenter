@@ -107,7 +107,7 @@ function create_http_loadbalancer()
        --security-groups "${sgp_id}" \
        --subnets "${subnet_id}" \
        --region "${DTC_DEPLOY_REGION}" \
-       --listener LoadBalancerPort="${LBAL_HTTP_PORT}",InstancePort="${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}",Protocol=http,InstanceProtocol=http > /dev/null
+       --listener LoadBalancerPort="${LBAL_BOX_HTTP_PORT}",InstancePort="${WEBPHP_APACHE_WEBSITE_HTTP_PORT}",Protocol=http,InstanceProtocol=http > /dev/null
  
    return 0
 }
@@ -139,7 +139,7 @@ function configure_loadbalancer_health_check()
  
    aws elb configure-health-check \
        --load-balancer-name "${lbal_nm}" \
-       --health-check Target=HTTP:"${SRV_WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 > /dev/null
+       --health-check Target=HTTP:"${WEBPHP_APACHE_LBAL_BOX_HEALTCHECK_HTTP_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 > /dev/null
  
    return 0
 }

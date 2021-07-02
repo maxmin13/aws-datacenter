@@ -13,18 +13,18 @@ echo
 shared_dir='shared'
 
 # The temporary box used to build the image may already be gone
-instance_id="$(get_instance_id "${SHAR_INSTANCE_NM}")"
+instance_id="$(get_instance_id "${SHARED_BOX_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Shared box not found.'
 else
-   instance_st="$(get_instance_state "${SHAR_INSTANCE_NM}")"
+   instance_st="$(get_instance_state "${SHARED_BOX_NM}")"
    echo "* Shared box ID: ${instance_id} (${instance_st})."
 fi
 
 # The temporary security group used to build the image may already be gone
-sgp_id="$(get_security_group_id "${SHAR_INSTANCE_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${SHARED_BOX_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -41,7 +41,7 @@ echo
 
 if [[ -n "${instance_id}" ]]
 then
-   instance_st="$(get_instance_state "${SHAR_INSTANCE_NM}")"
+   instance_st="$(get_instance_state "${SHARED_BOX_NM}")"
    if [[ 'terminated' != "${instance_st}" ]]
    then
       echo 'Deleting Shared box ...' 
@@ -67,7 +67,7 @@ fi
 ## Public IP 
 ## 
 
-eip="$(get_public_ip_address_associated_with_instance "${SHAR_INSTANCE_NM}")"
+eip="$(get_public_ip_address_associated_with_instance "${SHARED_BOX_NM}")"
 
 if [[ -n "${eip}" ]]
 then
@@ -85,7 +85,7 @@ fi
 ## SSH Key-pair
 ## 
 
-key_pair_file="$(get_keypair_file_path "${SHAR_INSTANCE_KEY_PAIR_NM}" "${SHAR_INSTANCE_ACCESS_DIR}")"
+key_pair_file="$(get_keypair_file_path "${SHARED_BOX_KEY_PAIR_NM}" "${SHARED_BOX_ACCESS_DIR}")"
    
 if [[ -f "${key_pair_file}" ]]
 then

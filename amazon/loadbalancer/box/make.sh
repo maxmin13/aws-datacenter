@@ -45,25 +45,25 @@ echo
 ## Security group 
 ## 
 
-sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${LBAL_BOX_SEC_GRP_NM}")"
 
 if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the load balancer security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${LBAL_SEC_GRP_NM}" 'Load balancer security group.')"  
+   sgp_id="$(create_security_group "${dtc_id}" "${LBAL_BOX_SEC_GRP_NM}" 'Load balancer security group.')"  
    
    echo 'Created load balancer security group.'
 fi
 
 # Check HTTP access from the Internet.
-granted_http="$(check_access_from_cidr_is_granted  "${sgp_id}" "${LBAL_HTTP_PORT}" '0.0.0.0/0')"
+granted_http="$(check_access_from_cidr_is_granted  "${sgp_id}" "${LBAL_BOX_HTTP_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_http}" ]]
 then
    echo 'WARN: Internet access to the load balancer already granted.'
 else
-   allow_access_from_cidr "${sgp_id}" "${LBAL_HTTP_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" "${LBAL_BOX_HTTP_PORT}" '0.0.0.0/0'
    
    echo 'Granted HTTP access to the load balancer from anywhere in the Internet.'
 fi
@@ -72,7 +72,7 @@ fi
 ## Load balancer box
 ## 
 
-exists="$(get_loadbalancer_dns_name "${LBAL_NM}")"
+exists="$(get_loadbalancer_dns_name "${LBAL_BOX_NM}")"
 
 if [[ -n "${exists}" ]]
 then
@@ -80,13 +80,13 @@ then
 else
    echo 'Creating an HTTP load balancer box ...'
    
-   create_http_loadbalancer "${LBAL_NM}" "${sgp_id}" "${subnet_ids}"
-   configure_loadbalancer_health_check "${LBAL_NM}"
+   create_http_loadbalancer "${LBAL_BOX_NM}" "${sgp_id}" "${subnet_ids}"
+   configure_loadbalancer_health_check "${LBAL_BOX_NM}"
 
    echo 'HTTP load balancer box created.'
 fi  
        
-loadbalancer_dns="$(get_loadbalancer_dns_name "${LBAL_NM}")"
+loadbalancer_dns="$(get_loadbalancer_dns_name "${LBAL_BOX_NM}")"
 
 echo
 echo "Load Balancer up and running at: ${loadbalancer_dns}."
