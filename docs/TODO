@@ -67,7 +67,7 @@ problems with jail
 allow dns from chroot
 
 ############################################################
-delete bucket maxmin
+delete bucket maxmin ??
 
 https://console.aws.amazon.com/s3/home?region=eu-west-1
 

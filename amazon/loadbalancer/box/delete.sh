@@ -23,15 +23,11 @@ echo 'Load balancer'
 echo '*************'
 echo
 
-# Removing old files
-rm -rf "${TMP_DIR:?}"/loadbalancer
-mkdir "${TMP_DIR}"/loadbalancer
-
 elb_dns="$(get_loadbalancer_dns_name "${LBAL_NM}")"
 
 if [[ -z "${elb_dns}" ]]
 then
-   echo '* WARN: Load balancer box not found'
+   echo '* WARN: Load balancer box not found.'
 else
    echo "* Load balancer DNS name: ${elb_dns}."
 fi
@@ -55,6 +51,10 @@ else
 fi
 
 echo
+
+# Removing old files
+rm -rf "${TMP_DIR:?}"/loadbalancer
+mkdir "${TMP_DIR}"/loadbalancer
 
 ##  
 ## Delete the instance.
@@ -90,11 +90,11 @@ fi
 
 if [[ -n "${sg_id}" ]]
 then
-   granted="$(check_access_from_cidr_is_granted "${sg_id}" "${LBAL_PORT}" '0.0.0.0/0')"
+   granted="$(check_access_from_cidr_is_granted "${sg_id}" "${LBAL_HTTPS_PORT}" '0.0.0.0/0')"
    
    if [[ -n "${granted}" ]]
    then
-   	revoke_access_from_cidr "${sg_id}" "${LBAL_PORT}" '0.0.0.0/0'
+   	revoke_access_from_cidr "${sg_id}" "${LBAL_HTTPS_PORT}" '0.0.0.0/0'
    	
    	echo 'Revoked access from internet to the load balancer.'
    else

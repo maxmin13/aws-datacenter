@@ -71,7 +71,7 @@ rm -rf "${TMP_DIR:?}"/"${loadbalancer_dir}"
 mkdir "${TMP_DIR}"/"${loadbalancer_dir}"
 
 ## 
-## security group 
+## Security group 
 ## 
 
 sgp_id="$(get_security_group_id "${LBAL_SEC_GRP_NM}")"
@@ -80,18 +80,18 @@ if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the load balancer security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${LBAL_SEC_GRP_NM}" 'Load Balancer security group.')"  
+   sgp_id="$(create_security_group "${dtc_id}" "${LBAL_SEC_GRP_NM}" 'Load balancer security group.')"  
    
    echo 'Created load balancer security group.'
 fi
 
-granted_https="$(check_access_from_cidr_is_granted  "${sgp_id}" "${LBAL_PORT}" '0.0.0.0/0')"
+granted_https="$(check_access_from_cidr_is_granted  "${sgp_id}" "${LBAL_HTTPS_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_https}" ]]
 then
    echo 'WARN: Internet access to the load balancer already granted.'
 else
-   allow_access_from_cidr "${sgp_id}" "${LBAL_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" "${LBAL_HTTPS_PORT}" '0.0.0.0/0'
    
    echo 'Granted HTTPS access to the load balancer from anywhere in the Internet.'
 fi
@@ -116,28 +116,28 @@ else
    
       cd "${TMP_DIR}"/"${loadbalancer_dir}"
    
-      echo 'Creating self-signed load balancer Certificate ...'
+      echo 'Creating self-signed SSL Certificate ...'
 
       # Generate RSA encrypted private key, protected with a passphrase.
       sed -e "s/SEDkey_fileSED/server.key/g" \
           -e "s/SEDkey_pwdSED/${LBAL_PK_PWD}/g" \
-             "${TEMPLATE_DIR}"/common/ssl/self_signed/gen-rsa_template.exp > gen-rsa.sh
+             "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_rsa_template.exp > gen_rsa.sh
 
-      chmod +x gen-rsa.sh
-      ./gen-rsa.sh > /dev/null
-      rm -f gen-rsa.sh
+      chmod +x gen_rsa.sh
+      ./gen_rsa.sh > /dev/null
+      rm -f gen_rsa.sh
    
-      echo 'Key-pair created.'
+      echo 'SSL key-pair created.'
 
       # Remove the password protection from the key file.
       sed -e "s/SEDkey_fileSED/server.key/g" \
           -e "s/SEDnew_key_fileSED/server.key.org/g" \
           -e "s/SEDkey_pwdSED/${LBAL_PK_PWD}/g" \
-             "${TEMPLATE_DIR}"/common/ssl/self_signed/remove-passphase_template.exp > remove-passphase.sh   
+             "${TEMPLATE_DIR}"/common/ssl/selfsigned/remove_passphase_template.exp > remove_passphase.sh   
       
-      chmod +x remove-passphase.sh
-      ./remove-passphase.sh > /dev/null
-      rm -f remove-passphase.sh  
+      chmod +x remove_passphase.sh
+      ./remove_passphase.sh > /dev/null
+      rm -f remove_passphase.sh  
    
       echo 'Removed password protection.'
 
@@ -154,19 +154,19 @@ else
           -e "s/SEDunit_nameSED/${CRT_UNIT_NM}/g" \
           -e "s/SEDcommon_nameSED/${CRT_COMMON_NM}/g" \
           -e "s/SEDemail_addressSED/${LBAL_EMAIL_ADD}/g" \
-             "${TEMPLATE_DIR}"/common/ssl/self_signed/gen-selfsign-cert_template.exp > gen-selfsign-cert.sh
+             "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.exp > gen_certificate.sh
       
-      chmod +x gen-selfsign-cert.sh
-      ./gen-selfsign-cert.sh > /dev/null
-      rm -f gen-selfsign-cert.sh
+      chmod +x gen_certificate.sh
+      ./gen_certificate.sh > /dev/null
+      rm -f gen_certificate.sh
    
-      echo 'Self-signed load balancer certificate created.'
+      echo 'Self-signed SSL certificate created.'
 
       mv server.key "${KEY_FILE}"
       mv server.crt "${CRT_FILE}"
 
       # Upload to IAM
-      echo 'Uploading certificate to IAM ...'
+      echo 'Uploading SSL certificate to IAM ...'
    
       upload_server_certificate "${CRT_NM}" \
           "${CRT_FILE}" \
@@ -197,7 +197,7 @@ else
 fi
 
 ## 
-## load balancer box
+## Load balancer box
 ## 
 
 exists="$(get_loadbalancer_dns_name "${LBAL_NM}")"

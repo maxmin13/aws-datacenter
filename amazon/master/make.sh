@@ -42,9 +42,7 @@ echo
    fi 
    
    echo
-   
-   #. "${PROJECT_DIR}"/amazon/lib/aws/route53/test/make.sh 
-      
+
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
 

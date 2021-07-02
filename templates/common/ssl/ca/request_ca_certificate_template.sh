@@ -84,6 +84,7 @@ echo "Requesting a certificate to Let's Encrypt Certification Autority ..."
 
 set +e 
 
+##
 ## TODO remove Certbot test mode
 certbot certonly \
     --cert-name "${CRT_DOMAIN}" \

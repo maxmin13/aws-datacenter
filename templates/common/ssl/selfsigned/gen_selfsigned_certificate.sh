@@ -6,13 +6,13 @@ set -o nounset
 set +o xtrace
 
 ###################################################################
-# Generates a private-key with no password and self-signed 
+# Generates a private-key with no password and a self-signed 
 # certificate in the current directory.
 #
 # Dependencies:
-# gen-rsa.sh 
-# remove-passphase.sh 
-# gen-selfsign-cert.sh
+# gen_rsa.sh 
+# remove_passphase.sh 
+# gen_certificate.sh
 #
 ###################################################################
 
@@ -25,17 +25,17 @@ yum install -y expect
 
 cd "${script_dir}" || exit 1
 
-chmod +x gen-rsa.sh remove-passphase.sh gen-selfsign-cert.sh
+chmod +x gen_rsa.sh remove_passphase.sh gen_certificate.sh
 
-key_file="$(./gen-rsa.sh)" 
-new_key_file="$(./remove-passphase.sh)" 
+key_file="$(./gen_rsa.sh)" 
+new_key_file="$(./remove_passphase.sh)" 
 
 rm "${key_file}"
 mv "${new_key_file}" "${key_file}"
 
 echo "No-password ${key_file} private-key generated."
 
-cert_file="$(./gen-selfsign-cert.sh)"
+cert_file="$(./gen_certificate.sh)"
 
 echo "Self-signed ${cert_file} certificate created."
  

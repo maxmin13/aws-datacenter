@@ -130,6 +130,7 @@ instance_state="$(get_instance_state "${SHAR_INSTANCE_NM}")"
 if [[ -n "${image_id}" && 'available' == "${image_state}" ]]
 then    
    echo 'Shared image already created, skipping creating Shared box.'
+   echo
    return
    
 elif [[ -n "${instance_id}" ]]

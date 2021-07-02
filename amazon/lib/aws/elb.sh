@@ -111,7 +111,7 @@ function create_loadbalancer()
        --security-groups "${sg_id}" \
        --subnets "${subnet_id}" \
        --region "${DTC_DEPLOY_REGION}" \
-       --listener LoadBalancerPort="${LBAL_PORT}",InstancePort="${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}",Protocol=https,InstanceProtocol=http,SSLCertificateId="${cert_arn}" >> /dev/null
+       --listener LoadBalancerPort="${LBAL_HTTPS_PORT}",InstancePort="${SRV_WEBPHP_APACHE_WEBSITE_HTTP_PORT}",Protocol=https,InstanceProtocol=http,SSLCertificateId="${cert_arn}" >> /dev/null
  
    return 0
 }

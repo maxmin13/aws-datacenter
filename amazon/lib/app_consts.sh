@@ -18,7 +18,7 @@ AWS_CHECK_IP_URL='http://checkip.amazonaws.com'
 MAXMIN_TLD='maxmin.it'
 
 ## *********** ##
-## data center ##
+## Data center ##
 ## *********** ##
 
 DTC_NM='maxmin-datacenter'
@@ -34,7 +34,7 @@ DTC_INTERNET_GATEWAY_NM='maxmin-gate'
 DTC_ROUTE_TABLE_NM='maxmin-route-tb'
 
 ## ******** ##
-## database ##
+## Database ##
 ## ******** ##
 
 DB_MMDATA_INSTANCE_NM='mmdatainstance'
@@ -66,14 +66,15 @@ SHAR_IMAGE_NM='maxmin-shared-ami'
 SHAR_IMAGE_DESC='Linux secured Image'
 
 ## ************* ##
-## load balancer ##
+## Load balancer ##
 ## ************* ##
 
 LBAL_NM='elbmaxmin'
-LBAL_PORT='443'
-LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
+LBAL_HTTPS_PORT='443'
+LBAL_HTTP_PORT='80'
 LBAL_SEC_GRP_NM='maxmin-elb-sgp'
 LBAL_DNS_SUB_DOMAIN='www'
+LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 
 ## ********* ##
 ## Admin box ##

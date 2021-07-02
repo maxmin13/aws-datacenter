@@ -35,7 +35,7 @@ WEBSITE_DOCROOT_ID='admin.maxmin.it'
 ssl_dir='ssl/certbot'
 
 echo '*************'
-echo 'Admin box SSL'
+echo 'SSL Admin box'
 echo '*************'
 echo
 
@@ -67,16 +67,6 @@ then
    exit 1
 else
    echo "* Admin public IP address: ${eip}."
-fi
-
-db_endpoint="$(get_database_endpoint "${DB_MMDATA_NM}")"
-
-if [[ -z "${db_endpoint}" ]]
-then
-   echo '* ERROR: database not found.'
-   exit 1
-else
-   echo "* database Endpoint: ${db_endpoint}."
 fi
 
 echo
@@ -217,19 +207,19 @@ then
    # Apache Web Server SSL key generation script.
    sed -e "s/SEDkey_fileSED/${key_file}/g" \
        -e "s/SEDkey_pwdSED/secret@123/g" \
-          "${TEMPLATE_DIR}"/common/ssl/self_signed/gen-rsa_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen-rsa.sh
+          "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_rsa_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen_rsa.sh
 
-   echo 'gen-rsa.sh ready.'
+   echo 'gen_rsa.sh ready.'
 
    # Apache Web Server remove the password protection from the key script.
    sed -e "s/SEDkey_fileSED/${key_file}/g" \
        -e "s/SEDnew_key_fileSED/${key_file_no_pwd}/g" \
        -e "s/SEDkey_pwdSED/secret@123/g" \
-          "${TEMPLATE_DIR}"/common/ssl/self_signed/remove-passphase_template.exp > "${TMP_DIR}"/"${ssl_dir}"/remove-passphase.sh   
+          "${TEMPLATE_DIR}"/common/ssl/selfsigned/remove_passphase_template.exp > "${TMP_DIR}"/"${ssl_dir}"/remove_passphase.sh   
 
-   echo 'remove-passphase.sh ready.'
+   echo 'remove_passphase.sh ready.'
 
-   # Apache Web Server create self-signed Certificate script.
+   # Apache Web Server create selfsigned Certificate script.
    sed -e "s/SEDkey_fileSED/${key_file}/g" \
        -e "s/SEDcert_fileSED/${crt_file}/g" \
        -e "s/SEDcountrySED/${CRT_DEV_COUNTRY}/g" \
@@ -239,15 +229,15 @@ then
        -e "s/SEDunit_nameSED/${CRT_DEV_UNIT}/g" \
        -e "s/SEDcommon_nameSED/${SRV_ADMIN_HOSTNAME}/g" \
        -e "s/SEDemail_addressSED/${SRV_ADMIN_EMAIL}/g" \
-          "${TEMPLATE_DIR}"/common/ssl/self_signed/gen-selfsign-cert_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen-selfsign-cert.sh
+          "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh
 
-   echo 'gen-selfsign-cert.sh ready.'
+   echo 'gen_selfsigned_certificate.sh ready.'
          
    scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
-       "${TEMPLATE_DIR}"/common/ssl/self_signed/gen_certificates.sh \
-       "${TMP_DIR}"/"${ssl_dir}"/gen-selfsign-cert.sh \
-       "${TMP_DIR}"/"${ssl_dir}"/remove-passphase.sh \
-       "${TMP_DIR}"/"${ssl_dir}"/gen-rsa.sh
+       "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_selfsigned_certificate.sh \
+       "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh \
+       "${TMP_DIR}"/"${ssl_dir}"/remove_passphase.sh \
+       "${TMP_DIR}"/"${ssl_dir}"/gen_rsa.sh
 else
 
    #
@@ -264,9 +254,9 @@ else
        -e "s/SEDcertbot_docroot_idSED/${CERTBOT_DOCROOT_ID}/g" \
        -e "s/SEDcrt_email_addressSED/${SRV_ADMIN_EMAIL}/g" \
        -e "s/SEDcrt_domainSED/${SRV_ADMIN_DNS_SUB_DOMAIN}.${MAXMIN_TLD}/g" \
-          "${TEMPLATE_DIR}"/common/ssl/ca/gen_ca_certificates_template.sh > "${TMP_DIR}"/"${ssl_dir}"/gen_certificates.sh
+          "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate.sh
           
-   echo 'gen_certificates.sh ready.'     
+   echo 'request_ca_certificate.sh ready.'     
 
    # Certboot HTTP virtualhost file.
    create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" \
@@ -284,7 +274,7 @@ else
    echo "${CERTBOT_VIRTUALHOST_CONFIG_FILE} ready."  
    
    scp_upload_files "${key_pair_file}" "${eip}" "${SHAR_INSTANCE_SSH_PORT}" "${SRV_ADMIN_USER_NM}" "${remote_dir}" \
-       "${TMP_DIR}"/"${ssl_dir}"/gen_certificates.sh \
+       "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate.sh \
        "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" 
 fi  
 
@@ -418,12 +408,11 @@ then
       revoke_access_from_cidr "${sgp_id}" "${SRV_ADMIN_APACHE_CERTBOT_HTTP_PORT}" "0.0.0.0/0"
    
       echo 'Revoked Certbot access to the Admin server.'  
+      echo
    fi
 fi
     
 # Removing local temp files
 rm -rf "${TMP_DIR:?}"/"${ssl_dir}"  
 
-echo
-echo 'SSL installed in the Admin box.' 
-echo
+

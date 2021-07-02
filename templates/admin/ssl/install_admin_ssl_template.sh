@@ -15,7 +15,8 @@ set +o xtrace
 # Dependencies:
 #
 # extend_apache_web_server_with_SSL_module_template.sh
-# gen_certificates.sh
+# request_ca_certificate.sh
+# gen_selfsigned_certificate.sh
 #
 ############################################################
 
@@ -45,7 +46,7 @@ CHAIN_FILE='SEDchain_fileSED'
 admin_log_file='/var/log/admin_ssl_install.log'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo 'Configuring Admin SSL ...'
+echo 'Configuring Admin box SSL ...'
  
 ##
 ## Apache web server SSL module.
@@ -64,24 +65,33 @@ echo 'Apache SSL module installed.'
 ## SSL certifcates 
 ## 
 
+echo 'Generating SSL certificate ...'
+
 cd "${script_dir}" || exit 1
 
-chmod +x gen_certificates.sh
-   
-echo 'Generating certificates ...'
-   
-set +e 
-./gen_certificates.sh >> "${admin_log_file}" 2>&1
-exit_code=$?
-set -e 
-   
+if [[ 'development' == "${ENV}" ]]
+then
+   chmod +x gen_selfsigned_certificate.sh    
+   set +e 
+   ./gen_selfsigned_certificate.sh >> "${admin_log_file}" 2>&1
+   exit_code=$?
+   set -e 
+else
+   # Request a certificate to Let's Encrypt CA.
+   chmod +x request_ca_certificate.sh
+   set +e 
+   ./request_ca_certificate.sh >> "${admin_log_file}" 2>&1
+   exit_code=$?
+   set -e 
+fi
+
 if [[ ! 0 -eq "${exit_code}" ]]
 then
-   echo "ERROR: generating certificates."     
+   echo "ERROR: generating SSL certificate."     
    exit 1
-fi 
+fi
 
-echo 'Certificates successfully generated.'
+echo 'SSL Certificate successfully generated.'
 
 ##
 ## Apache web server 
