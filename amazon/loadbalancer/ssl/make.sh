@@ -197,7 +197,7 @@ else
       exit 1
 fi
     
-# Wait until the certificate is available in IAM.
+# Wait until the certificate is visible in IAM.
 cert_arn="$(get_server_certificate_arn "${CRT_NM}")"
 
 test -n "${cert_arn}" && echo 'Certificated uploaded.' || 
@@ -225,8 +225,8 @@ test -n "${cert_arn}" && echo 'Certificated uploaded.' ||
 cert_arn="$(get_server_certificate_arn "${CRT_NM}")"
 
 # Create listener is idempotent, we can skip checking if the listener exists.
-# Even if the iam command list-server-certificates has returned the certificate arn, the cert may 
-# not still be available, add listener may fail if called too early. 
+# Even if the IAM command list-server-certificates has returned the certificate ARN, the certificate 
+# may still not be available and add listener command may fail if called too early. 
 add_https_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${cert_arn}" && 
 echo 'HTTPS listener added.' ||
 {
