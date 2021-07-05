@@ -323,13 +323,13 @@ function create_database()
 
    ## No multi availability zone
    aws rds create-db-instance \
-       --db-instance-identifier "${DB_BOX_NM}" \
+       --db-instance-identifier "${DB_INST_NM}" \
        --db-instance-class "${DB_INSTANCE_TYPE}" \
        --allocated-storage "${DB_VOLUME_SIZE}" \
        --db-name "${db_nm}" \
        --engine "${DB_ENGINE}" \
        --engine-version "${MYSQL_VERSION}" \
-       --port "${DB_PORT}" \
+       --port "${DB_INST_PORT}" \
        --no-auto-minor-version-upgrade \
        --master-username "${DB_MAIN_USER_NM}" \
        --master-user-password "${DB_MAIN_USER_PWD}" \
@@ -338,10 +338,10 @@ function create_database()
        --region "${DTC_DEPLOY_REGION}" \
        --availability-zone "${DTC_DEPLOY_ZONE_1}"  \
        --vpc-security-group-ids "${sgp_id}" \
-       --db-subnet-group-name "${DB_BOX_SUBNET_GRP_NM}" \
+       --db-subnet-group-name "${DB_INST_SUBNET_GRP_NM}" \
        --db-parameter-group-name "${db_pgp_nm}" >> /dev/null
 
-   aws rds wait db-instance-available --db-instance-identifier "${DB_BOX_NM}"
+   aws rds wait db-instance-available --db-instance-identifier "${DB_INST_NM}"
  
    return 0
 }

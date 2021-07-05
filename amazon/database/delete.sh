@@ -20,7 +20,7 @@ else
    echo "* database endpoint: "${db_endpoint}" (${db_state})."
 fi
 
-sgp_id="$(get_security_group_id "${DB_BOX_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -29,7 +29,7 @@ else
    echo "* database security group ID: ${sgp_id}."
 fi
 
-db_subnet_group_status="$(get_db_subnet_group_status "${DB_BOX_SUBNET_GRP_NM}")"
+db_subnet_group_status="$(get_db_subnet_group_status "${DB_INST_SUBNET_GRP_NM}")"
 
 if [[ -z "${db_subnet_group_status}" ]]
 then
@@ -60,7 +60,7 @@ then
    then
       echo 'Deleting database box ...' 
         
-      delete_database "${DB_BOX_NM}"
+      delete_database "${DB_INST_NM}"
       
       echo 'Database box deleted.'
    fi
@@ -99,7 +99,7 @@ fi
 
 if [[ -n "${db_subnet_group_status}" ]]
 then
-   delete_db_subnet_group "${DB_BOX_SUBNET_GRP_NM}"
+   delete_db_subnet_group "${DB_INST_SUBNET_GRP_NM}"
    
    echo 'Database subnet group deleted.'
 fi

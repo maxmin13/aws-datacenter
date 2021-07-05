@@ -19,17 +19,17 @@ echo
 rm -rf "${TMP_DIR:?}"/"${database_dir}"
 mkdir "${TMP_DIR}"/"${database_dir}"
 
-instance_id="$(get_instance_id "${ADMIN_BOX_NM}")"
+instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Admin box not found.'
 else
-   instance_st="$(get_instance_state "${ADMIN_BOX_NM}")"
+   instance_st="$(get_instance_state "${ADMIN_INST_NM}")"
    echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
-sgp_id="$(get_security_group_id "${ADMIN_BOX_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -38,7 +38,7 @@ else
    echo "* Admin security group ID: ${sgp_id}."
 fi
 
-eip="$(get_public_ip_address_associated_with_instance "${ADMIN_BOX_NM}")"
+eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
 
 if [[ -z "${eip}" ]]
 then
@@ -95,11 +95,11 @@ else
    ## SSH access 
   
    # Check if the Admin security group grants access from the development machine through SSH port
-   access_granted="$(check_access_from_cidr_is_granted "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')"
+   access_granted="$(check_access_from_cidr_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
    
    if [[ -z "${access_granted}" ]]
    then
-      allow_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+      allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
 
       echo 'Granted SSH access to development machine.' 
    else
@@ -108,17 +108,17 @@ else
 
    echo 'Uploading database scripts to the Admin box ...'
    
-   remote_dir=/home/"${ADMIN_BOX_USER_NM}"/script
-   key_pair_file="$(get_keypair_file_path "${ADMIN_BOX_KEY_PAIR_NM}" "${ADMIN_BOX_ACCESS_DIR}")"
-   wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}"
+   remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
+   key_pair_file="$(get_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+   wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
   
    ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir ${remote_dir}" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${ADMIN_BOX_USER_NM}"
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}"
                    
-   scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+   scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/database/delete_dbs.sql \
        "${TMP_DIR}"/database/delete_dbusers.sql \
        "${TMP_DIR}"/database/delete_database.sh
@@ -128,18 +128,18 @@ else
    ssh_run_remote_command_as_root "chmod +x ${remote_dir}/delete_database.sh" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${ADMIN_BOX_USER_NM}" \
-       "${ADMIN_BOX_USER_PWD}"    
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}" \
+       "${ADMIN_INST_USER_PWD}"    
  
    set +e   
           
    ssh_run_remote_command_as_root "${remote_dir}/delete_database.sh" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${ADMIN_BOX_USER_NM}" \
-       "${ADMIN_BOX_USER_PWD}"   
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}" \
+       "${ADMIN_INST_USER_PWD}"   
                      
    exit_code=$?
    set -e
@@ -152,8 +152,8 @@ else
    ssh_run_remote_command "rm -rf ${remote_dir}" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${ADMIN_BOX_USER_NM}"     
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}"     
    else
       echo 'ERROR: deleting database objects.'
       exit 1
@@ -166,7 +166,7 @@ else
    if [[ -n "${sgp_id}" ]]
    then
       # Revoke SSH access from the development machine
-      revoke_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+      revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
     
       echo 'Revoked SSH access to the Admin box.' 
   fi

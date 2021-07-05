@@ -24,8 +24,8 @@ APACHE_INSTALL_DIR='/etc/httpd'
 APACHE_SITES_AVAILABLE_DIR='/etc/httpd/sites-available'
 APACHE_SITES_ENABLED_DIR='/etc/httpd/sites-enabled'
 APACHE_USER='apache'
-LBAL_BOX_HTTP_VIRTUALHOST_CONFIG_FILE='loadbalancer.http.virtualhost.maxmin.it.conf' 
-LBAL_BOX_DOCROOT_ID='loadbalancer.maxmin.it'
+LBAL_HTTP_VIRTUALHOST_CONFIG_FILE='loadbalancer.http.virtualhost.maxmin.it.conf' 
+LBAL_DOCROOT_ID='loadbalancer.maxmin.it'
 MONIT_HTTP_VIRTUALHOST_CONFIG_FILE='monit.http.virtualhost.maxmin.it.conf'
 MONIT_DOCROOT_ID='monit.maxmin.it'
 
@@ -38,12 +38,12 @@ else
    export webphp_id="${1}"
 fi
    
-webphp_nm="${WEBPHP_BOX_NM/<ID>/"${webphp_id}"}"
+webphp_nm="${WEBPHP_INST_NM/<ID>/"${webphp_id}"}"
 webphp_dir=webphp"${webphp_id}" 
-webphp_hostname="${WEBPHP_BOX_HOSTNAME/<ID>/"${webphp_id}"}"
-webphp_private_ip="${WEBPHP_BOX_PRIVATE_IP/<ID>/"${webphp_id}"}"
-webphp_sgp_nm="${WEBPHP_BOX_SEC_GRP_NM/<ID>/"${webphp_id}"}"
-webphp_keypair_nm="${WEBPHP_BOX_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
+webphp_hostname="${WEBPHP_INST_HOSTNAME/<ID>/"${webphp_id}"}"
+webphp_private_ip="${WEBPHP_INST_PRIVATE_IP/<ID>/"${webphp_id}"}"
+webphp_sgp_nm="${WEBPHP_INST_SEC_GRP_NM/<ID>/"${webphp_id}"}"
+webphp_keypair_nm="${WEBPHP_INST_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
 loadbalancer_request_domain="${webphp_hostname}"
 monit_request_domain="${webphp_hostname}"
 
@@ -82,7 +82,7 @@ else
    echo "* Shared image ID: ${shared_image_id}."
 fi
 
-db_sgp_id="$(get_security_group_id "${DB_BOX_SEC_GRP_NM}")"
+db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
   
 if [[ -z "${db_sgp_id}" ]]
 then
@@ -102,18 +102,18 @@ else
    echo "* database endpoint: ${db_endpoint}."
 fi
 
-adm_instance_id="$(get_instance_id "${ADMIN_BOX_NM}")"
+adm_instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
 
 if [[ -z "${adm_instance_id}" ]]
 then
    echo '* ERROR: Admin box not found.'
    exit 1
 else
-   adm_instance_st="$(get_instance_state "${ADMIN_BOX_NM}")"
+   adm_instance_st="$(get_instance_state "${ADMIN_INST_NM}")"
    echo "* Admin box ID: ${adm_instance_id} (${adm_instance_st})."
 fi
 
-adm_sgp_id="$(get_security_group_id "${ADMIN_BOX_SEC_GRP_NM}")"
+adm_sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
 
 if [[ -z "${adm_sgp_id}" ]]
 then
@@ -123,7 +123,7 @@ else
    echo "* Admin security group ID: ${adm_sgp_id}."
 fi
 
-adm_pip="$(get_private_ip_address_associated_with_instance "${ADMIN_BOX_NM}")"
+adm_pip="$(get_private_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
 
 if [[ -z "${adm_pip}" ]]
 then
@@ -133,7 +133,7 @@ else
    echo "* Admin box private IP address: ${adm_pip}."
 fi
 
-loadbalancer_dns_nm="$(get_loadbalancer_dns_name "${LBAL_BOX_NM}")"
+loadbalancer_dns_nm="$(get_loadbalancer_dns_name "${LBAL_INST_NM}")"
 if [[ -z "${loadbalancer_dns_nm}" ]]
 then
    echo '* ERROR: load balancer not found.'
@@ -142,7 +142,7 @@ else
    echo "* load balancer: ${loadbalancer_dns_nm}."
 fi
 
-lbal_sgp_id="$(get_security_group_id "${LBAL_BOX_SEC_GRP_NM}")"
+lbal_sgp_id="$(get_security_group_id "${LBAL_INST_SEC_GRP_NM}")"
 
 if [[ -z "${lbal_sgp_id}" ]]
 then
@@ -174,13 +174,13 @@ else
    echo 'Created Webphp security group.'
 fi
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
    echo 'WARN: SSH access to the Webphp box already granted.'
 else
-   allow_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
    
    echo 'Granted SSH access to the Webphp box.'
 fi
@@ -189,13 +189,13 @@ fi
 ## Database access 
 ##
 
-granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_PORT}" "${sgp_id}")"
+granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}")"
 
 if [[ -n "${granted_db}" ]]
 then
    echo 'WARN: access to the database already granted.'
 else
-   allow_access_from_security_group "${db_sgp_id}" "${DB_PORT}" "${sgp_id}"
+   allow_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}"
    
    echo 'Granted access to the database.'
 fi
@@ -232,23 +232,23 @@ fi
 
 ## Removes the default user, creates the webphp-user user and sets the instance's hostname.     
 
-hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${WEBPHP_BOX_USER_PWD}")" 
-key_pair_file="$(get_keypair_file_path "${webphp_keypair_nm}" "${WEBPHP_BOX_ACCESS_DIR}")"
+hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${WEBPHP_INST_USER_PWD}")" 
+key_pair_file="$(get_keypair_file_path "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
 then
    echo 'WARN: SSH key-pair already created.'
 else
    # Save the private key file in the access directory
-   mkdir -p "${WEBPHP_BOX_ACCESS_DIR}"
-   generate_keypair "${key_pair_file}" "${WEBPHP_BOX_EMAIL}" 
+   mkdir -p "${WEBPHP_INST_ACCESS_DIR}"
+   generate_keypair "${key_pair_file}" "${WEBPHP_INST_EMAIL}" 
    
    echo 'SSH key-pair created.'
 fi
 
 public_key="$(get_public_key "${key_pair_file}")"
 
-awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${WEBPHP_BOX_USER_NM}" -v hostname="${webphp_hostname}" '{
+awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${WEBPHP_INST_USER_NM}" -v hostname="${webphp_hostname}" '{
     sub(/SEDuser_nameSED/,user)
     sub(/SEDhashed_passwordSED/,pwd)
     sub(/SEDpublic_keySED/,key)
@@ -302,15 +302,15 @@ echo "Webphp box public address: ${eip}."
 
 echo 'Uploading scripts to the Webphp box ...'
 
-remote_dir=/home/"${WEBPHP_BOX_USER_NM}"/script
+remote_dir=/home/"${WEBPHP_INST_USER_NM}"/script
 
-wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${WEBPHP_BOX_USER_NM}"
+wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHARED_BOX_SSH_PORT}" \
-    "${WEBPHP_BOX_USER_NM}"  
+    "${SHARED_INST_SSH_PORT}" \
+    "${WEBPHP_INST_USER_NM}"  
 
 # Prepare the scripts to run on the server.
 
@@ -319,9 +319,9 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
-    -e "s/SEDlbal_http_virtualhost_configSED/${LBAL_BOX_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDlbal_docroot_idSED/${LBAL_BOX_DOCROOT_ID}/g" \
-    -e "s/SEDlbal_http_portSED/${WEBPHP_APACHE_LBAL_BOX_HEALTCHECK_HTTP_PORT}/g" \
+    -e "s/SEDlbal_http_virtualhost_configSED/${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDlbal_docroot_idSED/${LBAL_DOCROOT_ID}/g" \
+    -e "s/SEDlbal_http_portSED/${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}/g" \
     -e "s/SEDmonit_http_virtualhost_configSED/${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDmonit_http_portSED/${WEBPHP_APACHE_MONIT_HTTP_PORT}/g" \
     -e "s/SEDmonit_docroot_idSED/${MONIT_DOCROOT_ID}/g" \
@@ -329,7 +329,7 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     
 echo 'install_webphp.sh ready.' 
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${WEBPHP_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/install_webphp.sh   
     
 # Get the account number.
@@ -347,15 +347,15 @@ aes4="${aes3:0:64}"
 
 # Apache Web Server main configuration file.
 sed -e "s/SEDapache_default_http_portSED/${WEBPHP_APACHE_DEFAULT_HTTP_PORT}/g" \
-    -e "s/SEDapache_loadbalancer_portSED/${WEBPHP_APACHE_LBAL_BOX_HEALTCHECK_HTTP_PORT}/g" \
+    -e "s/SEDapache_loadbalancer_portSED/${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}/g" \
     -e "s/SEDapache_website_portSED/${WEBPHP_APACHE_WEBSITE_HTTP_PORT}/g" \
     -e "s/SEDapache_monit_portSED/${WEBPHP_APACHE_MONIT_HTTP_PORT}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
-    -e "s/SEDwebphp_emailSED/${WEBPHP_BOX_EMAIL}/g" \
+    -e "s/SEDwebphp_emailSED/${WEBPHP_INST_EMAIL}/g" \
     -e "s/SEDdbhostSED/${db_endpoint}/g" \
     -e "s/SEDdbnameSED/${DB_NM}/g" \
-    -e "s/SEDdbportSED/${DB_PORT}/g" \
+    -e "s/SEDdbportSED/${DB_INST_PORT}/g" \
     -e "s/SEDdbuser_webphprwSED/${DB_WEBPHP_USER_NM}/g" \
     -e "s/SEDdbpass_webphprwSED/${DB_WEBPHP_USER_PWD}/g" \
     -e "s/SEDaws_accountSED/${aws_account}/g" \
@@ -390,7 +390,7 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
 
 echo 'extend_apache_web_server_with_security_module_template.sh ready.'
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${WEBPHP_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/httpd.conf \
     "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server.sh \
     "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_FCGI.sh  \
@@ -410,16 +410,16 @@ sed -e "s/SEDallow_url_fopenSED/On/g" \
 
 echo 'php.ini ready.'
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${WEBPHP_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TEMPLATE_DIR}"/common/php/install_php.sh \
     "${TMP_DIR}"/"${webphp_dir}"/php.ini 
   
 # Monit demon configuration file (runs on all servers).
 sed -e "s/SEDhostnameSED/${webphp_nm}/g" \
-    -e "s/SEDserver_admin_private_ipSED/${ADMIN_BOX_PRIVATE_IP}/g" \
+    -e "s/SEDserver_admin_private_ipSED/${ADMIN_INST_PRIVATE_IP}/g" \
     -e "s/SEDmmonit_collector_portSED/${ADMIN_MMONIT_COLLECTOR_PORT}/g" \
     -e "s/SEDapache_http_portSED/${WEBPHP_APACHE_MONIT_HTTP_PORT}/g" \
-    -e "s/SEDadmin_emailSED/${ADMIN_BOX_EMAIL}/g" \
+    -e "s/SEDadmin_emailSED/${ADMIN_INST_EMAIL}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
        "${TEMPLATE_DIR}"/webphp/monit/monitrc_template > "${TMP_DIR}"/"${webphp_dir}"/monitrc        
 
@@ -442,44 +442,44 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_HTTP_VIRTUALHOST_
    
 echo "${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE} ready."
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${WEBPHP_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/monitrc \
     "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}"    
        
 # Create a load balancer healt-check virtualhost. 
-create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_BOX_HTTP_VIRTUALHOST_CONFIG_FILE}" \
+create_virtualhost_configuration_file "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
-    "${WEBPHP_APACHE_LBAL_BOX_HEALTCHECK_HTTP_PORT}" \
+    "${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" \
     "${loadbalancer_request_domain}" \
     "${APACHE_DOCROOT_DIR}" \
-    "${LBAL_BOX_DOCROOT_ID}"    
+    "${LBAL_DOCROOT_ID}"    
  
 # Enable the load balancer virtualhost.                                       
-add_loadbalancer_rule_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_BOX_HTTP_VIRTUALHOST_CONFIG_FILE}" \
+add_loadbalancer_rule_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     'elb.htm' \
     "${APACHE_DOCROOT_DIR}" \
-    "${LBAL_BOX_DOCROOT_ID}"  
+    "${LBAL_DOCROOT_ID}"  
 
-echo "${LBAL_BOX_HTTP_VIRTUALHOST_CONFIG_FILE} ready." 
+echo "${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE} ready." 
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${WEBPHP_BOX_USER_NM}" "${remote_dir}" \
-    "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_BOX_HTTP_VIRTUALHOST_CONFIG_FILE}" 
+scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
+    "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" 
                 
 # Rsyslog configuration file.    
 sed -e "s/SEDserver_admin_rsyslog_portSED/${ADMIN_RSYSLOG_PORT}/g" \
-    -e "s/SEDserver_admin_private_ip_addressSED/${ADMIN_BOX_PRIVATE_IP}/g" \
+    -e "s/SEDserver_admin_private_ip_addressSED/${ADMIN_INST_PRIVATE_IP}/g" \
        "${TEMPLATE_DIR}"/webphp/rsyslog/rsyslog_template.conf > "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf    
 
 echo 'rsyslog.conf ready.'
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${WEBPHP_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf
     
-sed -e "s/SEDssh_portSED/${SHARED_BOX_SSH_PORT}/g" \
-    -e "s/SEDallowed_userSED/${WEBPHP_BOX_USER_NM}/g" \
+sed -e "s/SEDssh_portSED/${SHARED_INST_SSH_PORT}/g" \
+    -e "s/SEDallowed_userSED/${WEBPHP_INST_USER_NM}/g" \
        "${TEMPLATE_DIR}"/common/ssh/sshd_config_template > "${TMP_DIR}"/"${webphp_dir}"/sshd_config  
            
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${WEBPHP_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/sshd_config           
 
 echo 'sshd_config ready.'
@@ -494,18 +494,18 @@ echo 'Installing the Webphp modules ...'
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_webphp.sh" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHARED_BOX_SSH_PORT}" \
-    "${WEBPHP_BOX_USER_NM}" \
-    "${WEBPHP_BOX_USER_PWD}" 
+    "${SHARED_INST_SSH_PORT}" \
+    "${WEBPHP_INST_USER_NM}" \
+    "${WEBPHP_INST_USER_PWD}" 
 
 set +e     
            
 ssh_run_remote_command_as_root "${remote_dir}/install_webphp.sh" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHARED_BOX_SSH_PORT}" \
-    "${WEBPHP_BOX_USER_NM}" \
-    "${WEBPHP_BOX_USER_PWD}"   
+    "${SHARED_INST_SSH_PORT}" \
+    "${WEBPHP_INST_USER_NM}" \
+    "${WEBPHP_INST_USER_PWD}"   
                             
 exit_code=$?
 set -e
@@ -518,17 +518,17 @@ then
    ssh_run_remote_command "rm -rf ${remote_dir}" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${WEBPHP_BOX_USER_NM}" \
-       "${WEBPHP_BOX_USER_PWD}"  
+       "${SHARED_INST_SSH_PORT}" \
+       "${WEBPHP_INST_USER_NM}" \
+       "${WEBPHP_INST_USER_PWD}"  
    
    set +e
    ssh_run_remote_command_as_root "reboot" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${WEBPHP_BOX_USER_NM}" \
-       "${WEBPHP_BOX_USER_PWD}"
+       "${SHARED_INST_SSH_PORT}" \
+       "${WEBPHP_INST_USER_NM}" \
+       "${WEBPHP_INST_USER_PWD}"
    set -e
 else
    echo 'ERROR: configuring Webphp box.'
@@ -540,24 +540,24 @@ fi
 ## load balancer 
 ## 
 
-is_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_BOX_NM}" "${instance_id}")"
+is_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_INST_NM}" "${instance_id}")"
 
 if [[ 'true' == "${is_registered}" ]]
 then
    echo 'WARN: Webphp box already registered with the Load Balancer.'
 else
-   register_instance_with_loadbalancer "${LBAL_BOX_NM}" "${instance_id}"
+   register_instance_with_loadbalancer "${LBAL_INST_NM}" "${instance_id}"
    
    echo 'Registered Webphp box with the Load Balancer.'
 fi
        
-lbal_granted="$(check_access_from_security_group_is_granted "${sgp_id}" "${WEBPHP_APACHE_LBAL_BOX_HEALTCHECK_HTTP_PORT}" "${lbal_sgp_id}")"
+lbal_granted="$(check_access_from_security_group_is_granted "${sgp_id}" "${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" "${lbal_sgp_id}")"
 
 if [[ -n "${lbal_granted}" ]]
 then
    echo 'WARN: load balancer access to the Admin box already granted.'
 else
-   allow_access_from_security_group "${sgp_id}" "${WEBPHP_APACHE_LBAL_BOX_HEALTCHECK_HTTP_PORT}" "${lbal_sgp_id}"
+   allow_access_from_security_group "${sgp_id}" "${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" "${lbal_sgp_id}"
    
    echo 'Granted the load balancer access to the webphp instance (healt-check).'
 fi
@@ -566,12 +566,12 @@ fi
 ## SSH Access
 ## 
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Webphp box.' 
 fi

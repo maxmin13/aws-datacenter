@@ -21,7 +21,7 @@ set +o xtrace
 # Globals:
 #  None
 # Arguments:
-# +dtc_nm     -- the data center name.
+# +dtc_nm -- the data center name.
 # Returns:      
 #  the data center identifier, or blanc if the data center is not found.  
 #===============================================================================
@@ -186,11 +186,11 @@ function get_subnet_id()
 # Globals:
 #  None
 # Arguments:
-# +subnet_nm       -- the subnet name.
-# +subnet_cidr     -- the subnet CIDR.
-# +subnet_az       -- the subnet Availability Zone.
-# +dtc_id          -- the data center identifier.
-# +rtb_id          -- the route table identifier.
+# +subnet_nm   -- the subnet name.
+# +subnet_cidr -- the subnet CIDR.
+# +subnet_az   -- the subnet Availability Zone.
+# +dtc_id      -- the data center identifier.
+# +rtb_id      -- the route table identifier.
 # Returns:      
 #  the subnet identifier.  
 #===============================================================================
@@ -236,7 +236,7 @@ function create_subnet()
 # Globals:
 #  None
 # Arguments:
-# +subnet_id       -- the subnet identifier.
+# +subnet_id -- the subnet identifier.
 # Returns:      
 #  None.  
 #===============================================================================
@@ -256,11 +256,11 @@ function delete_subnet()
 }
 
 #============================================================================
-#
+# Returns an internet gateway's identifier.
 # Globals:
 #  None
 # Arguments:
-# +igw_nm     -- the internet gateway name.
+# +igw_nm -- the internet gateway name.
 # Returns:      
 #  the internet gateway identifier, or blanc if it is not found.  
 #===============================================================================
@@ -287,14 +287,15 @@ function get_internet_gateway_id()
 }
 
 #============================================================================
-# Returns the status of the attachement of the internet gateway to the VPD,
-# eg. 'available', 
+# Returns the current state of the attachment between the gateway and the 
+# VPC (data center, virtual private cloud). Present only if a VPC is 
+# attached.
 #
 # Globals:
 #  None
 # Arguments:
-# +igw_nm     -- the internet gateway name.
-# +dtc_id     -- the data center identifier.
+# +igw_nm -- the internet gateway name.
+# +dtc_id -- the data center identifier.
 # Returns:      
 #  the attachment status, or blanc if the data center or the internet gateway  
 #  are not found.  
@@ -328,8 +329,8 @@ function get_internet_gateway_attachment_status()
 # Globals:
 #  None
 # Arguments:
-# +igw_nm     -- the internet gateway name.
-# +dtc_id     -- the data center id.
+# +igw_nm -- the internet gateway name.
+# +dtc_id -- the data center id.
 # Returns:      
 #  the internet gateway identifier.  
 #===============================================================================
@@ -361,7 +362,7 @@ function create_internet_gateway()
 # Globals:
 #  None
 # Arguments:
-# +igw_id     -- the internet gateway identifier.
+# +igw_id -- the internet gateway identifier.
 # Returns:      
 #  None  
 #===============================================================================
@@ -381,7 +382,7 @@ function delete_internet_gateway()
 }
 
 #===============================================================================
-# Attaches an internet gateway to a Data Center.
+# Attaches an internet gateway to a data center.
 #
 # Globals:
 #  None
@@ -591,12 +592,12 @@ function create_security_group()
    local sgp_id
    
    sgp_id="$(aws ec2 create-security-group \
-         --group-name "${sgp_nm}" \
-         --description "${sgp_desc}" \
-         --vpc-id "${dtc_id}" \
-         --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value='${sgp_nm}'}]" \
-         --query 'GroupId' \
-         --output text)"
+        --group-name "${sgp_nm}" \
+        --description "${sgp_desc}" \
+        --vpc-id "${dtc_id}" \
+        --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value='${sgp_nm}'}]" \
+        --query 'GroupId' \
+        --output text)"
 
    echo "${sgp_id}"
 
@@ -1057,6 +1058,8 @@ function stop_instance()
 #  None
 # Arguments:
 # +instance_id     -- the instance identifier.
+# +wait_terminated -- if passed and equal to 'and_wait, the function wait until
+#                     the instance is in termitanted state.
 # Returns:      
 #  None
 #===============================================================================
@@ -1069,9 +1072,19 @@ function delete_instance()
    fi
 
    local instance_id="${1}"
+   local wait_terminated=''
+   
+   if [[ $# -eq 2 ]]
+   then
+      wait_terminated="${2}"
+   fi
 
    aws ec2 terminate-instances --instance-ids "${instance_id}" > /dev/null
-   aws ec2 wait instance-terminated --instance-ids "${instance_id}"
+   
+   if [[ 'and_wait' == "${wait_terminated}" ]]
+   then
+      aws ec2 wait instance-terminated --instance-ids "${instance_id}"
+   fi
    
    return 0
 }

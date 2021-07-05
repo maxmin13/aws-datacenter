@@ -1,14 +1,17 @@
 
-find ./ -type f -exec sed -i 's/DB_/DB_/g' {} \;
-find ./ -type f -exec sed -i 's/DB_BOX_SUBNET_GRP_DESC/DB_BOX_SUBNET_GRP_DESC/g' {} \;
-find ./ -type f -exec sed -i 's/DB_BOX_SEC_GRP_NM/DB_BOX_SEC_GRP_NM/g' {} \;
+find ./ -type f -exec sed -i 's/LBAL_INST_NM/LBAL_INST_NM/g' {} \;
+find ./ -type f -exec sed -i 's/LBAL_INST_HTTPS_PORT/LBAL_INST_HTTPS_PORT/g' {} \;
+find ./ -type f -exec sed -i 's/LBAL_INST_HTTP_PORT/LBAL_INST_HTTP_PORT/g' {} \;
+find ./ -type f -exec sed -i 's/LBAL_INST_SEC_GRP_NM/LBAL_INST_SEC_GRP_NM/g' {} \;
+find ./ -type f -exec sed -i 's/LBAL_INST_DNS_SUB_DOMAIN/LBAL_INST_DNS_SUB_DOMAIN/g' {} \;
 
 
 
 
-DB_BOX_SUBNET_GRP_NM='maxmin-db-subgp'
-DB_BOX_SUBNET_GRP_DESC='Database subnet group that spans multiple subnets'
-DB_BOX_SEC_GRP_NM='maxmin-db-sgp'
+
+DB_INST_SUBNET_GRP_NM='maxmin-db-subgp'
+DB_INST_SUBNET_GRP_DESC='Database subnet group that spans multiple subnets'
+DB_INST_SEC_GRP_NM='maxmin-db-sgp'
 
 ################
 xml manipulation

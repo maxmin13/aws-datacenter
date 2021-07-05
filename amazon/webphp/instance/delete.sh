@@ -19,9 +19,9 @@ echo "Webphp box ${webphp_id}"
 echo '************'
 echo
 
-webphp_nm="${WEBPHP_BOX_NM/<ID>/"${webphp_id}"}"
-keypair_nm="${WEBPHP_BOX_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
-webphp_sgp_nm="${WEBPHP_BOX_SEC_GRP_NM/<ID>/"${webphp_id}"}"
+webphp_nm="${WEBPHP_INST_NM/<ID>/"${webphp_id}"}"
+keypair_nm="${WEBPHP_INST_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
+webphp_sgp_nm="${WEBPHP_INST_SEC_GRP_NM/<ID>/"${webphp_id}"}"
 instance_id="$(get_instance_id "${webphp_nm}")"
 
 if [[ -z "${instance_id}" ]]
@@ -50,7 +50,7 @@ else
    echo "* Webphp public IP address: ${eip}."
 fi
 
-db_sgp_id="$(get_security_group_id "${DB_BOX_SEC_GRP_NM}")"
+db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
 
 if [[ -z "${db_sgp_id}" ]]
 then
@@ -59,7 +59,7 @@ else
    echo "* database security group ID: ${db_sgp_id}."
 fi
 
-adm_sgp_id="$(get_security_group_id "${ADMIN_BOX_SEC_GRP_NM}")"
+adm_sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
 
 if [[ -z "${adm_sgp_id}" ]]
 then
@@ -74,14 +74,14 @@ echo
 rm -rf "${TMP_DIR:?}"/webphp
 
 ## 
-## load balancer 
+## Load balancer 
 ## 
 
-is_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_BOX_NM}" "${instance_id}")"
+is_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_INST_NM}" "${instance_id}")"
 
 if [[ 'true' == "${is_registered}" ]]
 then
-   deregister_instance_from_loadbalancer "${LBAL_BOX_NM}" "${instance_id}"
+   deregister_instance_from_loadbalancer "${LBAL_INST_NM}" "${instance_id}"
 fi
 
 ## 
@@ -96,25 +96,25 @@ then
    then
       echo "Deleting Webphp box ..."
       
-      delete_instance "${instance_id}"
+      delete_instance "${instance_id}" 'and_wait'
       
       echo 'Webphp box deleted.'
    fi
 fi
 
 ## 
-## database grants 
+## Database grants 
 ## 
 
-db_sgp_id="$(get_security_group_id "${DB_BOX_SEC_GRP_NM}")"
+db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
 
 if [[ -n "${db_sgp_id}" && -n ${sgp_id} ]]
 then
-   granted="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_PORT}" "${sgp_id}")"
+   granted="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}")"
    
    if [[ -n "${granted}" ]]
    then
-   	revoke_access_from_security_group "${db_sgp_id}" "${DB_PORT}" "${sgp_id}"
+   	revoke_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}"
    	
    	echo 'Access to database revoked.'
    fi
@@ -178,7 +178,7 @@ fi
 ## SSH key-pair
 ## 
 
-key_pair_file="$(get_keypair_file_path "${keypair_nm}" "${WEBPHP_BOX_ACCESS_DIR}")"
+key_pair_file="$(get_keypair_file_path "${keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
 then

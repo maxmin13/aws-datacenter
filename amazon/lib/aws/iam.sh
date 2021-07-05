@@ -16,33 +16,6 @@ set +o xtrace
 #===============================================================================
 
 #===============================================================================
-# Deletes the specified server certificate on IAM by name, throws an error if 
-# the certificate is not found.
-#
-# Globals:
-#  None
-# Arguments:
-# +crt_nm -- the certificate name.
-# Returns:      
-#  None  
-#===============================================================================
-function delete_server_certificate()
-{
-   if [[ $# -lt 1 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 1
-   fi
-
-   local crt_nm="${1}"
- 
-   aws iam delete-server-certificate \
-       --server-certificate-name "${crt_nm}"
-  
-   return 0
-}
-
-#===============================================================================
 # Returns the Server Certificate ARN, or an empty string if the Certificate is
 # not found.
 #
@@ -125,3 +98,32 @@ function upload_server_certificate()
    return 0
 }
 
+#===============================================================================
+# Deletes the specified server certificate on IAM by name, throws an error if 
+# the certificate is not found.
+#
+# Globals:
+#  None
+# Arguments:
+# +crt_nm -- the certificate name.
+# Returns:      
+#  None  
+#===============================================================================
+function delete_server_certificate()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 1
+   fi
+
+   local crt_nm="${1}"
+   local exit_code=0
+   
+   set +e
+   aws iam delete-server-certificate --server-certificate-name "${crt_nm}" > /dev/null 2>&1
+   exit_code=$?
+   set -e
+   
+   return "${exit_code}"
+}

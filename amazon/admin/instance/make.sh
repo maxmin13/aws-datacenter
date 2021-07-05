@@ -61,7 +61,7 @@ else
    echo "* main subnet ID: ${subnet_id}."
 fi
 
-db_sgp_id="$(get_security_group_id "${DB_BOX_SEC_GRP_NM}")"
+db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
   
 if [[ -z "${db_sgp_id}" ]]
 then
@@ -101,24 +101,24 @@ mkdir "${TMP_DIR}"/"${admin_dir}"
 ## security group 
 ## 
 
-sgp_id="$(get_security_group_id "${ADMIN_BOX_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
 
 if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the Admin security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${ADMIN_BOX_SEC_GRP_NM}" 'Admin security group.')"  
+   sgp_id="$(create_security_group "${dtc_id}" "${ADMIN_INST_SEC_GRP_NM}" 'Admin security group.')"  
 
    echo 'Created Admin security group.'
 fi
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
    echo 'WARN: SSH access to the Admin box already granted.'
 else
-   allow_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
    
    echo 'Granted SSH access to the Admin box.'
 fi
@@ -127,13 +127,13 @@ fi
 ## database access 
 ##
 
-granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_PORT}" "${sgp_id}")"
+granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}")"
 
 if [[ -n "${granted_db}" ]]
 then
    echo 'WARN: database access already granted.'
 else
-   allow_access_from_security_group "${db_sgp_id}" "${DB_PORT}" "${sgp_id}"
+   allow_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}"
    
    echo 'Granted access to the database.'
 fi
@@ -144,23 +144,23 @@ fi
 
 ## Removes the default user, creates the admin-user user and sets the instance's hostname.     
 
-hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${ADMIN_BOX_USER_PWD}")" 
-key_pair_file="$(get_keypair_file_path "${ADMIN_BOX_KEY_PAIR_NM}" "${ADMIN_BOX_ACCESS_DIR}")"
+hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${ADMIN_INST_USER_PWD}")" 
+key_pair_file="$(get_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
 then
    echo 'WARN: SSH key-pair already created.'
 else
    # Save the private key file in the access directory
-   mkdir -p "${ADMIN_BOX_ACCESS_DIR}"
-   generate_keypair "${key_pair_file}" "${ADMIN_BOX_EMAIL}" 
+   mkdir -p "${ADMIN_INST_ACCESS_DIR}"
+   generate_keypair "${key_pair_file}" "${ADMIN_INST_EMAIL}" 
       
    echo 'SSH key-pair created.'
 fi
 
 public_key="$(get_public_key "${key_pair_file}")"
 
-awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${ADMIN_BOX_USER_NM}" -v hostname="${ADMIN_BOX_HOSTNAME}" '{
+awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${ADMIN_INST_USER_NM}" -v hostname="${ADMIN_INST_HOSTNAME}" '{
     sub(/SEDuser_nameSED/,user)
     sub(/SEDhashed_passwordSED/,pwd)
     sub(/SEDpublic_keySED/,key)
@@ -174,11 +174,11 @@ echo 'cloud_init.yml ready.'
 ## Admin box 
 ## 
 
-instance_id="$(get_instance_id "${ADMIN_BOX_NM}")"
+instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
 
 if [[ -n "${instance_id}" ]]
 then
-   instance_state="$(get_instance_state "${ADMIN_BOX_NM}")"
+   instance_state="$(get_instance_state "${ADMIN_INST_NM}")"
    
    if [[ 'running' == "${instance_state}" || \
          'stopped' == "${instance_state}" || \
@@ -193,10 +193,10 @@ else
    echo "Creating the Admin box ..."
 
    instance_id="$(run_instance \
-       "${ADMIN_BOX_NM}" \
+       "${ADMIN_INST_NM}" \
        "${sgp_id}" \
        "${subnet_id}" \
-       "${ADMIN_BOX_PRIVATE_IP}" \
+       "${ADMIN_INST_PRIVATE_IP}" \
        "${shared_image_id}" \
        "${TMP_DIR}"/"${admin_dir}"/cloud_init.yml)"
 
@@ -204,7 +204,7 @@ else
 fi
 
 # Get the public IP address assigned to the instance. 
-eip="$(get_public_ip_address_associated_with_instance "${ADMIN_BOX_NM}")"
+eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
 
 echo "Admin box public address: ${eip}."
 
@@ -214,15 +214,15 @@ echo "Admin box public address: ${eip}."
 
 echo 'Uploading the scripts to the Admin box ...'
 
-remote_dir=/home/"${ADMIN_BOX_USER_NM}"/script
+remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
 
-wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}"
+wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHARED_BOX_SSH_PORT}" \
-    "${ADMIN_BOX_USER_NM}"  
+    "${SHARED_INST_SSH_PORT}" \
+    "${ADMIN_INST_USER_NM}"  
 
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_default_http_portSED/${ADMIN_APACHE_DEFAULT_HTTP_PORT}/g" \
@@ -245,7 +245,7 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
 
 echo 'install_admin.sh ready.'
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/admin/install_admin.sh
 
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
@@ -268,19 +268,19 @@ sed -e "s/SEDapache_default_http_portSED/${ADMIN_APACHE_DEFAULT_HTTP_PORT}/g" \
     -e "s/SEDapache_phpmyadmin_http_portSED/${ADMIN_APACHE_PHPMYADMIN_HTTP_PORT}/g" \
     -e "s/SEDapache_loganalyzer_http_portSED/${ADMIN_APACHE_LOGANALYZER_HTTP_PORT}/g" \
     -e "s/SEDapache_admin_http_portSED/${ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
-    -e "s/SEDadmin_emailSED/${ADMIN_BOX_EMAIL}/g" \
+    -e "s/SEDadmin_emailSED/${ADMIN_INST_EMAIL}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
     -e "s/SEDdatabase_hostSED/${db_endpoint}/g" \
     -e "s/SEDdatabase_nameSED/${DB_NM}/g" \
-    -e "s/SEDdatabase_portSED/${DB_PORT}/g" \
+    -e "s/SEDdatabase_portSED/${DB_INST_PORT}/g" \
     -e "s/SEDdatabase_user_adminrwSED/${DB_ADMIN_USER_NM}/g" \
     -e "s/SEDdatabase_password_adminrwSED/${DB_ADMIN_USER_PWD}/g" \
        "${TEMPLATE_DIR}"/admin/httpd/httpd_template.conf > "${TMP_DIR}"/"${admin_dir}"/httpd.conf
 
 echo 'httpd.conf ready.'
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/install_apache_web_server.sh \
     "${TMP_DIR}"/"${admin_dir}"/extend_apache_web_server_with_FCGI.sh \
     "${TMP_DIR}"/"${admin_dir}"/httpd.conf \
@@ -296,7 +296,7 @@ sed -e "s/SEDallow_url_fopenSED/Off/g" \
 
 echo 'php.ini ready.'
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TEMPLATE_DIR}"/common/php/install_php.sh \
     "${TMP_DIR}"/"${admin_dir}"/php.ini
 
@@ -308,7 +308,7 @@ echo 'mmonit.service ready.'
      
 # M/Monit website configuration file (only on the Admin server).
 sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
-    -e "s/SEDserver_admin_private_ipSED/${ADMIN_BOX_PRIVATE_IP}/g" \
+    -e "s/SEDserver_admin_private_ipSED/${ADMIN_INST_PRIVATE_IP}/g" \
     -e "s/SEDcollector_portSED/${ADMIN_MMONIT_COLLECTOR_PORT}/g" \
     -e "s/SEDpublic_portSED/${ADMIN_MMONIT_HTTP_PORT}/g" \
     -e "s/SEDssl_secureSED/false/g" \
@@ -317,16 +317,16 @@ sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
        
 echo 'server.xml ready.' 
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${JAR_DIR}"/"${MMONIT_ARCHIVE}" \
     "${TMP_DIR}"/"${admin_dir}"/mmonit.service \
     "${TMP_DIR}"/"${admin_dir}"/server.xml 
  
 # Monit demon configuration file (runs on all servers).
-sed -e "s/SEDhostnameSED/${ADMIN_BOX_NM}/g" \
+sed -e "s/SEDhostnameSED/${ADMIN_INST_NM}/g" \
     -e "s/SEDmmonit_collector_portSED/${ADMIN_MMONIT_COLLECTOR_PORT}/g" \
     -e "s/SEDapache_monit_portSED/${ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
-    -e "s/SEDadmin_emailSED/${ADMIN_BOX_EMAIL}/g" \
+    -e "s/SEDadmin_emailSED/${ADMIN_INST_EMAIL}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
        "${TEMPLATE_DIR}"/admin/monit/monitrc_template > "${TMP_DIR}"/"${admin_dir}"/monitrc 
@@ -337,7 +337,7 @@ echo 'monitrc ready.'
 create_virtualhost_configuration_file "${TMP_DIR}"/"${admin_dir}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     '127.0.0.1' \
     "${ADMIN_APACHE_MONIT_HTTP_PORT}" \
-    "${ADMIN_BOX_HOSTNAME}" \
+    "${ADMIN_INST_HOSTNAME}" \
     "${APACHE_DOCROOT_DIR}" \
     "${MONIT_DOCROOT_ID}" 
                    
@@ -349,7 +349,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${MONIT_HTTP_VIRTUALHOST_C
      
 echo "${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE} ready."
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/monitrc \
     "${TMP_DIR}"/"${admin_dir}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" 
        
@@ -363,7 +363,7 @@ echo 'config.inc.php ready.'
 create_virtualhost_configuration_file "${TMP_DIR}"/"${admin_dir}"/"${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
     "${ADMIN_APACHE_PHPMYADMIN_HTTP_PORT}" \
-    "${ADMIN_BOX_HOSTNAME}" \
+    "${ADMIN_INST_HOSTNAME}" \
     "${APACHE_DOCROOT_DIR}" \
     "${PHPMYADMIN_DOCROOT_ID}"    
            
@@ -375,7 +375,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${PHPMYADMIN_HTTP_VIRTUALH
 
 echo "${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE} ready."    
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/"${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     "${TMP_DIR}"/"${admin_dir}"/config.inc.php      
      
@@ -383,7 +383,7 @@ scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_B
 create_virtualhost_configuration_file "${TMP_DIR}"/"${admin_dir}"/"${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
     "${ADMIN_APACHE_LOGANALYZER_HTTP_PORT}" \
-    "${ADMIN_BOX_HOSTNAME}" \
+    "${ADMIN_INST_HOSTNAME}" \
     "${APACHE_DOCROOT_DIR}" \
     "${LOGANALYZER_DOCROOT_ID}"        
      
@@ -395,7 +395,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${LOGANALYZER_HTTP_VIRTUAL
      
 echo "${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE} ready."  
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
      "${JAR_DIR}"/"${LOGANALYZER_ARCHIVE}" \
      "${TMP_DIR}"/"${admin_dir}"/"${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}" \
      "${TEMPLATE_DIR}"/admin/loganalyzer/config.php 
@@ -406,16 +406,16 @@ sed -e "s/SEDadmin_rsyslog_portSED/${ADMIN_RSYSLOG_PORT}/g" \
     
 echo 'rsyslog.conf ready.'
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/rsyslog.conf  \
     "${TEMPLATE_DIR}"/common/launch_javaMail.sh \
     "${TEMPLATE_DIR}"/admin/log/logrotatehttp
     
-sed -e "s/SEDssh_portSED/${SHARED_BOX_SSH_PORT}/g" \
-    -e "s/SEDallowed_userSED/${ADMIN_BOX_USER_NM}/g" \
+sed -e "s/SEDssh_portSED/${SHARED_INST_SSH_PORT}/g" \
+    -e "s/SEDallowed_userSED/${ADMIN_INST_USER_NM}/g" \
        "${TEMPLATE_DIR}"/common/ssh/sshd_config_template > "${TMP_DIR}"/"${admin_dir}"/sshd_config  
            
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/sshd_config           
 
 echo 'sshd_config ready.'        
@@ -432,18 +432,18 @@ echo 'Installing the Admin modules ...'
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin.sh" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHARED_BOX_SSH_PORT}" \
-    "${ADMIN_BOX_USER_NM}" \
-    "${ADMIN_BOX_USER_PWD}"
+    "${SHARED_INST_SSH_PORT}" \
+    "${ADMIN_INST_USER_NM}" \
+    "${ADMIN_INST_USER_PWD}"
 
 set +e   
           
 ssh_run_remote_command_as_root "${remote_dir}/install_admin.sh" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHARED_BOX_SSH_PORT}" \
-    "${ADMIN_BOX_USER_NM}" \
-    "${ADMIN_BOX_USER_PWD}"   
+    "${SHARED_INST_SSH_PORT}" \
+    "${ADMIN_INST_USER_NM}" \
+    "${ADMIN_INST_USER_PWD}"   
                      
 exit_code=$?
 set -e
@@ -456,16 +456,16 @@ then
    ssh_run_remote_command "rm -rf ${remote_dir}" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${ADMIN_BOX_USER_NM}"     
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}"     
    
    set +e
    ssh_run_remote_command_as_root "reboot" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${ADMIN_BOX_USER_NM}" \
-       "${ADMIN_BOX_USER_PWD}"
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}" \
+       "${ADMIN_INST_USER_PWD}"
    set -e
 else
    echo 'ERROR: configuring Admin box.'
@@ -476,12 +476,12 @@ fi
 ## SSH Access.
 ## 
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Admin box.' 
 fi

@@ -39,40 +39,43 @@ echo
       echo '****************'
       echo 'Env: development'
       echo '****************' 
-   fi 
-   
+   fi
+
    echo
    
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
 
    # Create a base shared image.
-   . "${PROJECT_DIR}"/amazon/shared/box/make.sh              
+   . "${PROJECT_DIR}"/amazon/shared/instance/make.sh              
    . "${PROJECT_DIR}"/amazon/shared/image/make.sh            
-   . "${PROJECT_DIR}"/amazon/shared/box/delete.sh            
+   . "${PROJECT_DIR}"/amazon/shared/instance/delete.sh  
+   
+   # Create database and load balancer.
+   . "${PROJECT_DIR}"/amazon/database/make.sh            
+   . "${PROJECT_DIR}"/amazon/loadbalancer/make.sh    
+   . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh            
 
-   # Create the server instances.
-   . "${PROJECT_DIR}"/amazon/database/box/make.sh            
-   . "${PROJECT_DIR}"/amazon/loadbalancer/box/make.sh        
-   . "${PROJECT_DIR}"/amazon/admin/box/make.sh               
-   . "${PROJECT_DIR}"/amazon/webphp/box/make.sh 1                  
+   # Create the Admin and Webphp instances.      
+   . "${PROJECT_DIR}"/amazon/admin/instance/make.sh               
+   . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1                  
 
    # Deploy database objects.
-   . "${PROJECT_DIR}"/amazon/database/box/data/make.sh       
+   . "${PROJECT_DIR}"/amazon/database/data/make.sh       
 
-   # Deploy admin website and public webphp websites.
-   . "${PROJECT_DIR}"/amazon/admin/box/website/make.sh      
-   . "${PROJECT_DIR}"/amazon/webphp/box/website/make.sh 1   
+   # Deploy Admin and Webphp websites.
+   . "${PROJECT_DIR}"/amazon/admin/instance/website/make.sh      
+   . "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 1   
    
-   # Register 'maxmin.it' domain with the AWS registrar.
+   # Configure SSL in the Admin instance.
+   . "${PROJECT_DIR}"/amazon/admin/instance/ssl/make.sh    
+   
+   # Register 'maxmin.it' domain with the AWS DNS registrar.
    . "${PROJECT_DIR}"/amazon/dns/domain/registration/make.sh 
 
-   # Create the hosted zone that handles the application DNS records.
+   # Create the application DNS hosted zone.
    . "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh      
 
-   # Configure SSL in the Admin instance.
-   . "${PROJECT_DIR}"/amazon/admin/box/ssl/make.sh     
-              
 } ### >> "${log_file}" 2>&1  
 
 echo

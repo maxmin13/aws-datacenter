@@ -226,6 +226,8 @@ then
    fi
    
    echo 'Admin website SSL successfully configured.'
+else
+   echo 'WARN: Admin website not found.'
 fi
 
 # Check the syntax

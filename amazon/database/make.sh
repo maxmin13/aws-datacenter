@@ -38,13 +38,13 @@ echo
 ## Security group
 ##
 
-sgp_id="$(get_security_group_id "${DB_BOX_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
   
 if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the database security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${DB_BOX_SEC_GRP_NM}" 'Database security group.')"
+   sgp_id="$(create_security_group "${dtc_id}" "${DB_INST_SEC_GRP_NM}" 'Database security group.')"
 
    echo 'Database security group created.'
 fi
@@ -53,13 +53,13 @@ fi
 ## database subnet group
 ## 
 
-db_subnet_group_status="$(get_db_subnet_group_status "${DB_BOX_SUBNET_GRP_NM}")"
+db_subnet_group_status="$(get_db_subnet_group_status "${DB_INST_SUBNET_GRP_NM}")"
 
 if [[ -n "${db_subnet_group_status}" ]]
 then
    echo 'WARN: the database subnet group is already created.'
 else 
-   create_db_subnet_group "${DB_BOX_SUBNET_GRP_NM}" "${DB_BOX_SUBNET_GRP_DESC}" "${subnet_ids}"
+   create_db_subnet_group "${DB_INST_SUBNET_GRP_NM}" "${DB_INST_SUBNET_GRP_DESC}" "${subnet_ids}"
 
    echo 'Database subnet group created.'
 fi

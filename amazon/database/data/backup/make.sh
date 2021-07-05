@@ -18,17 +18,17 @@ echo 'Database backup'
 echo '***************'
 echo
 
-instance_id="$(get_instance_id "${ADMIN_BOX_NM}")"
+instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Admin box not found.'
 else
-   instance_st="$(get_instance_state "${ADMIN_BOX_NM}")"
+   instance_st="$(get_instance_state "${ADMIN_INST_NM}")"
    echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
-sgp_id="$(get_security_group_id "${ADMIN_BOX_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -37,7 +37,7 @@ else
    echo "* Admin security group ID: ${sgp_id}."
 fi
 
-eip="$(get_public_ip_address_associated_with_instance "${ADMIN_BOX_NM}")"
+eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
 
 if [[ -z "${eip}" ]]
 then
@@ -83,21 +83,21 @@ then
    ## 
 
    # Check if the Admin box is SSH reacheable.
-   granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')"
+   granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
 
    if [[ -n "${granted_ssh}" ]]
    then
       echo 'WARN: SSH access to the Admin box already granted.'
    else
-      allow_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+      allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
    
       echo 'Granted SSH access to the Admin box.'
    fi
 
    echo 'Uploading database scripts to the Admin box ...'
 
-   remote_dir=/home/"${ADMIN_BOX_USER_NM}"/script
-   dump_dir=/home/"${ADMIN_BOX_USER_NM}"/dump
+   remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
+   dump_dir=/home/"${ADMIN_INST_USER_NM}"/dump
    dump_file=dump-database-"$(date +"%d-%m-%Y-%H.%M"."%S")"
    download_dir="${DOWNLOAD_DIR}"/"${database_dir}"/"$(date +"%d-%m-%Y")"
 
@@ -106,14 +106,14 @@ then
       mkdir -p "${download_dir}"
    fi
 
-   key_pair_file="$(get_keypair_file_path "${ADMIN_BOX_KEY_PAIR_NM}" "${ADMIN_BOX_ACCESS_DIR}")"
-   wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}"
+   key_pair_file="$(get_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+   wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
    ssh_run_remote_command "rm -rf ${remote_dir} && rm -rf ${dump_dir} && mkdir ${remote_dir} && mkdir ${dump_dir}" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${ADMIN_BOX_USER_NM}"  
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}"  
 
    echo 'Uploading database scripts to the Admin box ...'
    
@@ -127,7 +127,7 @@ then
 
    echo 'dump_database.sh ready.'
                    
-   scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+   scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${database_dir}"/dump_database.sh             
 
    echo 'Dumping database ...'
@@ -136,18 +136,18 @@ then
    ssh_run_remote_command_as_root "chmod +x ${remote_dir}/dump_database.sh" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${ADMIN_BOX_USER_NM}" \
-       "${ADMIN_BOX_USER_PWD}" 
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}" \
+       "${ADMIN_INST_USER_PWD}" 
     
    set +e   
           
    ssh_run_remote_command_as_root "${remote_dir}/dump_database.sh" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${ADMIN_BOX_USER_NM}" \
-       "${ADMIN_BOX_USER_PWD}"   
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}" \
+       "${ADMIN_INST_USER_PWD}"   
                      
    exit_code=$?
    set -e
@@ -160,8 +160,8 @@ then
       # Download the dump file.                   
       scp_download_file "${key_pair_file}" \
           "${eip}" \
-          "${SHARED_BOX_SSH_PORT}" \
-          "${ADMIN_BOX_USER_NM}" \
+          "${SHARED_INST_SSH_PORT}" \
+          "${ADMIN_INST_USER_NM}" \
           "${dump_dir}" \
           "${dump_file}" \
           "${download_dir}"    
@@ -172,8 +172,8 @@ then
       ssh_run_remote_command "rm -rf ${remote_dir} && rm -rf ${dump_dir:?}" \
           "${key_pair_file}" \
           "${eip}" \
-          "${SHARED_BOX_SSH_PORT}" \
-          "${ADMIN_BOX_USER_NM}"          
+          "${SHARED_INST_SSH_PORT}" \
+          "${ADMIN_INST_USER_NM}"          
    else
       echo 'ERROR: dumping database objects.'
       exit 1
@@ -186,7 +186,7 @@ then
    if [[ -n "${sgp_id}" ]]
    then
       # Revoke SSH access from the development machine
-      revoke_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+      revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
    
       echo 'Revoked SSH access to the Admin box.' 
    fi

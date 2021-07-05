@@ -84,31 +84,127 @@ function get_loadbalancer_hosted_zone_id()
 # Globals:
 #  None
 # Arguments:
-# +lbal_nm   -- the load balancer name.
-# +sg_id     -- the load balancer's security group identifier.
-# +subnet_id -- the load balancer's subnet identifier.
+# +lbal_nm       -- the load balancer name.
+# +lbal_port     -- the load balancer port.
+# +instance_port -- the instance port to which the traffic is forwarded.
+# +sg_id         -- the load balancer's security group identifier.
+# +subnet_id     -- the load balancer's subnet identifier.
 # Returns:      
 #  None  
 #===============================================================================
 function create_http_loadbalancer()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 5 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
 
    local lbal_nm="${1}"
-   local sgp_id="${2}"
-   local subnet_id="${3}"
+   local lbal_port="${2}"
+   local instance_port="${3}"
+   local sgp_id="${4}"
+   local subnet_id="${5}"
  
    aws elb create-load-balancer \
        --load-balancer-name "${lbal_nm}" \
        --security-groups "${sgp_id}" \
        --subnets "${subnet_id}" \
        --region "${DTC_DEPLOY_REGION}" \
-       --listener LoadBalancerPort="${LBAL_BOX_HTTP_PORT}",InstancePort="${WEBPHP_APACHE_WEBSITE_HTTP_PORT}",Protocol=http,InstanceProtocol=http > /dev/null
+       --listener LoadBalancerPort="${lbal_port}",InstancePort="${instance_port}",Protocol=http,InstanceProtocol=http > /dev/null
  
+   return 0
+}
+
+#===============================================================================
+# Deletes the specified load balancer. After deletion, the name and associated 
+# DNS record of the load balancer no longer exist and traffic sent to any of its 
+# IP addresses is no longer delivered to the instances.
+#
+# Globals:
+#  None
+# Arguments:
+# +lbal_nm -- the load balancer name.
+# Returns:      
+#  None  
+#===============================================================================
+function delete_loadbalancer()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 1
+   fi
+
+   local lbal_nm="${1}"
+ 
+   aws elb delete-load-balancer --load-balancer-name "${lbal_nm}" 
+
+   return 0
+}
+
+#===============================================================================
+# Creates an HTTPS listener and attaches it to the specified load balancer.
+# The create-load-balancer-listeners command is idempotent.
+# Globals:
+#  None
+# Arguments:
+# +lbal_nm       -- the load balancer name.
+# +lbal_port     -- the load balancer port.
+# +instance_port -- the instance port to which the traffic is forwarded.
+# +cert_arn      -- the Amazon Resource Name (ARN) of the certificate.
+# Returns:      
+#  None  
+#===============================================================================
+function add_https_listener()
+{
+   if [[ $# -lt 4 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 1
+   fi
+   
+   local lbal_nm="${1}"
+   local lbal_port="${2}"
+   local instance_port="${3}"
+   local cert_arn="${4}"
+   local exit_code=0
+   
+   set +e
+   aws elb create-load-balancer-listeners \
+       --load-balancer-name "${lbal_nm}" \
+       --listeners Protocol=HTTPS,LoadBalancerPort="${lbal_port}",InstanceProtocol=HTTP,InstancePort="${instance_port}",SSLCertificateId="${cert_arn}" > /dev/null 2>&1
+   exit_code="$?"
+   set -e
+   
+   return "${exit_code}"
+}
+
+#===============================================================================
+# Deletes a listener from the specified load balancer.
+# Globals:
+#  None
+# Arguments:
+# +lbal_nm   -- the load balancer name.
+# +lbal_port -- the client port number of the listener.
+# Returns:      
+#  None  
+#===============================================================================
+function delete_listener()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 1
+   fi
+
+   local lbal_nm="${1}"
+   local lbal_port="${2}"
+
+   aws elb delete-load-balancer-listeners \
+       --load-balancer-name "${lbal_nm}" \
+       --load-balancer-ports "${lbal_port}"
+
    return 0
 }
 
@@ -139,35 +235,8 @@ function configure_loadbalancer_health_check()
  
    aws elb configure-health-check \
        --load-balancer-name "${lbal_nm}" \
-       --health-check Target=HTTP:"${WEBPHP_APACHE_LBAL_BOX_HEALTCHECK_HTTP_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 > /dev/null
+       --health-check Target=HTTP:"${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 > /dev/null
  
-   return 0
-}
-
-#===============================================================================
-# Deletes the specified load balancer. After deletion, the name and associated 
-# DNS record of the load balancer no longer exist and traffic sent to any of its 
-# IP addresses is no longer delivered to the instances.
-#
-# Globals:
-#  None
-# Arguments:
-# +lbal_nm -- the load balancer name.
-# Returns:      
-#  None  
-#===============================================================================
-function delete_loadbalancer()
-{
-   if [[ $# -lt 1 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 1
-   fi
-
-   local lbal_nm="${1}"
- 
-   aws elb delete-load-balancer --load-balancer-name "${lbal_nm}" 
-
    return 0
 }
 
@@ -266,7 +335,8 @@ function check_instance_is_registered_with_loadbalancer()
       is_registered='true'
    fi                     
             
-   echo "${lbal_name}"
+   echo "${is_registered}"
    
    return 0
 }
+

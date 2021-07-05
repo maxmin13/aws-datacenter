@@ -20,8 +20,12 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo 'Generating self-signed certificate ...'
 
-amazon-linux-extras install epel -y 
-yum install -y expect 
+set +e
+amazon-linux-extras install epel -y > /dev/null 2>&1
+set -e 
+set +e
+yum install -y expect > /dev/null 2>&1
+set -e
 
 cd "${script_dir}" || exit 1
 
@@ -38,8 +42,12 @@ echo "No-password ${key_file} private-key generated."
 cert_file="$(./gen_certificate.sh)"
 
 echo "Self-signed ${cert_file} certificate created."
- 
-yum remove -y expect 
-amazon-linux-extras disable epel -y 
+
+set +e 
+yum remove -y expect > /dev/null 2>&1
+set -e 
+set +e
+amazon-linux-extras disable epel -y > /dev/null 2>&1
+set -e 
 
 exit 0

@@ -16,9 +16,9 @@ echo 'DNS hosted zone'
 echo '***************'
 echo
 
-lbal_dns_nm="${LBAL_BOX_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+lbal_dns_nm="${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
 target_lbal_dns_nm="$(get_alias_record_dns_name_value \
-   "${LBAL_BOX_DNS_SUB_DOMAIN}" \
+   "${LBAL_INST_DNS_SUB_DOMAIN}" \
    "${MAXMIN_TLD}")" 
        
 if [[ -z "${target_lbal_dns_nm}" ]]
@@ -30,7 +30,7 @@ else
 fi
 
 target_lbal_dns_hosted_zone_id="$(get_alias_record_hosted_zone_value \
-   "${LBAL_BOX_DNS_SUB_DOMAIN}" \
+   "${LBAL_INST_DNS_SUB_DOMAIN}" \
    "${MAXMIN_TLD}")" 
 
 if [[ -z "${target_lbal_dns_hosted_zone_id}" ]]
@@ -40,8 +40,8 @@ else
    echo "* Target load balancer hosted zone ID: ${target_lbal_dns_hosted_zone_id}."
 fi
 
-admin_dns_nm="${ADMIN_BOX_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
-target_admin_eip="$(get_record_value "${ADMIN_BOX_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+admin_dns_nm="${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+target_admin_eip="$(get_record_value "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
 
 if [[ -z "${target_admin_eip}" ]]
 then
@@ -57,14 +57,14 @@ echo
 ## load balancer www.admin.it record.
 ##
 
-has_lbal_record="$(check_hosted_zone_has_record "${LBAL_BOX_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+has_lbal_record="$(check_hosted_zone_has_record "${LBAL_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
 
 if [[ 'true' == "${has_lbal_record}" ]]
 then
    echo 'Deleting load balance record ...'
    
    request_id="$(delete_alias_record \
-       "${LBAL_BOX_DNS_SUB_DOMAIN}" \
+       "${LBAL_INST_DNS_SUB_DOMAIN}" \
        "${MAXMIN_TLD}" \
        "${target_lbal_dns_nm}" \
        "${target_lbal_dns_hosted_zone_id}")"                                   
@@ -77,14 +77,14 @@ fi
 ## Admin website admin.maxmin.it
 ##
 
-has_admin_record="$(check_hosted_zone_has_record "${ADMIN_BOX_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+has_admin_record="$(check_hosted_zone_has_record "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
 
 if [[ 'true' == "${has_admin_record}" ]]
 then
    echo 'Deleting Admin web site record ...'
 
    request_id="$(delete_record \
-       "${ADMIN_BOX_DNS_SUB_DOMAIN}" \
+       "${ADMIN_INST_DNS_SUB_DOMAIN}" \
        "${MAXMIN_TLD}" \
        "${target_admin_eip}")"                            
    status="$(get_record_request_status "${request_id}")"  

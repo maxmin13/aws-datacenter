@@ -24,18 +24,18 @@ echo 'Admin website'
 echo '*************'
 echo
 
-instance_id="$(get_instance_id "${ADMIN_BOX_NM}")"
+instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
    echo '* ERROR: Admin box not found.'
    exit 1
 else
-   instance_st="$(get_instance_state "${ADMIN_BOX_NM}")"
+   instance_st="$(get_instance_state "${ADMIN_INST_NM}")"
    echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
-sgp_id="$(get_security_group_id "${ADMIN_BOX_SEC_GRP_NM}")"
+sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -45,7 +45,7 @@ else
    echo "* Admin security group ID: ${sgp_id}."
 fi
 
-eip="$(get_public_ip_address_associated_with_instance "${ADMIN_BOX_NM}")"
+eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
 
 if [[ -z "${eip}" ]]
 then
@@ -65,13 +65,13 @@ mkdir "${TMP_DIR}"/"${admin_dir}"
 ## SSH Access
 ## 
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
    echo 'WARN: SSH access to the Admin box already granted.'
 else
-   allow_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
    
    echo 'Granted SSH access to the Admin box.'
 fi
@@ -82,16 +82,16 @@ fi
 
 echo 'Uploading the scripts to the Admin box ...'
 
-remote_dir=/home/"${ADMIN_BOX_USER_NM}"/script
+remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
 
-key_pair_file="$(get_keypair_file_path "${ADMIN_BOX_KEY_PAIR_NM}" "${ADMIN_BOX_ACCESS_DIR}")"
-wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}"
+key_pair_file="$(get_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHARED_BOX_SSH_PORT}" \
-    "${ADMIN_BOX_USER_NM}"   
+    "${SHARED_INST_SSH_PORT}" \
+    "${ADMIN_INST_USER_NM}"   
 
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
@@ -107,31 +107,31 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
 
 echo 'install_admin_website.sh ready.'
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/install_admin_website.sh 
 
 ## Website source files
 
 cd "${TMP_DIR}"/"${admin_dir}" || exit
-cp -R "${ADMIN_BOX_SRC_DIR}"/* ./
+cp -R "${ADMIN_INST_SRC_DIR}"/* ./
 
 # Tell the admin website it's running on AWS and
 # insert the email to send from
 sed -i -e "s/SEDis_devSED/0/g" \
-    -e "s/SEDsend_email_fromSED/${ADMIN_BOX_EMAIL}/g" \
+    -e "s/SEDsend_email_fromSED/${ADMIN_INST_EMAIL}/g" \
        init.php 
 
 zip -r "${WEBSITE_ARCHIVE}" ./*.php ./*.css > /dev/null 2>&1
 echo "${WEBSITE_ARCHIVE} ready."
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_ARCHIVE}"  
 
 # Website HTTP virtualhost file.
 create_virtualhost_configuration_file "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
     "${ADMIN_APACHE_WEBSITE_HTTP_PORT}" \
-    "${ADMIN_BOX_HOSTNAME}" \
+    "${ADMIN_INST_HOSTNAME}" \
     "${APACHE_DOCROOT_DIR}" \
     "${WEBSITE_DOCROOT_ID}"        
      
@@ -147,7 +147,7 @@ echo "${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE} ready."
 create_virtualhost_configuration_file "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
     "${ADMIN_APACHE_WEBSITE_HTTPS_PORT}" \
-    "${ADMIN_BOX_HOSTNAME}" \
+    "${ADMIN_INST_HOSTNAME}" \
     "${APACHE_DOCROOT_DIR}" \
     "${WEBSITE_DOCROOT_ID}"        
      
@@ -159,7 +159,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTPS_VIRTUALHOS
                       
 echo "${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE} ready." 
                              
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${ADMIN_BOX_USER_NM}" "${remote_dir}" \
+scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}"
 
@@ -168,18 +168,18 @@ echo "Installing Admin website ..."
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin_website.sh" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHARED_BOX_SSH_PORT}" \
-    "${ADMIN_BOX_USER_NM}" \
-    "${ADMIN_BOX_USER_PWD}"
+    "${SHARED_INST_SSH_PORT}" \
+    "${ADMIN_INST_USER_NM}" \
+    "${ADMIN_INST_USER_PWD}"
 
 set +e     
            
 ssh_run_remote_command_as_root "${remote_dir}/install_admin_website.sh" \
     "${key_pair_file}" \
     "${eip}" \
-    "${SHARED_BOX_SSH_PORT}" \
-    "${ADMIN_BOX_USER_NM}" \
-    "${ADMIN_BOX_USER_PWD}" 
+    "${SHARED_INST_SSH_PORT}" \
+    "${ADMIN_INST_USER_NM}" \
+    "${ADMIN_INST_USER_PWD}" 
       
 exit_code=$?	
 set -e
@@ -192,8 +192,8 @@ then
    ssh_run_remote_command "rm -rf ${remote_dir:?}" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${ADMIN_BOX_USER_NM}"   
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}"   
                    
    echo 'Cleared remote directory.'
 else
@@ -206,12 +206,12 @@ fi
 ## SSH Access.
 ## 
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Admin box.' 
 fi

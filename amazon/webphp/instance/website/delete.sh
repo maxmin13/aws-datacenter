@@ -28,9 +28,9 @@ else
    export webphp_id="${1}"
 fi
 
-webphp_nm="${WEBPHP_BOX_NM/<ID>/${webphp_id}}"
-webphp_keypair_nm="${WEBPHP_BOX_KEY_PAIR_NM/<ID>/${webphp_id}}"
-webphp_sgp_nm="${WEBPHP_BOX_SEC_GRP_NM/<ID>/${webphp_id}}"
+webphp_nm="${WEBPHP_INST_NM/<ID>/${webphp_id}}"
+webphp_keypair_nm="${WEBPHP_INST_KEY_PAIR_NM/<ID>/${webphp_id}}"
+webphp_sgp_nm="${WEBPHP_INST_SEC_GRP_NM/<ID>/${webphp_id}}"
 website_docroot_id="${WEBSITE_DOCROOT_ID/<ID>/${webphp_id}}"
 webphp_dir=webphp"${webphp_id}"
 
@@ -67,7 +67,7 @@ else
    echo "* Webphp public IP address: ${eip}."
 fi
 
-loadbalancer_sgp_id="$(get_security_group_id "${LBAL_BOX_SEC_GRP_NM}")"
+loadbalancer_sgp_id="$(get_security_group_id "${LBAL_INST_SEC_GRP_NM}")"
 
 if [[ -z "${loadbalancer_sgp_id}" ]]
 then
@@ -105,28 +105,28 @@ then
    ## SSH Access
    ##
 
-   granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')"
+   granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
 
    if [[ -n "${granted_ssh}" ]]
    then
       echo 'WARN: SSH access to the Webphp box already granted.'
    else
-      allow_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+      allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
   
       echo 'Granted SSH access to the Webphp box.'
    fi
 
    echo 'Uploading scripts to the Webphp box ...'
 
-   remote_dir=/home/"${WEBPHP_BOX_USER_NM}"/script
-   key_pair_file="$(get_keypair_file_path "${webphp_keypair_nm}" "${WEBPHP_BOX_ACCESS_DIR}")"
-   wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${WEBPHP_BOX_USER_NM}"
+   remote_dir=/home/"${WEBPHP_INST_USER_NM}"/script
+   key_pair_file="$(get_keypair_file_path "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
+   wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}"
 
    ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${WEBPHP_BOX_USER_NM}"  
+       "${SHARED_INST_SSH_PORT}" \
+       "${WEBPHP_INST_USER_NM}"  
 
    sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
        -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
@@ -138,7 +138,7 @@ then
  
    echo 'delete_webphp_website.sh ready.'
       
-   scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_BOX_SSH_PORT}" "${WEBPHP_BOX_USER_NM}" "${remote_dir}" \
+   scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${webphp_dir}"/delete_webphp_website.sh
           
    echo 'Deleting Webphp website ...'
@@ -147,18 +147,18 @@ then
    ssh_run_remote_command_as_root "chmod +x ${remote_dir}/delete_webphp_website.sh" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${WEBPHP_BOX_USER_NM}" \
-       "${WEBPHP_BOX_USER_PWD}" 
+       "${SHARED_INST_SSH_PORT}" \
+       "${WEBPHP_INST_USER_NM}" \
+       "${WEBPHP_INST_USER_PWD}" 
         
    set +e     
            
    ssh_run_remote_command_as_root "${remote_dir}/delete_webphp_website.sh" \
        "${key_pair_file}" \
        "${eip}" \
-       "${SHARED_BOX_SSH_PORT}" \
-       "${WEBPHP_BOX_USER_NM}" \
-       "${WEBPHP_BOX_USER_PWD}" 
+       "${SHARED_INST_SSH_PORT}" \
+       "${WEBPHP_INST_USER_NM}" \
+       "${WEBPHP_INST_USER_PWD}" 
       
    exit_code=$?	
    set -e
@@ -172,9 +172,9 @@ then
       ssh_run_remote_command "rm -rf ${remote_dir:?}" \
           "${key_pair_file}" \
           "${eip}" \
-          "${SHARED_BOX_SSH_PORT}" \
-          "${WEBPHP_BOX_USER_NM}" \
-          "${WEBPHP_BOX_USER_PWD}"  
+          "${SHARED_INST_SSH_PORT}" \
+          "${WEBPHP_INST_USER_NM}" \
+          "${WEBPHP_INST_USER_PWD}"  
   
       echo 'Cleared remote directory.'
    else
@@ -186,12 +186,12 @@ then
    ## SSH Access.
    ## 
 
-   granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0')"
+   granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
 
    if [[ -n "${granted_ssh}" ]]
    then
       # Revoke SSH access from the development machine
-      revoke_access_from_cidr "${sgp_id}" "${SHARED_BOX_SSH_PORT}" '0.0.0.0/0'
+      revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
    
       echo 'Revoked SSH access to the Webphp box.' 
    fi
