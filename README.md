@@ -13,7 +13,7 @@ Env: Linux Fedora distribution.
 ```
 ## Install the required programs: 
 
-sudo dnf install expect openssl xmlstarlet
+sudo dnf install -y expect openssl xmlstarlet
 
 ## Install Java and add it in path.
 

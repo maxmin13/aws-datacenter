@@ -45,7 +45,7 @@ function escape()
 # Makes the program sleep for a number of seconds.
 # Globals:
 #  None
-# Arguments:
+        # Arguments:
 # +seconds -- the number of seconds the program sleeps.
 # Returns:      
 #  None.  
@@ -72,6 +72,7 @@ function __wait()
    return 0
 }
 
+#### TODO create a test script
 ## Start tests: ##
 ##escaped="$(escape 'abc/efg')"
 ##if [[ "${escaped}" != 'abc\/efg' ]]

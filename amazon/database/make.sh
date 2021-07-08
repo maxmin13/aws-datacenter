@@ -50,7 +50,7 @@ else
 fi
 
 ## 
-## database subnet group
+## Subnet group
 ## 
 
 db_subnet_group_status="$(get_db_subnet_group_status "${DB_INST_SUBNET_GRP_NM}")"

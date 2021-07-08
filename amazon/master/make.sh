@@ -54,7 +54,7 @@ echo
    # Create database and load balancer.
    . "${PROJECT_DIR}"/amazon/database/make.sh            
    . "${PROJECT_DIR}"/amazon/loadbalancer/make.sh    
-   . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh            
+   ##################. "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh            
 
    # Create the Admin and Webphp instances.      
    . "${PROJECT_DIR}"/amazon/admin/instance/make.sh               
@@ -66,16 +66,16 @@ echo
    # Deploy Admin and Webphp websites.
    . "${PROJECT_DIR}"/amazon/admin/instance/website/make.sh      
    . "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 1   
-   
-   # Configure SSL in the Admin instance.
-   . "${PROJECT_DIR}"/amazon/admin/instance/ssl/make.sh    
-   
+
    # Register 'maxmin.it' domain with the AWS DNS registrar.
    . "${PROJECT_DIR}"/amazon/dns/domain/registration/make.sh 
 
    # Create the application DNS hosted zone.
-   . "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh      
-
+   . "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh  
+   
+   # Configure SSL in the Admin instance.
+   . "${PROJECT_DIR}"/amazon/admin/instance/ssl/make.sh    
+   
 } ### >> "${log_file}" 2>&1  
 
 echo

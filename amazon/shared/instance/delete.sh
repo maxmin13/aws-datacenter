@@ -57,10 +57,21 @@ fi
 ## 
   
 if [[ -n "${sgp_id}" ]]
-then
-   delete_security_group "${sgp_id}" 
-      
-   echo 'Shared box security group deleted.'
+then  
+   # shellcheck disable=SC2015
+   delete_security_group "${sgp_id}" 2> /dev/null && echo 'Security group deleted.' || 
+   {
+      __wait 60
+      delete_security_group "${sgp_id}" 2> /dev/null && echo 'Security group deleted.' || 
+      {
+         __wait 60
+         delete_security_group "${sgp_id}" 2> /dev/null && echo 'Security group deleted.' || 
+         {
+            echo 'Error: deleting security group.'
+            exit 1
+         }         
+      } 
+   }   
 fi
 
 ## 

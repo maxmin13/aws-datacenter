@@ -71,7 +71,7 @@ then
 fi
 
 ## 
-## database grants 
+## Database grants 
 ## 
 
 db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
@@ -89,7 +89,7 @@ then
 fi
 
 ## 
-## security group 
+## Security group 
 ## 
   
 if [[ -n "${sgp_id}" ]]

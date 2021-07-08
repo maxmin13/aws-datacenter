@@ -9,6 +9,16 @@ set +o xtrace
 # The script installs Certbot ACME client and runs the 'certbot' 
 # command to request a certificate for the 'maxmin.it' domain to
 # Let’s Encrypt CA.
+#
+# In this script Let’s Encrypt CA uses the HTTP-01 challege to 
+# verify your control over the maxmin.it domain. In this challenge 
+# the certificate authority will expect a specified file  to be 
+# posted in a specified location on a web site. The file will 
+# be downloaded using an HTTP request on TCP port 80. Since part  
+# of what this challenge shows is the ability to create a file at  
+# an arbitrary location, you cannot choose a different location or 
+# port number.
+#
 # Let’s Encrypt CA issues short-lived certificates (90 days). 
 # Most Certbot installations come with automatic renewals 
 # preconfigured. This is done by means of a scheduled task which 

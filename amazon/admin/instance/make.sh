@@ -98,7 +98,7 @@ rm -rf "${TMP_DIR:?}"/"${admin_dir}"
 mkdir "${TMP_DIR}"/"${admin_dir}"
 
 ## 
-## security group 
+## Security group 
 ## 
 
 sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
@@ -124,7 +124,7 @@ else
 fi
  
 ##
-## database access 
+## Database access 
 ##
 
 granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}")"

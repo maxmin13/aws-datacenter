@@ -42,7 +42,7 @@ db_snapshot_ids="$(get_database_snapshot_ids "${DB_NM}")"
 
 if [[ -z "${db_snapshot_ids}" ]]
 then
-   echo '* WARN: database snapshots not found'
+   echo '* WARN: database snapshots not found.'
 else
    echo "* database snapshots identifiers: ${db_snapshot_ids}."
 fi
@@ -67,7 +67,7 @@ then
 fi
 
 ## 
-## database snapshots
+## Snapshots
 ##
 
 if [[ -n "${db_snapshot_ids}" ]]
@@ -83,7 +83,7 @@ then
 fi
 
 ## 
-## DB security group
+## Security group
 ## 
   
 if [[ -n "${sgp_id}" ]]
@@ -94,7 +94,7 @@ then
 fi
 
 ## 
-## database subnet group
+## Subnet group
 ## 
 
 if [[ -n "${db_subnet_group_status}" ]]
