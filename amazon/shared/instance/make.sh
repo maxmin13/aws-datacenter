@@ -75,7 +75,7 @@ granted_ssh_22="$(check_access_from_cidr_is_granted  "${sgp_id}" '22' '0.0.0.0/0
 
 if [[ -z "${granted_ssh_22}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" '22' '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0'
    
    echo 'Granted SSH access on port 22.'
 fi
@@ -84,7 +84,7 @@ granted_ssh_38142="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_IN
 
 if [[ -z "${granted_ssh_38142}" ]]
 then
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
    
    echo "Granted SSH access on port ${SHARED_INST_SSH_PORT}."
 fi
@@ -244,7 +244,7 @@ granted_ssh_22="$(check_access_from_cidr_is_granted  "${sgp_id}" '22' '0.0.0.0/0
 
 if [[ -n "${granted_ssh_22}" ]]
 then 
-   revoke_access_from_cidr "${sgp_id}" '22' '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Shared box port 22.'
 fi
@@ -289,7 +289,7 @@ granted_ssh_38142="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_IN
 if [[ -n "${granted_ssh_38142}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Shared box.' 
    echo

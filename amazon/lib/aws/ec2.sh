@@ -34,7 +34,7 @@ function get_datacenter_id()
    fi
 
    local dtc_nm="${1}"
-   local dtc_id
+   local dtc_id=''
  
    dtc_id="$(aws ec2 describe-vpcs \
        --filters Name=tag-key,Values='Name' \
@@ -53,7 +53,7 @@ function get_datacenter_id()
 # Globals:
 #  None
 # Arguments:
-# +dtc_nm     -- the data center name.
+# +dtc_nm -- the data center name.
 # Returns:      
 #  the data center identifier.  
 #===============================================================================
@@ -66,7 +66,7 @@ function create_datacenter()
    fi
   
    local dtc_nm="${1}"
-   local dtc_id
+   local dtc_id=''
   
    dtc_id="$(aws ec2 create-vpc \
        --cidr-block "${DTC_CDIR}" \
@@ -136,7 +136,7 @@ function get_subnet_ids()
    fi
 
    local dtc_id="${1}"
-   local subnet_ids
+   local subnet_ids=''
    
    subnet_ids="$(aws ec2 describe-subnets \
        --filters Name=vpc-id,Values="${dtc_id}" \
@@ -166,7 +166,7 @@ function get_subnet_id()
    fi
 
    local subnet_nm="${1}"
-   local subnet_id
+   local subnet_id=''
   
    subnet_id="$(aws ec2 describe-subnets \
        --filters Name=tag-key,Values='Name' \
@@ -207,7 +207,7 @@ function create_subnet()
    local subnet_az="${3}"
    local dtc_id="${4}"
    local rtb_id="${5}"
-   local subnet_id
+   local subnet_id=''
  
    subnet_id="$(aws ec2 create-subnet \
        --vpc-id "${dtc_id}" \
@@ -273,7 +273,7 @@ function get_internet_gateway_id()
   fi
 
    local igw_nm="${1}"
-   local igw_id
+   local igw_id=''
   
    igw_id="$(aws ec2 describe-internet-gateways \
        --filters Name=tag-key,Values='Name' \
@@ -310,7 +310,7 @@ function get_internet_gateway_attachment_status()
 
    local igw_nm="${1}"
    local dtc_id="${2}"
-   local attachment_status
+   local attachment_status=''
   
    attachment_status="$(aws ec2 describe-internet-gateways \
        --filters Name=tag-key,Values='Name' \
@@ -344,7 +344,7 @@ function create_internet_gateway()
   
    local igw_nm="${1}"
    local dtc_id="{2}"
-   local igw_id
+   local igw_id=''
   
    igw_id="$(aws ec2 create-internet-gateway \
        --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value='${igw_nm}'}]" \
@@ -414,7 +414,7 @@ function attach_internet_gateway()
 # Globals:
 #  None
 # Arguments:
-# +rtb_nm     -- the route table name.
+# +rtb_nm -- the route table name.
 # Returns:      
 #  the route table identifier, or blanc if it is not found.  
 #===============================================================================
@@ -427,7 +427,7 @@ function get_route_table_id()
    fi
 
    local rtb_nm="${1}"
-   local rtb_id
+   local rtb_id=''
   
    rtb_id="$(aws ec2 describe-route-tables \
        --filters Name=tag-key,Values='Name' \
@@ -446,8 +446,8 @@ function get_route_table_id()
 # Globals:
 #  None
 # Arguments:
-# +rtb_nm     -- the route table name.
-# +dtc_id     -- the data center identifier.
+# +rtb_nm -- the route table name.
+# +dtc_id -- the data center identifier.
 
 # Returns:      
 #  the route table identifier, or blanc if it is not found.  
@@ -462,7 +462,7 @@ function create_route_table()
 
    local rtb_nm="${1}"
    local dtc_id="${2}"
-   local rtb_id
+   local rtb_id=''
   
    rtb_id="$(aws ec2 create-route-table \
        --vpc-id "${dtc_id}" \
@@ -481,7 +481,7 @@ function create_route_table()
 # Globals:
 #  None
 # Arguments:
-# +rtb_id     -- the route table identifier.
+# +rtb_id -- the route table identifier.
 
 # Returns:      
 #  None  
@@ -508,10 +508,10 @@ function delete_route_table()
 # Globals:
 #  None
 # Arguments:
-# +rtb_id               -- the route table identifier.
-# +target_id            -- the target identifier, for ex: an Internet Gateway.
-# +destination_cidr     -- the CIDR address block used to match the destination
-#           of the incoming traffic.
+# +rtb_id           -- the route table identifier.
+# +target_id        -- the target identifier, for ex: an Internet Gateway.
+# +destination_cidr -- the CIDR address block used to match the destination
+#                      of the incoming traffic.
 # Returns:      
 #  None
 #===============================================================================
@@ -553,7 +553,7 @@ function get_security_group_id()
    fi
 
    local sgp_nm="${1}"
-   local sgp_id
+   local sgp_id=''
   
    sgp_id="$(aws ec2 describe-security-groups \
          --filters Name=tag-key,Values='Name' \
@@ -589,7 +589,7 @@ function create_security_group()
    local dtc_id="${1}" 
    local sgp_nm="${2}"
    local sgp_desc="${3}"  
-   local sgp_id
+   local sgp_id=''
    
    sgp_id="$(aws ec2 create-security-group \
         --group-name "${sgp_nm}" \
@@ -639,15 +639,16 @@ function delete_security_group()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id -- the security group identifier.
-# +port   -- the TCP port
-# +cidr   -- the CIDR block from which incoming traffic is allowed.
+# +sgp_id    -- the security group identifier.
+# +port      -- the TCP port
+# +protocol  -- the IP protocol name (tcp , udp , icmp , icmpv6), default is tcp. 
+# +from_cidr -- the CIDR block representing the origin of the traffic.
 # Returns:      
 #  None
 #===============================================================================
 function allow_access_from_cidr()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
@@ -655,13 +656,14 @@ function allow_access_from_cidr()
 
    local sgp_id="${1}"
    local port="${2}"
-   local cidr="${3}" 
-
+   local protocol="${3}"
+   local from_cidr="${4}"
+   
    aws ec2 authorize-security-group-ingress \
        --group-id "${sgp_id}" \
-       --protocol tcp \
+       --protocol "${protocol}" \
        --port "${port}" \
-       --cidr "${cidr}" > /dev/null
+       --cidr "${from_cidr}" > /dev/null
  
    return 0
 }
@@ -672,16 +674,18 @@ function allow_access_from_cidr()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id           -- the security group identifier.
-# +port            -- the TCP port.
-# +from_sgp_id      -- the security group identifier from which incoming traffic 
-#                     is allowed.
+# +sgp_id      -- the security group identifier.
+# +port        -- the TCP port.
+# +protocol    -- the IP protocol name (tcp , udp , icmp , icmpv6), default is 
+#                 tcp.
+# +from_sgp_id -- the security group identifier representing the origin of the
+#                 traffic. 
 # Returns:      
 #  None
 #===============================================================================
 function allow_access_from_security_group()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
@@ -689,11 +693,12 @@ function allow_access_from_security_group()
 
    local sgp_id="${1}"
    local port="${2}"
-   local from_sgp_id="${3}" 
+   local protocol="${3}"
+   local from_sgp_id="${4}" 
 
    aws ec2 authorize-security-group-ingress \
        --group-id "${sgp_id}" \
-       --protocol tcp \
+       --protocol "${protocol}" \
        --port "${port}" \
        --source-group "${from_sgp_id}" > /dev/null 
 
@@ -706,16 +711,18 @@ function allow_access_from_security_group()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id           -- the security group identifier.
-# +port            -- the TCP port.
-# +from_sgp_id      -- the security group identifier from which incoming traffic 
-#                     is revoked.
+# +sgp_id      -- the security group identifier.
+# +port        -- the TCP port.
+# +protocol    -- the IP protocol name (tcp , udp , icmp , icmpv6), default is 
+#                 tcp. 
+# +from_sgp_id -- the security group identifier representing the origin of the
+#                 traffic. 
 # Returns:      
 #  None
 #===============================================================================
 function revoke_access_from_security_group()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
@@ -723,11 +730,12 @@ function revoke_access_from_security_group()
 
    local sgp_id="${1}"
    local port="${2}"
-   local from_sgp_id="${3}" 
+   local protocol="${3}"
+   local from_sgp_id="${4}"   
 
    aws ec2 revoke-security-group-ingress \
        --group-id "${sgp_id}" \
-       --protocol tcp \
+       --protocol "${protocol}" \
        --port "${port}" \
        --source-group "${from_sgp_id}" > /dev/null
 
@@ -740,16 +748,16 @@ function revoke_access_from_security_group()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id           -- the security group identifier.
-# +port            -- the TCP port.
-# +src_cidr        -- the CIDR block from which incoming traffic 
-#                     is revoked.
+# +sgp_id    -- the security group identifier.
+# +port      -- the TCP port
+# +protocol  -- the IP protocol name (tcp , udp , icmp , icmpv6), default is tcp. 
+# +from_cidr -- the CIDR block representing the origin of the traffic.
 # Returns:      
 #  None
 #===============================================================================
 function revoke_access_from_cidr()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
@@ -757,13 +765,14 @@ function revoke_access_from_cidr()
 
    local sgp_id="${1}"
    local port="${2}"
-   local src_cidr="${3}" 
-
+   local protocol="${3}"
+   local from_cidr="${4}"
+        
    aws ec2 revoke-security-group-ingress \
        --group-id "${sgp_id}" \
-       --protocol tcp \
+       --protocol "${protocol}" \
        --port "${port}" \
-       --cidr "${src_cidr}" > /dev/null
+       --cidr "${from_cidr}" > /dev/null
 
    return 0
 }
@@ -792,13 +801,13 @@ function check_access_from_security_group_is_granted()
    local sgp_id="${1}"
    local port="${2}"
    local from_sgp_id="${3}" 
-   local id
+   local id=''
 
    id="$(aws ec2 describe-security-groups \
-         --group-ids="${sgp_id}" \
-         --filters Name=ip-permission.to-port,Values="${port}" \
-         --query "SecurityGroups[?IpPermissions[?contains(UserIdGroupPairs[].GroupId, '${from_sgp_id}')]].{GroupId: GroupId}" \
-         --output text)"                     
+       --group-ids="${sgp_id}" \
+       --filters Name=ip-permission.to-port,Values="${port}" \
+       --query "SecurityGroups[?IpPermissions[?contains(UserIdGroupPairs[].GroupId, '${from_sgp_id}')]].{GroupId: GroupId}" \
+       --output text)"                     
             
    echo "${id}"
    
@@ -812,9 +821,9 @@ function check_access_from_security_group_is_granted()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id           -- the security group identifier.
-# +port            -- the TCP port.
-# +src_cidr        -- the CIDR block from which incoming is allowed.
+# +sgp_id    -- the security group identifier.
+# +port      -- the TCP port.
+# +from_cidr -- the CIDR block representing the origin of the traffic.
 # Returns:      
 #  the group identifier if the access is granted, blanc otherwise.
 #===============================================================================
@@ -828,13 +837,13 @@ function check_access_from_cidr_is_granted()
 
    local sgp_id="${1}"
    local port="${2}"
-   local src_cidr="${3}" 
-   local id
+   local from_cidr="${3}" 
+   local id=''
      
    id="$(aws ec2 describe-security-groups \
        --group-ids="${sgp_id}" \
        --filters Name=ip-permission.to-port,Values="${port}" \
-       --query "SecurityGroups[?IpPermissions[?contains(IpRanges[].CidrIp, '${src_cidr}')]].{GroupId: GroupId}" \
+       --query "SecurityGroups[?IpPermissions[?contains(IpRanges[].CidrIp, '${from_cidr}')]].{GroupId: GroupId}" \
        --output text)"           
          
    echo "${id}"
@@ -848,7 +857,7 @@ function check_access_from_cidr_is_granted()
 # Globals:
 #  None
 # Arguments:
-# +instance_nm     -- the instance name.
+# +instance_nm -- the instance name.
 # Returns:      
 #  the status of the instance, or blanc if the instance is not found.  
 #===============================================================================
@@ -861,7 +870,7 @@ function get_instance_state()
    fi
 
    local instance_nm="${1}"
-   local instance_st
+   local instance_st=''
   
    instance_st="$(aws ec2 describe-instances \
        --filters Name=tag-key,Values='Name' \
@@ -880,7 +889,7 @@ function get_instance_state()
 # Globals:
 #  None
 # Arguments:
-# +instance_nm     -- the instance name.
+# +instance_nm -- the instance name.
 # Returns:      
 #  the instance public address, or blanc if the instance is not found.  
 #===============================================================================
@@ -893,7 +902,7 @@ function get_public_ip_address_associated_with_instance()
    fi
 
    local instance_nm="${1}"
-   local instance_ip
+   local instance_ip=''
   
    instance_ip="$(aws ec2 describe-instances \
        --filters Name=tag-key,Values=Name \
@@ -912,7 +921,7 @@ function get_public_ip_address_associated_with_instance()
 # Globals:
 #  None
 # Arguments:
-# +instance_nm     -- the instance name.
+# +instance_nm -- the instance name.
 # Returns:      
 #  the instance private address, or blanc if the instance is not found.  
 #===============================================================================
@@ -925,7 +934,7 @@ function get_private_ip_address_associated_with_instance()
    fi
 
    local instance_nm="${1}"
-   local instance_ip
+   local instance_ip=''
   
    instance_ip="$(aws ec2 describe-instances \
        --filters Name=tag-key,Values=Name \
@@ -944,7 +953,7 @@ function get_private_ip_address_associated_with_instance()
 # Globals:
 #  None
 # Arguments:
-# +instance_nm     -- the instance name.
+# +instance_nm -- the instance name.
 # Returns:      
 #  the instance identifier, or blanc if the instance is not found.  
 #===============================================================================
@@ -957,7 +966,7 @@ function get_instance_id()
    fi
 
    local instance_nm="${1}"
-   local instance_id
+   local instance_id=''
 
    instance_id="$(aws ec2 describe-instances \
        --filters Name=tag-key,Values=Name \
@@ -976,7 +985,7 @@ function get_instance_id()
 #  None
 # Arguments:
 # +instance_nm     -- name assigned to the instance.
-# +sgp_id           -- security group identifier.
+# +sgp_id          -- security group identifier.
 # +subnet_id       -- subnet identifier.
 # +private_ip      -- private IP address assigned to the instance.
 # +image_id        -- identifier of the image from which the instance is
@@ -999,7 +1008,7 @@ function run_instance()
    local private_ip="${4}"
    local image_id="${5}"
    local cloud_init_file="${6}"
-   local instance_id
+   local instance_id=''
      
    instance_id="$(aws ec2 run-instances \
        --image-id "${image_id}" \
@@ -1028,7 +1037,7 @@ function run_instance()
 # Globals:
 #  None
 # Arguments:
-# +instance_id     -- the instance identifier.
+# +instance_id -- the instance identifier.
 # Returns:      
 #  None
 #===============================================================================
@@ -1095,11 +1104,11 @@ function delete_instance()
 # Globals:
 #  None
 # Arguments:
-# +instance_id    -- the instance identifier.
-# +img_nm         -- the Image name.
-# +img_desc       -- the Image description.
+# +instance_id -- the instance identifier.
+# +img_nm      -- the image name.
+# +img_desc    -- the image description.
 # Returns:      
-#  the Image identifier.    
+#  the image identifier.    
 #===============================================================================
 function create_image()
 {
@@ -1112,7 +1121,7 @@ function create_image()
    local instance_id="${1}"
    local img_nm="${2}"
    local img_desc="${3}"
-   local img_id
+   local img_id=''
 
    img_id="$(aws ec2 create-image \
         --instance-id "${instance_id}" \
@@ -1133,7 +1142,7 @@ function create_image()
 # Globals:
 #  None
 # Arguments:
-# +img_nm     -- the Image name.
+# +img_nm -- the image name.
 # Returns:      
 #  the Image identifier.
 #===============================================================================
@@ -1146,7 +1155,7 @@ function get_image_id()
    fi
 
    local img_nm="${1}"
-   local img_id
+   local img_id=''
 
    img_id="$(aws ec2 describe-images \
         --filters Name=name,Values="${img_nm}" \
@@ -1163,7 +1172,7 @@ function get_image_id()
 # Globals:
 #  None
 # Arguments:
-# +img_nm     -- the Image name.
+# +img_nm -- the image name.
 # Returns:      
 #  the Image state.
 #===============================================================================
@@ -1176,7 +1185,7 @@ function get_image_state()
    fi
 
    local img_nm="${1}"
-   local img_state
+   local img_state=''
 
    img_state="$(aws ec2 describe-images \
         --filters Name=name,Values="${img_nm}" \
@@ -1195,7 +1204,7 @@ function get_image_state()
 # Globals:
 #  None
 # Arguments:
-# +img_nm     -- Image name.
+# +img_nm -- the image name.
 # Returns:      
 #  the list of Image Snapshot identifiers, or blanc if no Snapshot is found.  
 #===============================================================================
@@ -1211,7 +1220,7 @@ function get_image_snapshot_ids()
 
    # AWS CLI provides built-in JSON-based output filtering capabilities with the --query option,
    # a JMESPATH expression is used as a filter. 
-   local img_snapshot_ids
+   local img_snapshot_ids=''
 
    img_snapshot_ids="$(aws ec2 describe-images \
        --filters Name=name,Values="${img_nm}" \
@@ -1255,7 +1264,7 @@ function delete_image()
 # Globals:
 #  None
 # Arguments:
-# +img_snapshot_id     -- the Image Snapshot identifier.
+# +img_snapshot_id -- the Image Snapshot identifier.
 # Returns:      
 #  None
 #========================================================
@@ -1281,7 +1290,7 @@ function delete_image_snapshot()
 # Globals:
 #  None
 # Arguments:
-# +eip     -- the Elastic IP Public address.
+# +eip -- the Elastic IP Public address.
 # Returns:      
 #  the allocation identifier, or blanc if the address is not allocate with your
 #  account.  
@@ -1295,7 +1304,7 @@ function get_allocation_id()
    fi
 
    local eip="${1}"
-   local allocation_id
+   local allocation_id=''
           
    allocation_id="$(aws ec2 describe-addresses \
        --filter Name=public-ip,Values="${eip}" \
@@ -1308,8 +1317,8 @@ function get_allocation_id()
 }
 
 #===============================================================================
-# Returns a list of allocation identifiers allocated with your account.
-# the list is a string where each identifier is separated by a space.
+# Returns a list of allocation identifiers associated your account.
+# The list is a string where each identifier is separated by a space.
 #
 # Globals:
 #  None
@@ -1321,7 +1330,7 @@ function get_allocation_id()
 #===============================================================================
 function get_all_allocation_ids()
 {
-   local allocation_ids
+   local allocation_ids=''
           
    allocation_ids="$(aws ec2 describe-addresses \
        --query 'Addresses[*].AllocationId' \
@@ -1347,7 +1356,7 @@ function get_all_allocation_ids()
 function get_public_ip_address_unused()
 {
    local eip=''
-   local eip_list
+   local eip_list=''
    
    eip_list="$(aws ec2 describe-addresses \
        --query 'Addresses[?InstanceId == null].PublicIp' \
@@ -1364,9 +1373,8 @@ function get_public_ip_address_unused()
 }
 
 #===============================================================================
-# Allocates an Elastic IP address to your AWS account. 
-# This method is used when there isn't any unused address available in your 
-# account.
+# Allocates an Elastic IP address to your AWS account. After you allocate the 
+# Elastic IP address you can associate it with an instance or network interface.
 #
 # Globals:
 #  None
@@ -1377,7 +1385,7 @@ function get_public_ip_address_unused()
 #===============================================================================
 function allocate_public_ip_address()
 {
-   local eip
+   local eip=''
   
    eip="$(aws ec2 allocate-address \
        --query 'PublicIp' \
@@ -1397,7 +1405,7 @@ function allocate_public_ip_address()
 # Globals:
 #  None
 # Arguments:
-# +allocation_id   -- Allocation identifier.
+# +allocation_id -- allocation identifier.
 # Returns:      
 #  None 
 #===============================================================================
@@ -1425,7 +1433,7 @@ function release_public_ip_address()
 # Globals:
 #  None
 # Arguments:
-#  +allocation_ids    the list
+#  +allocation_ids -- the list of allocation identifiers.
 # Returns:      
 #  None 
 #===============================================================================
@@ -1455,8 +1463,8 @@ function release_all_public_ip_addresses()
 # Globals:
 #  None
 # Arguments:
-# +eip             -- the public IP address.
-# +instance_id     -- the instance identifier.
+# +eip         -- the public IP address.
+# +instance_id -- the instance identifier.
 # Returns:      
 #  None 
 #===============================================================================

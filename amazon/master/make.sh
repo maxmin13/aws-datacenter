@@ -42,7 +42,7 @@ echo
    fi
 
    echo
-   
+       
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
 
@@ -53,12 +53,13 @@ echo
    
    # Create database and load balancer.
    . "${PROJECT_DIR}"/amazon/database/make.sh            
-   . "${PROJECT_DIR}"/amazon/loadbalancer/make.sh    
-   ##################. "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh            
+   . "${PROJECT_DIR}"/amazon/loadbalancer/make.sh             
 
    # Create the Admin and Webphp instances.      
    . "${PROJECT_DIR}"/amazon/admin/instance/make.sh               
-   . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1                  
+   . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1   
+   
+   ####. "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh                     
 
    # Deploy database objects.
    . "${PROJECT_DIR}"/amazon/database/data/make.sh       

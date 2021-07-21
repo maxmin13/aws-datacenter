@@ -8,14 +8,14 @@ ENV='production'
 ## Amazon EBS-backed image:
 ## By default, the root volume is deleted when the instance terminates.
 ## Data on any other EBS volumes persists after instance termination by default.
-AWS_BASE_IMG_ID='ami-0bb3fad3c0286ebd5'
+AWS_BASE_IMG_ID='ami-058b1b7fe545997ae' 
 AWS_CHECK_IP_URL='http://checkip.amazonaws.com'
 
 ## ********** ##
 ## App domain ##
 ## ********** ##
 
-MAXMIN_TLD='maxmin.it'
+MAXMIN_TLD='maxmin.it.'
 
 ## *********** ##
 ## Data center ##
@@ -96,6 +96,9 @@ ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT='9443'
 ADMIN_APACHE_LOGANALYZER_HTTP_PORT='8081'
 ADMIN_APACHE_LOGANALYZER_HTTPS_PORT='9444'
 ADMIN_APACHE_MONIT_HTTP_PORT='8082'
+ADMIN_ACME_DNS_HTTP_PORT='8082'
+ADMIN_ACME_DNS_HTTPS_PORT='9445'
+ADMIN_ACME_DNS_PORT='53'
 ADMIN_MMONIT_HTTP_PORT='8083'
 ADMIN_MMONIT_HTTPS_PORT='9445'
 ADMIN_MMONIT_COLLECTOR_PORT='8084'

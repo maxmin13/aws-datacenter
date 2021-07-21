@@ -1,56 +1,9 @@
 
 find ./ -type f -exec sed -i 's/LBAL_INST_NM/LBAL_INST_NM/g' {} \;
-find ./ -type f -exec sed -i 's/LBAL_INST_HTTPS_PORT/LBAL_INST_HTTPS_PORT/g' {} \;
-find ./ -type f -exec sed -i 's/LBAL_INST_HTTP_PORT/LBAL_INST_HTTP_PORT/g' {} \;
-find ./ -type f -exec sed -i 's/LBAL_INST_SEC_GRP_NM/LBAL_INST_SEC_GRP_NM/g' {} \;
-find ./ -type f -exec sed -i 's/LBAL_INST_DNS_SUB_DOMAIN/LBAL_INST_DNS_SUB_DOMAIN/g' {} \;
 
 
+scp -i admin-keys.pem -P 38142 admin-user@3.249.178.61:config.cfg .
 
-
-
-DB_INST_SUBNET_GRP_NM='maxmin-db-subgp'
-DB_INST_SUBNET_GRP_DESC='Database subnet group that spans multiple subnets'
-DB_INST_SEC_GRP_NM='maxmin-db-sgp'
-
-################
-xml manipulation
-################
-
-http://xmlstar.sourceforge.net/doc/UG/xmlstarlet-ug.html#idm47077139669232
-
-#Structure of XML Document:
-
-xmlstarlet el -u server.xml
-xmlstarlet el -a server.xml
-xmlstarlet el -v server.xml
-
-# Delete elements matching XPath expression
-xmlstarlet ed -d "/xml/table/rec[@id='2']" server.xml
-
-
-# Move element node <b> inside <a>
-echo '<x id="1"><a/><b/></x>' | xmlstarlet ed -m "//b" "//a"
-
-# Rename attributes: id -> ID
-xmlstarlet ed -r "//*/@id" -v ID server.xml
-
-# Rename elements: rec -> record
-xmlstarlet ed -r "/xml/table/rec" -v record server.xml
-
-# Update value of an attribute
-xmlstarlet ed -u "/xml/table/rec[@id=3]/@id" -v 5 server.xml
-
-# Update value of an element
-xmlstarlet ed -u "/xml/table/rec[@id=1]/numField" -v 0 server.xml
-
-# Add the attribute 'certificate' with value 'conf/cert.pem' to an element:
-
-xmlstarlet ed --inplace -i "Server/Service/Engine/Host[@name='18.202.248.20']" -t attr -n 'certificate' -v 'conf/cert.pem' server.xml  
-
-# Add the attribute 'secure' with value 'true' to an element:
-
-xmlstarlet ed --inplace -i "Server/Service/Connector[@address='10.0.0.10']" -t attr -n 'secure' -v 'true' server.xml 
 
 
 

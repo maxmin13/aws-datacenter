@@ -114,7 +114,7 @@ then
    
    if [[ -n "${granted}" ]]
    then
-   	revoke_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}"
+   	revoke_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}"
    	
    	echo 'Access to database revoked.'
    fi
@@ -131,7 +131,7 @@ then
    
    if [[ -n "${rsyslog_granted}" ]]
    then
-   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" "${sgp_id}"
+   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}"
    	
    	echo "Access to Admin Rsyslog revoked."
    fi
@@ -141,7 +141,7 @@ then
    
    if [[ -n "${mmonit_granted}" ]]
    then
-   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" "${sgp_id}"
+   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}"
    	
    	echo "Access to Admin MMonit revoked."
    fi   

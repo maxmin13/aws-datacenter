@@ -180,7 +180,7 @@ if [[ -n "${granted_ssh}" ]]
 then
    echo 'WARN: SSH access to the Webphp box already granted.'
 else
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
    
    echo 'Granted SSH access to the Webphp box.'
 fi
@@ -195,7 +195,7 @@ if [[ -n "${granted_db}" ]]
 then
    echo 'WARN: access to the database already granted.'
 else
-   allow_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}"
+   allow_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}"
    
    echo 'Granted access to the database.'
 fi
@@ -210,7 +210,7 @@ if [[ -n "${granted_rsyslog}" ]]
 then
    echo 'WARN: access to Admin Rsyslog already granted.'
 else
-   allow_access_from_security_group "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" "${sgp_id}"
+   allow_access_from_security_group "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}"
    
    echo 'Granted access to Admin Rsyslog.'
 fi
@@ -221,7 +221,7 @@ if [[ -n "${granted_mmonit}" ]]
 then
    echo 'WARN: access to Admin M/Monit collector already granted.'
 else
-   allow_access_from_security_group "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" "${sgp_id}"
+   allow_access_from_security_group "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}"
    
    echo 'Granted access to Admin M/Monit collector.'
 fi
@@ -557,7 +557,7 @@ if [[ -n "${lbal_granted}" ]]
 then
    echo 'WARN: load balancer access to the Admin box already granted.'
 else
-   allow_access_from_security_group "${sgp_id}" "${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" "${lbal_sgp_id}"
+   allow_access_from_security_group "${sgp_id}" "${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" 'tcp' "${lbal_sgp_id}"
    
    echo 'Granted the load balancer access to the webphp instance (healt-check).'
 fi
@@ -571,7 +571,7 @@ granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Webphp box.' 
 fi

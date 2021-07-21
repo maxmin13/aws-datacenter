@@ -82,7 +82,7 @@ then
    
    if [[ -n "${granted}" ]]
    then
-   	revoke_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}"
+   	revoke_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}"
    	
    	echo 'Access to database revoked.'
    fi

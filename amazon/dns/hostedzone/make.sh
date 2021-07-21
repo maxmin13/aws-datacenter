@@ -22,38 +22,40 @@ echo '***************'
 echo
 
 lbal_dns_nm="${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
-target_lbal_dns_nm="$(get_alias_record_dns_name_value \
+
+lbal_record_dns_nm="$(get_loadbalancer_record_dns_name_value \
    "${LBAL_INST_DNS_SUB_DOMAIN}" \
    "${MAXMIN_TLD}")" 
        
-if [[ -z "${target_lbal_dns_nm}" ]]
+if [[ -z "${lbal_record_dns_nm}" ]]
 then
-   echo '* WARN: load balancer DNS record not found.'
+   echo '* WARN: load balancer record DNS name not found.'
 else
    echo "* Load balancer DNS name: ${lbal_dns_nm}"
-   echo "* Target load balancer name: ${target_lbal_dns_nm}"
+   echo "* Load balancer record DNS name: ${lbal_record_dns_nm}"
 fi
 
-target_lbal_dns_hosted_zone_id="$(get_alias_record_hosted_zone_value \
+lbal_record_hz_id="$(get_loadbalancer_record_hosted_zone_value \
    "${LBAL_INST_DNS_SUB_DOMAIN}" \
    "${MAXMIN_TLD}")" 
 
-if [[ -z "${target_lbal_dns_hosted_zone_id}" ]]
+if [[ -z "${lbal_record_hz_id}" ]]
 then
-   echo '* WARN: load balancer hosted zone DNS record not found.'
+   echo '* WARN: load balancer record hosted zone ID record not found.'
 else
-   echo "* Target load balancer hosted zone ID: ${target_lbal_dns_hosted_zone_id}."
+   echo "* Load balancer record hosted zone ID: ${lbal_record_hz_id}."
 fi
 
 admin_dns_nm="${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
-target_admin_eip="$(get_record_value "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
 
-if [[ -z "${target_admin_eip}" ]]
+admin_record_ip_addr="$(get_record_value "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" 'A')"
+
+if [[ -z "${admin_record_ip_addr}" ]]
 then
-   echo '* WARN: Admin DNS record not found.'
+   echo '* WARN: Admin record IP address not found.'
 else
    echo "* Admin DNS name: ${admin_dns_nm}."
-   echo "* Target Admin IP address: ${target_admin_eip}."
+   echo "* Admin record IP address: ${admin_record_ip_addr}."
 fi
 
 echo
@@ -88,17 +90,18 @@ fi
 ## load balancer www.admin.it record.
 ##
 
-has_lbal_record="$(check_hosted_zone_has_record "${LBAL_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+has_lbal_record="$(check_hosted_zone_has_loadbalancer_record "${LBAL_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
 
 if [[ 'true' == "${has_lbal_record}" ]]
 then
    echo 'WARN: found load balance record, deleting ...'
    
-   request_id="$(delete_alias_record \
+   request_id="$(delete_loadbalancer_record \
        "${LBAL_INST_DNS_SUB_DOMAIN}" \
        "${MAXMIN_TLD}" \
-       "${target_lbal_dns_nm}" \
-       "${target_lbal_dns_hosted_zone_id}")"                                    
+       "${lbal_record_dns_nm}" \
+       "${lbal_record_hz_id}")" 
+                                        
    status="$(get_record_request_status "${request_id}")"
 
    echo "Load balancer record deleted (${status})"
@@ -109,7 +112,7 @@ fi
 target_lbal_dns_nm="$(get_loadbalancer_dns_name "${LBAL_INST_NM}")"
 target_lbal_dns_hosted_zone_id="$(get_loadbalancer_hosted_zone_id "${LBAL_INST_NM}")"
 
-request_id="$(create_loadbalancer_alias_record \
+request_id="$(create_loadbalancer_record \
     "${LBAL_INST_DNS_SUB_DOMAIN}" \
     "${MAXMIN_TLD}" \
     "${target_lbal_dns_nm}" \
@@ -117,23 +120,25 @@ request_id="$(create_loadbalancer_alias_record \
                                        
 status="$(get_record_request_status "${request_id}")"
    
-echo "Load balancer record "${lbal_dns_nm}" created (${status})."
+echo "Load balancer record ${lbal_dns_nm} created (${status})."
 
 ##
 ## Admin website admin.maxmin.it record.
 ##
 
-has_admin_record="$(check_hosted_zone_has_record "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+has_admin_record="$(check_hosted_zone_has_record "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" 'A')"
 
 if [[ 'true' == "${has_admin_record}" ]]
 then
    echo 'WARN: found Admin web site record, deleting ...'
 
    request_id="$(delete_record \
+       'A' \
        "${ADMIN_INST_DNS_SUB_DOMAIN}" \
        "${MAXMIN_TLD}" \
-       "${target_admin_eip}")"                            
-   status="$(get_record_request_status "${request_id}")"  
+       "${admin_record_ip_addr}")"  
+                                 
+   status="$(get_record_request_status "${request_id}")" 
    
    echo "Admin record deleted (${status})"
 fi
@@ -141,10 +146,13 @@ fi
 # Create a record that points to the Admin website
 
 target_admin_eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
+
 request_id="$(create_record \
+    'A' \
     "${ADMIN_INST_DNS_SUB_DOMAIN}" \
     "${MAXMIN_TLD}" \
-    "${target_admin_eip}")"                              
+    "${target_admin_eip}")"        
+                          
 status="$(get_record_request_status "${request_id}")"  
    
 echo "Admin record ${admin_dns_nm} created (${status})."

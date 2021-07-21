@@ -73,6 +73,8 @@ function __wait()
 }
 
 #### TODO create a test script
+
+## test escape https://github.com/joohoi/acme-dns
 ## Start tests: ##
 ##escaped="$(escape 'abc/efg')"
 ##if [[ "${escaped}" != 'abc\/efg' ]]

@@ -39,7 +39,7 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi 
-   
+      
    echo 
 
    # Make a backup of the database.

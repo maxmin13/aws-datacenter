@@ -5,21 +5,19 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-###############################################
-# The script extends Apache web server by 
-# installing the SSL module and creating a 
-# self-signed certificate or requesting it to a
-# Certificate authority. The certificate is 
-# used to configure SSL for the web server and 
-# M/Monit.
-###############################################
+###################################################################################
+# The script extends Apache web server by installing the SSL module.
+# In development environment it creates a self-signed certificate.
+# In production environment it requests a certificate to Let's Encrypt certificate
+# authority.
+# The certificate is used to configure SSL for the Apache web server and M/Monit.
+###################################################################################
 
 APACHE_INSTALL_DIR='/etc/httpd'
 APACHE_DOCROOT_DIR='/var/www/html'
 APACHE_SITES_AVAILABLE_DIR='/etc/httpd/sites-available'
 APACHE_SITES_ENABLED_DIR='/etc/httpd/sites-enabled'
-APACHE_USER='apache'
-CERTBOT_DOCROOT_ID='admin.maxmin.it' 
+APACHE_USER='apache' 
 CERTBOT_VIRTUALHOST_CONFIG_FILE='certbot.virtualhost.maxmin.it.conf'
 PHPMYADMIN_DOCROOT_ID='phpmyadmin.maxmin.it'
 PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE='phpmyadmin.http.virtualhost.maxmin.it.conf'
@@ -28,8 +26,8 @@ LOGANALYZER_DOCROOT_ID='loganalyzer.maxmin.it'
 LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE='loganalyzer.http.virtualhost.maxmin.it.conf'
 LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE='loganalyzer.https.virtualhost.maxmin.it.conf'
 ADMIN_DOCROOT_ID='admin.maxmin.it'
-ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE='admin.http.virtualhost.maxmin.it.conf' 
-ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE='admin.https.virtualhost.maxmin.it.conf' 
+WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='admin.http.virtualhost.maxmin.it.conf'
+WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE='admin.https.virtualhost.maxmin.it.conf'
 MMONIT_INSTALL_DIR='/opt/mmonit'
 WEBSITE_DOCROOT_ID='admin.maxmin.it'
 ssl_dir='ssl/certbot'
@@ -94,7 +92,7 @@ if [[ -n "${granted_ssh}" ]]
 then
    echo 'WARN: SSH access to the Admin box already granted.'
 else
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
    
    echo 'Granted SSH access to the Admin box.'
 fi
@@ -105,7 +103,7 @@ then
 
    if [[ -z "${granted_certbot}" ]]
    then
-      allow_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0'
+      allow_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' '0.0.0.0/0'
    
       echo 'Granted Certbot access to Admin box'
    fi  
@@ -171,32 +169,31 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHO
 echo "${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."     
 
 # Website virtualhost file.
-create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
+create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
     '*' \
     "${ADMIN_APACHE_WEBSITE_HTTPS_PORT}" \
     "${ADMIN_INST_HOSTNAME}" \
     "${APACHE_DOCROOT_DIR}" \
     "${ADMIN_DOCROOT_ID}"        
      
-add_alias_to_virtualhost "${TMP_DIR}"/"${ssl_dir}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
+add_alias_to_virtualhost "${TMP_DIR}"/"${ssl_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
     'admin' \
     "${APACHE_DOCROOT_DIR}" \
     "${ADMIN_DOCROOT_ID}" \
     'index.php' 
                       
-echo "${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."  
+echo "${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."  
 
 scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
-     "${TMP_DIR}"/"${ssl_dir}"/"${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}"
-
-# Names of certificates used in the configuration files (ssl.conf, server.xml).
+     "${TMP_DIR}"/"${ssl_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}"
+  
 key_file='key.pem'
 key_file_no_pwd='key_no.pass.pem'
-crt_file='cert.pem'
-chain_file='chain.pem'
-      
+crt_file='cert.pem' 
+chain_file='chain.pem'    
+     
 if [[ 'development' == "${ENV}" ]]
 then
 
@@ -231,10 +228,15 @@ then
        -e "s/SEDemail_addressSED/${ADMIN_INST_EMAIL}/g" \
           "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh
 
+   echo 'gen_certificate.sh ready.'
+
+   sed -e "s/SEDadmin_docroot_idSED/${ADMIN_DOCROOT_ID}/g" \
+          "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_selfsigned_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/gen_selfsigned_certificate.sh 
+    
    echo 'gen_selfsigned_certificate.sh ready.'
          
    scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
-       "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_selfsigned_certificate.sh \
+       "${TMP_DIR}"/"${ssl_dir}"/gen_selfsigned_certificate.sh \
        "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh \
        "${TMP_DIR}"/"${ssl_dir}"/remove_passphase.sh \
        "${TMP_DIR}"/"${ssl_dir}"/gen_rsa.sh
@@ -242,18 +244,18 @@ else
 
    #
    # In production get a certificate from Let's Encrypt CA.
-   #
-
+   #   
+     
    sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
-       -e "s/SEDapache_certbot_portSED/${ADMIN_APACHE_CERTBOT_HTTP_PORT}/g" \
-       -e "s/SEDapache_usrSED/${APACHE_USER}/g" \
        -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
+       -e "s/SEDapache_certbot_portSED/${ADMIN_APACHE_CERTBOT_HTTP_PORT}/g" \
+       -e "s/SEDcertbot_virtualhost_config_fileSED/${CERTBOT_VIRTUALHOST_CONFIG_FILE}/g" \
+       -e "s/SEDadmin_docroot_idSED/${ADMIN_DOCROOT_ID}/g" \
        -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
        -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
-       -e "s/SEDcertbot_virtualhost_fileSED/${CERTBOT_VIRTUALHOST_CONFIG_FILE}/g" \
-       -e "s/SEDcertbot_docroot_idSED/${CERTBOT_DOCROOT_ID}/g" \
        -e "s/SEDcrt_email_addressSED/${ADMIN_INST_EMAIL}/g" \
        -e "s/SEDcrt_domainSED/${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}/g" \
+       -e "s/SEDcrt_fileSED/${crt_file}/g" \
           "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate.sh
           
    echo 'request_ca_certificate.sh ready.'     
@@ -264,12 +266,12 @@ else
        "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" \
        "${MAXMIN_TLD}" \
        "${APACHE_DOCROOT_DIR}" \
-       "${CERTBOT_DOCROOT_ID}"
+       "${ADMIN_DOCROOT_ID}"
 
    add_server_alias_to_virtualhost "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" \
-       "${CERTBOT_DOCROOT_ID}" \
+       "${ADMIN_DOCROOT_ID}" \
        "${APACHE_DOCROOT_DIR}" \
-       "${CERTBOT_DOCROOT_ID}"
+       "${ADMIN_DOCROOT_ID}"
 
    echo "${CERTBOT_VIRTUALHOST_CONFIG_FILE} ready."  
    
@@ -283,8 +285,8 @@ sed -e "s/SEDenvironmentSED/${ENV}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
+    -e "s/SEDadmin_docroot_idSED/${ADMIN_DOCROOT_ID}/g" \
     -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
-    -e "s/SEDmonit_http_portSED/${ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
     -e "s/SEDphpmyadmin_http_portSED/${ADMIN_APACHE_PHPMYADMIN_HTTP_PORT}/g" \
     -e "s/SEDphpmyadmin_https_portSED/${ADMIN_APACHE_PHPMYADMIN_HTTPS_PORT}/g" \
     -e "s/SEDphpmyadmin_http_virtualhost_fileSED/${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
@@ -296,9 +298,8 @@ sed -e "s/SEDenvironmentSED/${ENV}/g" \
     -e "s/SEDwebsite_http_portSED/${ADMIN_APACHE_WEBSITE_HTTP_PORT}/g" \
     -e "s/SEDwebsite_https_portSED/${ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
     -e "s/SEDwebsite_docroot_idSED/${WEBSITE_DOCROOT_ID}/g" \
-    -e "s/SEDwebsite_http_virtualhost_fileSED/${ADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDwebsite_https_virtualhost_fileSED/${ADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDcertbot_docroot_idSED/${CERTBOT_DOCROOT_ID}/g" \
+    -e "s/SEDwebsite_http_virtualhost_fileSED/${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
+    -e "s/SEDwebsite_https_virtualhost_fileSED/${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDkey_fileSED/${key_file}/g" \
     -e "s/SEDcert_fileSED/${crt_file}/g" \
     -e "s/SEDchain_fileSED/${chain_file}/g" \
@@ -394,7 +395,7 @@ granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Admin box.' 
 fi
@@ -405,7 +406,7 @@ then
    
    if [[ -n "${granted_ssh}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" "0.0.0.0/0"
+      revoke_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' "0.0.0.0/0"
    
       echo 'Revoked Certbot access to the Admin server.'  
       echo

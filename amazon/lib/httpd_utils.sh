@@ -86,7 +86,7 @@ set +o xtrace
 # +port               -- The server IP port to which the virtual host responds. 
 # +domain             -- The request domain to which the virtual host responds
 #                        (ServerName directive).
-# +base_docroot      -- The Apache server base document root, usually
+# +base_docroot       -- The Apache server base document root, usually
 #                        /var/www/http, from which the DocumentRoot directive
 #                        is built.
 # +doc_root_id        -- String appended to the base document root to obtain the

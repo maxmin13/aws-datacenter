@@ -1,5 +1,20 @@
 
 
+add protocol in query
+
+check_access_from_cidr_is_granted
+check_access_from_security_group_is_granted
+
+#########################################
+
+install_admin_ssl_template.sh
+
+############### TODO error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
+############### 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+############### 
+############### 
+
 ###############################
 
 

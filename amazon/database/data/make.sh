@@ -70,7 +70,7 @@ if [[ -n "${granted_ssh}" ]]
 then
    echo 'WARN: SSH access to the Admin box already granted.'
 else
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
    
    echo 'Granted SSH access to the Admin box.'
 fi
@@ -163,7 +163,7 @@ fi
 if [[ -n "${sgp_id}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
    
    echo 'Revoked SSH access to the Admin box.' 
 fi

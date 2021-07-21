@@ -63,7 +63,7 @@ if [[ -n "${granted_http}" ]]
 then
    echo 'WARN: HTTP internet access to the load balancer already granted.'
 else
-   allow_access_from_cidr "${sgp_id}" "${LBAL_INST_HTTP_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${sgp_id}" "${LBAL_INST_HTTP_PORT}" 'tcp' '0.0.0.0/0'
    
    echo 'Granted HTTP internet access to the load balancer.'
 fi

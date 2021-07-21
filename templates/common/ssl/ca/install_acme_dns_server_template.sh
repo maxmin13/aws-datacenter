@@ -9,10 +9,8 @@ set +o xtrace
 # 
 ###################################################################
 
+ADMIN_INST_USER_NM='SEDadmin_instance_user_nmSED'
 GIT_ACME_DNS_URL='SEDacme_dns_urlSED'
-ACME_DNS_SERVER_IP_ADD='SEDacme_dns_server_ip_addSED'
-ACME_DNS_CONFIG_FILE='SEDacme_dns_config_fileSED'
-acme_dns_install_log_file='/var/log/acme_dns_install_log_file.log'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo 'Installing Acme DNS server ...'
@@ -20,32 +18,69 @@ echo 'Installing Acme DNS server ...'
 cd "${script_dir}" || exit
 
 # Required programs.
-yum install -y git gcc go > "${acme_dns_install_log_file}"
-yum remove -y certbot > "${acme_dns_install_log_file}"
-yum install -y certbot python2-certbot-apache > "${acme_dns_install_log_file}"
+amazon-linux-extras install epel -y
+yum install -y git gcc go
 
-echo 'Certbot SSL agent installed.'
+echo 'Required programs installed.'
+
+# Add a user for acme-dns service.
+if id 'acme-dns' > /dev/null 2>&1
+then
+    echo 'acme-dns user alredy created.'
+else
+   adduser --system --home /var/lib/acme-dns acme-dns
+   mkdir /var/lib/acme-dns
+   chown acme-dns: /var/lib/acme-dns
+fi
 
 export CGO_CFLAGS="-g -O2 -Wno-return-local-addr" 
 export GOPATH=/tmp/acme-dns
+
+rm -rf acme-dns
 git clone "${GIT_ACME_DNS_URL}"
+
+echo 'Building acme-dns server ...'
+
 cd acme-dns
 go build
-mkdir /etc/acme-dns
-#### cp config.cfg /etc/acme-dns/
-mv acme-dns /usr/local/bin
 
-# Add a user for the acme-dns service.
-adduser --system --home /var/lib/acme-dns acme-dns
-mkdir /var/lib/acme-dns
-chown acme-dns: /var/lib/acme-dns
+echo 'acme-dns built.'
+
+cp -f acme-dns /usr/local/bin
+
+echo 'acme-dns executable file moved in class-path.'
+
+setcap 'cap_net_bind_service=+ep' /usr/local/bin/acme-dns
+
+echo 'Allowed the acme-dns executable binding on port lower than 1000.'
+
+cd "${script_dir}" || exit
+
+cp -f acme-dns.service /etc/systemd/system
+systemctl daemon-reload
+
+echo 'acme-dns service file moved in the Systemd directory.'
+
+mkdir -p /etc/acme-dns
+cp -f config.cfg /etc/acme-dns    
+        
+echo 'acme-dns configuration file copied.'
 
 # Install acme-dns as a service.
-mv acme-dns.service /etc/systemd/system
 systemctl daemon-reload
 systemctl enable acme-dns.service
+
+echo 'Starting acme-dns service ...'
+
 systemctl start acme-dns.service
 systemctl status acme-dns.service
+
+echo 'acme-dns service started.'
+
+# Change ownership in the script directory otherwise it is not possible to delete them from dev machine.
+chown -R "${ADMIN_INST_USER_NM}":"${ADMIN_INST_USER_NM}" ./
+
+amazon-linux-extras disable epel -y > /dev/null 2>&1
 
 echo 'Acme DNS server installed.'
 

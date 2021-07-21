@@ -23,11 +23,10 @@ set +o xtrace
 # Most Certbot installations come with automatic renewals 
 # preconfigured. This is done by means of a scheduled task which 
 # runs 'certbot renew' periodically.
-# All generated keys and issued certificates can be found in 
-# /etc/letsencrypt/live/$domain, where $domain is the certificate 
-# name. 
+
 #
-# /etc/letsencrypt/live/admin.maxmin.it
+# /etc/letsencrypt/live/admin.maxmin.it/
+#
 # cert.pem
 # chain.pem
 # fullchain.pem
@@ -35,15 +34,16 @@ set +o xtrace
 #
 ###################################################################
 
-APACHE_CERTBOT_HTTP_PORT='SEDapache_certbot_portSED'
 APACHE_INSTALL_DIR='SEDapache_install_dirSED'
 APACHE_DOCROOT_DIR='SEDapache_docroot_dirSED'
 APACHE_SITES_AVAILABLE_DIR='SEDapache_sites_available_dirSED'
 APACHE_SITES_ENABLED_DIR='SEDapache_sites_enabled_dirSED'
-CERTBOT_VIRTUALHOST_CONFIG_FILE='SEDcertbot_virtualhost_fileSED'
-CERTBOT_DOCROOT_ID='SEDcertbot_docroot_idSED'
+APACHE_CERTBOT_HTTP_PORT='SEDapache_certbot_portSED'
+CERTBOT_VIRTUALHOST_CONFIG_FILE='SEDcertbot_virtualhost_config_fileSED'
+ADMIN_DOCROOT_ID='SEDadmin_docroot_idSED'
 CRT_EMAIL_ADDRESS='SEDcrt_email_addressSED'
 CRT_DOMAIN='SEDcrt_domainSED'
+CRT_FILE='SEDcrt_fileSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo 'Requesting SSL certificates to Let''Encrypt.'
@@ -55,12 +55,13 @@ echo "Enabled Apache Listen on Certbot port ${APACHE_CERTBOT_HTTP_PORT}."
 
 cd "${script_dir}" || exit
 
-certbot_docroot="${APACHE_DOCROOT_DIR}"/"${CERTBOT_DOCROOT_ID}"/public_html
+# Create the directory of the http-01 challege.
+certbot_docroot="${APACHE_DOCROOT_DIR}"/"${ADMIN_DOCROOT_ID}"/public_html
 mkdir --parents "${certbot_docroot}"
 find "${certbot_docroot}" -type d -exec chown root:root {} +
 find "${certbot_docroot}" -type d -exec chmod 755 {} +
 
-# Enable Certbot HTTP virtual host.
+# Enable Certbot HTTP virtualhost.
 cp "${CERTBOT_VIRTUALHOST_CONFIG_FILE}" "${APACHE_SITES_AVAILABLE_DIR}"
 
 if [[ ! -f "${APACHE_SITES_ENABLED_DIR}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" ]]
@@ -93,21 +94,24 @@ echo "Requesting a certificate to Let's Encrypt Certification Autority ..."
 ## (“web root”) containing the files served by your webserver.
 
 set +e 
-
-##
-## TODO remove Certbot test mode
+    
+## TODO remove Certbot test mode    
 certbot certonly \
-    --cert-name "${CRT_DOMAIN}" \
-    -d "${CRT_DOMAIN}" \
-    -m "${CRT_EMAIL_ADDRESS}" \
     --webroot \
     -w "${certbot_docroot}" \
-    --agree-tos \
+    -d "${CRT_DOMAIN}" \
+    -m "${CRT_EMAIL_ADDRESS}" \
     --non-interactive \
-    --test-cert
+    --agree-tos \
+    --test-cert    
 
 exit_code=$?
 set -e 
+
+find /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}" -type d -exec chown root:root {} +
+find /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}" -type d -exec chmod 500 {} +
+find /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}" -type f -exec chown root:root {} +
+find /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}" -type f -exec chmod 400 {} +
 
 # Disable Certbot HTTP virtual host.
 rm "${APACHE_SITES_ENABLED_DIR}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}"
