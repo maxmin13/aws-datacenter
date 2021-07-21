@@ -7,16 +7,13 @@ set +o xtrace
 
 ###################################################################
 # Generates a private-key with no password and a self-signed 
-# certificate in following directory:
-#
-# /etc/self-signed/live/admin.maxmin.it/
+# certificate in the current directory:
 #
 # cert.pem
 # key.pem
 #
 ###################################################################
 
-ADMIN_DOCROOT_ID='SEDadmin_docroot_idSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo 'Generating self-signed certificate ...'
@@ -43,17 +40,6 @@ echo "No-password ${key_file} private-key generated."
 cert_file="$(./gen_certificate.sh)"
 
 echo "Self-signed ${cert_file} certificate created."
-
-certificate_dir=/etc/self-signed/live/"${ADMIN_DOCROOT_ID}"
-mkdir -p "${certificate_dir}"
-cp "${key_file}" "${cert_file}" "${certificate_dir}"
-
-find "${certificate_dir}" -type d -exec chown root:root {} +
-find "${certificate_dir}" -type d -exec chmod 500 {} +
-find "${certificate_dir}" -type f -exec chown root:root {} +
-find "${certificate_dir}" -type f -exec chmod 400 {} +
-
-echo "Certificates copied in the "${certificate_dir}" directory."
 
 set +e 
 yum remove -y expect > /dev/null 2>&1

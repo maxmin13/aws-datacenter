@@ -40,7 +40,7 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi
-
+   
    echo
        
    # Create the datacenter.
@@ -59,7 +59,7 @@ echo
    . "${PROJECT_DIR}"/amazon/admin/instance/make.sh               
    . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1   
    
-   ####. "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh                     
+   . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh                     
 
    # Deploy database objects.
    . "${PROJECT_DIR}"/amazon/database/data/make.sh       

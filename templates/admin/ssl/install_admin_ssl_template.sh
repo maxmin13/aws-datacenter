@@ -18,7 +18,7 @@ set +o xtrace
 #
 # /etc/letsencrypt/live/admin.maxmin.it/
 #
-# The files creted are:
+# The files cretaed are:
 #
 # cert.pem
 # chain.pem
@@ -58,9 +58,6 @@ WEBSITE_HTTPS_PORT='SEDwebsite_https_portSED'
 WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='SEDwebsite_http_virtualhost_fileSED'
 WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE='SEDwebsite_https_virtualhost_fileSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
-KEY_FILE='SEDkey_fileSED'
-CERT_FILE='SEDcert_fileSED'
-CHAIN_FILE='SEDchain_fileSED'
 admin_log_file='/var/log/admin_ssl_install.log'
 
 
@@ -93,31 +90,51 @@ echo 'Generating SSL certificate ...'
 
 cd "${script_dir}" || exit 1
 
+cert_dir=''
+cert_file=''
+key_file=''   
+chain_file=''
+
 if [[ 'development' == "${ENV}" ]]
 then
 
    #
-   # Generates the certificates in the directory:
-   # /etc/self-signed/live/admin.maxmin.it/ 
-   #
+   # In development the certificate is self-signed.
+   # The certificate is created in the directory:
+   # /etc/self-signed/live/admin.maxmin.it/
+   # key.pem
+   # cert.pem
    
-   chmod +x gen_selfsigned_certificate.sh    
+   chmod +x request_selfsigned_certificate.sh
    set +e 
-   ./gen_selfsigned_certificate.sh >> "${admin_log_file}" 2>&1
+   ./request_selfsigned_certificate.sh >> "${admin_log_file}" 2>&1
    exit_code=$?
-   set -e 
+   set -e  
+   
+   cert_dir=/etc/self-signed/live/"${ADMIN_DOCROOT_ID}"
+   cert_file=cert.pem
+   key_file=key.pem
 else
 
    #
-   # Generates the certificates in the directory:
+   # In production the certificate is signed by Let's Encrypt CA.
+   # The certificate is created in the directory:
    # /etc/letsencrypt/live/admin.maxmin.it/
-   #
+   # cert.pem
+   # chain.pem
+   # fullchain.pem
+   # privkey.pem
    
    chmod +x request_ca_certificate.sh
    set +e 
    ./request_ca_certificate.sh >> "${admin_log_file}" 2>&1
    exit_code=$?
    set -e 
+   
+   cert_dir=/etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}"
+   cert_file=cert.pem
+   key_file=privkey.pem   
+   chain_file=fullchain.pem
 fi
 
 if [[ ! 0 -eq "${exit_code}" ]]
@@ -134,50 +151,22 @@ echo 'SSL Certificate successfully generated.'
 
 echo 'Configuring Apache web server SSL ...'
 
-if [[ 'development' == "${ENV}" ]]
+rm -f "${APACHE_INSTALL_DIR}"/ssl/key.pem
+ln -s "${cert_dir}"/"${key_file}" "${APACHE_INSTALL_DIR}"/ssl/key.pem
+sed -i "s/^#SSLCertificateKeyFile/SSLCertificateKeyFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+   
+rm -f "${APACHE_INSTALL_DIR}"/ssl/cert.pem
+ln -s "${cert_dir}"/"${cert_file}" "${APACHE_INSTALL_DIR}"/ssl/cert.pem
+sed -i "s/^#SSLCertificateFile/SSLCertificateFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+
+if [[ -n "${chain_file}" ]]
 then
-   # Development certificate directory:
-   # /etc/self-signed/live/admin.maxmin.it/ 
-
-   # Link the certificate paths with the self-signed certificates.
-   rm -f "${APACHE_INSTALL_DIR}"/ssl/"${KEY_FILE}" 
-   ln -s /etc/self-signed/live/"${ADMIN_DOCROOT_ID}"/key.pem "${APACHE_INSTALL_DIR}"/ssl/"${KEY_FILE}"
-   
-   rm -f "${APACHE_INSTALL_DIR}"/ssl/"${CERT_FILE}"
-   ln -s /etc/self-signed/live/"${ADMIN_DOCROOT_ID}"/cert.pem "${APACHE_INSTALL_DIR}"/ssl/"${CERT_FILE}"
-   
-   echo 'ssl.conf paths linked with the self-generate certificates.' >> "${admin_log_file}" 2>&1
-
-   # Enable the certificate paths.
-   sed -i "s/^#SSLCertificateKeyFile/SSLCertificateKeyFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
-   sed -i "s/^#SSLCertificateFile/SSLCertificateFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf 
-
-   echo 'Certificate and key paths enabled in ssl.conf.' >> "${admin_log_file}" 2>&1
-
-else
-   # Production certificate directory:
-   # /etc/letsencrypt/live/admin.maxmin.it/ 
-
-   # Link the certificate paths with certificates obtained from Let's Encrypt.
-   rm -f "${APACHE_INSTALL_DIR}"/ssl/"${KEY_FILE}"
-   ln -s /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}"/privkey.pem "${APACHE_INSTALL_DIR}"/ssl/"${KEY_FILE}"
-   
-   rm -f "${APACHE_INSTALL_DIR}"/ssl/"${CERT_FILE}"
-   ln -s /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}"/cert.pem "${APACHE_INSTALL_DIR}"/ssl/"${CERT_FILE}"
-   
-   rm -f "${APACHE_INSTALL_DIR}"/ssl/"${CHAIN_FILE}"
-   ln -s /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}"/chain.pem "${APACHE_INSTALL_DIR}"/ssl/"${CHAIN_FILE}"
-
-   echo 'ssl.conf paths linked with the certificates obtained from Let''s Encrypt.' >> "${admin_log_file}" 2>&1
-
-   # Enable the certificate paths.
-   sed -i "s/^#SSLCertificateKeyFile/SSLCertificateKeyFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
-   sed -i "s/^#SSLCertificateFile/SSLCertificateFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+   rm -f "${APACHE_INSTALL_DIR}"/ssl/chain.pem
+   ln -s "${cert_dir}"/"${chain_file}" "${APACHE_INSTALL_DIR}"/ssl/chain.pem
    sed -i "s/^#SSLCertificateChainFile/SSLCertificateChainFile/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
-
-   echo 'Certificate, key and chain paths enabled in ssl.conf.' >> "${admin_log_file}" 2>&1
 fi
-
+   
+echo 'Created key and certificate symlinks for ssl.conf configuration file.' >> "${admin_log_file}" 2>&1
 echo 'Apache web server SSL successfully configured.'
   
 ##
@@ -273,26 +262,18 @@ find "${MMONIT_INSTALL_DIR}"/conf -type f -exec chmod 400 {} +
 
 echo 'M/Monit configuration file copied.' >> "${admin_log_file}" 2>&1 
 
-rm -f "${MMONIT_INSTALL_DIR}"/conf/"${CERT_FILE}"
+rm -f "${MMONIT_INSTALL_DIR}"/conf/cert.pem
 
-if [[ 'development' == "${ENV}" ]]
+cat "${cert_dir}"/"${key_file}" > "${MMONIT_INSTALL_DIR}"/conf/cert.pem
+
+if [[ -n "${chain_file}" ]]
 then
-   # Development certificate directory:
-   # /etc/self-signed/live/admin.maxmin.it/
-   
-   cat /etc/self-signed/live/"${ADMIN_DOCROOT_ID}"/key.pem > "${MMONIT_INSTALL_DIR}"/conf/"${CERT_FILE}"
-   cat /etc/self-signed/live/"${ADMIN_DOCROOT_ID}"/cert.pem >> "${MMONIT_INSTALL_DIR}"/conf/"${CERT_FILE}"
-   
-   echo 'M/Monit self-signed certificate installed.' >> "${admin_log_file}" 2>&1
+   cat "${cert_dir}"/"${chain_file}" >> "${MMONIT_INSTALL_DIR}"/conf/cert.pem
 else
-   # Production certificate directory:
-   # /etc/letsencrypt/live/admin.maxmin.it/
-   
-   cat /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}"/privkey.pem > "${MMONIT_INSTALL_DIR}"/conf/"${CERT_FILE}"
-   cat /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}"/fullchain.pem >> "${MMONIT_INSTALL_DIR}"/conf/"${CERT_FILE}"
-
-   echo 'M/Monit ca certificate installed.' >> "${admin_log_file}" 2>&1  
+   cat "${cert_dir}"/"${cert_file}" >> "${MMONIT_INSTALL_DIR}"/conf/cert.pem
 fi
+
+echo 'M/Monit certificate installed.' >> "${admin_log_file}" 2>&1  
 
 find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chown root:root {} +
 find "${MMONIT_INSTALL_DIR}"/conf -type d -exec chmod 500 {} +

@@ -86,13 +86,13 @@ function upload_server_certificate()
       aws iam upload-server-certificate \
           --server-certificate-name "${crt_nm}" \
           --certificate-body file://"${cert_dir}/${crt_file}" \
-          --private-key file://"${cert_dir}/${key_file}" >> /dev/null
+          --private-key file://"${cert_dir}/${key_file}" > /dev/null
    else
       aws iam upload-server-certificate \
           --server-certificate-name "${crt_nm}" \
           --certificate-body file://"${cert_dir}/${crt_file}" \
           --private-key file://"${cert_dir}/${key_file}" \
-          --certificate-chain file://"${cert_dir}/${chain_file}" >> /dev/null
+          --certificate-chain file://"${cert_dir}/${chain_file}" > /dev/null
    fi
   
    return 0

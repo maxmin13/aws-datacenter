@@ -43,7 +43,6 @@ CERTBOT_VIRTUALHOST_CONFIG_FILE='SEDcertbot_virtualhost_config_fileSED'
 ADMIN_DOCROOT_ID='SEDadmin_docroot_idSED'
 CRT_EMAIL_ADDRESS='SEDcrt_email_addressSED'
 CRT_DOMAIN='SEDcrt_domainSED'
-CRT_FILE='SEDcrt_fileSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo 'Requesting SSL certificates to Let''Encrypt.'

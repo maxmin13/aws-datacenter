@@ -54,7 +54,7 @@ DB_LOG_SLOW_QUERIES_PARAM_GRP_DESC='Log slow queries database parameter group'
 ## Shared image ##
 ## ************ ##
 
-SHARED_INST_NM='shared-box'
+SHARED_INST_NM='shared-box3'
 SHARED_INST_HOSTNAME='shared.maxmin.it'
 SHARED_INST_USER_NM='shared-user'
 SHARED_INST_PRIVATE_IP='10.0.0.8'
@@ -79,7 +79,7 @@ LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 ## Admin box ##
 ## ********* ##
 
-ADMIN_INST_NM='admin-box'
+ADMIN_INST_NM='admin-box3'
 ADMIN_INST_PRIVATE_IP='10.0.0.10'
 ADMIN_INST_HOSTNAME='admin.maxmin.it'
 ADMIN_INST_USER_NM='admin-user'

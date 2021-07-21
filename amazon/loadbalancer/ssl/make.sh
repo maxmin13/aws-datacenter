@@ -7,11 +7,15 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-##
-## Add an HTTPS listener to the load balancer on port 443 that forwards the requests to the 
-## clients on port 8070 unencrypted.
-## Remove the HTTP listener.
-##
+########################################################################
+## The script configure SSL in the load balancer.
+## It adds an HTTPS listener to the load balancer on port 443 that   
+## forwards the requests to the webphp websites on port 8070 unencrypted  
+## and remove the HTTP listener. 
+## The script uploads an SSL certificate to IAM. In development the 
+## certificate is self-signed, in production the certificate is signed 
+## by Let's Encrypt certificate authority.
+########################################################################
 
 lbal_dir='loadbalancer'
 
@@ -78,7 +82,7 @@ echo
 
 # Removing old files
 rm -rf "${TMP_DIR:?}"/"${lbal_dir}"
-mkdir "${TMP_DIR}"/"${lbal_dir}"
+mkdir -p "${TMP_DIR}"/"${lbal_dir}"
 
 ##
 ## Security group.
@@ -96,6 +100,10 @@ else
    echo 'WARN: HTTP internet access to the load balancer already revoked.'
 fi
 
+##
+## HTTP listener.
+##
+
 delete_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTP_PORT}"
 
 echo 'HTTP listener deleted.'
@@ -112,17 +120,12 @@ echo 'HTTPS listener deleted.'
 
 if [[ 'production' == "${ENV}" ]]
 then
-   crt_nm='tod'
-   crt_file='tod'
-   key_file='todo'
-   chain_file='todo'
+   crt_nm='lbal-prod-certificate'
    GIT_ACME_DNS_URL='https://github.com/joohoi/acme-dns' 
    ACME_DNS_DOMAIN_NM='acme-dns'."${MAXMIN_TLD}"
    LETS_ENCRYPT_INSTALL_DIR='/etc/letsencrypt'
 else
-   crt_nm='maxmin-dev-elb-cert'
-   crt_file='maxmin-dev-elb-cert.pem'
-   key_file='maxmin-dev-elb-key.pem'
+   crt_nm='lbal-dev-certificate'
    CRT_COUNTRY_NM='IE'
    CRT_PROVINCE_NM='Dublin'
    CRT_CITY_NM='Dublin'
@@ -168,7 +171,7 @@ test -z "${cert_arn}" && echo 'Certificate deleted.' ||
       cert_arn="$(get_server_certificate_arn "${crt_nm}")"
       test -z "${cert_arn}" &&  echo 'Certificate deleted.' || 
       {
-         # Throw an error if the cert is stil visible.
+         # Raise an error if the cert is stil visible.
          echo 'ERROR: certificate not deleted from IAM.'
          exit 1     
       }        
@@ -181,58 +184,47 @@ if [[ 'development' == "${ENV}" ]]
 then
 
    #
-   # Create and upload a self-signed Server Certificate to IAM. 
+   # Create and upload a self-signed Server Certificate to IAM:
+   #
+   # key.pem
+   # cert.pem
    #
  
    echo 'Creating self-signed SSL Certificate ...'
 
    # Generate RSA encrypted private key, protected with a passphrase.
-   sed -e "s/SEDkey_fileSED/${key_file}/g" \
-       -e "s/SEDkey_pwdSED/secret/g" \
-          "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_rsa_template.exp > gen_rsa.sh
+   cp "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_rsa.sh gen_rsa.sh
 
    echo 'gen_rsa.sh ready.'
 
    # Remove the password protection from the key file.
-   sed -e "s/SEDkey_fileSED/${key_file}/g" \
-       -e "s/SEDnew_key_fileSED/server.key.org/g" \
-       -e "s/SEDkey_pwdSED/secret/g" \
-          "${TEMPLATE_DIR}"/common/ssl/selfsigned/remove_passphase_template.exp > remove_passphase.sh   
+   cp "${TEMPLATE_DIR}"/common/ssl/selfsigned/remove_passphase.sh remove_passphase.sh   
       
    echo 'remove_passphase.sh ready.'
 
    # Create a self-signed Certificate.
-   sed -e "s/SEDkey_fileSED/${key_file}/g" \
-       -e "s/SEDcert_fileSED/${crt_file}/g" \
-       -e "s/SEDcountrySED/${CRT_COUNTRY_NM}/g" \
+   sed -e "s/SEDcountrySED/${CRT_COUNTRY_NM}/g" \
        -e "s/SEDstate_or_provinceSED/${CRT_PROVINCE_NM}/g" \
        -e "s/SEDcitySED/${CRT_CITY_NM}/g" \
        -e "s/SEDorganizationSED/${CRT_ORGANIZATION_NM}/g" \
        -e "s/SEDunit_nameSED/${CRT_UNIT_NM}/g" \
        -e "s/SEDcommon_nameSED/${CRT_COMMON_NM}/g" \
        -e "s/SEDemail_addressSED/${LBAL_EMAIL_ADD}/g" \
-          "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.exp > gen_certificate.sh
+          "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.sh > gen_certificate.sh
              
    echo 'gen_certificate.sh ready.'
-      
-   cp "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_selfsigned_certificate.sh gen_selfsigned_certificate.sh
+
+   cp "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_selfsigned_certificate.sh gen_selfsigned_certificate.sh    
       
    echo 'gen_selfsigned_certificate.sh ready.'
-     
-   echo 'Generating self-signed SSL certificate ...'  
-      
+
    chmod +x gen_selfsigned_certificate.sh
    ./gen_selfsigned_certificate.sh 
        
    echo 'Self-signed SSL certificate created.'
-
-   # Upload to IAM.
    echo 'Uploading SSL certificate to IAM ...'
-
-   upload_server_certificate "${crt_nm}" \
-       "${crt_file}" \
-       "${key_file}" \
-       "${TMP_DIR}"/"${lbal_dir}"  
+   
+   upload_server_certificate "${crt_nm}" cert.pem key.pem "${TMP_DIR}"/"${lbal_dir}"  
 else
 
    #
@@ -274,7 +266,6 @@ else
    
       echo 'Granted acme-dns access to the Admin box''s 53 udp port.'
    fi   
-
 
    # acme-dns api needs HTTPS port
    granted_acme_dns_https_port="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_HTTPS_PORT}" '0.0.0.0/0')"
@@ -441,11 +432,6 @@ else
    fi       
 fi
 
-exit
-exit
-exit
-exit
-
 ## 
 ## SSH Access.
 ##
@@ -501,7 +487,7 @@ test -n "${cert_arn}" && echo 'Certificate uploaded.' ||
 
 cert_arn="$(get_server_certificate_arn "${crt_nm}")"
 
-# Create listener is idempotent, we can skip checking if the listener exists.
+# Create listener action is idempotent, we can skip checking if the listener exists.
 # Even if the IAM command list-server-certificates has returned the certificate ARN, the certificate 
 # may still not be available and add listener command may fail if called too early. 
 # shellcheck disable=SC2015
@@ -522,7 +508,7 @@ granted_https="$(check_access_from_cidr_is_granted  "${lbal_sgp_id}" "${LBAL_INS
 
 if [[ -z "${granted_https}" ]]
 then
-   allow_access_from_cidr "${lbal_sgp_id}" "${LBAL_INST_HTTPS_PORT}" '0.0.0.0/0'
+   allow_access_from_cidr "${lbal_sgp_id}" "${LBAL_INST_HTTPS_PORT}" 'tcp' '0.0.0.0/0'
    
    echo 'Granted HTTPS internet access to the load balancer.'
 else

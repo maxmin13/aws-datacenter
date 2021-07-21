@@ -188,12 +188,7 @@ scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_
      "${TMP_DIR}"/"${ssl_dir}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}"
-  
-key_file='key.pem'
-key_file_no_pwd='key_no.pass.pem'
-crt_file='cert.pem' 
-chain_file='chain.pem'    
-     
+   
 if [[ 'development' == "${ENV}" ]]
 then
 
@@ -201,45 +196,27 @@ then
    # In development use a self-signed certificate.
    #
    
-   # Apache Web Server SSL key generation script.
-   sed -e "s/SEDkey_fileSED/${key_file}/g" \
-       -e "s/SEDkey_pwdSED/secret@123/g" \
-          "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_rsa_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen_rsa.sh
-
-   echo 'gen_rsa.sh ready.'
-
-   # Apache Web Server remove the password protection from the key script.
-   sed -e "s/SEDkey_fileSED/${key_file}/g" \
-       -e "s/SEDnew_key_fileSED/${key_file_no_pwd}/g" \
-       -e "s/SEDkey_pwdSED/secret@123/g" \
-          "${TEMPLATE_DIR}"/common/ssl/selfsigned/remove_passphase_template.exp > "${TMP_DIR}"/"${ssl_dir}"/remove_passphase.sh   
-
-   echo 'remove_passphase.sh ready.'
-
+   sed -e "s/SEDadmin_docroot_dirSED/${ADMIN_DOCROOT_ID}/g" \
+          "${TEMPLATE_DIR}"/common/ssl/selfsigned/request_selfsigned_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/request_selfsigned_certificate.sh   
+   
    # Apache Web Server create selfsigned Certificate script.
-   sed -e "s/SEDkey_fileSED/${key_file}/g" \
-       -e "s/SEDcert_fileSED/${crt_file}/g" \
-       -e "s/SEDcountrySED/${CRT_DEV_COUNTRY}/g" \
+   sed -e "s/SEDcountrySED/${CRT_DEV_COUNTRY}/g" \
        -e "s/SEDstate_or_provinceSED/${CRT_DEV_CITY}/g" \
        -e "s/SEDcitySED/${CRT_DEV_CITY}/g" \
        -e "s/SEDorganizationSED/${CRT_DEV_ORGANIZATION}/g" \
        -e "s/SEDunit_nameSED/${CRT_DEV_UNIT}/g" \
        -e "s/SEDcommon_nameSED/${ADMIN_INST_HOSTNAME}/g" \
        -e "s/SEDemail_addressSED/${ADMIN_INST_EMAIL}/g" \
-          "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.exp > "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh
+          "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh
 
-   echo 'gen_certificate.sh ready.'
-
-   sed -e "s/SEDadmin_docroot_idSED/${ADMIN_DOCROOT_ID}/g" \
-          "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_selfsigned_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/gen_selfsigned_certificate.sh 
-    
    echo 'gen_selfsigned_certificate.sh ready.'
          
    scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
-       "${TMP_DIR}"/"${ssl_dir}"/gen_selfsigned_certificate.sh \
+       "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_selfsigned_certificate.sh \
+       "${TMP_DIR}"/"${ssl_dir}"/request_selfsigned_certificate.sh \
        "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh \
-       "${TMP_DIR}"/"${ssl_dir}"/remove_passphase.sh \
-       "${TMP_DIR}"/"${ssl_dir}"/gen_rsa.sh
+       "${TEMPLATE_DIR}"/common/ssl/selfsigned/remove_passphase.sh \
+       "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_rsa.sh
 else
 
    #
@@ -255,7 +232,6 @@ else
        -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
        -e "s/SEDcrt_email_addressSED/${ADMIN_INST_EMAIL}/g" \
        -e "s/SEDcrt_domainSED/${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}/g" \
-       -e "s/SEDcrt_fileSED/${crt_file}/g" \
           "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate.sh
           
    echo 'request_ca_certificate.sh ready.'     
@@ -300,9 +276,6 @@ sed -e "s/SEDenvironmentSED/${ENV}/g" \
     -e "s/SEDwebsite_docroot_idSED/${WEBSITE_DOCROOT_ID}/g" \
     -e "s/SEDwebsite_http_virtualhost_fileSED/${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
     -e "s/SEDwebsite_https_virtualhost_fileSED/${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}/g" \
-    -e "s/SEDkey_fileSED/${key_file}/g" \
-    -e "s/SEDcert_fileSED/${crt_file}/g" \
-    -e "s/SEDchain_fileSED/${chain_file}/g" \
        "${TEMPLATE_DIR}"/admin/ssl/install_admin_ssl_template.sh > "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh
 
 echo 'install_admin_ssl.sh ready.'
@@ -317,9 +290,9 @@ sed -e "s/SEDwebsite_portSED/${ADMIN_APACHE_WEBSITE_HTTPS_PORT}/g" \
        
 # M/Monit configuration file
   
-# Insert the certificate='conf/server.dev.crt' attribute.       
+# Insert the certificate='conf/cert.pem' attribute.       
 xmlstarlet ed -i "Server/Service/Engine/Host[@name='SEDserver_admin_public_ipSED']" \
-    -t attr -n 'certificate' -v "conf/${crt_file}" \
+    -t attr -n 'certificate' -v "conf/cert.pem" \
     "${TEMPLATE_DIR}"/admin/mmonit/server_template.xml > "${TMP_DIR}"/"${ssl_dir}"/server.xml  
 
 # Insert the secure='true' attribute.

@@ -1,0 +1,12 @@
+#cloud-config
+users:
+  - name: shared-user
+    gecos: Aws user
+    passwd: $6$rounds=4096$TEItKK9AK9YXh5IM$eyRqEl0KTx2jgoBjB5gITuTRkxaO8vwc5IUqgfk3epIYw2L/Ex/cOMlqDlfmKZeVOmM7cHTHVbjLZXsjW1mhr.
+    lock_passwd: false
+    sudo: ALL=(ALL) PASSWD:ALL
+    ssh-authorized-keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDGoc6WsQVrwBhFeokbRecOq39cESXYhXha3dWJH8RikInjHt7TUQ54esmnqlgztnWLxai+rG1qxQ2zw4R1QAB+/PyzqGFAqu411y7YgkyKOcteoY7DdPZh7wNLKbjeSwCVuvVAMbjy1YV/rI9U2EVZT1gRdSxa+N862JVWTC7wNTGzfKX1XfYr0VCLZLYXj7EgewJYAIc8jM/ja4aGwb+5ygd20SKdJPq7PB4IVGgCxcVU8aJzUXR6OXSYjHESDSneR82CDpOBk7Ftrc/E1UgA7Ha/KKjLShZRmQuOa98kW/2ye2oOlU0aa/5Nsf0JOH0y/+v5MMV8vLIsWKCC3lqR6R/Zxg957gq6gQgrfvTIL0GPjMqOVIh7+9kX/fdHscYYStt/fDCU1D5gLfilrp/rOKBa1oVpKs5c3/uMj7mwtAXhOSbr3Sj1WzUImTbyk+z5iFE+75NMxhm1ZMSWs/ojhzUf7gMg1bu91xDZQ+sJQaxpciHlnPeOXoZYS6RoHPoja5Ptsdee8FpOWwyl6CpYB91YbVXNC3C6YMXOUspy3CYcTFdDUagvSAxOAdpbqgAYYgbkLNw3XColLP0jZGC6o04uCbSm3l6R4pbpDtacFnmckRf9m+WC+sRSN9mb4+Sx1ab3rICr+oGPW2M6teOmGKYLioRlG2hUIDvET3Blxw== minardi.massimiliano@libero.it
+hostname: shared.maxmin.it
+
+
