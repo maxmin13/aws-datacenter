@@ -41,6 +41,11 @@ echo
       echo '****************' 
    fi
    
+     . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh 
+     exit
+     exit
+   
+   
    echo
        
    # Create the datacenter.

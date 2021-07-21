@@ -236,12 +236,12 @@ function get_hosted_zone_name_servers()
 # Globals:
 #  None
 # Arguments:
+# +record_type    -- the record type, eg: A, NS, or aws-alias.
 # +sub_domain_nm  -- the record sub-domain name, eg: www.
 # +hosted_zone_nm -- the hosted zone name, this is the name you have 
 #                    registered with your DNS registrar (eg: maxmin.it).
 #                    It is a fully qualified domain name (RFC 1034), must end 
 #                    with a dot, eg: maxmin.it.
-# +record_type    -- the record type, eg: A, NS, or aws-alias.
 # Returns:      
 #  true/false value.  
 #===============================================================================
@@ -253,13 +253,13 @@ function check_hosted_zone_has_record()
       return 1
    fi
    
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
-   local record_type="${3}"
+   local record_type="${1}"
+   local sub_domain_nm="${2}"
+   local hosted_zone_nm="${3}"
    local has_record='false'
    local record=''
       
-   record="$(get_record_value "${sub_domain_nm}" "${hosted_zone_nm}" "${record_type}")"   
+   record="$(get_record_value "${record_type}" "${sub_domain_nm}" "${hosted_zone_nm}")"   
    
    if [[ -n "${record}" ]]
    then
@@ -280,13 +280,12 @@ function check_hosted_zone_has_record()
 # Globals:
 #  None
 # Arguments:
+# +record_type    -- the record type, eg: A, NS, or aws-alias.
 # +sub_domain_nm  -- the record sub-domain name, eg: www.
 # +hosted_zone_nm -- the hosted zone name, this is the name you have 
 #                    registered with your DNS registrar (eg: maxmin.it).
 #                    It is a fully qualified domain name (RFC 1034), must end 
 #                    with a dot, eg: maxmin.it.
-# +record_type    -- the record type, eg: A, NS, or aws-alias.
-
 # Returns:      
 #  the record value.  
 #===============================================================================
@@ -298,9 +297,9 @@ function get_record_value()
       return 1
    fi
    
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
-   local record_type="${3}"
+   local record_type="${1}"
+   local sub_domain_nm="${2}"
+   local hosted_zone_nm="${3}"
    local domain=''
    local record=''
    local hosted_zone_id=''
@@ -550,9 +549,10 @@ function __create_delete_record()
    fi  
   
    has_record="$(check_hosted_zone_has_record \
+       "${record_type}" \
        "${sub_domain_nm}" \
-       "${hosted_zone_nm}" \
-       "${record_type}")"
+       "${hosted_zone_nm}" 
+       )"
     
    if [[ 'CREATE' == "${action}" && 'false' == "${has_record}" ||
          'DELETE' == "${action}" && 'true' == "${has_record}" ]]
@@ -721,7 +721,7 @@ function check_hosted_zone_has_loadbalancer_record()
    local has_record='false'
    local record=''
       
-   record="$(get_record_value "${sub_domain_nm}" "${hosted_zone_nm}" 'aws-alias')"   
+   record="$(get_record_value 'aws-alias' "${sub_domain_nm}" "${hosted_zone_nm}")"   
    
    if [[ -n "${record}" ]]
    then
@@ -906,7 +906,7 @@ function get_loadbalancer_record_dns_name_value()
    local hosted_zone_nm="${2}"
    local record_value=''
    
-   record_value="$(get_record_value "${sub_domain_nm}" "${hosted_zone_nm}" 'aws-alias')"
+   record_value="$(get_record_value 'aws-alias' "${sub_domain_nm}" "${hosted_zone_nm}")"
    
    echo "${record_value}"
    
@@ -949,7 +949,8 @@ function create_record()
    fi     
 
    request_id="$(__create_delete_record \
-       'CREATE' "${record_type}" \
+       'CREATE' \
+       "${record_type}" \
        "${sub_domain_nm}" \
        "${hosted_zone_nm}" \
        "${record_value}")"
@@ -995,7 +996,8 @@ function delete_record()
    fi     
 
    request_id="$(__create_delete_record \
-       'DELETE' "${record_type}" \
+       'DELETE' \
+       "${record_type}" \
        "${sub_domain_nm}" \
        "${hosted_zone_nm}" \
        "${record_value}")"

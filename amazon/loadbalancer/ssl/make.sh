@@ -134,7 +134,7 @@ else
    CRT_COMMON_NM='www.maxmin.it'  
 fi
 
-# Get the certificate ARN from IAM
+# Check if a certificate is alread uploaded to IAM
 cert_arn="$(get_server_certificate_arn "${crt_nm}")"
 
 if [[ -n "${cert_arn}" ]]
@@ -281,78 +281,54 @@ else
    
    #
    # Publish in Route 53 the DNS records that establish your acme-dns instance as the authoritative 
-   # nameserver for acme-dns.maxmin.it: 
+   # nameserver for acme-dns.maxmin.it, eg: 
    #
    # acme-dns.maxmin.it	A  34.244.4.71
    # acme-dns.maxmin.it	NS acme-dns.maxmin.it
    #
    
-   route53_has_acme_dns_A_record="$(check_hosted_zone_has_record 'acme-dns' "${MAXMIN_TLD}" 'A')"
+   route53_has_acme_dns_A_record="$(check_hosted_zone_has_record 'A' 'acme-dns' "${MAXMIN_TLD}")"
    
    if [[ 'true' == "${route53_has_acme_dns_A_record}" ]]
    then
       # If the record is there, delete id because the IP address may be old.
       echo 'WARN: found acme-dns A record, deleting ...'
       
-      target_eip="$(get_record_value 'acme-dns' "${MAXMIN_TLD}" 'A')"
-   
-      request_id="$(delete_record \
-          'acme-dns' \
-          "${MAXMIN_TLD}" \
-          "${target_eip}")"
-                                      
+      target_eip="$(get_record_value 'A' 'acme-dns' "${MAXMIN_TLD}")" 
+      request_id="$(delete_record 'A' 'acme-dns' "${MAXMIN_TLD}" "${admin_eip}")"                                      
       status="$(get_record_request_status "${request_id}")"  
    
       echo "acme-dns A record deleted (${status})"
    fi
    
-   ### TODO fix this passing A record type
-   request_id="$(create_record \
-       'acme-dns' \
-       "${MAXMIN_TLD}" \
-       "${admin_eip}")" 
-                                    
+   request_id="$(create_record 'A' 'acme-dns' "${MAXMIN_TLD}" "${admin_eip}")"                         
    status="$(get_record_request_status "${request_id}")"  
    
    echo "acme-dns A record created (${status})."     
    
-   route53_has_acme_dns_NS_record="$(check_hosted_zone_has_record 'acme-dns' "${MAXMIN_TLD}" 'NS')"
+   route53_has_acme_dns_NS_record="$(check_hosted_zone_has_record 'NS' 'acme-dns' "${MAXMIN_TLD}")"
    
    if [[ 'true' == "${route53_has_acme_dns_NS_record}" ]]
    then
       echo 'WARN: found acme-dns NS record, deleting ...'
       
-      target_eip="$(get_record_value 'acme-dns' "${MAXMIN_TLD}" 'NS')"
-   
-      request_id="$(delete_record \
-          'acme-dns' \
-          "${MAXMIN_TLD}" \
-          "${target_eip}")"
-                                      
+      target_eip="$(get_record_value 'NS' 'acme-dns' "${MAXMIN_TLD}")"
+      request_id="$(delete_record 'NS' 'acme-dns' "${MAXMIN_TLD}" "${admin_eip}")" 
       status="$(get_record_request_status "${request_id}")"  
    
       echo "acme-dns A record deleted (${status})"
    fi
-   
-   ### TODO fix this passing NS record type
-   request_id="$(create_record \
-       'acme-dns' \
-       "${MAXMIN_TLD}" \
-       "${admin_eip}")" 
-                                    
+
+   request_id="$(create_record 'NS' 'acme-dns' "${MAXMIN_TLD}" "${admin_eip}")" 
    status="$(get_record_request_status "${request_id}")"  
    
    echo "acme-dns NS record created (${status})."  
-   
- 
-   
-   
+
    # Upload the scripts to the Admin box.
 
    echo 'Uploading the scripts to the Admin box ...'
 
    remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
-
    key_pair_file="$(get_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
    wait_ssh_started "${key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 

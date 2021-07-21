@@ -48,7 +48,7 @@ fi
 
 admin_dns_nm="${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
 
-admin_record_ip_addr="$(get_record_value "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" 'A')"
+admin_record_ip_addr="$(get_record_value 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
 
 if [[ -z "${admin_record_ip_addr}" ]]
 then
@@ -126,7 +126,7 @@ echo "Load balancer record ${lbal_dns_nm} created (${status})."
 ## Admin website admin.maxmin.it record.
 ##
 
-has_admin_record="$(check_hosted_zone_has_record "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}" 'A')"
+has_admin_record="$(check_hosted_zone_has_record 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
 
 if [[ 'true' == "${has_admin_record}" ]]
 then
