@@ -13,10 +13,10 @@ SSH Session:
 ------------
 
 # Enable security group access on port 38142
-rm -f ~/.ssh/known_hosts && ssh -i 'admin-keys.pem' -p 38142 admin-user@3.250.99.236
+rm -f ~/.ssh/known_hosts && ssh -i 'admin-keys.pem' -p 38142 admin-user@54.155.141.211
 
 ------------
-LogAnalizer:
+LogAnalyzer:
 ------------
 
 # No Load Balancer, enable security group access port

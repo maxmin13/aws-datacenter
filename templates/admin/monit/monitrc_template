@@ -17,7 +17,7 @@ set mmonit http://monit:monit@127.0.0.1:SEDmmonit_collector_portSED/collector
 ##
 check file apache_bin with path /usr/sbin/httpd
   if failed checksum and
-     expect the sum df439582ba0039278aa0e3b4c6c14df6 then unmonitor
+     expect the sum 03f3c7f8f94fd4967e2856d9cfc1ec43 then unmonitor
   if failed permission 755 then unmonitor
   if failed uid "root" then unmonitor
   if failed gid "root" then unmonitor

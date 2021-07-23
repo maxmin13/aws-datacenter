@@ -7,12 +7,13 @@ set +o xtrace
  
 export PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../../datacenter && pwd)"
 
-source "${PROJECT_DIR}"/amazon/lib/project_dirs.sh
-source "${PROJECT_DIR}"/amazon/lib/app_consts.sh
-source "${PROJECT_DIR}"/amazon/lib/archives.sh
-source "${PROJECT_DIR}"/amazon/lib/ssh_utils.sh
-source "${PROJECT_DIR}"/amazon/lib/general_utils.sh
-source "${PROJECT_DIR}"/amazon/lib/httpd_utils.sh
+source "${PROJECT_DIR}"/amazon/lib/const/app_consts.sh
+source "${PROJECT_DIR}"/amazon/lib/const/project_dirs.sh
+source "${PROJECT_DIR}"/amazon/lib/const/archives.sh
+source "${PROJECT_DIR}"/amazon/lib/const/dev_consts.sh
+source "${PROJECT_DIR}"/amazon/lib/utils/ssh_utils.sh
+source "${PROJECT_DIR}"/amazon/lib/utils/general_utils.sh
+source "${PROJECT_DIR}"/amazon/lib/utils/httpd_utils.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/rds.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/ec2.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/elb.sh

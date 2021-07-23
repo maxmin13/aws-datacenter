@@ -8,7 +8,7 @@ set logfile syslog
 
 set mmonit http://monit:monit@SEDserver_admin_private_ipSED:SEDmmonit_collector_portSED/collector
      with timeout 30 seconds              # Default timeout is 5 seconds
-     # and register without credentials     # Don't register credentials
+     # and register without credentials   # Don't register credentials
 
 set httpd port 2812 and
     allow monit:monit 
@@ -20,7 +20,7 @@ set httpd port 2812 and
 ##
 check file apache_bin with path /usr/sbin/httpd
   if failed checksum and
-     expect the sum df439582ba0039278aa0e3b4c6c14df6 then unmonitor
+     expect the sum 03f3c7f8f94fd4967e2856d9cfc1ec43 then unmonitor
   if failed permission 755 then unmonitor
   if failed uid "root" then unmonitor
   if failed gid "root" then unmonitor

@@ -6,6 +6,7 @@ set -o errexit
 set -o pipefail
 set -o nounset
 set +o xtrace
+shopt -s inherit_errexit
 
 ########################################################################
 ## The script configure SSL in the load balancer.
@@ -16,6 +17,16 @@ set +o xtrace
 ## certificate is self-signed, in production the certificate is signed 
 ## by Let's Encrypt certificate authority.
 ########################################################################
+
+ACME_DNS_DOMAIN_NM='acme-dns'."${MAXMIN_TLD}"
+LETS_ENCRYPT_INSTALL_DIR='/etc/letsencrypt'
+
+if [[ 'production' == "${ENV}" ]]
+then
+   crt_nm='lbal-prod-certificate'
+else
+   crt_nm='lbal-dev-certificate'  
+fi
 
 lbal_dir='loadbalancer'
 
@@ -118,22 +129,6 @@ echo 'HTTPS listener deleted.'
 
 ## The load balancer certificates are handled by AWS Identity and Access Management (IAM).
 
-if [[ 'production' == "${ENV}" ]]
-then
-   crt_nm='lbal-prod-certificate'
-   GIT_ACME_DNS_URL='https://github.com/joohoi/acme-dns' 
-   ACME_DNS_DOMAIN_NM='acme-dns'."${MAXMIN_TLD}"
-   LETS_ENCRYPT_INSTALL_DIR='/etc/letsencrypt'
-else
-   crt_nm='lbal-dev-certificate'
-   CRT_COUNTRY_NM='IE'
-   CRT_PROVINCE_NM='Dublin'
-   CRT_CITY_NM='Dublin'
-   CRT_ORGANIZATION_NM='WWW'
-   CRT_UNIT_NM='UN'
-   CRT_COMMON_NM='www.maxmin.it'  
-fi
-
 # Check if a certificate is alread uploaded to IAM
 cert_arn="$(get_server_certificate_arn "${crt_nm}")"
 
@@ -203,13 +198,13 @@ then
    echo 'remove_passphase.sh ready.'
 
    # Create a self-signed Certificate.
-   sed -e "s/SEDcountrySED/${CRT_COUNTRY_NM}/g" \
-       -e "s/SEDstate_or_provinceSED/${CRT_PROVINCE_NM}/g" \
-       -e "s/SEDcitySED/${CRT_CITY_NM}/g" \
-       -e "s/SEDorganizationSED/${CRT_ORGANIZATION_NM}/g" \
-       -e "s/SEDunit_nameSED/${CRT_UNIT_NM}/g" \
-       -e "s/SEDcommon_nameSED/${CRT_COMMON_NM}/g" \
-       -e "s/SEDemail_addressSED/${LBAL_EMAIL_ADD}/g" \
+   sed -e "s/SEDcountrySED/${DEV_LBAL_CRT_COUNTRY_NM}/g" \
+       -e "s/SEDstate_or_provinceSED/${DEV_LBAL_CRT_PROVINCE_NM}/g" \
+       -e "s/SEDcitySED/${DEV_LBAL_CRT_CITY_NM}/g" \
+       -e "s/SEDorganizationSED/${DEV_LBAL_CRT_ORGANIZATION_NM}/g" \
+       -e "s/SEDunit_nameSED/${DEV_LBAL_CRT_UNIT_NM}/g" \
+       -e "s/SEDcommon_nameSED/${DEV_LBAL_CRT_COMMON_NM}/g" \
+       -e "s/SEDemail_addressSED/${DEV_LBAL_LBAL_EMAIL_ADD}/g" \
           "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.sh > gen_certificate.sh
              
    echo 'gen_certificate.sh ready.'
@@ -306,7 +301,7 @@ else
    
    echo "acme-dns A record created (${status})."     
    
-   route53_has_acme_dns_NS_record="$(check_hosted_zone_has_record 'NS' 'acme-dns' "${MAXMIN_TLD}")"
+  route53_has_acme_dns_NS_record="$(check_hosted_zone_has_record 'NS' 'acme-dns' "${MAXMIN_TLD}")"
    
    if [[ 'true' == "${route53_has_acme_dns_NS_record}" ]]
    then
@@ -323,9 +318,6 @@ else
    status="$(get_record_request_status "${request_id}")"  
    
    echo "acme-dns NS record created (${status})."  
-
-   # Upload the scripts to the Admin box.
-
    echo 'Uploading the scripts to the Admin box ...'
 
    remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
@@ -336,13 +328,18 @@ else
        "${key_pair_file}" \
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
-       "${ADMIN_INST_USER_NM}"   
+       "${ADMIN_INST_USER_NM}"
        
-   sed -e "s/SEDadmin_instance_user_nmSED/${ADMIN_INST_USER_NM}/g" \
-       -e "s/SEDacme_dns_urlSED/$(escape ${GIT_ACME_DNS_URL})/g" \
-          "${TEMPLATE_DIR}"/common/ssl/ca/install_acme_dns_server_template.sh > install_acme_dns_server.sh   
+   sed -e "s/SEDacme_dns_urlSED/$(escape ${ACME_GIT_DNS_URL})/g" \
+       -e "s/SEDadmin_instance_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+          "${TEMPLATE_DIR}"/common/ssl/ca/install_acme_dns_server_template.sh > install_acme_dns_server.sh         
           
-   echo 'install_acme_dns_server.sh ready.' 
+   echo 'install_acme_dns_server.sh ready.'       
+          
+   sed -e "s/SEDadmin_instance_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+          "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_with_dns_challenge_template.sh > request_ca_certificate_with_dns_challenge.sh             
+          
+   echo 'request_ca_certificate_with_dns_challenge.sh ready.' 
            
    sed -e "s/^listen = .*/listen = \":${ADMIN_ACME_DNS_PORT}\"/g" \
        -e "s/auth.example.org/${ACME_DNS_DOMAIN_NM}/g" \
@@ -358,9 +355,9 @@ else
   
    scp_upload_files "${key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${lbal_dir}"/install_acme_dns_server.sh \
+       "${TMP_DIR}"/"${lbal_dir}"/request_ca_certificate_with_dns_challenge.sh \
        "${TMP_DIR}"/"${lbal_dir}"/config.cfg \
-       "${TEMPLATE_DIR}"/common/ssl/ca/acme-dns.service \
-       "${TEMPLATE_DIR}"/loadbalancer/ssl/ca/install_loadbalancer_ssl.sh 
+       "${TEMPLATE_DIR}"/common/ssl/ca/acme-dns.service 
     
    echo 'Scripts uploaded.'
      
@@ -369,9 +366,15 @@ else
    ## By AWS default, sudo has not password.
    ## 
 
-   echo 'Installing SSL in the loadbalancer box ...'
+
+ echo OOOOk run it manually
+ exit 
+ exit
+ exit
+
+   echo 'Requesting SSL certificate ...'
     
-   ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_loadbalancer_ssl.sh" \
+   ssh_run_remote_command_as_root "chmod +x ${remote_dir}/request_ca_certificate_with_dns_challenge.sh" \
        "${key_pair_file}" \
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
@@ -380,7 +383,7 @@ else
 
    set +e   
           
-   ssh_run_remote_command_as_root "${remote_dir}/install_loadbalancer_ssl.sh" \
+   ssh_run_remote_command_as_root "${remote_dir}/request_ca_certificate_with_dns_challenge.sh" \
        "${key_pair_file}" \
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
@@ -393,7 +396,12 @@ else
    # shellcheck disable=SC2181
    if [ 0 -eq "${exit_code}" ]
    then 
-      echo 'SSL successfully configured in the load balancer box.' 
+      echo 'SSL certificate successfully requested.' 
+     
+     #### DOWNLOAD CERTIFICATE 
+     
+     ## UPLOAD CERTIFICATE TO IAM
+     
      
     #########  ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     #########      "${key_pair_file}" \
@@ -440,6 +448,10 @@ fi
    
 ####   echo 'Revoked acme-dns access to the Admin box.'
 ####fi
+
+## STOP ACME-DNS
+ 
+## REMOVE RECORDS FROM ROUTE 53
     
 # Wait until the certificate is visible in IAM.
 cert_arn="$(get_server_certificate_arn "${crt_nm}")"

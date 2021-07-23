@@ -60,7 +60,6 @@ WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE='SEDwebsite_https_virtualhost_fileSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
 admin_log_file='/var/log/admin_ssl_install.log'
 
-
 ############### TODO error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
 ############### 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -86,7 +85,7 @@ echo 'Apache SSL module installed.'
 ## SSL certifcates 
 ## 
 
-echo 'Generating SSL certificate ...'
+echo 'Requesting SSL certificate ...'
 
 cd "${script_dir}" || exit 1
 
@@ -125,9 +124,9 @@ else
    # fullchain.pem
    # privkey.pem
    
-   chmod +x request_ca_certificate.sh
+   chmod +x request_ca_certificate_with_http_challenge.sh
    set +e 
-   ./request_ca_certificate.sh >> "${admin_log_file}" 2>&1
+   ./request_ca_certificate_with_http_challenge.sh >> "${admin_log_file}" 2>&1
    exit_code=$?
    set -e 
    
@@ -139,11 +138,11 @@ fi
 
 if [[ ! 0 -eq "${exit_code}" ]]
 then
-   echo "ERROR: generating SSL certificate."     
+   echo "ERROR: requesting SSL certificate."     
    exit 1
 fi
 
-echo 'SSL Certificate successfully generated.'
+echo 'SSL Certificate successfully requested.'
 
 ##
 ## Apache web server 

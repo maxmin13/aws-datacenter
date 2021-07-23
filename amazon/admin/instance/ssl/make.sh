@@ -200,12 +200,12 @@ then
           "${TEMPLATE_DIR}"/common/ssl/selfsigned/request_selfsigned_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/request_selfsigned_certificate.sh   
    
    # Apache Web Server create selfsigned Certificate script.
-   sed -e "s/SEDcountrySED/${CRT_DEV_COUNTRY}/g" \
-       -e "s/SEDstate_or_provinceSED/${CRT_DEV_CITY}/g" \
-       -e "s/SEDcitySED/${CRT_DEV_CITY}/g" \
-       -e "s/SEDorganizationSED/${CRT_DEV_ORGANIZATION}/g" \
-       -e "s/SEDunit_nameSED/${CRT_DEV_UNIT}/g" \
-       -e "s/SEDcommon_nameSED/${ADMIN_INST_HOSTNAME}/g" \
+   sed -e "s/SEDcountrySED/${DEV_ADMIN_CRT_COUNTRY_NM}/g" \
+       -e "s/SEDstate_or_provinceSED/${DEV_ADMIN_CRT_PROVINCE_NM}/g" \
+       -e "s/SEDcitySED/${DEV_ADMIN_CRT_CITY_NM}/g" \
+       -e "s/SEDorganizationSED/${DEV_ADMIN_CRT_ORGANIZATION_NM}/g" \
+       -e "s/SEDunit_nameSED/${DEV_ADMIN_CRT_UNIT_NM}/g" \
+       -e "s/SEDcommon_nameSED/${DEV_ADMIN_CRT_COMMON_NM}/g" \
        -e "s/SEDemail_addressSED/${ADMIN_INST_EMAIL}/g" \
           "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh
 
@@ -232,9 +232,9 @@ else
        -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
        -e "s/SEDcrt_email_addressSED/${ADMIN_INST_EMAIL}/g" \
        -e "s/SEDcrt_domainSED/${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}/g" \
-          "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate.sh
+          "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_with_http_challenge_template.sh > "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate_with_http_challenge.sh
           
-   echo 'request_ca_certificate.sh ready.'     
+   echo 'request_ca_certificate_with_http_challenge.sh ready.'     
 
    # Certboot HTTP virtualhost file.
    create_virtualhost_configuration_file "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" \
@@ -252,7 +252,7 @@ else
    echo "${CERTBOT_VIRTUALHOST_CONFIG_FILE} ready."  
    
    scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
-       "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate.sh \
+       "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate_with_http_challenge.sh \
        "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" 
 fi  
 
