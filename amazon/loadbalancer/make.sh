@@ -57,7 +57,7 @@ else
 fi
 
 # Check HTTP access from the Internet.
-granted_http="$(check_access_from_cidr_is_granted  "${sgp_id}" "${LBAL_INST_HTTP_PORT}" '0.0.0.0/0')"
+granted_http="$(check_access_from_cidr_is_granted  "${sgp_id}" "${LBAL_INST_HTTP_PORT}" 'tcp' '0.0.0.0/0')"
 
 if [[ -n "${granted_http}" ]]
 then
