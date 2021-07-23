@@ -95,7 +95,7 @@ mkdir "${TMP_DIR}"/"${webphp_dir}"
 ## SSH Access
 ##
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
@@ -240,6 +240,7 @@ fi
 
 loadbalancer_granted="$(check_access_from_security_group_is_granted "${sgp_id}" \
     "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" \
+     'tcp' \
     "${loadbalancer_sgp_id}")"
 
 if [[ -z "${loadbalancer_granted}" ]]
@@ -253,7 +254,7 @@ fi
 ## SSH Access.
 ## 
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then

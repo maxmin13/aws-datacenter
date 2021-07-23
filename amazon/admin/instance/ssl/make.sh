@@ -86,7 +86,7 @@ then
    exit 1
 fi
     
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
@@ -99,7 +99,7 @@ fi
    
 if [[ 'production' == "${ENV}" ]]
 then      
-   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0')"  
+   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' '0.0.0.0/0')"  
 
    if [[ -z "${granted_certbot}" ]]
    then
@@ -363,7 +363,7 @@ fi
 ## SSH Access.
 ##
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')" 
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')" 
 
 if [[ -n "${granted_ssh}" ]]
 then
@@ -375,7 +375,7 @@ fi
 
 if [[ 'production' == "${ENV}" ]]
 then      
-   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" '0.0.0.0/0')"  
+   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' '0.0.0.0/0')"  
    
    if [[ -n "${granted_ssh}" ]]
    then

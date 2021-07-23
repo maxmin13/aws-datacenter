@@ -95,7 +95,7 @@ else
    ## SSH access 
   
    # Check if the Admin security group grants access from the development machine through SSH port
-   access_granted="$(check_access_from_cidr_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
+   access_granted="$(check_access_from_cidr_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
    
    if [[ -z "${access_granted}" ]]
    then

@@ -71,7 +71,7 @@ else
    echo 'Created Shared security group.'
 fi
 
-granted_ssh_22="$(check_access_from_cidr_is_granted  "${sgp_id}" '22' '0.0.0.0/0')"
+granted_ssh_22="$(check_access_from_cidr_is_granted  "${sgp_id}" '22' 'tcp' '0.0.0.0/0')"
 
 if [[ -z "${granted_ssh_22}" ]]
 then
@@ -80,7 +80,7 @@ then
    echo 'Granted SSH access on port 22.'
 fi
 
-granted_ssh_38142="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh_38142="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
 
 if [[ -z "${granted_ssh_38142}" ]]
 then
@@ -240,7 +240,7 @@ fi
 
 # Finally, remove access from SSH port 22.
 
-granted_ssh_22="$(check_access_from_cidr_is_granted  "${sgp_id}" '22' '0.0.0.0/0')"
+granted_ssh_22="$(check_access_from_cidr_is_granted  "${sgp_id}" '22' 'tcp' '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh_22}" ]]
 then 
@@ -284,7 +284,7 @@ echo 'Shared box stopped.'
 ## SSH Access
 ## 
 
-granted_ssh_38142="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh_38142="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh_38142}" ]]
 then

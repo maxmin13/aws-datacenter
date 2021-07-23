@@ -64,7 +64,7 @@ mkdir "${TMP_DIR}"/"${database_dir}"
 ## SSH Access 
 ## 
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then

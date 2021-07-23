@@ -100,7 +100,7 @@ mkdir -p "${TMP_DIR}"/"${lbal_dir}"
 ##
 
 # Check HTTP access from the Internet to the load balancer.
-granted_lbal_http="$(check_access_from_cidr_is_granted  "${lbal_sgp_id}" "${LBAL_INST_HTTP_PORT}" '0.0.0.0/0')"
+granted_lbal_http="$(check_access_from_cidr_is_granted  "${lbal_sgp_id}" "${LBAL_INST_HTTP_PORT}" 'tcp' '0.0.0.0/0')"
 
 if [[ -n "${granted_lbal_http}" ]]
 then
@@ -124,7 +124,7 @@ delete_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}"
 echo 'HTTPS listener deleted.'
 
 ## 
-## SSL certificate
+## IAM SSL certificate
 ##
 
 ## The load balancer certificates are handled by AWS Identity and Access Management (IAM).
@@ -179,7 +179,7 @@ if [[ 'development' == "${ENV}" ]]
 then
 
    #
-   # Create and upload a self-signed Server Certificate to IAM:
+   # Development: generate and upload a self-signed Server Certificate to IAM:
    #
    # key.pem
    # cert.pem
@@ -223,11 +223,12 @@ then
 else
 
    #
-   # Install an acme-dns server in the Admin instance to run the DNS-01 certbot challenge.
+   # Production: install acme-dns server in the Admin instance and run the DNS-01 challenge to request 
+   #             a certificate signed by Let's Encrypt.
    #
      
    # SSH Access to Admin instance.
-   granted_admin_ssh="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
+   granted_admin_ssh="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
 
    if [[ -n "${granted_admin_ssh}" ]]
    then
@@ -238,8 +239,8 @@ else
       echo 'Granted SSH access to the Admin box.'
    fi
 
-   # acme-dns needs to open a privileged port 53 tcp
-   granted_acme_dns_tcp_port="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" '0.0.0.0/0')"
+   # acme-dns needs to open a privileged 53 port tcp
+   granted_acme_dns_tcp_port="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'tcp' '0.0.0.0/0')"
    
    if [[ -n "${granted_acme_dns_tcp_port}" ]]
    then
@@ -250,8 +251,8 @@ else
       echo 'Granted acme-dns access to the Admin box''s 53 tcp port.'
    fi
    
-   # acme-dns needs to open a privileged port 53 udp
-   granted_acme_dns_udp_port="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" '0.0.0.0/0')"
+   # acme-dns needs to open a privileged 53 port udp
+   granted_acme_dns_udp_port="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'udp' '0.0.0.0/0')"
    
    if [[ -n "${granted_acme_dns_udp_port}" ]]
    then
@@ -263,7 +264,7 @@ else
    fi   
 
    # acme-dns api needs HTTPS port
-   granted_acme_dns_https_port="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_HTTPS_PORT}" '0.0.0.0/0')"
+   granted_acme_dns_https_port="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_HTTPS_PORT}" 'tcp' '0.0.0.0/0')"
    
    if [[ -n "${granted_acme_dns_https_port}" ]]
    then
@@ -366,7 +367,7 @@ else
    ## By AWS default, sudo has not password.
    ## 
 
-
+ ##### TODO
  echo OOOOk run it manually
  exit 
  exit
@@ -420,7 +421,7 @@ fi
 ## SSH Access.
 ##
 
-####granted_admin_ssh="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
+####granted_admin_ssh="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
 
 #####if [[ -n "${granted_admin_ssh}" ]]
 ####then
@@ -430,7 +431,7 @@ fi
 ####fi
 
 # acme-dns needs to open a privileged port 53 tcp
-####   granted_acme_dns_port_tcp="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" '0.0.0.0/0')"
+####   granted_acme_dns_port_tcp="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'tcp' '0.0.0.0/0')"
 
 #####if [[ -n "${granted_acme_dns_port_tcp}" ]]
 ####then
@@ -440,11 +441,21 @@ fi
 ####fi
 
 # acme-dns needs to open a privileged port 53 udp
-####   granted_acme_dns_port_udp="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" '0.0.0.0/0')"
+####   granted_acme_dns_port_udp="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'udp' '0.0.0.0/0')"
 
 #####if [[ -n "${granted_acme_dns_port_udp}" ]]
 ####then
 ####   revoke_access_from_cidr "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'udp' '0.0.0.0/0'
+   
+####   echo 'Revoked acme-dns access to the Admin box.'
+####fi
+
+# acme-dns needs to open a privileged port 53 tcp
+####   granted_acme_dns_port_udp="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'tcp' '0.0.0.0/0')"
+
+#####if [[ -n "${granted_acme_dns_port_udp}" ]]
+####then
+####   revoke_access_from_cidr "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'tcp' '0.0.0.0/0'
    
 ####   echo 'Revoked acme-dns access to the Admin box.'
 ####fi
@@ -492,7 +503,7 @@ echo 'HTTPS listener added.' ||
 }
 
 # Check HTTPS access from the Internet to the load balancer.
-granted_https="$(check_access_from_cidr_is_granted  "${lbal_sgp_id}" "${LBAL_INST_HTTPS_PORT}" '0.0.0.0/0')"
+granted_https="$(check_access_from_cidr_is_granted  "${lbal_sgp_id}" "${LBAL_INST_HTTPS_PORT}" 'tcp' '0.0.0.0/0')"
 
 if [[ -z "${granted_https}" ]]
 then

@@ -784,15 +784,18 @@ function revoke_access_from_cidr()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id          -- security group identifier.
-# +port            -- the TCP port.
-# +from_sgp_id     -- the security group from which incoming traffic is allowed.
+# +sgp_id      -- the security group identifier.
+# +port        -- the TCP port.
+# +protocol    -- the IP protocol name (tcp , udp , icmp , icmpv6), default is 
+#                 tcp. 
+# +from_sgp_id -- the security group identifier representing the origin of the
+#                 traffic. 
 # Returns:      
 #  the group identifier if the access is granted, blanc otherwise.
 #===============================================================================
 function check_access_from_security_group_is_granted()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
@@ -800,13 +803,14 @@ function check_access_from_security_group_is_granted()
 
    local sgp_id="${1}"
    local port="${2}"
-   local from_sgp_id="${3}" 
+   local protocol="${3}"
+   local from_sgp_id="${4}"  
    local id=''
 
    id="$(aws ec2 describe-security-groups \
        --group-ids="${sgp_id}" \
        --filters Name=ip-permission.to-port,Values="${port}" \
-       --query "SecurityGroups[?IpPermissions[?contains(UserIdGroupPairs[].GroupId, '${from_sgp_id}')]].{GroupId: GroupId}" \
+       --query "SecurityGroups[? IpPermissions[? IpProtocol == '${protocol}' && UserIdGroupPairs[? GroupId == '${from_sgp_id}']]].GroupId" \
        --output text)"                     
             
    echo "${id}"
@@ -822,14 +826,15 @@ function check_access_from_security_group_is_granted()
 #  None
 # Arguments:
 # +sgp_id    -- the security group identifier.
-# +port      -- the TCP port.
+# +port      -- the TCP port
+# +protocol  -- the IP protocol name (tcp , udp , icmp , icmpv6), default is tcp. 
 # +from_cidr -- the CIDR block representing the origin of the traffic.
 # Returns:      
 #  the group identifier if the access is granted, blanc otherwise.
 #===============================================================================
 function check_access_from_cidr_is_granted()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
@@ -837,13 +842,14 @@ function check_access_from_cidr_is_granted()
 
    local sgp_id="${1}"
    local port="${2}"
-   local from_cidr="${3}" 
+   local protocol="${3}"
+   local from_cidr="${4}"
    local id=''
      
    id="$(aws ec2 describe-security-groups \
        --group-ids="${sgp_id}" \
        --filters Name=ip-permission.to-port,Values="${port}" \
-       --query "SecurityGroups[?IpPermissions[?contains(IpRanges[].CidrIp, '${from_cidr}')]].{GroupId: GroupId}" \
+       --query "SecurityGroups[? IpPermissions[? IpProtocol == '${protocol}' && IpRanges[? CidrIp == '${from_cidr}']]].GroupId" \
        --output text)"           
          
    echo "${id}"

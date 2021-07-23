@@ -110,7 +110,7 @@ db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
 
 if [[ -n "${db_sgp_id}" && -n ${sgp_id} ]]
 then
-   granted="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}")"
+   granted="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}")"
    
    if [[ -n "${granted}" ]]
    then
@@ -127,7 +127,7 @@ fi
 if [[ -n "${adm_sgp_id}" && -n ${sgp_id} ]]
 then
    # Check if access to Admin rsyslog is granted.
-   rsyslog_granted="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" "${sgp_id}")"
+   rsyslog_granted="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}")"
    
    if [[ -n "${rsyslog_granted}" ]]
    then
@@ -137,7 +137,7 @@ then
    fi
 
    # Check if the Webphp box is granted access to admin instance M/Monit
-   mmonit_granted="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" "${sgp_id}")"
+   mmonit_granted="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}")"
    
    if [[ -n "${mmonit_granted}" ]]
    then

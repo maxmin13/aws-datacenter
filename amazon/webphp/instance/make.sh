@@ -174,7 +174,7 @@ else
    echo 'Created Webphp security group.'
 fi
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
@@ -189,7 +189,7 @@ fi
 ## Database access 
 ##
 
-granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" "${sgp_id}")"
+granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}")"
 
 if [[ -n "${granted_db}" ]]
 then
@@ -204,7 +204,7 @@ fi
 ## Admin box access
 ## 
 
-granted_rsyslog="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" "${sgp_id}")"
+granted_rsyslog="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}")"
 
 if [[ -n "${granted_rsyslog}" ]]
 then
@@ -215,7 +215,7 @@ else
    echo 'Granted access to Admin Rsyslog.'
 fi
 
-granted_mmonit="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" "${sgp_id}")"
+granted_mmonit="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}")"
 
 if [[ -n "${granted_mmonit}" ]]
 then
@@ -551,7 +551,7 @@ else
    echo 'Registered Webphp box with the Load Balancer.'
 fi
        
-lbal_granted="$(check_access_from_security_group_is_granted "${sgp_id}" "${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" "${lbal_sgp_id}")"
+lbal_granted="$(check_access_from_security_group_is_granted "${sgp_id}" "${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" 'tcp' "${lbal_sgp_id}")"
 
 if [[ -n "${lbal_granted}" ]]
 then
@@ -566,7 +566,7 @@ fi
 ## SSH Access
 ## 
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" '0.0.0.0/0')"
+granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
 
 if [[ -n "${granted_ssh}" ]]
 then
