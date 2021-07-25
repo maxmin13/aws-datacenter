@@ -42,18 +42,14 @@ echo
       echo '****************' 
    fi
    
-          
-
-   # Create the Admin and Webphp instances.      
-   . "${PROJECT_DIR}"/amazon/admin/instance/make.sh               
-   . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 2 
    
-    . "${PROJECT_DIR}"/amazon/admin/instance/website/make.sh      
-   . "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 2   
    
-   exit
-   exit   
+   . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh                     
+exit
+exit
+exit
 
+   
    echo
        
    # Create the datacenter.

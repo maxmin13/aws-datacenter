@@ -387,8 +387,8 @@ function delete_internet_gateway()
 # Globals:
 #  None
 # Arguments:
-# +igw_id     -- the internet gateway identifier.
-# +dtc_id     -- the data center id.
+# +igw_id -- the internet gateway identifier.
+# +dtc_id -- the data center id.
 # Returns:      
 #  None
 #===============================================================================
@@ -540,7 +540,7 @@ function set_route()
 # Globals:
 #  None
 # Arguments:
-# +sgp_nm         -- the security group name.
+# +sgp_nm -- the security group name.
 # Returns:      
 #  the security group identifier, or blanc if it is not found.  
 #===============================================================================
@@ -711,9 +711,9 @@ function allow_access_from_security_group()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id      -- the security group identifier.
-# +port        -- the TCP port.
-# +protocol    -- the IP protocol name (tcp , udp , icmp , icmpv6), default is 
+# +sgp_id   -- the security group identifier.
+# +port     -- the TCP port.
+# +protocol -- the IP protocol name (tcp , udp , icmp , icmpv6), default is 
 #                 tcp. 
 # +from_sgp_id -- the security group identifier representing the origin of the
 #                 traffic. 
@@ -1244,7 +1244,7 @@ function get_image_snapshot_ids()
 # Globals:
 #  None
 # Arguments:
-# +img_id     -- the Image identifier.
+# +img_id  -- the Image identifier.
 # Returns:      
 #  None
 #========================================================

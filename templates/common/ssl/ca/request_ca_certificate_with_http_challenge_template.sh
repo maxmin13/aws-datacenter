@@ -45,6 +45,7 @@ CRT_EMAIL_ADDRESS='SEDcrt_email_addressSED'
 CRT_DOMAIN='SEDcrt_domainSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+
 echo 'Requesting SSL certificates to Let''Encrypt.'
 
 # Make Apache listen on Certbot port.
@@ -79,8 +80,8 @@ echo 'Apache web server restarted and ready for Certbot.'
 
 echo 'Installing Certbot SSL agent ...'
 
-yum remove -y certbot 
-yum install -y certbot python2-certbot-apache
+yum remove -y certbot  
+yum install -y certbot python2-certbot-apache 
 
 echo 'Certbot SSL agent installed.'
 echo "Requesting a certificate to Let's Encrypt Certification Autority ..."
@@ -122,8 +123,10 @@ sed -i "s/^#Listen \+${APACHE_CERTBOT_HTTP_PORT}$/Listen ${APACHE_CERTBOT_HTTP_P
 
 echo "Disabled Apache Listen on Certbot port ${APACHE_CERTBOT_HTTP_PORT}."
 
-httpd -t
+httpd -t 
 systemctl restart httpd 
+
+echo 'Apache web server restarted' 
 
 if [[ ! 0 -eq "${exit_code}" ]]
 then

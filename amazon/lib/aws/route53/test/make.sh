@@ -11,9 +11,9 @@ set +o xtrace
 _HOSTED_ZONE_ID="$(aws route53 list-hosted-zones \
     --query "HostedZones[?Name=='${MAXMIN_TLD}'].{Id: Id}" \
     --output text)" 
-    
+   
 HOSTED_ZONE_ID="$(echo "${_HOSTED_ZONE_ID}" | cut -d'/' -f 3)" 
-
+ 
 # This is the ID of the hosted zone created with the load balancer, it is not deleted when the load
 # balancer is deleted, so I use it for the tests.
 ALIAS_TARGET_HOSTED_ZONE_ID='Z32O12XQLNTSW2'
@@ -1472,6 +1472,135 @@ then
 fi     
 
 echo 'delete_loadbalancer_record tests completed.'
+
+###########################################
+## TEST 13: create_record
+###########################################
+
+__clear_hosted_zone
+
+#
+# Create A record successfully.
+#
+
+request_id=''
+status=''
+value=''
+
+# Create the record.
+request_id="$(create_record  'A' 'acme-dns' 'maxmin.it.' '18.203.73.111')"
+
+# Check the status of the request.
+status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
+
+if [[ "${status}" != 'INSYNC' && "${status}" != 'PENDING' ]]
+then
+   echo 'ERROR: testing __submit_change_batch.'
+   counter=$((counter +1))
+fi
+
+#
+# Create NS record successfully.
+#
+
+request_id=''
+status=''
+value=''
+
+# Create the record.
+request_id="$(create_record  'NS' 'acme-dns' 'maxmin.it.' 'acme-dns.maxmin.it.')"
+
+# Check the status of the request.
+status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
+
+if [[ "${status}" != 'INSYNC' && "${status}" != 'PENDING' ]]
+then
+   echo 'ERROR: testing __submit_change_batch.'
+   counter=$((counter +1))
+fi
+
+echo 'create_record tests completed.'
+
+__clear_hosted_zone
+
+###########################################
+## TEST 14: delete_record
+###########################################
+
+__clear_hosted_zone
+
+# Insert a acme-dns.maxmin.it.maxmin.it NS and A records in the hosted zone.
+__helper_create_record \
+    'acme-dns.maxmin.it.' \
+    "${HOSTED_ZONE_ID}" \
+    '18.203.73.111' \
+    'A' > /dev/null 
+
+__helper_create_record \
+    'acme-dns.maxmin.it.' \
+    "${HOSTED_ZONE_ID}" \
+    'acme-dns.maxmin.it.' \
+    'NS' > /dev/null 
+
+#
+# Delete A record succesfully.
+#
+
+request_id=''
+status=''
+
+# Delete the record.
+request_id="$(delete_record  'A' 'acme-dns' 'maxmin.it.' '18.203.73.111')"
+
+# Check the status of the request.
+status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
+
+if [[ "${status}" != 'INSYNC' && "${status}" != 'PENDING' ]]
+then
+   echo 'ERROR: testing __submit_change_batch.'
+   counter=$((counter +1))
+fi
+
+# Check the record has been cleared.
+if [[ -n "$(aws route53 list-resource-record-sets \
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[? Name=='acme-dns.maxmin.it' && Type=='A' ].Name" \
+   --output text)" ]]
+then
+   echo 'ERROR: testing __create_delete_record DELETE record found in the hosted zone.'
+   counter=$((counter +1))
+fi
+
+#
+# Delete NS record successfully.
+#
+
+request_id=''
+status=''
+
+# Delete the record.
+request_id="$(delete_record  'NS' 'acme-dns' 'maxmin.it.' 'acme-dns.maxmin.it.')"
+
+# Check the status of the request.
+status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
+
+if [[ "${status}" != 'INSYNC' && "${status}" != 'PENDING' ]]
+then
+   echo 'ERROR: testing __submit_change_batch.'
+   counter=$((counter +1))
+fi
+
+# Check the record has been cleared.
+if [[ -n "$(aws route53 list-resource-record-sets \
+   --hosted-zone-id "${HOSTED_ZONE_ID}" \
+   --query "ResourceRecordSets[? Name=='acme-dns.maxmin.it' && Type=='A' ].Name" \
+   --output text)" ]]
+then
+   echo 'ERROR: testing __create_delete_record DELETE record found in the hosted zone.'
+   counter=$((counter +1))
+fi
+
+echo 'delete_record tests completed.'
 
 ##############################################
 # Count the errors.

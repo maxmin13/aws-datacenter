@@ -1,5 +1,9 @@
 
 
+delete database object
+then run backup
+error, database mmdata not found
+
 #########################################
 
 install_admin_ssl_template.sh

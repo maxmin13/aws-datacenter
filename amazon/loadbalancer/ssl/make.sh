@@ -18,8 +18,13 @@ shopt -s inherit_errexit
 ## by Let's Encrypt certificate authority.
 ########################################################################
 
-ACME_DNS_DOMAIN_NM='acme-dns'."${MAXMIN_TLD}"
+ACME_DNS_DOMAIN_NM=acme-dns."${MAXMIN_TLD}"
+ACME_DNS_DATABASE_DIR='/var/lib/acme-dns/acme-dns.db'
+ACME_DNS_CERT_DIR='/var/lib/acme-dns/cert'
+ACME_DNS_CONFIG_DIR='/etc/acme-dns'
+ACME_DNS_BINARY_DIR='/usr/local/bin'
 LETS_ENCRYPT_INSTALL_DIR='/etc/letsencrypt'
+LETS_ENCRYPT_MODE='letsencryptstaging'
 
 if [[ 'production' == "${ENV}" ]]
 then
@@ -179,7 +184,8 @@ if [[ 'development' == "${ENV}" ]]
 then
 
    #
-   # Development: generate and upload a self-signed Server Certificate to IAM:
+   # Development: 
+   # generate and upload a self-signed Server Certificate to IAM.
    #
    # key.pem
    # cert.pem
@@ -223,8 +229,9 @@ then
 else
 
    #
-   # Production: install acme-dns server in the Admin instance and run the DNS-01 challenge to request 
-   #             a certificate signed by Let's Encrypt.
+   # Production: 
+   # install acme-dns server in the Admin instance and run the DNS-01 challenge to request a 
+   # certificate signed by Let's Encrypt. Upload the signed certificate to IAN.
    #
      
    # SSH Access to Admin instance.
@@ -239,28 +246,20 @@ else
       echo 'Granted SSH access to the Admin box.'
    fi
 
-   # acme-dns needs to open a privileged 53 port tcp
-   granted_acme_dns_tcp_port="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'tcp' '0.0.0.0/0')"
-   
-   if [[ -n "${granted_acme_dns_tcp_port}" ]]
-   then
-      echo 'WARN: acme-dns access to the Admin box''s 53 tcp port already granted.'
-   else
-      allow_access_from_cidr "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'tcp' '0.0.0.0/0'
-   
-      echo 'Granted acme-dns access to the Admin box''s 53 tcp port.'
-   fi
-   
-   # acme-dns needs to open a privileged 53 port udp
+   # acme-dns needs to open a privileged 53 port UDP.
+   # UDP/53 might work for most situations; it basically depends on the size of the DNS request,
+   # which will have to be TCP once it gets too large (Like for DNSSEC). But if you are only 
+   # doing one domain at a time, it may work.
+ 
    granted_acme_dns_udp_port="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'udp' '0.0.0.0/0')"
    
    if [[ -n "${granted_acme_dns_udp_port}" ]]
    then
-      echo 'WARN: acme-dns access to the Admin box''s 53 udp port already granted.'
+      echo 'WARN: acme-dns access to the Admin box''s 53 UDP port already granted.'
    else
       allow_access_from_cidr "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'udp' '0.0.0.0/0'
    
-      echo 'Granted acme-dns access to the Admin box''s 53 udp port.'
+      echo 'Granted acme-dns access to the Admin box''s 53 UDP port.'
    fi   
 
    # acme-dns api needs HTTPS port
@@ -288,13 +287,14 @@ else
    if [[ 'true' == "${route53_has_acme_dns_A_record}" ]]
    then
       # If the record is there, delete id because the IP address may be old.
-      echo 'WARN: found acme-dns A record, deleting ...'
-      
       target_eip="$(get_record_value 'A' 'acme-dns' "${MAXMIN_TLD}")" 
+      
+      echo "WARN: found acme-dns A record (${target_eip}), deleting ..."
+      
       request_id="$(delete_record 'A' 'acme-dns' "${MAXMIN_TLD}" "${admin_eip}")"                                      
       status="$(get_record_request_status "${request_id}")"  
    
-      echo "acme-dns A record deleted (${status})"
+      echo "acme-dns A record deleted (${status})."
    fi
    
    request_id="$(create_record 'A' 'acme-dns' "${MAXMIN_TLD}" "${admin_eip}")"                         
@@ -306,13 +306,14 @@ else
    
    if [[ 'true' == "${route53_has_acme_dns_NS_record}" ]]
    then
-      echo 'WARN: found acme-dns NS record, deleting ...'
-      
-      target_eip="$(get_record_value 'NS' 'acme-dns' "${MAXMIN_TLD}")"
-      request_id="$(delete_record 'NS' 'acme-dns' "${MAXMIN_TLD}" "${admin_eip}")" 
+      target_domain_mn="$(get_record_value 'NS' 'acme-dns' "${MAXMIN_TLD}")"
+        
+      echo "WARN: found acme-dns NS record (${target_domain_mn}), deleting ..."
+            
+      request_id="$(delete_record 'NS' 'acme-dns' "${MAXMIN_TLD}" "${target_domain_mn}")" 
       status="$(get_record_request_status "${request_id}")"  
    
-      echo "acme-dns A record deleted (${status})"
+      echo "acme-dns A record deleted (${status})."
    fi
 
    request_id="$(create_record 'NS' 'acme-dns' "${MAXMIN_TLD}" "${admin_eip}")" 
@@ -331,8 +332,10 @@ else
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"
        
-   sed -e "s/SEDacme_dns_urlSED/$(escape ${ACME_GIT_DNS_URL})/g" \
+   sed -e "s/SEDacme_dns_urlSED/$(escape "${ACME_GIT_DNS_URL}")/g" \
        -e "s/SEDadmin_instance_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+       -e "s/SEDacme_dns_config_dirSED/$(escape ${ACME_DNS_CONFIG_DIR})/g" \
+       -e "s/SEDacme_dns_binary_dirSED/$(escape ${ACME_DNS_BINARY_DIR})/g"
           "${TEMPLATE_DIR}"/common/ssl/ca/install_acme_dns_server_template.sh > install_acme_dns_server.sh         
           
    echo 'install_acme_dns_server.sh ready.'       
@@ -341,15 +344,14 @@ else
           "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_with_dns_challenge_template.sh > request_ca_certificate_with_dns_challenge.sh             
           
    echo 'request_ca_certificate_with_dns_challenge.sh ready.' 
-           
+      
    sed -e "s/^listen = .*/listen = \":${ADMIN_ACME_DNS_PORT}\"/g" \
-       -e "s/auth.example.org/${ACME_DNS_DOMAIN_NM}/g" \
+       -e "s/auth.example.org./${ACME_DNS_DOMAIN_NM}/g" \
        -e "s/198.51.100.1/${admin_eip}/g" \
-       -e "s/^connection = .*/connection = \"$(escape '/var/lib/acme-dns/acme-dns.db')\"/g" \
-       -e 's/^tls = .*/tls = "letsencrypt"/g' \
-       -e "s/^port = .*/port = \"${ADMIN_ACME_DNS_HTTPS_PORT}\"/g" \
-       -e "s/^acme_cache_dir = .*/acme_cache_dir = \"$(escape '/var/lib/acme-dns/cert')\"/g" \
-       -e "s/admin.example.org/${LBAL_EMAIL_ADD/@/\.}/g" \
+       -e "s/^connection = .*/connection = \"$(escape ${ACME_DNS_DATABASE_DIR})\"/g" \
+       -e "s/^tls = .*/tls = ${LETS_ENCRYPT_MODE}/g" \
+       -e "s/^port = .*/port = ${ADMIN_ACME_DNS_HTTPS_PORT}/g" \
+       -e "s/^acme_cache_dir = .*/acme_cache_dir = $(escape ${ACME_DNS_CERT_DIR})/g" \
           "${TEMPLATE_DIR}"/common/ssl/ca/config_template.cfg > config.cfg         
    
    echo 'config.cfg ready.'               
@@ -366,12 +368,6 @@ else
    ## Remote commands that have to be executed as priviledged user are run with sudo.
    ## By AWS default, sudo has not password.
    ## 
-
- ##### TODO
- echo OOOOk run it manually
- exit 
- exit
- exit
 
    echo 'Requesting SSL certificate ...'
     
@@ -393,6 +389,12 @@ else
                      
    exit_code=$?
    set -e
+   
+   echo OOOKKK
+   
+   exit
+   exit
+   
 
    # shellcheck disable=SC2181
    if [ 0 -eq "${exit_code}" ]
@@ -430,15 +432,6 @@ fi
 ####   echo 'Revoked SSH access to the Admin box.' 
 ####fi
 
-# acme-dns needs to open a privileged port 53 tcp
-####   granted_acme_dns_port_tcp="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'tcp' '0.0.0.0/0')"
-
-#####if [[ -n "${granted_acme_dns_port_tcp}" ]]
-####then
-####   revoke_access_from_cidr "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'tcp' '0.0.0.0/0'
-   
-####   echo 'Revoked acme-dns access to the Admin box.'
-####fi
 
 # acme-dns needs to open a privileged port 53 udp
 ####   granted_acme_dns_port_udp="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${ADMIN_ACME_DNS_PORT}" 'udp' '0.0.0.0/0')"

@@ -6,11 +6,19 @@ set -o nounset
 set +o xtrace
 
 ###################################################################
-# 
+# https://jaletzki.de/posts/acme-dns-on-centos-7/
+# In this post an acme-dns server will be set up and a client will 
+# acquire a Let’s Encrypt certificate using the DNS-01 challenge.
+# Acme-dns provides a simple API exclusively for TXT record updates 
+# and should be used with ACME magic “_acme-challenge” - subdomain 
+# CNAME records. This way, in the unfortunate exposure of API keys, 
+# the effects are limited to the subdomain TXT record in question.
 ###################################################################
 
 ADMIN_INST_USER_NM='SEDadmin_instance_user_nmSED'
 GIT_ACME_DNS_URL='SEDacme_dns_urlSED'
+ACME_DNS_CONFIG_DIR='SEDacme_dns_config_dirSED'
+ACME_DNS_BINARY_DIR='SEDacme_dns_binary_dirSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo 'Installing Acme DNS server ...'
@@ -46,11 +54,11 @@ go build
 
 echo 'acme-dns built.'
 
-cp -f acme-dns /usr/local/bin
+cp -f acme-dns "${ACME_DNS_BINARY_DIR}"
 
 echo 'acme-dns executable file moved in class-path.'
 
-setcap 'cap_net_bind_service=+ep' /usr/local/bin/acme-dns
+setcap 'cap_net_bind_service=+ep' "${ACME_DNS_BINARY_DIR}"/acme-dns
 
 echo 'Allowed the acme-dns executable binding on port lower than 1000.'
 
@@ -61,8 +69,8 @@ systemctl daemon-reload
 
 echo 'acme-dns service file moved in the Systemd directory.'
 
-mkdir -p /etc/acme-dns
-cp -f config.cfg /etc/acme-dns    
+mkdir -p "${ACME_DNS_CONFIG_DIR}"
+cp -f config.cfg "${ACME_DNS_CONFIG_DIR}"    
         
 echo 'acme-dns configuration file copied.'
 
@@ -77,7 +85,8 @@ systemctl status acme-dns.service
 
 echo 'acme-dns service started.'
 
-# Change ownership in the script directory otherwise it is not possible to delete them from dev machine.
+# Change ownership in the script directory otherwise it is not possible to delete 
+# them from dev machine.
 chown -R "${ADMIN_INST_USER_NM}":"${ADMIN_INST_USER_NM}" ./
 
 amazon-linux-extras disable epel -y > /dev/null 2>&1
