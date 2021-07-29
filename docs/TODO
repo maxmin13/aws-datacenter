@@ -1,5 +1,43 @@
 
 
+check set +e in function, return emptry string in case there is an error:
+
+function __submit_change_batch()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 1
+   fi
+   
+   local hosted_zone_id="${1}"
+   local request_body="${2}"
+   local request_id=''
+
+   set +e
+   request_id="$(aws route53 change-resource-record-sets \
+       --hosted-zone-id "${hosted_zone_id}" \
+       --change-batch "${request_body}" \
+       --query ChangeInfo.Id \
+       --output text 2>/dev/null)"
+   set -e
+         
+   echo "${request_id}"
+   
+   return 0                              
+}
+
+__submit_change_batch returns "" if it is called twice with the same parameters
+
+########################################
+set trap in templates
+
+
+see: request_ca_certificate_with_dns_challenge.sh
+
+
+########################################
+
 delete database object
 then run backup
 error, database mmdata not found

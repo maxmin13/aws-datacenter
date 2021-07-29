@@ -14,6 +14,7 @@ WEBSITE_ARCHIVE='SEDwebsite_archiveSED'
 WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='SEDwebphp_virtual_host_configSED'
 WEBSITE_HTTP_PORT='SEDwebsite_http_portSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WEBPHP_INST_USER_NM='SEDwebphp_inst_user_nmSED'
 webphp_log_file='/var/log/website_install.log'
 
 #
@@ -21,6 +22,11 @@ webphp_log_file='/var/log/website_install.log'
 #
 
 cd "${script_dir}" || exit
+
+###### TODO pass SEDwebphp_inst_user_nmSED value
+# Change ownership in the script directory to delete it from dev machine.
+######trap "chown -R ${WEBPHP_INST_USER_NM}:${WEBPHP_INST_USER_NM} ${script_dir}" ERR EXIT
+
 mkdir webphp
 unzip "${WEBSITE_ARCHIVE}" -d webphp >> "${webphp_log_file}" 2>&1
 webphp_docroot="${APACHE_DOCROOT_DIR}"/"${WEBSITE_DOCROOT_ID}"/public_html

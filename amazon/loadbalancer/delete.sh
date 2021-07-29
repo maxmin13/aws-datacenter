@@ -72,10 +72,10 @@ then
       __wait 70
       delete_security_group "${sgp_id}" 2> /dev/null && echo 'Security group deleted.' || 
       {
-         __wait 70
+         __wait 40
          delete_security_group "${sgp_id}" 2> /dev/null && echo 'Security group deleted.' || 
          {
-            __wait 70
+            __wait 20
             delete_security_group "${sgp_id}" 2> /dev/null && echo 'Security group deleted.' || 
             {
                echo 'Error: deleting security group.'

@@ -282,44 +282,44 @@ else
    # acme-dns.maxmin.it	NS acme-dns.maxmin.it
    #
    
-   route53_has_acme_dns_A_record="$(check_hosted_zone_has_record 'A' 'acme-dns' "${MAXMIN_TLD}")"
+   route53_has_acme_dns_A_record="$(check_hosted_zone_has_record 'A' 'acme-dns'."${MAXMIN_TLD}")"
    
    if [[ 'true' == "${route53_has_acme_dns_A_record}" ]]
    then
       # If the record is there, delete id because the IP address may be old.
-      target_eip="$(get_record_value 'A' 'acme-dns' "${MAXMIN_TLD}")" 
+      target_eip="$(get_record_value 'A' 'acme-dns'."${MAXMIN_TLD}")" 
       
       echo "WARN: found acme-dns A record (${target_eip}), deleting ..."
       
-      request_id="$(delete_record 'A' 'acme-dns' "${MAXMIN_TLD}" "${admin_eip}")"                                      
-      status="$(get_record_request_status "${request_id}")"  
+  #####    request_id="$(delete_record 'A' 'acme-dns'."${MAXMIN_TLD}" "${admin_eip}")"                                      
+   ######   status="$(get_record_request_status "${request_id}")"  
    
-      echo "acme-dns A record deleted (${status})."
+    ####  echo "acme-dns A record deleted (${status})."
    fi
    
-   request_id="$(create_record 'A' 'acme-dns' "${MAXMIN_TLD}" "${admin_eip}")"                         
-   status="$(get_record_request_status "${request_id}")"  
+ ####  request_id="$(create_record 'A' 'acme-dns'."${MAXMIN_TLD}" "${admin_eip}")"                         
+  ##### status="$(get_record_request_status "${request_id}")"  
    
-   echo "acme-dns A record created (${status})."     
+ ####  echo "acme-dns A record created (${status})."     
    
-  route53_has_acme_dns_NS_record="$(check_hosted_zone_has_record 'NS' 'acme-dns' "${MAXMIN_TLD}")"
+  route53_has_acme_dns_NS_record="$(check_hosted_zone_has_record 'NS' 'acme-dns'."${MAXMIN_TLD}")"
    
    if [[ 'true' == "${route53_has_acme_dns_NS_record}" ]]
    then
-      target_domain_mn="$(get_record_value 'NS' 'acme-dns' "${MAXMIN_TLD}")"
+      target_domain_mn="$(get_record_value 'NS' 'acme-dns'."${MAXMIN_TLD}")"
         
       echo "WARN: found acme-dns NS record (${target_domain_mn}), deleting ..."
             
-      request_id="$(delete_record 'NS' 'acme-dns' "${MAXMIN_TLD}" "${target_domain_mn}")" 
-      status="$(get_record_request_status "${request_id}")"  
+  ######    request_id="$(delete_record 'NS' 'acme-dns'."${MAXMIN_TLD}" "${target_domain_mn}")" 
+   ######   status="$(get_record_request_status "${request_id}")"  
    
-      echo "acme-dns A record deleted (${status})."
+    ####  echo "acme-dns A record deleted (${status})."
    fi
 
-   request_id="$(create_record 'NS' 'acme-dns' "${MAXMIN_TLD}" "${admin_eip}")" 
-   status="$(get_record_request_status "${request_id}")"  
+  ####### request_id="$(create_record 'NS' 'acme-dns'."${MAXMIN_TLD}" "${admin_eip}")" 
+   #######status="$(get_record_request_status "${request_id}")"  
    
-   echo "acme-dns NS record created (${status})."  
+ ###  echo "acme-dns NS record created (${status})."  
    echo 'Uploading the scripts to the Admin box ...'
 
    remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
@@ -331,34 +331,48 @@ else
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"
+
+   sed -e "s/SEDaws_cli_repository_urlSED/$(escape "${AWS_CLI_REPOSITORY_URL}")/g" \
+       -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+          "${TEMPLATE_DIR}"/common/aws/client/install_aws_cli_template.sh > install_aws_cli.sh   
+    
+   echo 'install_aws_cli.sh ready.'   
        
-   sed -e "s/SEDacme_dns_urlSED/$(escape "${ACME_GIT_DNS_URL}")/g" \
-       -e "s/SEDadmin_instance_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+   sed -e "s/SEDacme_dns_git_repository_urlSED/$(escape "${ACME_DNS_GIT_REPOSITORY_URL}")/g" \
+       -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
        -e "s/SEDacme_dns_config_dirSED/$(escape ${ACME_DNS_CONFIG_DIR})/g" \
-       -e "s/SEDacme_dns_binary_dirSED/$(escape ${ACME_DNS_BINARY_DIR})/g"
+       -e "s/SEDacme_dns_binary_dirSED/$(escape ${ACME_DNS_BINARY_DIR})/g" \
           "${TEMPLATE_DIR}"/common/ssl/ca/install_acme_dns_server_template.sh > install_acme_dns_server.sh         
           
    echo 'install_acme_dns_server.sh ready.'       
-          
-   sed -e "s/SEDadmin_instance_user_nmSED/${ADMIN_INST_USER_NM}/g" \
-          "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_with_dns_challenge_template.sh > request_ca_certificate_with_dns_challenge.sh             
-          
-   echo 'request_ca_certificate_with_dns_challenge.sh ready.' 
-      
-   sed -e "s/^listen = .*/listen = \":${ADMIN_ACME_DNS_PORT}\"/g" \
-       -e "s/auth.example.org./${ACME_DNS_DOMAIN_NM}/g" \
-       -e "s/198.51.100.1/${admin_eip}/g" \
-       -e "s/^connection = .*/connection = \"$(escape ${ACME_DNS_DATABASE_DIR})\"/g" \
-       -e "s/^tls = .*/tls = ${LETS_ENCRYPT_MODE}/g" \
-       -e "s/^port = .*/port = ${ADMIN_ACME_DNS_HTTPS_PORT}/g" \
-       -e "s/^acme_cache_dir = .*/acme_cache_dir = $(escape ${ACME_DNS_CERT_DIR})/g" \
-          "${TEMPLATE_DIR}"/common/ssl/ca/config_template.cfg > config.cfg         
+               
+  # sed -e "s/^listen = .*/listen = \":${ADMIN_ACME_DNS_PORT}\"/g" \
+ #      -e "s/auth.example.org./${ACME_DNS_DOMAIN_NM}/g" \
+ #      -e "s/198.51.100.1/${admin_eip}/g" \
+  #     -e "s/^connection = .*/connection = \"$(escape ${ACME_DNS_DATABASE_DIR})\"/g" \
+  #     -e "s/^tls = .*/tls = ${LETS_ENCRYPT_MODE}/g" \
+  #     -e "s/^port = .*/port = ${ADMIN_ACME_DNS_HTTPS_PORT}/g" \
+   #    -e "s/^acme_cache_dir = .*/acme_cache_dir = $(escape ${ACME_DNS_CERT_DIR})/g" \
+   #       "${TEMPLATE_DIR}"/common/ssl/ca/config_template.cfg > config.cfg     
+   
+   
+   ####### TODO PASS VARIABLES
+   ######## TODO
+sed -e 's/^listen = .*/listen = ":53"/g' "${TEMPLATE_DIR}"/common/ssl/ca/config_template.cfg \
+    -e 's/auth.example.org./acme-dns.example.com/g' "${TEMPLATE_DIR}"/common/ssl/ca/config_template.cfg \
+    -e "s/198.51.100.1/${admin_eip}/g" "${TEMPLATE_DIR}"/common/ssl/ca/config_template.cfg \
+    -e 's/^connection = .*/connection = "\/var\/lib\/acme-dns\/acme-dns.db"/g' "${TEMPLATE_DIR}"/common/ssl/ca/config_template.cfg \
+    -e 's/^tls = .*/tls = "letsencryptstaging"/g' "${TEMPLATE_DIR}"/common/ssl/ca/config_template.cfg \
+    -e 's/^port = .*/port = "9445"/g' "${TEMPLATE_DIR}"/common/ssl/ca/config_template.cfg \
+    -e 's/^acme_cache_dir = .*/acme_cache_dir = "\/var\/lib\/acme-dns\/cert"/g' "${TEMPLATE_DIR}"/common/ssl/ca/config_template.cfg > config.cfg       
    
    echo 'config.cfg ready.'               
   
    scp_upload_files "${key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${lbal_dir}"/install_acme_dns_server.sh \
-       "${TMP_DIR}"/"${lbal_dir}"/request_ca_certificate_with_dns_challenge.sh \
+       "${TMP_DIR}"/"${lbal_dir}"/install_aws_cli.sh \
+       "${TEMPLATE_DIR}"/common/aws/client/aws_cli_public_key \
+       "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_with_dns_challenge.sh \
        "${TMP_DIR}"/"${lbal_dir}"/config.cfg \
        "${TEMPLATE_DIR}"/common/ssl/ca/acme-dns.service 
     
@@ -378,24 +392,16 @@ else
        "${ADMIN_INST_USER_NM}" \
        "${ADMIN_INST_USER_PWD}"
 
-   set +e   
-          
+   set +e             
    ssh_run_remote_command_as_root "${remote_dir}/request_ca_certificate_with_dns_challenge.sh" \
        "${key_pair_file}" \
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}" \
-       "${ADMIN_INST_USER_PWD}"   
-                     
+       "${ADMIN_INST_USER_PWD}"       
    exit_code=$?
    set -e
-   
-   echo OOOKKK
-   
-   exit
-   exit
-   
-
+     
    # shellcheck disable=SC2181
    if [ 0 -eq "${exit_code}" ]
    then 
@@ -414,7 +420,7 @@ else
                    
       echo 'Cleared remote directory.'
    else
-      echo 'ERROR: configuring SSL in the load balancer box.' 
+      echo 'ERROR: configuring load balancer''s SSL.' 
       exit 1
    fi       
 fi

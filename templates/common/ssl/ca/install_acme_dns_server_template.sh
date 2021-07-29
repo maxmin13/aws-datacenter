@@ -15,8 +15,8 @@ set +o xtrace
 # the effects are limited to the subdomain TXT record in question.
 ###################################################################
 
-ADMIN_INST_USER_NM='SEDadmin_instance_user_nmSED'
-GIT_ACME_DNS_URL='SEDacme_dns_urlSED'
+ADMIN_INST_USER_NM='SEDadmin_inst_user_nmSED'
+ACME_DNS_GIT_REPOSITORY_URL='SEDacme_dns_git_repository_urlSED'
 ACME_DNS_CONFIG_DIR='SEDacme_dns_config_dirSED'
 ACME_DNS_BINARY_DIR='SEDacme_dns_binary_dirSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -45,7 +45,7 @@ export CGO_CFLAGS="-g -O2 -Wno-return-local-addr"
 export GOPATH=/tmp/acme-dns
 
 rm -rf acme-dns
-git clone "${GIT_ACME_DNS_URL}"
+git clone "${ACME_DNS_GIT_REPOSITORY_URL}"
 
 echo 'Building acme-dns server ...'
 
@@ -81,16 +81,21 @@ systemctl enable acme-dns.service
 echo 'Starting acme-dns service ...'
 
 systemctl start acme-dns.service
-systemctl status acme-dns.service
 
 echo 'acme-dns service started.'
 
-# Change ownership in the script directory otherwise it is not possible to delete 
-# them from dev machine.
-chown -R "${ADMIN_INST_USER_NM}":"${ADMIN_INST_USER_NM}" ./
-
 amazon-linux-extras disable epel -y > /dev/null 2>&1
 
-echo 'Acme DNS server installed.'
+is_active="$(systemctl is-active acme-dns)"
+
+echo ************************** is_active $is_active
+
+if [[ 'active' == "${is_active}" ]]
+then
+   echo 'Acme-dns server up and running.'
+else
+   echo 'ERROR: acme-dns server in not running.'
+   exit 1
+fi
 
 exit 0

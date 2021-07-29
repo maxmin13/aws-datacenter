@@ -179,8 +179,7 @@ ssh_run_remote_command_as_root "${remote_dir}/install_admin_website.sh" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
-    "${ADMIN_INST_USER_PWD}" 
-      
+    "${ADMIN_INST_USER_PWD}"      
 exit_code=$?	
 set -e
 
@@ -198,7 +197,6 @@ then
    echo 'Cleared remote directory.'
 else
    echo 'ERROR: installing Admin website.'
-   
    exit 1
 fi
             

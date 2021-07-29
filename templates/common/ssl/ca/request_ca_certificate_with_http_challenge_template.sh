@@ -45,8 +45,11 @@ CRT_EMAIL_ADDRESS='SEDcrt_email_addressSED'
 CRT_DOMAIN='SEDcrt_domainSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-
 echo 'Requesting SSL certificates to Let''Encrypt.'
+
+##
+## Apache web server.
+##
 
 # Make Apache listen on Certbot port.
 sed -i "s/^##certboot_anchor##/Listen ${APACHE_CERTBOT_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
@@ -76,7 +79,9 @@ systemctl restart httpd
 
 echo 'Apache web server restarted and ready for Certbot.'
 
-# Install and run Certbot
+##
+## Certbot.
+##
 
 echo 'Installing Certbot SSL agent ...'
 
@@ -92,6 +97,10 @@ echo "Requesting a certificate to Let's Encrypt Certification Autority ..."
 ## the command line. 
 ## In addition, you’ll need to specify '--webroot-path' or '-w' with the top-level directory 
 ## (“web root”) containing the files served by your webserver.
+
+##
+## Certificate.
+##
 
 set +e 
     
@@ -112,6 +121,10 @@ find /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}" -type d -exec chown root:root {
 find /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}" -type d -exec chmod 500 {} +
 find /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}" -type f -exec chown root:root {} +
 find /etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}" -type f -exec chmod 400 {} +
+
+##
+## Apache web server.
+##
 
 # Disable Certbot HTTP virtual host.
 rm "${APACHE_SITES_ENABLED_DIR}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}"

@@ -24,8 +24,7 @@ echo
 lbal_dns_nm="${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
 
 lbal_record_dns_nm="$(get_loadbalancer_record_dns_name_value \
-   "${LBAL_INST_DNS_SUB_DOMAIN}" \
-   "${MAXMIN_TLD}")" 
+   "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")" 
        
 if [[ -z "${lbal_record_dns_nm}" ]]
 then
@@ -36,8 +35,7 @@ else
 fi
 
 lbal_record_hz_id="$(get_loadbalancer_record_hosted_zone_value \
-   "${LBAL_INST_DNS_SUB_DOMAIN}" \
-   "${MAXMIN_TLD}")" 
+   "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")" 
 
 if [[ -z "${lbal_record_hz_id}" ]]
 then
@@ -48,7 +46,7 @@ fi
 
 admin_dns_nm="${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
 
-admin_record_ip_addr="$(get_record_value 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+admin_record_ip_addr="$(get_record_value 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")"
 
 if [[ -z "${admin_record_ip_addr}" ]]
 then
@@ -97,8 +95,7 @@ then
    echo 'WARN: found load balance record, deleting ...'
    
    request_id="$(delete_loadbalancer_record \
-       "${LBAL_INST_DNS_SUB_DOMAIN}" \
-       "${MAXMIN_TLD}" \
+       "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" \
        "${lbal_record_dns_nm}" \
        "${lbal_record_hz_id}")" 
                                         
@@ -113,8 +110,7 @@ target_lbal_dns_nm="$(get_loadbalancer_dns_name "${LBAL_INST_NM}")"
 target_lbal_dns_hosted_zone_id="$(get_loadbalancer_hosted_zone_id "${LBAL_INST_NM}")"
 
 request_id="$(create_loadbalancer_record \
-    "${LBAL_INST_DNS_SUB_DOMAIN}" \
-    "${MAXMIN_TLD}" \
+    "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" \
     "${target_lbal_dns_nm}" \
     "${target_lbal_dns_hosted_zone_id}")"   
                                        
@@ -126,7 +122,7 @@ echo "Load balancer record ${lbal_dns_nm} created (${status})."
 ## Admin website admin.maxmin.it record.
 ##
 
-has_admin_record="$(check_hosted_zone_has_record 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+has_admin_record="$(check_hosted_zone_has_record 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")"
 
 if [[ 'true' == "${has_admin_record}" ]]
 then
@@ -134,8 +130,7 @@ then
 
    request_id="$(delete_record \
        'A' \
-       "${ADMIN_INST_DNS_SUB_DOMAIN}" \
-       "${MAXMIN_TLD}" \
+       "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" \
        "${admin_record_ip_addr}")"  
                                  
    status="$(get_record_request_status "${request_id}")" 
@@ -149,8 +144,7 @@ target_admin_eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST
 
 request_id="$(create_record \
     'A' \
-    "${ADMIN_INST_DNS_SUB_DOMAIN}" \
-    "${MAXMIN_TLD}" \
+    "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" \
     "${target_admin_eip}")"        
                           
 status="$(get_record_request_status "${request_id}")"  

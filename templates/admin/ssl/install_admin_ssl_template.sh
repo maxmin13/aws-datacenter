@@ -58,6 +58,7 @@ WEBSITE_HTTPS_PORT='SEDwebsite_https_portSED'
 WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE='SEDwebsite_http_virtualhost_fileSED'
 WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE='SEDwebsite_https_virtualhost_fileSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
+ADMIN_INST_USER_NM='SEDadmin_inst_user_nmSED'
 admin_log_file='/var/log/admin_ssl_install.log'
 
 ############### TODO error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
@@ -65,6 +66,10 @@ admin_log_file='/var/log/admin_ssl_install.log'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ############### 
 ############### 
+
+### TODO pass SEDadmin_inst_user_nmSED value
+# Change ownership in the script directory to delete it from dev machine.
+####trap "chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}" ERR EXIT
 
 echo 'Configuring Admin box SSL ...'
  

@@ -22,16 +22,21 @@ LOGANALYZER_ARCHIVE='SEDloganalyzer_archiveSED'
 LOGANALYZER_DOCROOT_ID='SEDloganalyzer_docroot_idSED'
 LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE='SEDloganalyzer_http_virtualhost_fileSED'
 LOGANALYZER_HTTP_PORT='SEDloganalyzer_http_portSED'
+ADMIN_INST_USER_NM='SEDadmin_inst_user_nmSED'
 admin_log_file='/var/log/admin_box_install.log'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+cd "${script_dir}" || exit
+
+### TODO pass SEDadmin_inst_user_nmSED value
+# Change ownership in the script directory to delete it from dev machine.
+####trap "chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}" ERR EXIT
 
 amazon-linux-extras install epel -y >> "${admin_log_file}" 2>&1
 
 ## 
 ## Rsyslog 
 ## 
-
-cd "${script_dir}" || exit
 
 cp -f /etc/rsyslog.conf /etc/rsyslog.conf__backup
 cp -f rsyslog.conf /etc/rsyslog.conf

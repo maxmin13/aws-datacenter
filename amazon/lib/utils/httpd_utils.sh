@@ -111,7 +111,13 @@ function create_virtualhost_configuration_file()
    local base_docroot="${5}" 
    local doc_root_id="${6}" 
    
-   __add_virtualhost_element "${virtual_host_file}" "${address}" "${port}" "${domain}" "${base_docroot}" "${doc_root_id}"  
+   __add_virtualhost_element \
+       "${virtual_host_file}" \
+       "${address}" \
+       "${port}" \
+       "${domain}" \
+       "${base_docroot}" \
+       "${doc_root_id}"  
    
    return 0
 }
@@ -328,7 +334,7 @@ function __add_virtualhost_element()
    local domain="${4}"
    local base_docroot="${5}" 
    local doc_root_id="${6}" 
-   local virtual_host_element   
+   local virtual_host_element=''   
 
    cat <<-EOF > "${virtual_host_file}"
 	<VirtualHost SEDip_addressSED:SEDip_portSED>
@@ -338,11 +344,11 @@ function __add_virtualhost_element()
 	EOF
 
    virtual_host_element="$(sed -e "s/SEDip_addressSED/${address}/g" \
-               -e "s/SEDip_portSED/${port}/g" \
-               -e "s/SEDrequest_domainSED/${domain}/g" \
-               -e "s/SEDbase_docroot_dirSED/$(escape "${base_docroot}")/g" \
-               -e "s/SEDdoc_root_idSED/$(escape "${doc_root_id}")/g" \
-                  "${virtual_host_file}")" 
+       -e "s/SEDip_portSED/${port}/g" \
+       -e "s/SEDrequest_domainSED/${domain}/g" \
+       -e "s/SEDbase_docroot_dirSED/$(escape "${base_docroot}")/g" \
+       -e "s/SEDdoc_root_idSED/$(escape "${doc_root_id}")/g" \
+          "${virtual_host_file}")" 
                                                  
    echo "${virtual_host_element}" > "${virtual_host_file}"
    
@@ -360,7 +366,7 @@ function __add_directory_element()
    local virtual_host_file="${1}"
    local base_docroot="${2}"
    local doc_root_id="${3}" 
-   local directory_element 
+   local directory_element='' 
    
    directory_element="$(__build_directory_element "${base_docroot}" "${doc_root_id}")"
    
@@ -380,7 +386,7 @@ function __remove_directory_element()
    local virtual_host_file="${1}"
    local base_docroot="${2}"
    local doc_root_id="${3}"
-   local directory_element
+   local directory_element=''
    
    sed -i "/<Directory $(escape "${base_docroot}"/"${doc_root_id}"/public_html)>/,/<\/Directory>/d" "${virtual_host_file}"
 
@@ -398,7 +404,7 @@ function __add_rewrite_rule_directive()
    local virtual_host_file="${1}" 
    local pattern="${2}"
    local substitution="${3}"    
-   local rewrite_rule_directive 
+   local rewrite_rule_directive='' 
    
    # Add the directive before the </VirtualHost> element.
    rewrite_rule_directive="$(__build_rewrite_rule_directive "${pattern}" "${substitution}")"
@@ -420,7 +426,7 @@ function __add_rewrite_cond_directive()
    local virtual_host_file="${1}"
    local test_string="${2}"
    local cond_pattern="${3}"     
-   local rewrite_cond_directive 
+   local rewrite_cond_directive=''
    
    # Add the directive before the </VirtualHost> element.
    rewrite_cond_directive="$(__build_rewrite_cond_directive "${test_string}" "${cond_pattern}")"
@@ -477,7 +483,7 @@ function __add_server_alias_directive()
    
    local virtual_host_file="${1}"
    local server_alias_nm="${2}"      
-   local directive
+   local directive=''
    
    directive="$(__build_server_alias_directive "${server_alias_nm}")"
      
@@ -503,12 +509,13 @@ function __add_alias_directive()
    local base_docroot="${3}"
    local doc_root_id="${4}"
    local aliased_nm="${5}"      
-   local directive
+   local directive=''
    
-   directive="$(__build_alias_directive "${alias_nm}" \
-                                        "${base_docroot}" \
-                                        "${doc_root_id}" \
-                                        "${aliased_nm}")"
+   directive="$(__build_alias_directive \
+       "${alias_nm}" \
+       "${base_docroot}" \
+       "${doc_root_id}" \
+       "${aliased_nm}")"
      
    # Add the Alias directive before the </VirtualHost> element.
    sed -i "/^<\/VirtualHost>/i ${directive}" "${virtual_host_file}"
@@ -544,13 +551,13 @@ function __build_directory_element()
 
    local base_docroot="${1}"
    local doc_root_id="${2}" 
-   local template
+   local template=''
    
    template='<Directory SEDbase_docroot_dirSED/SEDdoc_root_idSED/public_html>\n   Require all granted\n</Directory>\n'
 
    directory_element="$(printf '%b\n' "${template}" \
-                        | sed -e "s/SEDdoc_root_idSED/${doc_root_id}/g" \
-                              -e "s/SEDbase_docroot_dirSED/$(escape "${base_docroot}")/g")"               
+       | sed -e "s/SEDdoc_root_idSED/${doc_root_id}/g" \
+             -e "s/SEDbase_docroot_dirSED/$(escape "${base_docroot}")/g")"               
 
    echo "${directory_element}"
    
@@ -567,7 +574,7 @@ function __build_server_alias_directive()
    
    local server_alias_nm="${1}"
    local template='ServerAlias SEDpar1SED'
-   local directive 
+   local directive=''
   
    directive="$(__build_directive "${template}" "${server_alias_nm}")"           
    echo "${directive}"
@@ -588,13 +595,15 @@ function __build_alias_directive()
    local doc_root_id="${3}"
    local aliased_nm="${4}"
    local template='Alias /SEDpar1SED SEDpar2SED/SEDpar3SED/public_html/SEDpar4SED'
-   local directive 
+   local directive='' 
   
-   directive="$(__build_directive "${template}" \
-                                  "${alias_nm}" \
-                                  "${base_docroot}" \
-                                  "${doc_root_id}" \
-                                  "${aliased_nm}")"           
+   directive="$(__build_directive \
+       "${template}" \
+       "${alias_nm}" \
+       "${base_docroot}" \
+       "${doc_root_id}" \
+       "${aliased_nm}")" 
+                 
    echo "${directive}"
 
    return 0                                                        
@@ -611,11 +620,13 @@ function __build_rewrite_cond_directive()
    local test_string="${1}"
    local cond_pattern="${2}"
    local template='RewriteCond SEDpar1SED SEDpar2SED'
-   local directive  
+   local directive=''  
  
-   directive="$(__build_directive "${template}" \
-                                  "${test_string}" \
-                                  "${cond_pattern}")"
+   directive="$(__build_directive \
+       "${template}" \
+       "${test_string}" \
+       "${cond_pattern}")"
+                                  
    echo "${directive}"
 
    return 0
@@ -632,11 +643,13 @@ function __build_rewrite_rule_directive()
    local pattern="${1}"
    local substitution="${2}"
    local template='RewriteRule SEDpar1SED SEDpar2SED [L]'
-   local directive
+   local directive=''
 
-   directive="$(__build_directive "${template}" \
-                                  "${pattern}" \
-                                  "${substitution}")"
+   directive="$(__build_directive \
+       "${template}" \
+       "${pattern}" \
+       "${substitution}")"
+       
    echo "${directive}"
 
    return 0

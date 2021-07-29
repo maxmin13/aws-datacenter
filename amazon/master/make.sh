@@ -17,7 +17,7 @@ source "${PROJECT_DIR}"/amazon/lib/utils/httpd_utils.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/rds.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/ec2.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/elb.sh
-source "${PROJECT_DIR}"/amazon/lib/aws/iam.sh
+source "${PROJECT_DIR}"/amazon/lib/aws/iam/iam.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53/route53.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
@@ -41,15 +41,7 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi
-   
-   
-   
-   . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh                     
-exit
-exit
-exit
-
-   
+         
    echo
        
    # Create the datacenter.
@@ -68,6 +60,7 @@ exit
    . "${PROJECT_DIR}"/amazon/admin/instance/make.sh               
    . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1   
    
+   # TODO only development works.
    ####. "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh                     
 
    # Deploy database objects.

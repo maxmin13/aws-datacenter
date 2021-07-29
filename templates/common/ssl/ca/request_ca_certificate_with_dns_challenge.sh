@@ -17,21 +17,18 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ############### 
 ############### 
 
-cd "${script_dir}" || exit
-
-# Change ownership in the script directory to delete it from dev machine.
-trap "chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}" ERR EXIT
-
 ##
-## AWS client.
+## aws client.
 ##
 
-echo 'Installing AWS client ...'
+cd "${script_dir}" || exit 1
+
+echo 'Installing aws client ...'
 
 chmod +x install_aws_cli.sh
 ./install_aws_cli.sh >> "${lbal_log_file}" 2>&1 
 
-echo 'AWS client installed.'
+echo 'aws client installed.'
 
 ##
 ## acme-dns server.
@@ -48,10 +45,6 @@ echo 'acme-dns installed.'
 
 echo 'Registering www.maxmin.it domain with acme-dns server.'
 
-################# TODO 
-################# TODO 
-################# TODO 
-################# TODO FROM HERE
 registration_resp="$(curl -X POST https://www.maxmin.it/register)"
 
 if ! jq -e . > /dev/null 2>&1 <<< "${registration_resp}"

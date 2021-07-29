@@ -15,8 +15,15 @@ WEBSITE_HTTP_PORT='SEDwebsite_http_portSED'
 WEBSITE_HTTPS_PORT='SEDwebsite_https_portSED'
 WEBSITE_ARCHIVE='SEDwebsite_archiveSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
+ADMIN_INST_USER_NM='SEDadmin_inst_user_nmSED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 admin_log_file='/var/log/admin_website_install.log'
+
+cd "${script_dir}" || exit
+
+### TODO pass SEDadmin_inst_user_nmSED value
+# Change ownership in the script directory to delete it from dev machine.
+####trap "chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}" ERR EXIT
 
 # Check if SSL is installed.
 ssl_enabled='false'

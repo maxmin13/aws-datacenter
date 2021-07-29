@@ -10,7 +10,8 @@ ENV='production'
 ## Data on any other EBS volumes persists after instance termination by default.
 AWS_BASE_IMG_ID='ami-058b1b7fe545997ae' 
 AWS_CHECK_IP_URL='http://checkip.amazonaws.com'
-ACME_GIT_DNS_URL='https://github.com/joohoi/acme-dns'
+ACME_DNS_GIT_REPOSITORY_URL='https://github.com/joohoi/acme-dns'
+AWS_CLI_REPOSITORY_URL='https://awscli.amazonaws.com'
 
 ## ********** ##
 ## App domain ##
@@ -80,7 +81,7 @@ LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 ## Admin box ##
 ## ********* ##
 
-ADMIN_INST_NM='admin-box2'
+ADMIN_INST_NM='admin-box'
 ADMIN_INST_PRIVATE_IP='10.0.0.10'
 ADMIN_INST_HOSTNAME='admin.maxmin.it'
 ADMIN_INST_USER_NM='admin-user'

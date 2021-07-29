@@ -154,16 +154,16 @@ function create_user()
 }
 
 #===============================================================================
-# 
+# Deletes the specified managed policy.
 #
 # Globals:
 #  None
 # Arguments:
-# +name -- the group name.
+# +name -- the policy name.
 # Returns:      
-#  None  
+#  None.  
 #===============================================================================
-function create_user_group()
+function delete_route53_policy()
 {
    if [[ $# -lt 1 ]]
    then
@@ -172,68 +172,93 @@ function create_user_group()
    fi
 
    local name="${1}"
-   
-   aws iam create-group --group-name "${name}" 
-   
+   local arn=''
+
+   arn="$(aws iam list-policies --query "Policies[? PolicyName=='${name}' ].Arn" --output text)"
+
+   if [[ -n "${arn}" ]]
+   then
+      echo 'deleting in delete_route_policy'
+      aws iam delete-policy --policy-arn "${arn}"
+   else 
+      echo 'not found in delete_route_policy'
+   fi
+       
    return 0
 }
 
 #===============================================================================
-# 
+# Creates a new managed policy for your AWS account that allows the users to 
+# create and delete records in Route 53.
 #
 # Globals:
 #  None
 # Arguments:
-# +name            -- the policy name.
-# +description     -- the policy description.
-# +policy_document -- the JSON policy document that you want to use as the 
-#                     content for the new policy.
+# +name -- the policy name.
 # Returns:      
-#  None  
+#  the policy ARN or a blanc string if there is an error.  
 #===============================================================================
-function create_policy()
+function create_route53_policy()
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
 
    local name="${1}"
-   local description="${2}"
-   local policy_document="${3}"
+   local arn=''
+   local description='Create/delete Route 53 records.'
+   local policy_document=''
+
+   policy_document="$(__build_route53_policy_document)"       
+        
+   set +e        
+   arn="$(aws iam create-policy \
+          --policy-name "${name}" \
+          --description "${description}" \
+          --policy-document "${policy_document}" \
+          --query "Policy.Arn" \
+          --output text 2>/dev/null)"    
+   set -e
    
-   aws iam create-policy --policy-name "${name}" \
-       --description "${description}" \
-       --policy-document "${policy_document}"
+   echo "${arn}"    
    
    return 0
 }
 
 #===============================================================================
-# 
+# Create a policy document that allows the user to create and delete records in
+# Route 53.
 #
 # Globals:
 #  None
 # Arguments:
-# +name            -- the policy name.
+#  None
 # Returns:      
-#  None  
+#  A policy JSON document for accessing Route 53.  
 #===============================================================================
-function create_policy()
+function __build_route53_policy_document()
 {
-   if [[ $# -lt 3 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 1
-   fi
-
-   local name="${1}"
-
-   
-   aws iam create-policy --policy-name "${name}" \
-       --description "${description}" \
-       --policy-document "${policy_document}"
+   policy_document=$(cat <<-'EOF' 
+{
+   "Version":"2012-10-17",
+   "Statement":[
+      {
+         "Effect":"Allow",
+         "Action":[
+            "route53:DeleteTrafficPolicy",
+            "route53:CreateTrafficPolicy"
+         ],
+         "Resource":"*"
+      }
+   ]
+}      
+	EOF
+   )
+    
+   echo "${policy_document}"
    
    return 0
 }
+

@@ -436,15 +436,13 @@ ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin.sh" \
     "${ADMIN_INST_USER_NM}" \
     "${ADMIN_INST_USER_PWD}"
 
-set +e   
-          
+set +e      
 ssh_run_remote_command_as_root "${remote_dir}/install_admin.sh" \
     "${key_pair_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
-    "${ADMIN_INST_USER_PWD}"   
-                     
+    "${ADMIN_INST_USER_PWD}"                 
 exit_code=$?
 set -e
 

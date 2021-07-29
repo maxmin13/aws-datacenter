@@ -1,7 +1,7 @@
-#!/usr/bin/bash
+#!/usr/bin/bash 
 
-set -o errexit
-## turn on -e in subshells
+set -e
+# command-substitution-inherit_errexit.sh
 shopt -s inherit_errexit
 set -o pipefail
 set -o nounset
@@ -236,31 +236,26 @@ function get_hosted_zone_name_servers()
 # Globals:
 #  None
 # Arguments:
-# +record_type    -- the record type, eg: A, NS, or aws-alias.
-# +sub_domain_nm  -- the record sub-domain name, eg: www.
-# +hosted_zone_nm -- the hosted zone name, this is the name you have 
-#                    registered with your DNS registrar (eg: maxmin.it).
-#                    It is a fully qualified domain name (RFC 1034), must end 
-#                    with a dot, eg: maxmin.it.
+# +record_type -- the record type, eg: A, NS, or aws-alias.
+# +domain_nm   -- the fully qualified domain name, eg: 'www.maxmin.'
 # Returns:      
 #  true/false value.  
 #===============================================================================
 function check_hosted_zone_has_record() 
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
    
    local record_type="${1}"
-   local sub_domain_nm="${2}"
-   local hosted_zone_nm="${3}"
+   local domain_nm="${2}"
    local has_record='false'
    local record=''
       
-   record="$(get_record_value "${record_type}" "${sub_domain_nm}" "${hosted_zone_nm}")"   
-   
+   record="$(get_record_value "${record_type}" "${domain_nm}")"   
+      
    if [[ -n "${record}" ]]
    then
       has_record='true'
@@ -280,57 +275,46 @@ function check_hosted_zone_has_record()
 # Globals:
 #  None
 # Arguments:
-# +record_type    -- the record type, eg: A, NS, or aws-alias.
-# +sub_domain_nm  -- the record sub-domain name, eg: www.
-# +hosted_zone_nm -- the hosted zone name, this is the name you have 
-#                    registered with your DNS registrar (eg: maxmin.it).
-#                    It is a fully qualified domain name (RFC 1034), must end 
-#                    with a dot, eg: maxmin.it.
+# +record_type -- the record type, eg: A, NS, or aws-alias.
+# +domain_nm   -- the fully qualified domain name, eg: 'www.maxmin.'
 # Returns:      
 #  the record value.  
 #===============================================================================
 function get_record_value() 
 {
-   if [[ $# -lt 3 ]]
+   if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
    
    local record_type="${1}"
-   local sub_domain_nm="${2}"
-   local hosted_zone_nm="${3}"
-   local domain=''
+   local domain_nm="${2}"
    local record=''
+   local hosted_zone_nm=''
    local hosted_zone_id=''
-   
-   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
-   
-   if [[ -z "${hosted_zone_id}" ]]
-   then
-      # hosted zone not found.
-      echo "${record}"
-      return 0
-   fi
-      
-   if [[ -n "${sub_domain_nm}" ]]
-   then
-      domain="${sub_domain_nm}"."${hosted_zone_nm}"
-   else
-      domain="${hosted_zone_nm}"
-   fi 
 
+   hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')
+   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+
+   if [[ -z "${hosted_zone_id}" ]]  
+   then 
+      # Hosted zone not found.
+      echo "${hosted_zone_id}"
+      return 0
+   fi 
+      
    if [[ 'aws-alias' == "${record_type}" ]]
    then
       record="$(aws route53 list-resource-record-sets \
            --hosted-zone-id "${hosted_zone_id}" \
-           --query "ResourceRecordSets[? Type == 'A' && Name == '${domain}' ].AliasTarget.DNSName" \
+           --query "ResourceRecordSets[? Type == 'A' && Name == '${domain_nm}' ].AliasTarget.DNSName" \
            --output text)"
     
    else
       record="$(aws route53 list-resource-record-sets \
            --hosted-zone-id "${hosted_zone_id}" \
-           --query "ResourceRecordSets[? Type == '${record_type}' && Name == '${domain}' ].ResourceRecords[*].Value" \
+           --query "ResourceRecordSets[? Type == '${record_type}' && Name == '${domain_nm}' ].ResourceRecords[*].Value" \
            --output text)"
    fi                  
            
@@ -348,7 +332,7 @@ function get_record_value()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm    -- the DNS domain name. 
+# +domain_nm    -- the fully qualified domain name, eg: 'www.maxmin.'
 # +record_value -- the value associated to the domain, eg: an IP address in case
 #                  of a type A record, a domain name in case of a NS type 
 #                  record.
@@ -371,25 +355,29 @@ function __create_record_change_batch()
    local record_value="${4}"
    local comment="${5}"
    local template=''
+   local change_batch=''
    
    template=$(cat <<-'EOF'
         {
            "Comment":"SEDcommentSED",
-           "Changes":[
-              {
-                 "Action":"SEDactionSED",
-                 "ResourceRecordSet":{
-                    "Name":"SEDdomain_nameSED",
-                    "Type":"SEDrecord_typeSED",
-                    "TTL":120,
-                    "ResourceRecords":[
+           "Changes":
+              [
+                 {
+                    "Action":"SEDactionSED",
+                    "ResourceRecordSet":
                        {
-                          "Value":"SEDrecord_valueSED"
+                          "Name":"SEDdomain_nameSED",
+                          "Type":"SEDrecord_typeSED",
+                          "TTL":120,
+                          "ResourceRecords":
+                             [
+                                {
+                                   "Value":"SEDrecord_valueSED"
+                                }
+                             ]
                        }
-                    ]
                  }
-              }
-           ]
+              ]
         }
 	EOF
    )
@@ -413,7 +401,7 @@ function __create_record_change_batch()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm             -- the DNS domain name.
+# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.'
 # +target_domain_nm      -- the DNS name referred by the alias.
 # +target_hosted_zone_id -- the identifier of the hosted zone of the DNS domain name.
 # +action                -- CREATE | DELETE
@@ -434,25 +422,29 @@ function __create_alias_record_change_batch()
    local record_value="${3}"
    local target_hosted_zone_id="${4}"
    local comment="${5}"
-   local template
+   local template=''
+   local change_batch=''
    
    template=$(cat <<-'EOF' 
         {
            "Comment":"SEDcommentSED",
-           "Changes":[
-              {
-                 "Action":"SEDactionSED",
-                 "ResourceRecordSet":{
-                    "Name":"SEDdomain_nmSED",
-                    "Type":"A",
-                    "AliasTarget":{
-                       "HostedZoneId":"SEDtarget_hosted_zone_idSED",
-                       "DNSName":"SEDrecord_valueSED",
-                       "EvaluateTargetHealth":false
-                    }
+           "Changes":
+              [
+                 {
+                    "Action":"SEDactionSED",
+                    "ResourceRecordSet":
+                       {
+                          "Name":"SEDdomain_nmSED",
+                          "Type":"A",
+                          "AliasTarget":
+                             {
+                                "HostedZoneId":"SEDtarget_hosted_zone_idSED",
+                                "DNSName":"SEDrecord_valueSED",
+                                "EvaluateTargetHealth":false
+                             }
+                       }
                  }
-              }
-           ]
+             ]
         }       
 	EOF
    )
@@ -484,11 +476,7 @@ function __create_alias_record_change_batch()
 # Arguments:
 # +action                -- either CREATE or DELETE.
 # +record_type           -- the type of the record, either A, NS or aws-alias.
-# +sub_domain_nm         -- the alias sub-domain name, eg. www.
-# +hosted_zone_nm        -- the hosted zone name, this is the name you have 
-#                           registered with your DNS registrar (eg: maxmin.it).
-#                           It is a fully qualified domain name (RFC 1034), must end 
-#                           with a dot, eg: maxmin.it.
+# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.'
 # +record_value          -- the value of the record type, eg: an IP address, a  
 #                           DNS domain.
 # +target_hosted_zone_id -- optional, if the record is a aws-alias, the targeted
@@ -498,7 +486,7 @@ function __create_alias_record_change_batch()
 #===============================================================================
 function __create_delete_record()
 {
-   if [[ $# -lt 5 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
@@ -506,17 +494,17 @@ function __create_delete_record()
    
    local action="${1}"
    local record_type="${2}"
-   local sub_domain_nm="${3}"
-   local hosted_zone_nm="${4}"
-   local record_value="${5}"
+   local domain_nm="${3}"
+   local record_value="${4}"
    local target_hosted_zone_id=''
       
-   if [[ $# -eq 6 ]]
+   if [[ $# -eq 5 ]]
    then
-      target_hosted_zone_id="${6}"
+      target_hosted_zone_id="${5}"
    fi   
 
    local request_body=''
+   local hosted_zone_nm=''
    local hosted_zone_id=''
    local request_id=''
    local has_record='false'
@@ -533,25 +521,19 @@ function __create_delete_record()
       return 1
    fi   
    
+   hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
-   
-   if [[ -z "${hosted_zone_id}" ]]
-   then
-      # hosted zone not found.
-      return 1
-   fi
-      
-   if [[ -n "${sub_domain_nm}" ]]
-   then
-      domain="${sub_domain_nm}"."${hosted_zone_nm}"
-   else
-      domain="${hosted_zone_nm}"
-   fi  
-  
+
+   if [[ -z "${hosted_zone_id}" ]]  
+   then 
+      # Hosted zone not found.
+      echo "${hosted_zone_id}"
+      return 0
+   fi 
+    
    has_record="$(check_hosted_zone_has_record \
        "${record_type}" \
-       "${sub_domain_nm}" \
-       "${hosted_zone_nm}" 
+       "${domain_nm}"  
        )"
     
    if [[ 'CREATE' == "${action}" && 'false' == "${has_record}" ||
@@ -562,19 +544,21 @@ function __create_delete_record()
          # aws-alias record type.
          request_body="$(__create_alias_record_change_batch \
              "${action}" \
-             "${domain}" \
+             "${domain_nm}" \
              "${record_value}" \
              "${target_hosted_zone_id}" \
-             "AWS alias record for ${sub_domain_nm}.${hosted_zone_nm}")"         
+             "AWS alias record for ${domain_nm}")"         
       else      
          # A or NS record type.
          request_body="$(__create_record_change_batch \
              "${action}" \
              "${record_type}" \
-             "${domain}" \
+             "${domain_nm}" \
              "${record_value}" \
              "Record for ${record_value}")"         
       fi
+      
+      echo target_hosted_zone_id $target_hosted_zone_id
       
       request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")" 
    fi   
@@ -631,8 +615,7 @@ function get_record_request_status()
 # +hosted_zone_id -- the hosted zone identifier.
 # +request_body   -- the request details.
 # Returns:      
-#  the change batch request identifier or a blanc string if the request is not
-#  submitted.  
+#  the change batch request identifier or a blanc string if there is an error.  
 #=============================================================================== 
 function __submit_change_batch()
 {
@@ -646,13 +629,14 @@ function __submit_change_batch()
    local request_body="${2}"
    local request_id=''
 
-   ## Submit the changes in the batch to the hosted zone.
+   set +e
    request_id="$(aws route53 change-resource-record-sets \
        --hosted-zone-id "${hosted_zone_id}" \
        --change-batch "${request_body}" \
        --query ChangeInfo.Id \
-       --output text)"
-               
+       --output text 2>/dev/null)"
+   set -e
+         
    echo "${request_id}"
    
    return 0                              
@@ -679,12 +663,11 @@ function __get_hosted_zone_id()
       return 1
    fi
    
-   local domain_nm="${1}"
-   local hosted_zone_id
+   local hosted_zone_nm="${1}"
+   local hosted_zone_id=''
 
-   # The domain name must be followed by a dot.
    hosted_zone_id="$(aws route53 list-hosted-zones \
-       --query "HostedZones[?Name=='${domain_nm}'].{Id: Id}" \
+       --query "HostedZones[? Name=='${hosted_zone_nm}'].{Id: Id}" \
        --output text)"        
              
    echo "${hosted_zone_id}"          
@@ -700,28 +683,23 @@ function __get_hosted_zone_id()
 # Globals:
 #  None
 # Arguments:
-# +sub_domain_nm  -- the record sub-domain name, eg: www.
-# +hosted_zone_nm -- the hosted zone name, this is the name you have 
-#                    registered with your DNS registrar (eg: maxmin.it).
-#                    It is a fully qualified domain name (RFC 1034), must end 
-#                    with a dot, eg: maxmin.it.
+# +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.'
 # Returns:      
 #  true/false value.  
 #===============================================================================
 function check_hosted_zone_has_loadbalancer_record() 
 {
-   if [[ $# -lt 2 ]]
+   if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
    
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
+   local domain_nm="${1}"
    local has_record='false'
    local record=''
       
-   record="$(get_record_value 'aws-alias' "${sub_domain_nm}" "${hosted_zone_nm}")"   
+   record="$(get_record_value 'aws-alias' "${domain_nm}")"   
    
    if [[ -n "${record}" ]]
    then
@@ -743,40 +721,29 @@ function check_hosted_zone_has_loadbalancer_record()
 # Globals:
 #  None
 # Arguments:
-# +sub_domain_nm         -- the load balancer sub-domain name, eg. www.
-# +hosted_zone_nm        -- the hosted zone name, this is the name you have 
-#                           registered with the DNS registrar.
+# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.'
 # +record_value          -- the targeted load balancer domain name.
-# +target_hosted_zone_id -- the targeted load balancer hosted zone identifier. 
+# +target_hosted_zone_id -- the targeted load balancer hosted zone identifier.  
 # Returns:      
 #  the ID of the request of a blanc string if the request is not submitted.  
 #===============================================================================
 function create_loadbalancer_record()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
    
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
-   local record_value="${3}"
-   local target_hosted_zone_id="${4}"
-   local request_id=''
-   #local dualstack_domain_name="${record_value}"
-   
-   # dualstack to support both IPv4 and IPv6 addresses
-   #if [[ "${record_value}" != 'dualstack'* ]]
-   #then
-   #   dualstack_domain_name="dualstack.${record_value}"
-   #fi   
+   local domain_nm="${1}"
+   local record_value="${2}"
+   local target_hosted_zone_id="${3}"
+   local request_id=''    
 
    request_id="$(__create_delete_record \
        'CREATE' \
        'aws-alias' \
-       "${sub_domain_nm}" \
-       "${hosted_zone_nm}" \
+       "${domain_nm}" \
        "${record_value}" \
        "${target_hosted_zone_id}")"
 
@@ -795,9 +762,7 @@ function create_loadbalancer_record()
 # Globals:
 #  None
 # Arguments:
-# +sub_domain_nm         -- the load balancer sub-domain name, eg. www.
-# +hosted_zone_nm        -- the hosted zone name, this is the name you have 
-#                           registered with the DNS registrar.
+# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.'
 # +record_value          -- the targeted load balancer domain name.
 # +target_hosted_zone_id -- the targeted load balancer hosted zone identifier. 
 # Returns:      
@@ -805,23 +770,21 @@ function create_loadbalancer_record()
 #===============================================================================
 function delete_loadbalancer_record()
 {
-if [[ $# -lt 4 ]]
+if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
    
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
-   local record_value="${3}"
-   local target_hosted_zone_id="${4}"
+   local domain_nm="${1}"
+   local record_value="${2}"
+   local target_hosted_zone_id="${3}"
    local request_id=''
 
    request_id="$(__create_delete_record \
        'DELETE' \
        'aws-alias' \
-       "${sub_domain_nm}" \
-       "${hosted_zone_nm}" \
+       "${domain_nm}" \
        "${record_value}" \
        "${target_hosted_zone_id}")"
 
@@ -841,35 +804,31 @@ if [[ $# -lt 4 ]]
 # Globals:
 #  None
 # Arguments:
-# +sub_domain_nm  -- the record sub-domain name, eg. www
-# +hosted_zone_nm -- the hosted zone name, this is the name you have 
-#                    registered with your DNS registrar (eg: maxmin.it).
+# +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.'
 # Returns:      
 #  the targeted hosted zone ID.  
 #===============================================================================
 function get_loadbalancer_record_hosted_zone_value() 
 {
-   if [[ $# -lt 2 ]]
+   if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
    
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
+   local domain_nm="${1}"
+   local hosted_zone_nm=''
    local hosted_zone_id=''
    local target_hosted_zone_id=''
-   local domain=''
-   
-   domain="${sub_domain_nm}"."${hosted_zone_nm}"
-   
+      
+   hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')
    hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
-   
+     
    if [[ -n "${hosted_zone_id}" ]]
    then
       target_hosted_zone_id="$(aws route53 list-resource-record-sets \
           --hosted-zone-id "${hosted_zone_id}" \
-          --query "ResourceRecordSets[?contains(Name,'${domain}')].AliasTarget.HostedZoneId" \
+          --query "ResourceRecordSets[? contains(Name,'${domain_nm}')].AliasTarget.HostedZoneId" \
           --output text)"
    fi 
    
@@ -887,26 +846,23 @@ function get_loadbalancer_record_hosted_zone_value()
 # Globals:
 #  None
 # Arguments:
-# +sub_domain_nm  -- the record sub-domain name, eg. www
-# +hosted_zone_nm -- the hosted zone name, this is the name you have 
-#                    registered with your DNS registrar (eg: maxmin.it).
+# +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.'
 # Returns:      
 #  the DNS address where the alias record routes the traffic ti, or blanc if not 
 #  found.  
 #===============================================================================
 function get_loadbalancer_record_dns_name_value() 
 {
-   if [[ $# -lt 2 ]]
+   if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
    
-   local sub_domain_nm="${1}"
-   local hosted_zone_nm="${2}"
+   local domain_nm="${1}"
    local record_value=''
    
-   record_value="$(get_record_value 'aws-alias' "${sub_domain_nm}" "${hosted_zone_nm}")"
+   record_value="$(get_record_value 'aws-alias' "${domain_nm}")"
    
    echo "${record_value}"
    
@@ -921,25 +877,24 @@ function get_loadbalancer_record_dns_name_value()
 # Globals:
 #  None
 # Arguments:
-# +sub_domain_nm  -- the alias sub-domain name, eg. www.
-# +hosted_zone_nm -- the hosted zone name, this is the name you have 
-#                    registered with the DNS registrar.
-# +ip_address     -- the IP address associated to the domain name.
+# +record_type  -- the type of the record, either A, NS or aws-alias.
+# +domain_nm    -- the fully qualified domain name, eg: 'www.maxmin.'
+# +record_value -- the value of the record type, eg: an IP address, a  
+#                  DNS domain.
 # Returns:      
 #  the ID of the request of a blanc string if the request is not submitted.  
 #===============================================================================
 function create_record()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
    
    local record_type="${1}"
-   local sub_domain_nm="${2}"
-   local hosted_zone_nm="${3}"
-   local record_value="${4}"
+   local domain_nm="${2}"
+   local record_value="${3}"
    local request_id=''
     
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" ]]
@@ -951,8 +906,7 @@ function create_record()
    request_id="$(__create_delete_record \
        'CREATE' \
        "${record_type}" \
-       "${sub_domain_nm}" \
-       "${hosted_zone_nm}" \
+       "${domain_nm}" \
        "${record_value}")"
    
    echo "${request_id}"
@@ -968,25 +922,24 @@ function create_record()
 # Globals:
 #  None
 # Arguments:
-# +sub_domain_nm      -- the alias sub-domain name, eg. www
-# +hosted_zone_nm     -- the hosted zone name, this is the name you have 
-#                        registered with your DNS registrar.
-# +ip_address         -- the IP address associated to the domain name.
+# +record_type           -- the type of the record, either A, NS or aws-alias.
+# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.'
+# +record_value          -- the value of the record type, eg: an IP address, a  
+#                           DNS domain.
 # Returns:      
 #  the ID of the request.  
 #===============================================================================
 function delete_record()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
    
    local record_type="${1}"
-   local sub_domain_nm="${2}"
-   local hosted_zone_nm="${3}"
-   local record_value="${4}"
+   local domain_nm="${2}"
+   local record_value="${3}"
    local request_id=''
     
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" ]]
@@ -998,8 +951,7 @@ function delete_record()
    request_id="$(__create_delete_record \
        'DELETE' \
        "${record_type}" \
-       "${sub_domain_nm}" \
-       "${hosted_zone_nm}" \
+       "${domain_nm}" \
        "${record_value}")"
    
    echo "${request_id}"

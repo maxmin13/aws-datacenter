@@ -19,8 +19,7 @@ echo
 lbal_dns_nm="${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
 
 lbal_record_dns_nm="$(get_loadbalancer_record_dns_name_value \
-   "${LBAL_INST_DNS_SUB_DOMAIN}" \
-   "${MAXMIN_TLD}")" 
+   "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")" 
        
 if [[ -z "${lbal_record_dns_nm}" ]]
 then
@@ -31,8 +30,7 @@ else
 fi
 
 lbal_record_hz_id="$(get_loadbalancer_record_hosted_zone_value \
-   "${LBAL_INST_DNS_SUB_DOMAIN}" \
-   "${MAXMIN_TLD}")" 
+   "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")" 
 
 if [[ -z "${lbal_record_hz_id}" ]]
 then
@@ -42,8 +40,7 @@ else
 fi
 
 admin_dns_nm="${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
-
-admin_record_ip_addr="$(get_record_value 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+admin_record_ip_addr="$(get_record_value 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")"
 
 if [[ -z "${admin_record_ip_addr}" ]]
 then
@@ -59,15 +56,14 @@ echo
 ## load balancer www.admin.it record.
 ##
 
-has_lbal_record="$(check_hosted_zone_has_loadbalancer_record "${LBAL_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+has_lbal_record="$(check_hosted_zone_has_loadbalancer_record "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")"
 
 if [[ 'true' == "${has_lbal_record}" ]]
 then
    echo 'Deleting load balance record ...'
 
    request_id="$(delete_loadbalancer_record \
-       "${LBAL_INST_DNS_SUB_DOMAIN}" \
-       "${MAXMIN_TLD}" \
+       "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" \
        "${lbal_record_dns_nm}" \
        "${lbal_record_hz_id}")" 
                                          
@@ -80,7 +76,7 @@ fi
 ## Admin website admin.maxmin.it
 ##
 
-has_admin_record="$(check_hosted_zone_has_record 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}" "${MAXMIN_TLD}")"
+has_admin_record="$(check_hosted_zone_has_record 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}"."${MAXMIN_TLD}")"
 
 if [[ 'true' == "${has_admin_record}" ]]
 then
@@ -88,8 +84,7 @@ then
 
    request_id="$(delete_record \
        'A' \
-       "${ADMIN_INST_DNS_SUB_DOMAIN}" \
-       "${MAXMIN_TLD}" \
+       "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" \
        "${admin_record_ip_addr}")"  
                                  
    status="$(get_record_request_status "${request_id}")"  
