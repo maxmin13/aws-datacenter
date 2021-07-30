@@ -78,10 +78,10 @@ set +o xtrace
 # +caller_reference -- any unique string that identifies the request and that 
 #                      allows failed CreateHostedZone requests to be retried 
 #                      without the risk of executing the operation twice.
-# +comment          -- Any comments that you want to include about the hosted 
+# +comment          -- any comments that you want to include about the hosted 
 #                      zone.
 # Returns:      
-#  the hosted zone identifier.  
+#  the hosted zone identifier, prints the result in the stdout.  
 #===============================================================================
 function create_hosted_zone()
 {
@@ -135,7 +135,8 @@ function delete_hosted_zone()
    local hosted_zone_nm="${1}"
    local hosted_zone_id=''
    
-   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+   __get_hosted_zone_id "${hosted_zone_nm}"
+   hosted_zone_id="${__RESULT}"
    
    if [[ -n "${hosted_zone_id}" ]]
    then
@@ -158,7 +159,7 @@ function delete_hosted_zone()
 #                    It is a fully qualified domain name (RFC 1034), must end 
 #                    with a dot, eg: maxmin.it.
 # Returns:      
-#  true/false value.
+#  true/false value, returns the value in the __RESULT variable.
 #===============================================================================
 function check_hosted_zone_exists() 
 {
@@ -172,14 +173,15 @@ function check_hosted_zone_exists()
    local exists='false'
    local hosted_zone_id=''
    
-   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+   __get_hosted_zone_id "${hosted_zone_nm}"
+   hosted_zone_id="${__RESULT}"
    
    if [[ -n "${hosted_zone_id}" ]]
    then
       exists='true'
    fi
    
-   echo "${exists}"
+   eval "__RESULT='${exists}'"
    
    return 0
 }
@@ -199,6 +201,9 @@ function check_hosted_zone_exists()
 #  ex: ns-128.awsdns-16.com ns-1930.awsdns-49.co.uk ns-752.awsdns-30.net 
 #      ns-1095.awsdns-08.org,
 #  or blanc if not found.
+# Returns:      
+#  the list of the hosted zone's name servers, returns the value in the __RESULT 
+#  variable.
 #===============================================================================
 function get_hosted_zone_name_servers() 
 {
@@ -212,7 +217,8 @@ function get_hosted_zone_name_servers()
    local name_servers=''
    local hosted_zone_id=''
    
-   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+   __get_hosted_zone_id "${hosted_zone_nm}"
+   hosted_zone_id="${__RESULT}"
    
    if [[ -n "${hosted_zone_id}" ]]
    then
@@ -222,7 +228,7 @@ function get_hosted_zone_name_servers()
           --output text)"
    fi   
    
-   echo "${name_servers}"
+   eval "__RESULT='${name_servers}'"
    
    return 0
 }
@@ -239,7 +245,7 @@ function get_hosted_zone_name_servers()
 # +record_type -- the record type, eg: A, NS, or aws-alias.
 # +domain_nm   -- the fully qualified domain name, eg: 'www.maxmin.'
 # Returns:      
-#  true/false value.  
+#  true/false value, returns the value in the __RESULT variable.
 #===============================================================================
 function check_hosted_zone_has_record() 
 {
@@ -254,14 +260,15 @@ function check_hosted_zone_has_record()
    local has_record='false'
    local record=''
       
-   record="$(get_record_value "${record_type}" "${domain_nm}")"   
+   get_record_value "${record_type}" "${domain_nm}"
+   record="${__RESULT}" 
       
    if [[ -n "${record}" ]]
    then
       has_record='true'
    fi                 
-     
-   echo "${has_record}"
+    
+   eval "__RESULT='${has_record}'"
    
    return 0
 }
@@ -278,7 +285,7 @@ function check_hosted_zone_has_record()
 # +record_type -- the record type, eg: A, NS, or aws-alias.
 # +domain_nm   -- the fully qualified domain name, eg: 'www.maxmin.'
 # Returns:      
-#  the record value.  
+#  the record value, returns the value in the __RESULT variable.  
 #===============================================================================
 function get_record_value() 
 {
@@ -295,12 +302,13 @@ function get_record_value()
    local hosted_zone_id=''
 
    hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')
-   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+   __get_hosted_zone_id "${hosted_zone_nm}"
+   hosted_zone_id="${__RESULT}"
 
    if [[ -z "${hosted_zone_id}" ]]  
    then 
       # Hosted zone not found.
-      echo "${hosted_zone_id}"
+      eval "__RESULT=''"
       return 0
    fi 
       
@@ -318,7 +326,7 @@ function get_record_value()
            --output text)"
    fi                  
            
-   echo "${record}"
+   eval "__RESULT='${record}'"
    
    return 0
 }
@@ -339,7 +347,8 @@ function get_record_value()
 # +action       -- CREATE | DELETE
 # +comment      -- comment about the changes in this change batch request.
 # Returns:      
-#  a JSON string representing a change batch request for a type A record.  
+#  a JSON string representing a change batch request for a type A record, 
+#  returns the value in the __RESULT variable. 
 #=============================================================================== 
 function __create_record_change_batch()
 {
@@ -389,7 +398,7 @@ function __create_record_change_batch()
              -e "s/SEDcommentSED/${comment}/g" \
              -e "s/SEDactionSED/${action}/g")" 
    
-   echo "${change_batch}"
+   eval "__RESULT='${change_batch}'"
    
    return 0
 }
@@ -403,11 +412,14 @@ function __create_record_change_batch()
 # Arguments:
 # +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.'
 # +target_domain_nm      -- the DNS name referred by the alias.
-# +target_hosted_zone_id -- the identifier of the hosted zone of the DNS domain name.
+# +target_hosted_zone_id -- the identifier of the hosted zone of the DNS domain 
+#                           name.
 # +action                -- CREATE | DELETE
-# +comment               -- comment about the changes in this change batch request.
+# +comment               -- comment about the changes in this change batch 
+#                           request.
 # Returns:      
-#  the change batch containing the changes to apply to a hosted zone.  
+#  the change batch containing the changes to apply to a hosted zone, returns 
+#  the value in the __RESULT variable.   
 #=============================================================================== 
 function __create_alias_record_change_batch()
 {
@@ -456,7 +468,7 @@ function __create_alias_record_change_batch()
              -e "s/SEDcommentSED/${comment}/g" \
              -e "s/SEDactionSED/${action}/g")" 
    
-   echo "${change_batch}"
+   eval "__RESULT='${change_batch}'"
    
    return 0
 }
@@ -482,7 +494,8 @@ function __create_alias_record_change_batch()
 # +target_hosted_zone_id -- optional, if the record is a aws-alias, the targeted
 #                           hosted zone identifier.
 # Returns:      
-#  the ID of the request of a blanc string if the request is not submitted.  
+#  the ID of the request of a blanc string if the request is not submitted, 
+#  returns the value in the __RESULT variable.
 #===============================================================================
 function __create_delete_record()
 {
@@ -522,48 +535,40 @@ function __create_delete_record()
    fi   
    
    hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')
-   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+   __get_hosted_zone_id "${hosted_zone_nm}"
+   hosted_zone_id="${__RESULT}"
 
    if [[ -z "${hosted_zone_id}" ]]  
    then 
       # Hosted zone not found.
-      echo "${hosted_zone_id}"
+      eval "__RESULT=''"
       return 0
    fi 
     
-   has_record="$(check_hosted_zone_has_record \
-       "${record_type}" \
-       "${domain_nm}"  
-       )"
-    
+   check_hosted_zone_has_record "${record_type}" "${domain_nm}"
+   has_record="${__RESULT}"
+ 
    if [[ 'CREATE' == "${action}" && 'false' == "${has_record}" ||
          'DELETE' == "${action}" && 'true' == "${has_record}" ]]
    then
       if [[ 'aws-alias' == "${record_type}" ]]
       then       
          # aws-alias record type.
-         request_body="$(__create_alias_record_change_batch \
-             "${action}" \
-             "${domain_nm}" \
-             "${record_value}" \
-             "${target_hosted_zone_id}" \
-             "AWS alias record for ${domain_nm}")"         
+         __create_alias_record_change_batch \
+             "${action}" "${domain_nm}" "${record_value}" "${target_hosted_zone_id}" "AWS alias record for ${domain_nm}"
+         request_body="${__RESULT}"         
       else      
          # A or NS record type.
-         request_body="$(__create_record_change_batch \
-             "${action}" \
-             "${record_type}" \
-             "${domain_nm}" \
-             "${record_value}" \
-             "Record for ${record_value}")"         
+         __create_record_change_batch \
+             "${action}" "${record_type}" "${domain_nm}" "${record_value}" "Record for ${record_value}"
+         request_body="${__RESULT}"         
       fi
-      
-      echo target_hosted_zone_id $target_hosted_zone_id
-      
-      request_id="$(__submit_change_batch "${hosted_zone_id}" "${request_body}")" 
+
+      __submit_change_batch "${hosted_zone_id}" "${request_body}" 
+      request_id="${__RESULT}"
    fi   
    
-   echo "${request_id}"
+   eval "__RESULT='${request_id}'"
    
    return 0
 }
@@ -582,7 +587,8 @@ function __create_delete_record()
 # Arguments:
 # +request_id -- the ID of the request.
 # Returns:      
-#  the status of the request or a blanc string if the request is not found.  
+#  the status of the request or a blanc string if the request is not found, 
+#  returns the value in the __RESULT variable. 
 #===============================================================================
 function get_record_request_status()
 {
@@ -600,7 +606,7 @@ function get_record_request_status()
        --query ChangeInfo.Status --output text 2>/dev/null )"
    set -e
    
-   echo "${status}"
+   eval "__RESULT='${status}'"
    
    return 0
 }
@@ -615,7 +621,8 @@ function get_record_request_status()
 # +hosted_zone_id -- the hosted zone identifier.
 # +request_body   -- the request details.
 # Returns:      
-#  the change batch request identifier or a blanc string if there is an error.  
+#  the change batch request identifier or a blanc string if there is an error, 
+#  returns the value in the __RESULT variable.  
 #=============================================================================== 
 function __submit_change_batch()
 {
@@ -637,7 +644,7 @@ function __submit_change_batch()
        --output text 2>/dev/null)"
    set -e
          
-   echo "${request_id}"
+   eval "__RESULT='${request_id}'"
    
    return 0                              
 }
@@ -653,7 +660,8 @@ function __submit_change_batch()
 #                    It is a fully qualified domain name (RFC 1034), must end 
 #                    with a dot, eg: maxmin.it.
 # Returns:      
-#  the hosted zone identifier or an empty string if not found. 
+#  the hosted zone identifier or an empty string if not found, returns the value 
+#  in the __RESULT variable.  
 #===============================================================================
 function __get_hosted_zone_id()
 {
@@ -670,7 +678,7 @@ function __get_hosted_zone_id()
        --query "HostedZones[? Name=='${hosted_zone_nm}'].{Id: Id}" \
        --output text)"        
              
-   echo "${hosted_zone_id}"          
+   eval "__RESULT='${hosted_zone_id}'"          
    
    return 0
 }
@@ -685,7 +693,7 @@ function __get_hosted_zone_id()
 # Arguments:
 # +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.'
 # Returns:      
-#  true/false value.  
+#  true/false value, returns the value in the __RESULT variable.  
 #===============================================================================
 function check_hosted_zone_has_loadbalancer_record() 
 {
@@ -699,14 +707,15 @@ function check_hosted_zone_has_loadbalancer_record()
    local has_record='false'
    local record=''
       
-   record="$(get_record_value 'aws-alias' "${domain_nm}")"   
+   get_record_value 'aws-alias' "${domain_nm}"   
+   record="${__RESULT}"
    
    if [[ -n "${record}" ]]
    then
       has_record='true'
    fi                 
      
-   echo "${has_record}"
+   eval "__RESULT='${has_record}'"   
    
    return 0
 }
@@ -725,7 +734,8 @@ function check_hosted_zone_has_loadbalancer_record()
 # +record_value          -- the targeted load balancer domain name.
 # +target_hosted_zone_id -- the targeted load balancer hosted zone identifier.  
 # Returns:      
-#  the ID of the request of a blanc string if the request is not submitted.  
+#  the ID of the request of a blanc string if the request is not submitted,
+#  returns the value in the __RESULT variable.   
 #===============================================================================
 function create_loadbalancer_record()
 {
@@ -740,14 +750,11 @@ function create_loadbalancer_record()
    local target_hosted_zone_id="${3}"
    local request_id=''    
 
-   request_id="$(__create_delete_record \
-       'CREATE' \
-       'aws-alias' \
-       "${domain_nm}" \
-       "${record_value}" \
-       "${target_hosted_zone_id}")"
-
-   echo "${request_id}"
+   __create_delete_record \
+       'CREATE' 'aws-alias' "${domain_nm}" "${record_value}" "${target_hosted_zone_id}"
+   request_id="${__RESULT}"
+   
+   eval "__RESULT='${request_id}'" 
    
    return 0
 }
@@ -766,7 +773,8 @@ function create_loadbalancer_record()
 # +record_value          -- the targeted load balancer domain name.
 # +target_hosted_zone_id -- the targeted load balancer hosted zone identifier. 
 # Returns:      
-#  the ID of the request of a blanc string if the request is not submitted.  
+#  the ID of the request of a blanc string if the request is not submitted, 
+#  returns the value in the __RESULT variable.  
 #===============================================================================
 function delete_loadbalancer_record()
 {
@@ -781,14 +789,11 @@ if [[ $# -lt 2 ]]
    local target_hosted_zone_id="${3}"
    local request_id=''
 
-   request_id="$(__create_delete_record \
-       'DELETE' \
-       'aws-alias' \
-       "${domain_nm}" \
-       "${record_value}" \
-       "${target_hosted_zone_id}")"
+   __create_delete_record \
+       'DELETE' 'aws-alias' "${domain_nm}" "${record_value}" "${target_hosted_zone_id}"
+   request_id="${__RESULT}"    
 
-   echo "${request_id}"
+   eval "__RESULT='${request_id}'"
    
    return 0
 }
@@ -806,7 +811,7 @@ if [[ $# -lt 2 ]]
 # Arguments:
 # +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.'
 # Returns:      
-#  the targeted hosted zone ID.  
+#  the targeted hosted zone ID, returns the value in the __RESULT variable.  
 #===============================================================================
 function get_loadbalancer_record_hosted_zone_value() 
 {
@@ -821,8 +826,10 @@ function get_loadbalancer_record_hosted_zone_value()
    local hosted_zone_id=''
    local target_hosted_zone_id=''
       
-   hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')
-   hosted_zone_id="$(__get_hosted_zone_id "${hosted_zone_nm}")"
+   hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')  
+   
+   __get_hosted_zone_id "${hosted_zone_nm}"
+   hosted_zone_id="${__RESULT}"
      
    if [[ -n "${hosted_zone_id}" ]]
    then
@@ -832,7 +839,7 @@ function get_loadbalancer_record_hosted_zone_value()
           --output text)"
    fi 
    
-   echo "${target_hosted_zone_id}"
+   eval "__RESULT='${target_hosted_zone_id}'"
  
    return 0
 }
@@ -848,8 +855,8 @@ function get_loadbalancer_record_hosted_zone_value()
 # Arguments:
 # +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.'
 # Returns:      
-#  the DNS address where the alias record routes the traffic ti, or blanc if not 
-#  found.  
+#  the DNS address where the alias record routes the traffic to, or blanc if not 
+#  found, returns the value in the __RESULT variable. 
 #===============================================================================
 function get_loadbalancer_record_dns_name_value() 
 {
@@ -862,9 +869,10 @@ function get_loadbalancer_record_dns_name_value()
    local domain_nm="${1}"
    local record_value=''
    
-   record_value="$(get_record_value 'aws-alias' "${domain_nm}")"
+   get_record_value 'aws-alias' "${domain_nm}"
+   record="${__RESULT}"
    
-   echo "${record_value}"
+   eval "__RESULT='${record_value}'"
    
    return 0
 }
@@ -882,7 +890,8 @@ function get_loadbalancer_record_dns_name_value()
 # +record_value -- the value of the record type, eg: an IP address, a  
 #                  DNS domain.
 # Returns:      
-#  the ID of the request of a blanc string if the request is not submitted.  
+#  the ID of the request of a blanc string if the request is not submitted, 
+#  returns the value in the __RESULT variable.   
 #===============================================================================
 function create_record()
 {
@@ -903,13 +912,10 @@ function create_record()
       return 1
    fi     
 
-   request_id="$(__create_delete_record \
-       'CREATE' \
-       "${record_type}" \
-       "${domain_nm}" \
-       "${record_value}")"
+   __create_delete_record 'CREATE' "${record_type}" "${domain_nm}" "${record_value}" 
+   request_id="${__RESULT}"
    
-   echo "${request_id}"
+   eval "__RESULT='${request_id}'"
    
    return 0
 }
@@ -922,12 +928,12 @@ function create_record()
 # Globals:
 #  None
 # Arguments:
-# +record_type           -- the type of the record, either A, NS or aws-alias.
-# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.'
-# +record_value          -- the value of the record type, eg: an IP address, a  
-#                           DNS domain.
+# +record_type  -- the type of the record, either A, NS or aws-alias.
+# +domain_nm    -- the fully qualified domain name, eg: 'www.maxmin.'
+# +record_value -- the value of the record type, eg: an IP address, a  
+#                  DNS domain.
 # Returns:      
-#  the ID of the request.  
+#  the ID of the request, returns the value in the __RESULT variable.     
 #===============================================================================
 function delete_record()
 {
@@ -948,13 +954,10 @@ function delete_record()
       return 1
    fi     
 
-   request_id="$(__create_delete_record \
-       'DELETE' \
-       "${record_type}" \
-       "${domain_nm}" \
-       "${record_value}")"
+   __create_delete_record 'DELETE' "${record_type}" "${domain_nm}" "${record_value}"
+   request_id="${__RESULT}"
    
-   echo "${request_id}"
+   eval "__RESULT='${request_id}'"
    
    return 0
 }

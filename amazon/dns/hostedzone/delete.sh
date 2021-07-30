@@ -18,8 +18,8 @@ echo
 
 lbal_dns_nm="${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
 
-lbal_record_dns_nm="$(get_loadbalancer_record_dns_name_value \
-   "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")" 
+get_loadbalancer_record_dns_name_value "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+lbal_record_dns_nm="${__RESULT}"
        
 if [[ -z "${lbal_record_dns_nm}" ]]
 then
@@ -29,8 +29,8 @@ else
    echo "* Load balancer record DNS name: ${lbal_record_dns_nm}"
 fi
 
-lbal_record_hz_id="$(get_loadbalancer_record_hosted_zone_value \
-   "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")" 
+get_loadbalancer_record_hosted_zone_value "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" 
+lbal_record_hz_id="${__RESULT}"
 
 if [[ -z "${lbal_record_hz_id}" ]]
 then
@@ -40,7 +40,8 @@ else
 fi
 
 admin_dns_nm="${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
-admin_record_ip_addr="$(get_record_value 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")"
+get_record_value 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+admin_record_ip_addr="${__RESULT}"
 
 if [[ -z "${admin_record_ip_addr}" ]]
 then
@@ -56,18 +57,19 @@ echo
 ## load balancer www.admin.it record.
 ##
 
-has_lbal_record="$(check_hosted_zone_has_loadbalancer_record "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}")"
+check_hosted_zone_has_loadbalancer_record "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+has_lbal_record="${__RESULT}"
 
 if [[ 'true' == "${has_lbal_record}" ]]
 then
    echo 'Deleting load balance record ...'
 
-   request_id="$(delete_loadbalancer_record \
-       "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" \
-       "${lbal_record_dns_nm}" \
-       "${lbal_record_hz_id}")" 
-                                         
-   status="$(get_record_request_status "${request_id}")"
+   delete_loadbalancer_record \
+       "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" "${lbal_record_dns_nm}" "${lbal_record_hz_id}"
+   request_id="${__RESULT}"          
+                                   
+   get_record_request_status "${request_id}"
+   status="${__RESULT}"
 
    echo "Load balance record, deleted (${status})"
 fi
@@ -76,18 +78,18 @@ fi
 ## Admin website admin.maxmin.it
 ##
 
-has_admin_record="$(check_hosted_zone_has_record 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}"."${MAXMIN_TLD}")"
+check_hosted_zone_has_record 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}"."${MAXMIN_TLD}"
+has_admin_record="${__RESULT}"
 
 if [[ 'true' == "${has_admin_record}" ]]
 then
    echo 'Deleting Admin web site record ...'
 
-   request_id="$(delete_record \
-       'A' \
-       "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" \
-       "${admin_record_ip_addr}")"  
-                                 
-   status="$(get_record_request_status "${request_id}")"  
+   delete_record 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" "${admin_record_ip_addr}"
+   request_id="${__RESULT}"  
+                            
+   get_record_request_status "${request_id}" 
+   status="${__RESULT}"
    
    echo "Admin record, deleted (${status})"
 fi
@@ -96,7 +98,8 @@ fi
 ## hosted zone maxmin.it
 ## 
 
-exists="$(check_hosted_zone_exists "${MAXMIN_TLD}")"
+check_hosted_zone_exists "${MAXMIN_TLD}"
+exists="${__RESULT}"
 
 if [[ -n "${exists}" ]]
 then

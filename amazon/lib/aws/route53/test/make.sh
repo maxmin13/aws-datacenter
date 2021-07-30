@@ -28,29 +28,29 @@ counter=0
 ################################################# 
 function __helper_create_alias_record()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
 
    local domain_nm="${1}"
-   local hosted_zone_id="${2}"
-   local target_domain_nm="${3}"
-   local target_hosted_zone_id="${4}"
-   
-   # Check the record has already been created.    
-   if [[ -n "$(aws route53 list-resource-record-sets \
-       --hosted-zone-id "${hosted_zone_id}" \
+   local target_domain_nm="${2}"
+   local target_hosted_zone_id="${3}"
+   local request_id=''
+
+   if [[ -z "$(aws route53 list-resource-record-sets \
+       --hosted-zone-id "${HOSTED_ZONE_ID}" \
        --query "ResourceRecordSets[? Name=='${domain_nm}' ].Name" \
        --output text)" ]]
-   then
-      echo 'ERROR: creating test aws-alias record, the record is alredy created.'
-      return 1
-   fi     
+   then   
+       __helper_create_delete_alias_record \
+           'CREATE' "${domain_nm}" "${target_domain_nm}" "${target_hosted_zone_id}"
+       request_id="${__RESULT}"
+   fi
    
-   __helper_create_delete_alias_record 'CREATE' "${domain_nm}" "${hosted_zone_id}" "${target_domain_nm}" "${target_hosted_zone_id}"
-  
+   eval "__RESULT='${request_id}'"
+   
    return 0
 }
 
@@ -59,32 +59,35 @@ function __helper_create_alias_record()
 ################################################# 
 function __helper_delete_alias_record()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
 
    local domain_nm="${1}"
-   local hosted_zone_id="${2}"
-   local target_domain_nm="${3}"
-   local target_hosted_zone_id="${4}"
-   
-   # Check the record exists.    
+   local target_domain_nm="${2}"
+   local target_hosted_zone_id="${3}"
+   local request_id=''
+
    if [[ -n "$(aws route53 list-resource-record-sets \
-       --hosted-zone-id "${hosted_zone_id}" \
+       --hosted-zone-id "${HOSTED_ZONE_ID}" \
        --query "ResourceRecordSets[? Name=='${domain_nm}' ].Name" \
        --output text)" ]]
-   then
-      __helper_create_delete_alias_record 'DELETE' "${domain_nm}" "${hosted_zone_id}" "${target_domain_nm}" "${target_hosted_zone_id}"      
-   fi    
+   then   
+       __helper_create_delete_alias_record \
+          'DELETE' "${domain_nm}" "${target_domain_nm}" "${target_hosted_zone_id}"      
+       request_id="${__RESULT}" 
+   fi
+   
+   eval "__RESULT='${request_id}'"   
 
    return 0
 }
 
 function __helper_create_delete_alias_record()
 {
-   if [[ $# -lt 5 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
@@ -92,11 +95,11 @@ function __helper_create_delete_alias_record()
 
    local action="${1}"
    local domain_nm="${2}"
-   local hosted_zone_id="${3}"
-   local target_domain_nm="${4}"
-   local target_hosted_zone_id="${5}"
+   local target_domain_nm="${3}"
+   local target_hosted_zone_id="${4}"
    local comment="${RECORD_COMMENT}"
-   local template
+   local template=''
+   local request_id=''
    
    template=$(cat <<-'EOF' 
         {
@@ -126,11 +129,13 @@ function __helper_create_delete_alias_record()
            -e "s/SEDcommentSED/${comment}/g" \
            -e "s/SEDactionSED/${action}/g")" 
   
-   aws route53 change-resource-record-sets \
-       --hosted-zone-id "${hosted_zone_id}" \
+   request_id="$(aws route53 change-resource-record-sets \
+       --hosted-zone-id "${HOSTED_ZONE_ID}" \
        --change-batch "${request_body}" \
        --query ChangeInfo.Id \
-       --output text
+       --output text)"
+   
+   eval "__RESULT='${request_id}'"
    
    return 0
 }
@@ -141,29 +146,29 @@ function __helper_create_delete_alias_record()
 #################################################
 function __helper_create_record()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
 
    local domain_nm="${1}"
-   local hosted_zone_id="${2}"
-   local record_value="${3}"
-   local record_type="${4}"
-   
-   # Check the record has already been created.    
-   if [[ -n "$(aws route53 list-resource-record-sets \
-       --hosted-zone-id "${hosted_zone_id}" \
+   local record_value="${2}"
+   local record_type="${3}"
+   local request_id=''
+
+   if [[ -z "$(aws route53 list-resource-record-sets \
+       --hosted-zone-id "${HOSTED_ZONE_ID}" \
        --query "ResourceRecordSets[? Type=='${record_type}' && Name=='${domain_nm}' ].Name" \
        --output text)" ]]
-   then
-      echo 'ERROR: creating test record, the record is alredy created.'
-      return 1
-   else
-      __helper_create_delete_record 'CREATE' "${domain_nm}" "${hosted_zone_id}" "${record_value}" "${record_type}"  
-   fi     
-     
+   then   
+       __helper_create_delete_record \
+           'CREATE' "${domain_nm}" "${record_value}" "${record_type}"  
+       request_id="${__RESULT}" 
+   fi
+   
+   eval "__RESULT='${request_id}'"
+    
    return 0
 }
 
@@ -172,32 +177,34 @@ function __helper_create_record()
 ################################################# 
 function __helper_delete_record()
 {
-   if [[ $# -lt 4 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
    fi
 
    local domain_nm="${1}"
-   local hosted_zone_id="${2}"
-   local record_value="${3}"
-   local record_type="${4}"
-   
-   # Check the record exists.    
+   local record_value="${2}"
+   local record_type="${3}"
+   local request_id=''
+
    if [[ -n "$(aws route53 list-resource-record-sets \
-       --hosted-zone-id "${hosted_zone_id}" \
+       --hosted-zone-id "${HOSTED_ZONE_ID}" \
        --query "ResourceRecordSets[? Type=='${record_type}' && Name=='${domain_nm}' ].Name" \
        --output text)" ]]
-   then
-      __helper_create_delete_record 'DELETE' "${domain_nm}" "${hosted_zone_id}" "${record_value}" "${record_type}"    
-   fi    
+   then   
+       __helper_create_delete_record 'DELETE' "${domain_nm}" "${record_value}" "${record_type}" 
+       request_id="${__RESULT}"
+   fi
+    
+   eval "__RESULT='${request_id}'"    
    
    return 0
 }
 
 function __helper_create_delete_record()
 {
-   if [[ $# -lt 5 ]]
+   if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 1
@@ -205,9 +212,8 @@ function __helper_create_delete_record()
    
    local action="${1}"
    local domain_nm="${2}"
-   local hosted_zone_id="${3}"
-   local record_value="${4}"
-   local record_type="${5}"
+   local record_value="${3}"
+   local record_type="${4}"
    local comment="${RECORD_COMMENT}"
    local template=''
    
@@ -238,13 +244,15 @@ function __helper_create_delete_record()
              -e "s/SEDrecord_valueSED/${record_value}/g" \
              -e "s/SEDrecord_typeSED/${record_type}/g" \
              -e "s/SEDcommentSED/${comment}/g" \
-             -e "s/SEDactionSED/${action}/g")" 
-   
-   aws route53 change-resource-record-sets \
-       --hosted-zone-id "${hosted_zone_id}" \
+             -e "s/SEDactionSED/${action}/g")"
+             
+   request_id="$(aws route53 change-resource-record-sets \
+       --hosted-zone-id "${HOSTED_ZONE_ID}" \
        --change-batch "${request_body}" \
        --query ChangeInfo.Id \
-       --output text    
+       --output text )"
+   
+   eval "__RESULT='${request_id}'"       
    
    return 0
 } 
@@ -252,24 +260,16 @@ function __helper_create_delete_record()
 function __clear_hosted_zone()
 {
    __helper_delete_record \
-       'acme-dns.maxmin.it.' \
-       "${HOSTED_ZONE_ID}" \
-        '18.203.73.111' \
-        'A' > /dev/null
+       'acme-dns.maxmin.it.' '18.203.73.111' 'A' > /dev/null
 
-    __helper_delete_record \
-        'acme-dns.maxmin.it.' \
-        "${HOSTED_ZONE_ID}" \
-        'acme-dns.maxmin.it.' \
-        'NS' > /dev/null 
+   __helper_delete_record \
+       'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.' 'NS' > /dev/null 
 
-    __helper_delete_alias_record \
-        'www.maxmin.it.' \
-        "${HOSTED_ZONE_ID}" \
-        '1203266565.eu-west-1.elb.amazonaws.com.' \
-        "${ALIAS_TARGET_HOSTED_ZONE_ID}" > /dev/null 
+   __helper_delete_alias_record \
+       'www.maxmin.it.' '1203266565.eu-west-1.elb.amazonaws.com.' \
+       "${ALIAS_TARGET_HOSTED_ZONE_ID}" > /dev/null 
         
-    return 0
+   return 0
 }
 
 ##
@@ -286,12 +286,28 @@ echo
 ###########################################
 
 #
+# Missing parameter.
+#
+
+set +e
+__get_hosted_zone_id > /dev/null
+exit_code=$?
+set -e
+
+if test 0 -eq "${exit_code}"
+then
+   echo 'ERROR: testing __get_hosted_zone_id with missing argument.'
+   counter=$((counter +1))
+fi
+
+#
 # Successfull search.
 #
 
-id="$(__get_hosted_zone_id 'maxmin.it.')"
+__get_hosted_zone_id 'maxmin.it.'
+hosted_zone_id="${__RESULT}" 
 
-if test "/hostedzone/${HOSTED_ZONE_ID}" != "${id}" 
+if test "/hostedzone/${HOSTED_ZONE_ID}" != "${hosted_zone_id}" 
 then
   echo 'ERROR: testing __get_hosted_zone_id with correct hosted zone name.'
   counter=$((counter +1))
@@ -301,7 +317,10 @@ fi
 # Hosted zone name without trailing dot.
 #
 
-if test -n "$(__get_hosted_zone_id 'maxmin.it')" 
+__get_hosted_zone_id 'maxmin.it'
+hosted_zone_id="${__RESULT}"
+
+if test -n "${hosted_zone_id}" 
 then
   echo 'ERROR: testing __get_hosted_zone_id with hosted zone name without trailing dot.'
   counter=$((counter +1))
@@ -311,7 +330,10 @@ fi
 # Empty hosted zone name.
 #
 
-if test -n "$(__get_hosted_zone_id '')" 
+__get_hosted_zone_id ''
+hosted_zone_id="${__RESULT}"
+
+if test -n "${hosted_zone_id}" 
 then
   echo 'ERROR: testing __get_hosted_zone_id with empty hosted zone name.'
   counter=$((counter +1))
@@ -321,7 +343,10 @@ fi
 # Wrong hosted zone name.
 #
 
-if test -n "$(__get_hosted_zone_id 'xxx.maxmin.it.')" 
+__get_hosted_zone_id 'xxx.maxmin.it.'
+hosted_zone_id="${__RESULT}"
+
+if test -n "${hosted_zone_id}" 
 then
   echo 'ERROR: testing __get_hosted_zone_id with wrong hosted zone name.'
   counter=$((counter +1))
@@ -337,7 +362,12 @@ echo '__get_hosted_zone_id tests completed.'
 # Successful search.
 #
 
-if test 'true' != "$(check_hosted_zone_exists 'maxmin.it.')"
+exists=''
+
+check_hosted_zone_exists 'maxmin.it.'
+exists="${__RESULT}"
+
+if test 'true' != "${exists}"
 then
    echo 'ERROR: testing check_hosted_zone_exists with correct hosted zone name.'
    counter=$((counter +1))
@@ -347,7 +377,12 @@ fi
 # Hosted zone name without trailing dot.
 #
 
-if test 'false' != "$(check_hosted_zone_exists 'maxmin.it')"
+exists=''
+
+check_hosted_zone_exists 'maxmin.it'
+exists="${__RESULT}"
+
+if test 'false' != "${exists}"
 then
    echo 'ERROR: testing check_hosted_zone_exists hosted zone name without trailing dot.'
    counter=$((counter +1))
@@ -357,7 +392,12 @@ fi
 # Empty hosted zone name.
 #
 
-if test 'false' != "$(check_hosted_zone_exists '')" 
+exists=''
+
+check_hosted_zone_exists ''
+exists="${__RESULT}"
+
+if test 'false' != "${exists}" 
 then
   echo 'ERROR: testing check_hosted_zone_exists empty hosted zone name.'
   counter=$((counter +1))
@@ -367,7 +407,12 @@ fi
 # Not existing hosted zone.
 #
 
-if 'false' != "$(check_hosted_zone_exists 'xxx.maxmin.it')"
+exists=''
+
+check_hosted_zone_exists 'xxxx.it.'
+exists="${__RESULT}"
+
+if 'false' != "${exists}"
 then
   echo 'ERROR: testing check_hosted_zone_exists with wrong hosted zone name.'
   counter=$((counter +1))
@@ -377,7 +422,12 @@ fi
 # Not existing hosted zone.
 #
 
-if 'false' != "$(check_hosted_zone_exists 'it')"
+exists=''
+
+check_hosted_zone_exists 'it.'
+exists="${__RESULT}"
+
+if 'false' != "${exists}"
 then
   echo 'ERROR: testing check_hosted_zone_exists with it hosted zone name.'
   counter=$((counter +1))
@@ -393,7 +443,12 @@ echo 'check_hosted_zone_exists tests completed.'
 # Successful search.
 #
 
-if test -z "$(get_hosted_zone_name_servers 'maxmin.it.')" 
+name_servers=''
+
+get_hosted_zone_name_servers 'maxmin.it.'
+name_servers="${__RESULT}"
+
+if test -z "${name_servers}" 
 then
    echo 'ERROR: testing get_hosted_zone_name_servers with hosted zone name maxmin.it.'
    counter=$((counter +1))
@@ -403,7 +458,12 @@ fi
 # Hosted zone name without trailing dot.
 #
 
-if test -n "$(get_hosted_zone_name_servers 'maxmin.it')" 
+name_servers=''
+
+get_hosted_zone_name_servers 'maxmin.it'
+name_servers="${__RESULT}"
+
+if test -n "${name_servers}" 
 then
    echo 'ERROR: testing get_hosted_zone_name_servers with hosted zone name maxmin.it.'
    counter=$((counter +1))
@@ -413,9 +473,12 @@ fi
 # Empty hosted zone name.
 #
 
-servers="$(get_hosted_zone_name_servers '')"
+name_servers=''
 
-if [[ -n "${servers}" ]]
+get_hosted_zone_name_servers ''
+name_servers="${__RESULT}"
+
+if [[ -n "${name_servers}" ]]
 then
    echo 'ERROR: testing get_hosted_zone_name_servers with empty hosted zone name.'
    counter=$((counter +1))
@@ -425,9 +488,12 @@ fi
 # Not existing hosted zone.
 #
 
-servers="$(get_hosted_zone_name_servers 'xxx.maxmin.it')"
+name_servers=''
 
-if [[ -n "${servers}" ]]
+get_hosted_zone_name_servers 'xxxxx.it.'
+name_servers="${__RESULT}"
+
+if [[ -n "${name_servers}" ]]
 then
    echo 'ERROR: testing get_hosted_zone_name_servers with wrong hosted zone name.'
    counter=$((counter +1))
@@ -437,9 +503,12 @@ fi
 # Not existing hosted zone.
 #
 
-servers="$(get_hosted_zone_name_servers 'it')"
+name_servers=''
 
-if [[ -n "${servers}" ]]
+get_hosted_zone_name_servers 'it'
+name_servers="${__RESULT}"
+
+if [[ -n "${name_servers}" ]]
 then
    echo 'ERROR: testing get_hosted_zone_name_servers with it hosted zone name.'
    counter=$((counter +1))
@@ -456,13 +525,11 @@ __clear_hosted_zone
 # Insert a acme-dns.maxmin.it.maxmin.it NS and A records in the hosted zone.
 __helper_create_record \
     'acme-dns.maxmin.it.' \
-    "${HOSTED_ZONE_ID}" \
     '18.203.73.111' \
     'A' > /dev/null 
 
 __helper_create_record \
     'acme-dns.maxmin.it.' \
-    "${HOSTED_ZONE_ID}" \
     'acme-dns.maxmin.it.' \
     'NS' > /dev/null 
 
@@ -470,7 +537,6 @@ __helper_create_record \
 # inserted in the hosted zone as a type A record.    
 __helper_create_alias_record \
     'www.maxmin.it.' \
-    "${HOSTED_ZONE_ID}" \
     '1203266565.eu-west-1.elb.amazonaws.com.' \
     "${ALIAS_TARGET_HOSTED_ZONE_ID}" > /dev/null 
 
@@ -493,7 +559,12 @@ fi
 # A record search with not existing domain.
 #
 
-if test 'false' != "$(check_hosted_zone_has_record 'A' 'acme-dns.xxxxxx.it.')"
+has_record=''
+
+check_hosted_zone_has_record 'A' 'acme-dns.xxxxxx.it.'
+has_record="${__RESULT}"
+
+if test 'false' != "${has_record}"
 then
   echo 'ERROR: testing check_hosted_zone_has_record A record search with not existing domain.'
   counter=$((counter +1))
@@ -503,7 +574,12 @@ fi
 # A record search with empty domain.
 #
 
-if test 'false' != "$(check_hosted_zone_has_record 'A' '')"
+has_record=''
+
+check_hosted_zone_has_record 'A' ''
+has_record="${__RESULT}"
+
+if test 'false' != "${has_record}"
 then
   echo 'ERROR: testing check_hosted_zone_has_record A record search with empty domain.'
   counter=$((counter +1))
@@ -513,7 +589,12 @@ fi
 # A record search with not fully qualified domain.
 #
 
-if test 'false' != "$(check_hosted_zone_has_record 'A' 'www.maxmin.it')"
+has_record=''
+
+check_hosted_zone_has_record 'A' 'www.maxmin.it'
+has_record="${__RESULT}"
+
+if test 'false' != "${has_record}"
 then
   echo 'ERROR: testing check_hosted_zone_has_record A record search with not fully qualified domain.'
   counter=$((counter +1))
@@ -523,7 +604,12 @@ fi
 # NS record search with empty domain.
 #
 
-if test 'false' != "$(check_hosted_zone_has_record 'NS' '')"
+has_record=''
+
+check_hosted_zone_has_record 'NS' ''
+has_record="${__RESULT}"
+
+if test 'false' != "${has_record}"
 then
   echo 'ERROR: testing check_hosted_zone_has_record NS record search with empty domain.'
   counter=$((counter +1))
@@ -533,7 +619,12 @@ fi
 # NS record search with not fully qualified domain.
 #
 
-if test 'false' != "$(check_hosted_zone_has_record 'NS' 'www.maxmin.it')"
+has_record=''
+
+check_hosted_zone_has_record 'NS' 'www.maxmin.it'
+has_record="${__RESULT}"
+
+if test 'false' != "${has_record}"
 then
   echo 'ERROR: testing check_hosted_zone_has_record NS record search with not fully qualified domain.'
   counter=$((counter +1))
@@ -543,7 +634,12 @@ fi
 # NS record search with not existing domain.
 #
 
-if test 'false' != "$(check_hosted_zone_has_record 'A' 'xxx.maxmin.it.')"
+has_record=''
+
+check_hosted_zone_has_record 'NS' 'xxx.maxmin.it.'
+has_record="${__RESULT}"
+
+if test 'false' != "${has_record}"
 then
   echo 'ERROR: testing check_hosted_zone_has_record NS record search with not existing domain.'
   counter=$((counter +1))
@@ -553,7 +649,12 @@ fi
 # Wrong record type.
 #
 
-if test 'false' != "$(check_hosted_zone_has_record 'CNAME' 'acme-dns.maxmin.it.')"
+has_record=''
+
+check_hosted_zone_has_record  'CNAME' 'acme-dns.maxmin.it.'
+has_record="${__RESULT}"
+
+if test 'false' != "${has_record}"
 then
   echo 'ERROR: testing check_hosted_zone_has_record wrong record type.'
   counter=$((counter +1))
@@ -563,18 +664,27 @@ fi
 # A record search with valid domain.
 #
 
-if test 'true' != "$(check_hosted_zone_has_record 'A' 'acme-dns.maxmin.it.')"
+has_record=''
+
+check_hosted_zone_has_record  'A' 'acme-dns.maxmin.it.'
+has_record="${__RESULT}"
+
+if test 'true' != "${has_record}"
 then
    echo 'ERROR: testing check_hosted_zone_has_record A record search with valid domain.'
    counter=$((counter +1))
 fi
 
-
 #
 # NS record search with valid domain.
 #
 
-if test 'true' != "$(check_hosted_zone_has_record 'NS' 'acme-dns.maxmin.it.')"
+has_record=''
+
+check_hosted_zone_has_record  'NS' 'acme-dns.maxmin.it.'
+has_record="${__RESULT}"
+
+if test 'true' != "${has_record}"
 then
    echo 'ERROR: testing check_hosted_zone_has_record NS record search with valid domain.'
    counter=$((counter +1))
@@ -584,7 +694,12 @@ fi
 # aws-alias record search with valid domain.
 #
 
-if test 'true' != "$(check_hosted_zone_has_record 'aws-alias' 'www.maxmin.it.')"
+has_record=''
+
+check_hosted_zone_has_record  'aws-alias' 'www.maxmin.it.'
+has_record="${__RESULT}"
+
+if test 'true' != "${has_record}"
 then
    echo 'ERROR: testing check_hosted_zone_has_record aws-alias record search with valid domain.'
    counter=$((counter +1))
@@ -594,7 +709,12 @@ fi
 # aws-alias record search with not fully qualified domain.
 #
 
-if test 'false' != "$(check_hosted_zone_has_record 'aws-alias' 'www.maxmin.it')"
+has_record=''
+
+check_hosted_zone_has_record  'aws-alias' 'www.maxmin.it'
+has_record="${__RESULT}"
+
+if test 'false' != "${has_record}"
 then
    echo 'ERROR: testing check_hosted_zone_has_record aws-alias record search with not fully qualified domain.'
    counter=$((counter +1))
@@ -612,21 +732,13 @@ __clear_hosted_zone
 
 # Insert a acme-dns.maxmin.it.maxmin.it NS and A records in the hosted zone.
 __helper_create_record \
-    'acme-dns.maxmin.it.' \
-    "${HOSTED_ZONE_ID}" \
-    '18.203.73.111' \
-    'A' > /dev/null 
+    'acme-dns.maxmin.it.' '18.203.73.111' 'A' > /dev/null 
 
 __helper_create_record \
-    'acme-dns.maxmin.it.' \
-    "${HOSTED_ZONE_ID}" \
-    'acme-dns.maxmin.it.' \
-    'NS' > /dev/null 
+    'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.' 'NS' > /dev/null 
 
 __helper_create_alias_record \
-    'www.maxmin.it.' \
-    "${HOSTED_ZONE_ID}" \
-    '1203266565.eu-west-1.elb.amazonaws.com.' \
+    'www.maxmin.it.' '1203266565.eu-west-1.elb.amazonaws.com.' \
     "${ALIAS_TARGET_HOSTED_ZONE_ID}" > /dev/null 
 
 #
@@ -648,7 +760,12 @@ fi
 # A record search with not existing domain.
 #
 
-if test -n "$(get_record_value 'A' 'acme-dns.xxxxxx.it.')"
+record_value=''
+
+get_record_value 'A' 'acme-dns.xxxxxx.it.'
+record_value="${__RESULT}"
+
+if test -n "${record_value}"
 then
   echo 'ERROR: testing get_record_value A record search with not existing domain.'
   counter=$((counter +1))
@@ -658,8 +775,13 @@ fi
 # A record search with not fully qualified domain.
 #
 
+record_value=''
+
+get_record_value 'A' 'acme-dns.maxmin.it'
+record_value="${__RESULT}"
+
 # An empty string is expected.
-if test -n "$(get_record_value 'A' 'acme-dns.maxmin.it')"
+if test -n "${record_value}"
 then
   echo 'ERROR: testing get_record_value NS record search with not fully qualified domain.'
   counter=$((counter +1))
@@ -669,8 +791,13 @@ fi
 # NS record search with not existing domain.
 #
 
+record_value=''
+
+get_record_value 'NS' 'xxx.maxmin.it.'
+record_value="${__RESULT}"
+
 # An empty string is expected.
-if test -n "$(get_record_value 'NS' 'xxx.maxmin.it.')"
+if test -n "${record_value}"
 then
   echo 'ERROR: testing get_record_value NS record search with not existing domain.'
   counter=$((counter +1))
@@ -680,8 +807,13 @@ fi
 # NS record search with not fully qualified domain.
 #
 
+record_value=''
+
+get_record_value 'NS' 'acme-dns.maxmin.it'
+record_value="${__RESULT}"
+
 # An empty string is expected.
-if test -n "$(get_record_value 'NS' 'acme-dns.maxmin.it')"
+if test -n "${record_value}"
 then
   echo 'ERROR: testing get_record_value NS record search with not fully qualified domain.'
   counter=$((counter +1))
@@ -691,7 +823,12 @@ fi
 # Wrong record type.
 #
 
-if test -n "$(get_record_value 'CNAME' 'acme-dns.maxmin.it.')"
+record_value=''
+
+get_record_value 'CNAME' 'acme-dns.maxmin.it'
+record_value="${__RESULT}"
+
+if test -n "${record_value}"
 then
   echo 'ERROR: testing get_record_value with wrong record type.'
   counter=$((counter +1))
@@ -701,7 +838,12 @@ fi
 # A record search with valid domain.
 #
 
-if test -z "$(get_record_value 'A' 'acme-dns.maxmin.it.')"
+record_value=''
+
+get_record_value 'A' 'acme-dns.maxmin.it.'
+record_value="${__RESULT}"
+
+if test -z "${record_value}"
 then
    echo 'ERROR: testing get_record_value record search with valid domain.'
    counter=$((counter +1))
@@ -711,7 +853,12 @@ fi
 # NS record search with valid domain.
 #
 
-if test -z "$(get_record_value 'NS' 'acme-dns.maxmin.it.')"
+record_value=''
+
+get_record_value 'NS' 'acme-dns.maxmin.it.'
+record_value="${__RESULT}"
+
+if test -z "${record_value}"
 then
    echo 'ERROR: testing get_record_value with valid NS type search parameters.'
    counter=$((counter +1))
@@ -721,7 +868,12 @@ fi
 # aws-alias record search with valid domain.
 #
 
-if test -z "$(get_record_value 'aws-alias' 'www.maxmin.it.')"
+record_value=''
+
+get_record_value 'aws-alias' 'www.maxmin.it.'
+record_value="${__RESULT}"
+
+if test -z "${record_value}"
 then
    echo 'ERROR: testing get_record_value aws-alias record search with valid domain.'
    counter=$((counter +1))
@@ -731,7 +883,12 @@ fi
 # aws-alias record search with not fully qualified domain.
 #
 
-if test -n "$(get_record_value 'aws-alias' 'www.maxmin.it')"
+record_value=''
+
+get_record_value 'aws-alias' 'www.maxmin.it'
+record_value="${__RESULT}"
+
+if test -n "${record_value}"
 then
    echo 'ERROR: testing get_record_value aws-alias record search with not fully qualified domain.'
    counter=$((counter +1))
@@ -750,7 +907,8 @@ __clear_hosted_zone
 #
 
 request_body=''
-request_body="$(__create_record_change_batch 'CREATE' 'A' 'webphp1.maxmin.it.' '34.242.102.242' 'admin website')"
+__create_record_change_batch 'CREATE' 'A' 'webphp1.maxmin.it.' '34.242.102.242' 'admin website'
+request_body="${__RESULT}"
 
 ## Validate JSON.
 if jq -e . >/dev/null 2>&1 <<< "${request_body}"
@@ -808,8 +966,8 @@ fi
 # Create a JSON request for type NS record.
 #
 
-request_body=''
-request_body="$(__create_record_change_batch 'CREATE' 'NS' 'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.' 'admin website')"
+__create_record_change_batch 'CREATE' 'NS' 'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.' 'admin website'
+request_body="${__RESULT}"
 
 ## Validate JSON.
 if jq -e . >/dev/null 2>&1 <<< "${request_body}"
@@ -873,9 +1031,9 @@ echo '__create_record_change_batch tests completed.'
 # Create a JSON request for a type aws-alias record.
 #
 
-request_body=''
-request_body="$(__create_alias_record_change_batch 'CREATE' 'www.maxmin.it.' \
-    '1203266565.eu-west-1.elb.amazonaws.com.' "${ALIAS_TARGET_HOSTED_ZONE_ID}" 'load balancer record')"
+__create_alias_record_change_batch 'CREATE' 'www.maxmin.it.' \
+    '1203266565.eu-west-1.elb.amazonaws.com.' "${ALIAS_TARGET_HOSTED_ZONE_ID}" 'load balancer record'
+request_body="${__RESULT}"
 
 ## Validate JSON.
 if jq -e . >/dev/null 2>&1 <<< "${request_body}"
@@ -997,7 +1155,8 @@ fi
 # Not existing hosted zone.
 #
 
-request_id="$(__create_delete_record 'CREATE' 'A' 'acme-dns.xxxxxx.it.' '18.203.73.111')"
+__create_delete_record 'CREATE' 'A' 'acme-dns.xxxxxx.it.' '18.203.73.111'
+request_id="${__RESULT}"
 
 # Empty string is expected.
 if [[ -n "${request_id}" ]]
@@ -1015,7 +1174,8 @@ status=''
 value=''
 
 # Create the record.
-request_id="$(__create_delete_record 'CREATE' 'A' 'acme-dns.maxmin.it.' '18.203.73.111')"
+__create_delete_record 'CREATE' 'A' 'acme-dns.maxmin.it.' '18.203.73.111'
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1046,7 +1206,8 @@ request_id=''
 status=''
 value=''
 
-request_id="$(__create_delete_record 'CREATE' 'A' 'acme-dns.maxmin.it.' '18.203.73.111')"
+__create_delete_record 'CREATE' 'A' 'acme-dns.maxmin.it.' '18.203.73.111'
+request_id="${__RESULT}"
 
 # Empty value expected.
 if test -n "${request_id}"
@@ -1064,7 +1225,8 @@ status=''
 value=''
 
 # Delete the record.
-request_id="$(__create_delete_record 'DELETE' 'A' 'acme-dns.maxmin.it.' '18.203.73.111')"
+__create_delete_record 'DELETE' 'A' 'acme-dns.maxmin.it.' '18.203.73.111'
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1085,7 +1247,8 @@ status=''
 value=''
 
 # Delete the record.
-request_id="$(__create_delete_record 'DELETE' 'A' 'acme-dns.maxmin.it.' '18.203.73.111')"
+__create_delete_record 'DELETE' 'A' 'acme-dns.maxmin.it.' '18.203.73.111'
+request_id="${__RESULT}"
 
 # Empty string is expected.
 if test -n "${request_id}"
@@ -1103,7 +1266,8 @@ status=''
 value=''
 
 # Create the record.
-request_id="$(__create_delete_record 'CREATE' 'NS' 'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.')"
+__create_delete_record 'CREATE' 'NS' 'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.'
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1135,7 +1299,8 @@ status=''
 value=''
 
 # Delete the record.
-request_id="$(__create_delete_record 'DELETE' 'NS' 'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.')"
+__create_delete_record 'DELETE' 'NS' 'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.'
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1155,12 +1320,8 @@ status=''
 value=''
 
 # Create the record.
-request_id="$(__create_delete_record \
-    'CREATE' \
-    'aws-alias' \
-    'www.maxmin.it.' \
-    '1203266565.eu-west-1.elb.amazonaws.com.' \
-    "${ALIAS_TARGET_HOSTED_ZONE_ID}")"
+__create_delete_record 'CREATE' 'aws-alias' 'www.maxmin.it.' '1203266565.eu-west-1.elb.amazonaws.com.' "${ALIAS_TARGET_HOSTED_ZONE_ID}"
+request_id="${__RESULT}"    
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1207,12 +1368,8 @@ status=''
 value=''
 
 # Delete the record.
-request_id="$(__create_delete_record \
-    'DELETE' \
-    'aws-alias' \
-    'www.maxmin.it.' \
-    '1203266565.eu-west-1.elb.amazonaws.com.' \
-    "${ALIAS_TARGET_HOSTED_ZONE_ID}")"
+__create_delete_record 'DELETE' 'aws-alias' 'www.maxmin.it.' '1203266565.eu-west-1.elb.amazonaws.com.' "${ALIAS_TARGET_HOSTED_ZONE_ID}"
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1249,11 +1406,14 @@ __clear_hosted_zone
 request_id=''
 status='' 
 
+###### TODO USE AN HELPER
 # Create the record.
-request_id="$(__create_delete_record 'CREATE' 'A' 'acme-dns.maxmin.it.' '18.203.73.111')"
+__helper_create_record 'acme-dns.maxmin.it.' '18.203.73.111' 'A'     
+request_id="${__RESULT}"  
 
 # Check the request.
-status="$(get_record_request_status "${request_id}")"
+get_record_request_status "${request_id}"
+status="${__RESULT}"
 
 if [[ 'PENDING' != "${status}" && 'INSYNC' != "${status}" ]]
 then
@@ -1268,18 +1428,16 @@ __clear_hosted_zone
 #
 
 request_id=''
-status=''    
+status='' 
 
-# Create the record.
-request_id="$(__create_delete_record \
-    'CREATE' \
-    'aws-alias' \
-    'www.maxmin.it.' \
-    '1203266565.eu-west-1.elb.amazonaws.com.' \
-    "${ALIAS_TARGET_HOSTED_ZONE_ID}")"
+# Create the record. 
+__helper_create_alias_record \
+    'www.maxmin.it.' '1203266565.eu-west-1.elb.amazonaws.com.' "${ALIAS_TARGET_HOSTED_ZONE_ID}"    
+request_id="${__RESULT}"
 
 # Check the status of the request.
-status="$(get_record_request_status "${request_id}")"
+get_record_request_status "${request_id}"
+status="${__RESULT}"
 
 if [[ 'PENDING' != "${status}" && 'INSYNC' != "${status}" ]]
 then
@@ -1293,10 +1451,12 @@ __clear_hosted_zone
 # Not existing request.
 #
 
-status=''
+request_id=''
+status='' 
 
 # Check the status of a not existing requests.
-status="$(get_record_request_status 'xxx')"
+get_record_request_status 'xxx'
+status="${__RESULT}"
 
 # Empty string is expected.
 if test -n "${status}"
@@ -1322,12 +1482,14 @@ request_id=''
 status=''
 
 # Prepare the body of the request.
-request_body="$(__create_alias_record_change_batch 'CREATE' 'www.maxmin.it.' \
+__create_alias_record_change_batch 'CREATE' 'www.maxmin.it.' \
     '1203266565.eu-west-1.elb.amazonaws.com.' "${ALIAS_TARGET_HOSTED_ZONE_ID}" \
-    'load balancer record')"
+    'load balancer record'
+request_body="${__RESULT}"
     
 # Subimt the request.    
-request_id="$(__submit_change_batch "${HOSTED_ZONE_ID}" "${request_body}")"
+__submit_change_batch "${HOSTED_ZONE_ID}" "${request_body}"
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1373,10 +1535,9 @@ status=''
 value=''
 
 # Create the record.
-request_id="$(create_loadbalancer_record \
-    'www.maxmin.it.' \
-    '1203266565.eu-west-1.elb.amazonaws.com.' \
-    "${ALIAS_TARGET_HOSTED_ZONE_ID}")"
+create_loadbalancer_record \
+    'www.maxmin.it.' '1203266565.eu-west-1.elb.amazonaws.com.' "${ALIAS_TARGET_HOSTED_ZONE_ID}"
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1386,13 +1547,6 @@ then
    echo 'ERROR: testing __submit_change_batch.'
    counter=$((counter +1))
 fi
-
-# Clear the hosted zone.
-__helper_delete_alias_record \
-    'www.maxmin.it.' \
-    "${HOSTED_ZONE_ID}" \
-    '1203266565.eu-west-1.elb.amazonaws.com.' \
-    "${ALIAS_TARGET_HOSTED_ZONE_ID}" > /dev/null 
 
 echo 'create_loadbalancer_record tests completed.'
 
@@ -1405,10 +1559,8 @@ __clear_hosted_zone
 __clear_hosted_zone
     
 __helper_create_alias_record \
-    'www.maxmin.it.' \
-    "${HOSTED_ZONE_ID}" \
-    '1203266565.eu-west-1.elb.amazonaws.com.' \
-    "${ALIAS_TARGET_HOSTED_ZONE_ID}" > /dev/null     
+    'www.maxmin.it.' '1203266565.eu-west-1.elb.amazonaws.com.' "${ALIAS_TARGET_HOSTED_ZONE_ID}" \
+    > /dev/null     
 
 #
 # Delete load balancer record successfully.
@@ -1419,10 +1571,10 @@ status=''
 value=''
 
 # Delete the record.
-request_id="$(delete_loadbalancer_record \
-    'www.maxmin.it.' \
-    '1203266565.eu-west-1.elb.amazonaws.com.' \
-    "${ALIAS_TARGET_HOSTED_ZONE_ID}")"
+delete_loadbalancer_record \
+    'www.maxmin.it.' '1203266565.eu-west-1.elb.amazonaws.com.' "${ALIAS_TARGET_HOSTED_ZONE_ID}"
+    
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1460,7 +1612,8 @@ status=''
 value=''
 
 # Create the record.
-request_id="$(create_record  'A' 'acme-dns.maxmin.it.' '18.203.73.111')"
+create_record  'A' 'acme-dns.maxmin.it.' '18.203.73.111'
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1480,7 +1633,8 @@ status=''
 value=''
 
 # Create the record.
-request_id="$(create_record  'NS' 'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.')"
+create_record  'NS' 'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.'
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1502,17 +1656,10 @@ __clear_hosted_zone
 __clear_hosted_zone
 
 # Insert a acme-dns.maxmin.it.maxmin.it NS and A records in the hosted zone.
-__helper_create_record \
-    'acme-dns.maxmin.it.' \
-    "${HOSTED_ZONE_ID}" \
-    '18.203.73.111' \
-    'A' > /dev/null 
+__helper_create_record 'acme-dns.maxmin.it.' '18.203.73.111' 'A' > /dev/null 
 
 __helper_create_record \
-    'acme-dns.maxmin.it.' \
-    "${HOSTED_ZONE_ID}" \
-    'acme-dns.maxmin.it.' \
-    'NS' > /dev/null 
+    'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.' 'NS' > /dev/null 
 
 #
 # Delete A record succesfully.
@@ -1522,7 +1669,8 @@ request_id=''
 status=''
 
 # Delete the record.
-request_id="$(delete_record  'A' 'acme-dns.maxmin.it.' '18.203.73.111')"
+delete_record  'A' 'acme-dns.maxmin.it.' '18.203.73.111'
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"
@@ -1551,7 +1699,8 @@ request_id=''
 status=''
 
 # Delete the record.
-request_id="$(delete_record  'NS' 'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.')"
+delete_record  'NS' 'acme-dns.maxmin.it.' 'acme-dns.maxmin.it.'
+request_id="${__RESULT}"
 
 # Check the status of the request.
 status="$(aws route53 get-change --id "${request_id}" --query ChangeInfo.Status --output text)"

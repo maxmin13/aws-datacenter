@@ -282,42 +282,54 @@ else
    # acme-dns.maxmin.it	NS acme-dns.maxmin.it
    #
    
-   route53_has_acme_dns_A_record="$(check_hosted_zone_has_record 'A' 'acme-dns'."${MAXMIN_TLD}")"
+   check_hosted_zone_has_record 'A' 'acme-dns'."${MAXMIN_TLD}"
+   route53_has_acme_dns_A_record="${__RESULT}"
    
    if [[ 'true' == "${route53_has_acme_dns_A_record}" ]]
    then
       # If the record is there, delete id because the IP address may be old.
-      target_eip="$(get_record_value 'A' 'acme-dns'."${MAXMIN_TLD}")" 
+      get_record_value 'A' 'acme-dns'."${MAXMIN_TLD}"
+      target_eip="${__RESULT}"
       
       echo "WARN: found acme-dns A record (${target_eip}), deleting ..."
       
-  #####    request_id="$(delete_record 'A' 'acme-dns'."${MAXMIN_TLD}" "${admin_eip}")"                                      
-   ######   status="$(get_record_request_status "${request_id}")"  
+  #####    delete_record 'A' 'acme-dns'."${MAXMIN_TLD}" "${admin_eip}"
+  ### request_id="${__RESULT}"                            
+ ###  get_record_request_status "${request_id}" 
+ ###  status="${__RESULT}" 
    
     ####  echo "acme-dns A record deleted (${status})."
    fi
    
- ####  request_id="$(create_record 'A' 'acme-dns'."${MAXMIN_TLD}" "${admin_eip}")"                         
-  ##### status="$(get_record_request_status "${request_id}")"  
+ ####  create_record 'A' 'acme-dns'."${MAXMIN_TLD}" "${admin_eip}"  
+ #### request_id="${__RESULT}"                                                  
+ ###  get_record_request_status "${request_id}" 
+###   status="${__RESULT}"
    
  ####  echo "acme-dns A record created (${status})."     
    
-  route53_has_acme_dns_NS_record="$(check_hosted_zone_has_record 'NS' 'acme-dns'."${MAXMIN_TLD}")"
+  check_hosted_zone_has_record 'NS' 'acme-dns'."${MAXMIN_TLD}"
+  route53_has_acme_dns_NS_record="${__RESULT}"
    
    if [[ 'true' == "${route53_has_acme_dns_NS_record}" ]]
    then
-      target_domain_mn="$(get_record_value 'NS' 'acme-dns'."${MAXMIN_TLD}")"
+      get_record_value 'NS' 'acme-dns'."${MAXMIN_TLD}"
+      target_domain_mn="${__RESULT}"
         
       echo "WARN: found acme-dns NS record (${target_domain_mn}), deleting ..."
             
-  ######    request_id="$(delete_record 'NS' 'acme-dns'."${MAXMIN_TLD}" "${target_domain_mn}")" 
-   ######   status="$(get_record_request_status "${request_id}")"  
+  ######    delete_record 'NS' 'acme-dns'."${MAXMIN_TLD}" "${target_domain_mn}" 
+  ##### request_id="${__RESULT}"                             
+  #### get_record_request_status "${request_id}" 
+ ####  status="${__RESULT}"
    
     ####  echo "acme-dns A record deleted (${status})."
    fi
 
-  ####### request_id="$(create_record 'NS' 'acme-dns'."${MAXMIN_TLD}" "${admin_eip}")" 
-   #######status="$(get_record_request_status "${request_id}")"  
+  ####### create_record 'NS' 'acme-dns'."${MAXMIN_TLD}" "${admin_eip}"
+  ##### request_id="${__RESULT}"                             
+  ### get_record_request_status "${request_id}" 
+  #### status="${__RESULT}" 
    
  ###  echo "acme-dns NS record created (${status})."  
    echo 'Uploading the scripts to the Admin box ...'
