@@ -476,16 +476,19 @@ fi
 ## REMOVE RECORDS FROM ROUTE 53
     
 # Wait until the certificate is visible in IAM.
-cert_arn="$(get_server_certificate_arn "${crt_nm}")"
+get_server_certificate_arn "${crt_nm}"
+cert_arn="__RESULT"
 # shellcheck disable=SC2015
 test -n "${cert_arn}" && echo 'Certificate uploaded.' || 
 {  
    __wait 30
-   cert_arn="$(get_server_certificate_arn "${crt_nm}")"
+   get_server_certificate_arn "${crt_nm}"
+   cert_arn="__RESULT"
    test -n "${cert_arn}" &&  echo 'Certificate uploaded.' ||
    {
       __wait 30
-      cert_arn="$(get_server_certificate_arn "${crt_nm}")"
+      get_server_certificate_arn "${crt_nm}"
+      cert_arn="__RESULT"
       test -n "${cert_arn}" &&  echo 'Certificate uploaded.' || 
       {
          # Throw an error if after 90 secs the cert is stil not visible.
@@ -495,7 +498,8 @@ test -n "${cert_arn}" && echo 'Certificate uploaded.' ||
    }
 }
 
-cert_arn="$(get_server_certificate_arn "${crt_nm}")"
+get_server_certificate_arn "${crt_nm}"
+cert_arn="__RESULT"
 
 # Create listener action is idempotent, we can skip checking if the listener exists.
 # Even if the IAM command list-server-certificates has returned the certificate ARN, the certificate 

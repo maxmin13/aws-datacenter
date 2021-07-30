@@ -24,7 +24,7 @@ set +o xtrace
 # Arguments:
 # +crt_nm -- the certificate name.
 # Returns:      
-#  the server certificate ARN.
+#  the server certificate ARN, returns the value in the __RESULT variable. 
 #===============================================================================
 function get_server_certificate_arn()
 {
@@ -40,7 +40,7 @@ function get_server_certificate_arn()
        --query "ServerCertificateMetadataList[?ServerCertificateName=='${crt_nm}'].Arn" \
        --output text)" 
   
-   echo "${cert_arn}"
+   eval "__RESULT='${cert_arn}'"
 
    return 0
 }
@@ -178,10 +178,9 @@ function delete_route53_policy()
 
    if [[ -n "${arn}" ]]
    then
-      echo 'deleting in delete_route_policy'
       aws iam delete-policy --policy-arn "${arn}"
    else 
-      echo 'not found in delete_route_policy'
+      echo 'WARN: delete_route_policy not found.'
    fi
        
    return 0
@@ -211,18 +210,19 @@ function create_route53_policy()
    local description='Create/delete Route 53 records.'
    local policy_document=''
 
-   policy_document="$(__build_route53_policy_document)"       
+   __build_route53_policy_document
+   policy_document="${__RESULT}"      
         
    set +e        
    arn="$(aws iam create-policy \
-          --policy-name "${name}" \
-          --description "${description}" \
-          --policy-document "${policy_document}" \
-          --query "Policy.Arn" \
-          --output text 2>/dev/null)"    
+       --policy-name "${name}" \
+       --description "${description}" \
+       --policy-document "${policy_document}" \
+       --query "Policy.Arn" \
+       --output text 2>/dev/null)"    
    set -e
    
-   echo "${arn}"    
+   eval "__RESULT='${arn}'"   
    
    return 0
 }
@@ -257,7 +257,7 @@ function __build_route53_policy_document()
 	EOF
    )
     
-   echo "${policy_document}"
+   eval "__RESULT='${policy_document}'"
    
    return 0
 }

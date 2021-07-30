@@ -42,11 +42,8 @@ function __helper_create_policy()
    )       
                 
    aws iam create-policy \
-          --policy-name "${name}" \
-          --description "${description}" \
-          --policy-document "${policy_document}" \
-          --query "Policy.Arn" \
-          --output text    
+          --policy-name "${name}" --description "${description}" \
+          --policy-document "${policy_document}" --query "Policy.Arn" --output text > /dev/null  
 
    return 0
 }
@@ -54,12 +51,11 @@ function __helper_create_policy()
 function __helper_clear_policies()
 {
    local arn=''
-
+   
    arn="$(aws iam list-policies --query "Policies[? PolicyName=='Route-53-policy' ].Arn" --output text)"
 
    if [[ -n "${arn}" ]]
    then
-      echo deleting $arn
       set +e
       aws iam delete-policy --policy-arn "${arn}"
       set -e
@@ -68,7 +64,14 @@ function __helper_clear_policies()
    return 0
 }
 
-echo 'Starting IAN tests ...'
+##
+##
+##
+echo 'Starting route53.sh script tests ...'
+echo
+##
+##
+##
 
 trap "__helper_clear_policies" EXIT
 
@@ -81,7 +84,8 @@ trap "__helper_clear_policies" EXIT
 #
 
 document_policy=''
-document_policy="$(__build_route53_policy_document)"
+__build_route53_policy_document
+document_policy="${__RESULT}"
 
 ## Validate JSON.
 if jq -e . >/dev/null 2>&1 <<< "${document_policy}"
@@ -162,8 +166,9 @@ fi
 #
 # Create a policy successfully.
 #
-
-arn="$(create_route53_policy 'Route-53-policy')"
+arn=''
+create_route53_policy 'Route-53-policy'
+arn="${__RESULT}"
 
 if test -z "${arn}"
 then
@@ -185,7 +190,9 @@ fi
 
 # An empty string is expected.
 
-arn="$(create_route53_policy 'Route-53-policy')"
+arn=''
+create_route53_policy 'Route-53-policy'
+arn="${__RESULT}"
 
 if test -n "${arn}"
 then
@@ -241,11 +248,15 @@ echo 'delete_route53_policy tests completed.'
 # Count the errors.
 ##############################################
 
+echo
+
 if [[ "${counter}" -gt 0 ]]
 then
-   echo "iam.sh script test completed with ${counter} errors."
+   echo "route53.sh script test completed with ${counter} errors."
 else
-   echo 'iam.sh script test successfully completed.'
+   echo 'route53.sh script test successfully completed.'
 fi
+
+echo
 
 exit 0

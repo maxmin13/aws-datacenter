@@ -1727,10 +1727,17 @@ echo 'delete_record tests completed.'
 # Count the errors.
 ##############################################
 
+echo
+
 if [[ "${counter}" -gt 0 ]]
 then
    echo "route53.sh script test completed with ${counter} errors."
 else
    echo 'route53.sh script test successfully completed.'
 fi
+
+echo
+
+exit 0
+
 
