@@ -42,8 +42,8 @@ function __helper_create_policy()
    )       
                 
    aws iam create-policy \
-          --policy-name "${name}" --description "${description}" \
-          --policy-document "${policy_document}" --query "Policy.Arn" --output text > /dev/null  
+       --policy-name "${name}" --description "${description}" \
+       --policy-document "${policy_document}" --query "Policy.Arn" --output text > /dev/null  
 
    return 0
 }
@@ -52,7 +52,8 @@ function __helper_clear_policies()
 {
    local arn=''
    
-   arn="$(aws iam list-policies --query "Policies[? PolicyName=='Route-53-policy' ].Arn" --output text)"
+   arn="$(aws iam list-policies --query "Policies[? PolicyName=='Route-53-policy' ].Arn" \
+       --output text)"
 
    if [[ -n "${arn}" ]]
    then

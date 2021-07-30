@@ -125,6 +125,13 @@ function delete_server_certificate()
    exit_code=$?
    set -e
    
+   if [[ 0 -eq "${exit_code}" ]]
+   then 
+     echo 'Certificate deleted.'
+   else
+     echo 'WARN: certificate not found.'
+   fi
+   
    return "${exit_code}"
 }
 

@@ -30,8 +30,8 @@ else
    echo "* security group ID: ${sgp_id}."
 fi
 
-get_server_certificate_arn "${crt_nm}"
-cert_arn="__RESULT"
+get_server_certificate_arn "${CRT_NM}"
+cert_arn="${__RESULT}"
 
 if [[ -z "${cert_arn}" ]]
 then
@@ -96,8 +96,6 @@ then
    echo 'Deleting certificate ...'
 
    delete_server_certificate "${CRT_NM}"
-   
-   echo 'Certificate deleted.'
 fi
   
 echo
