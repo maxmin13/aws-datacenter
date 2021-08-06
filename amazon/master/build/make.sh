@@ -1,10 +1,10 @@
 #!/usr/bin/bash
 
-set -o errexit
-## turn on -e in subshells
-shopt -s inherit_errexit
-set -o pipefail
-set -o nounset
+# shellcheck disable=SC1091,SC2155
+
+set +o errexit
+set +o pipefail
+set +o nounset
 set +o xtrace
 
 export PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../../../datacenter && pwd)"
@@ -26,7 +26,7 @@ source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
 source "${PROJECT_DIR}"/amazon/credential/recaptcha.sh
 source "${PROJECT_DIR}"/amazon/credential/passwords.sh
 
-log_file="${LOG_DIR}"/test-$(date +"%d-%m-%Y-%H.%M"."%S")
+###log_file="${LOG_DIR}"/test-$(date +"%d-%m-%Y-%H.%M"."%S")
  
 echo
 
@@ -46,7 +46,7 @@ echo
    echo
 
    # Route 53 tests.
-   #. "${PROJECT_DIR}"/amazon/lib/aws/route53/test/make.sh  
+  ## . "${PROJECT_DIR}"/amazon/lib/aws/route53/test/make.sh  
    
    # IAM tests.
    . "${PROJECT_DIR}"/amazon/lib/aws/iam/test/make.sh 

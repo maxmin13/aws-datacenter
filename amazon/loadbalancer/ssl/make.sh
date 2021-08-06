@@ -302,7 +302,8 @@ else
    fi
    
    create_record 'A' 'acme-dns'."${MAXMIN_TLD}" "${admin_eip}"  
-   request_id="${__RESULT}"                                                  
+   request_id="${__RESULT}"       
+                                              
    get_record_request_status "${request_id}" 
    status="${__RESULT}"
    
@@ -319,7 +320,8 @@ else
       echo "WARN: found acme-dns NS record (${target_domain_mn}), deleting ..."
             
       delete_record 'NS' 'acme-dns'."${MAXMIN_TLD}" "${target_domain_mn}" 
-      request_id="${__RESULT}"                             
+      request_id="${__RESULT}"        
+                           
       get_record_request_status "${request_id}" 
       status="${__RESULT}"
    
@@ -327,7 +329,8 @@ else
    fi
 
    create_record 'NS' 'acme-dns'."${MAXMIN_TLD}" "${admin_eip}"
-   request_id="${__RESULT}"                             
+   request_id="${__RESULT}"    
+                            
    get_record_request_status "${request_id}" 
    status="${__RESULT}" 
    

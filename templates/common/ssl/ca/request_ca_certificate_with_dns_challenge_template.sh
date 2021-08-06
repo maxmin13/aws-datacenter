@@ -33,6 +33,8 @@ chmod +x install_aws_cli.sh
 
 echo 'AWS client installed.'
 
+
+
 ##
 ## acme-dns server.
 ##
@@ -51,7 +53,7 @@ echo 'Registering www.maxmin.it domain with acme-dns server.'
 ################# TODO 
 ################# TODO 
 ################# TODO 
-################# TODO FROM HERE
+################# TODO 
 registration_resp="$(curl -X POST https://www.maxmin.it/register)"
 
 if ! jq -e . > /dev/null 2>&1 <<< "${registration_resp}"

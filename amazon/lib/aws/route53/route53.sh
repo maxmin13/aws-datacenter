@@ -88,12 +88,12 @@ function create_hosted_zone()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local hosted_zone_nm="${1}"
-   local caller_reference="${2}"
-   local comment="${3}"
+   declare -r hosted_zone_nm="${1}"
+   declare -r caller_reference="${2}"
+   declare -r comment="${3}"
    local hosted_zone_id=''
 
    hosted_zone_id="$(aws route53 create-hosted-zone \
@@ -129,10 +129,10 @@ function delete_hosted_zone()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local hosted_zone_nm="${1}"
+   declare -r hosted_zone_nm="${1}"
    local hosted_zone_id=''
    
    __get_hosted_zone_id "${hosted_zone_nm}"
@@ -166,10 +166,10 @@ function check_hosted_zone_exists()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local hosted_zone_nm="${1}"
+   declare -r hosted_zone_nm="${1}"
    local exists='false'
    local hosted_zone_id=''
    
@@ -210,10 +210,10 @@ function get_hosted_zone_name_servers()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local hosted_zone_nm="${1}"
+   declare -r hosted_zone_nm="${1}"
    local name_servers=''
    local hosted_zone_id=''
    
@@ -252,11 +252,11 @@ function check_hosted_zone_has_record()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local record_type="${1}"
-   local domain_nm="${2}"
+   declare -r record_type="${1}"
+   declare -r domain_nm="${2}"
    local has_record='false'
    local record=''
       
@@ -292,11 +292,11 @@ function get_record_value()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local record_type="${1}"
-   local domain_nm="${2}"
+   declare -r record_type="${1}"
+   declare -r domain_nm="${2}"
    local record=''
    local hosted_zone_nm=''
    local hosted_zone_id=''
@@ -355,14 +355,14 @@ function __create_record_change_batch()
    if [[ $# -lt 5 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local action="${1}"
-   local record_type="${2}"
-   local domain_nm="${3}"
-   local record_value="${4}"
-   local comment="${5}"
+   declare -r action="${1}"
+   declare -r record_type="${2}"
+   declare -r domain_nm="${3}"
+   declare -r record_value="${4}"
+   declare -r comment="${5}"
    local template=''
    local change_batch=''
    
@@ -426,14 +426,14 @@ function __create_alias_record_change_batch()
    if [[ $# -lt 5 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local action="${1}"
-   local domain_nm="${2}"
-   local record_value="${3}"
-   local target_hosted_zone_id="${4}"
-   local comment="${5}"
+   declare -r action="${1}"
+   declare -r domain_nm="${2}"
+   declare -r record_value="${3}"
+   declare -r target_hosted_zone_id="${4}"
+   declare -r comment="${5}"
    local template=''
    local change_batch=''
    
@@ -502,13 +502,13 @@ function __create_delete_record()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local action="${1}"
-   local record_type="${2}"
-   local domain_nm="${3}"
-   local record_value="${4}"
+   declare -r action="${1}"
+   declare -r record_type="${2}"
+   declare -r domain_nm="${3}"
+   declare -r record_value="${4}"
    local target_hosted_zone_id=''
       
    if [[ $# -eq 5 ]]
@@ -525,13 +525,13 @@ function __create_delete_record()
    if [[ 'CREATE' != "${action}" && 'DELETE' != "${action}" ]]
    then
       echo 'ERROR: action can only be CREATE and DELETE.'
-      return 1
+      return 128
    fi
    
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" && 'aws-alias' != "${record_type}" ]]
    then
       echo 'ERROR: record type can only be A, NS, aws-alias.'
-      return 1
+      return 128
    fi   
    
    hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')
@@ -595,10 +595,10 @@ function get_record_request_status()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local request_id="${1}"
+   declare -r request_id="${1}"
    local status=''
 
    set +e
@@ -629,11 +629,11 @@ function __submit_change_batch()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local hosted_zone_id="${1}"
-   local request_body="${2}"
+   declare -r hosted_zone_id="${1}"
+   declare -r request_body="${2}"
    local request_id=''
 
    set +e
@@ -668,10 +668,10 @@ function __get_hosted_zone_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local hosted_zone_nm="${1}"
+   declare -r hosted_zone_nm="${1}"
    local hosted_zone_id=''
 
    hosted_zone_id="$(aws route53 list-hosted-zones \
@@ -700,10 +700,10 @@ function check_hosted_zone_has_loadbalancer_record()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local domain_nm="${1}"
+   declare -r domain_nm="${1}"
    local has_record='false'
    local record=''
       
@@ -742,12 +742,12 @@ function create_loadbalancer_record()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local domain_nm="${1}"
-   local record_value="${2}"
-   local target_hosted_zone_id="${3}"
+   declare -r domain_nm="${1}"
+   declare -r record_value="${2}"
+   declare -r target_hosted_zone_id="${3}"
    local request_id=''    
 
    __create_delete_record \
@@ -781,12 +781,12 @@ function delete_loadbalancer_record()
 if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local domain_nm="${1}"
-   local record_value="${2}"
-   local target_hosted_zone_id="${3}"
+   declare -r domain_nm="${1}"
+   declare -r record_value="${2}"
+   declare -r target_hosted_zone_id="${3}"
    local request_id=''
 
    __create_delete_record \
@@ -818,10 +818,10 @@ function get_loadbalancer_record_hosted_zone_value()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local domain_nm="${1}"
+   declare -r domain_nm="${1}"
    local hosted_zone_nm=''
    local hosted_zone_id=''
    local target_hosted_zone_id=''
@@ -863,14 +863,14 @@ function get_loadbalancer_record_dns_name_value()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local domain_nm="${1}"
+   declare -r domain_nm="${1}"
    local record_value=''
    
    get_record_value 'aws-alias' "${domain_nm}"
-   record="${__RESULT}"
+   record_value="${__RESULT}"
    
    eval "__RESULT='${record_value}'"
    
@@ -898,18 +898,18 @@ function create_record()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local record_type="${1}"
-   local domain_nm="${2}"
-   local record_value="${3}"
+   declare -r record_type="${1}"
+   declare -r domain_nm="${2}"
+   declare -r record_value="${3}"
    local request_id=''
     
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" ]]
    then
       echo 'ERROR: record type can only be A, NS.'
-      return 1
+      return 128
    fi     
 
    __create_delete_record 'CREATE' "${record_type}" "${domain_nm}" "${record_value}" 
@@ -940,18 +940,18 @@ function delete_record()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
-   local record_type="${1}"
-   local domain_nm="${2}"
-   local record_value="${3}"
+   declare -r record_type="${1}"
+   declare -r domain_nm="${2}"
+   declare -r record_value="${3}"
    local request_id=''
     
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" ]]
    then
       echo 'ERROR: record type can only be A, NS.'
-      return 1
+      return 128
    fi     
 
    __create_delete_record 'DELETE' "${record_type}" "${domain_nm}" "${record_value}"
