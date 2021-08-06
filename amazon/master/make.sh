@@ -42,27 +42,7 @@ echo
       echo '****************'
       echo 'Env: development'
       echo '****************' 
-   fi
-      
-   # Create the datacenter.
-   . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
-
-   # Create a base shared image.
-   . "${PROJECT_DIR}"/amazon/shared/instance/make.sh              
-   . "${PROJECT_DIR}"/amazon/shared/image/make.sh            
-   . "${PROJECT_DIR}"/amazon/shared/instance/delete.sh  
-   
-   # Create database and load balancer.
-   . "${PROJECT_DIR}"/amazon/database/make.sh            
-   . "${PROJECT_DIR}"/amazon/loadbalancer/make.sh             
-
-   # Create the Admin and Webphp instances.      
-   . "${PROJECT_DIR}"/amazon/admin/instance/make.sh               
-   . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1  
-   
-   exit
-   exit
-   exit   
+   fi  
          
    echo
        
