@@ -2,8 +2,8 @@
 
 # shellcheck disable=SC2034
 
-#ENV='development'
-ENV='production'
+ENV='development'
+#ENV='production'
 
 ## Amazon EBS-backed image:
 ## By default, the root volume is deleted when the instance terminates.

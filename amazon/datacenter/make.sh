@@ -55,7 +55,7 @@ then
 fi
 
 ## 
-## route table
+## Route table
 ## 
 
 rtb_id="$(get_route_table_id "${DTC_ROUTE_TABLE_NM}")"

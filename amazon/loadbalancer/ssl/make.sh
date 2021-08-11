@@ -231,7 +231,7 @@ else
    #
    # Production: 
    # install acme-dns server in the Admin instance and run the DNS-01 challenge to request a 
-   # certificate signed by Let's Encrypt. Upload the signed certificate to IAN.
+   # certificate signed by Let's Encrypt. Upload the signed certificate to IAM.
    #
      
    # SSH Access to Admin instance.

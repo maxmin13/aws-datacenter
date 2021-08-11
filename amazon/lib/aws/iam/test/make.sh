@@ -1,29 +1,20 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 
-set +o errexit
-set +o pipefail
-set +o nounset
-set +o xtrace
+set -o errexit
+set -o pipefail
+set -o nounset
+#set -o xtrace
  
 counter=0
+__RESULT=''
 
 ##
 ## Functions used to handle test data.
 ##
 
-function __helper_create_policy()
+function __helper_create_managed_policy_document()
 {
-   if [[ $# -lt 1 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 1
-   fi
-
-   declare -r policy_nm="${1}"
-   declare -r policy_desc='Create/delete Route 53 records.'
    local policy_document=''
-   local policy_arn=''
-
    policy_document=$(cat <<-'EOF' 
 {
    "Version":"2012-10-17",
@@ -39,7 +30,28 @@ function __helper_create_policy()
    ]
 }      
 	EOF
-   )       
+   )
+   
+   eval "__RESULT='${policy_document}'"
+   
+   return 0
+}
+
+function __helper_create_managed_policy()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 1
+   fi
+
+   declare -r policy_nm="${1}"
+   declare -r policy_desc='Create/delete Route 53 records.'
+   local policy_document=''
+   local policy_arn=''
+
+   __helper_create_managed_policy_document
+   policy_document="${__RESULT}"      
                 
    policy_arn="$(aws iam create-policy \
        --policy-name "${policy_nm}" --description "${policy_desc}" \
@@ -53,41 +65,24 @@ function __helper_create_policy()
 function __helper_clear_resources()
 {
    local policy_arn=''
-   local group_id=''
    local user_id=''
    
-   group_id="$(aws iam list-groups --query "Groups[? GroupName=='techies' ].GroupId" --output text)"
+   # Clear the global __RESULT variable.
+   __RESULT=''
+   
    policy_arn="$(aws iam list-policies --query "Policies[? PolicyName=='Route-53-policy' ].Arn" \
        --output text)"
    user_id="$(aws iam list-users --query "Users[? UserName=='tech1'].UserId" --output text)"       
-   
-   if [[ -n "${group_id}" ]]
-   then
-      if [[ -n "${user_id}" ]]
-      then
-         set +e
-         aws iam remove-user-from-group --user-name 'tech1' --group-name 'techies'
-         set -e
-         
-         echo 'User removed from group.'
-      fi
-      
-      if [[ -n "${policy_arn}" ]]
-      then
-         set +e
-         aws iam detach-group-policy --group-name 'techies' --policy-arn "${policy_arn}"
-         set -e
-         
-         echo 'Policy detached from group.'
-      fi
-      
-      aws iam delete-group --group-name 'techies' > /dev/null 2>&1
-   
-      echo 'Group deleted.'
-   fi
-
+  
    if [[ -n "${user_id}" ]]
    then
+      if [[ -n "${policy_arn}" ]]
+      then
+         aws iam detach-user-policy --user-name 'tech1' --policy-arn "${policy_arn}"
+         
+         echo 'Policy detached from from user.'
+      fi
+      
       aws iam delete-user --user-name 'tech1'
       
       echo 'User deleted.'
@@ -115,222 +110,65 @@ echo
 trap "__helper_clear_resources > /dev/null 2>&1" EXIT
 
 ###########################################
-## TEST 1: delete_group
+## TEST 11: create_user
 ###########################################
 
-__helper_clear_resources > /dev/null 2>&1
-
-# Create a user group with one user and one policy.
-aws iam create-group --group-name 'techies' > /dev/null
-aws iam create-user --user-name 'tech1' > /dev/null 
-aws iam add-user-to-group --user-name 'tech1' --group-name 'techies'
-__helper_create_policy 'Route-53-policy' > /dev/null 2>&1
-policy_arn="${__RESULT}"
-aws iam attach-group-policy --group-name 'techies' --policy-arn "${policy_arn}"
+__helper_clear_resources > /dev/null 2>&1 
 
 #
 # Missing argument.
 #
 
 set +e
-delete_group > /dev/null
+create_user > /dev/null 2>&1
 exit_code=$?
 set -e
 
-if test 0 -eq "${exit_code}"
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
 then
-   echo 'ERROR: testing delete_group with missing argument.'
+   echo 'ERROR: testing create_user with missing arguments.'
    counter=$((counter +1))
-fi
+fi 
 
 #
-# Group with user and policy.
-# 
+# Success.
+#
 
 set +e
-delete_group 'techies' > /dev/null
+create_user 'tech1' > /dev/null 2>&1
 exit_code=$?
 set -e
 
-# Check the group has been deleted.
-group_id="$(aws iam list-groups --query "Groups[? GroupName=='techies' ].GroupId" --output text)"
-
-if test -n "${group_id}"
+# No error is expected.
+if [[ 0 -ne "${exit_code}" ]]
 then
-   echo 'ERROR: testing delete_group, the group hasn''t been canceled.'
+   echo 'ERROR: testing create_user.'
    counter=$((counter +1))
-fi 
-
-# Check the policy hasn't been canceled.
-policy_arn="$(aws iam list-policies --query "Policies[? PolicyName=='Route-53-policy' ].Arn" \
-    --output text)"
+else 
+   user_id="$(aws iam list-users --query "Users[? UserName=='tech1' ].UserId" \
+       --output text)"
     
-if test -z "${policy_arn}"
-then
-   echo 'ERROR: testing delete_group, the policy has been canceled.'
-   counter=$((counter +1))
-fi     
-
-# Check the user hasn't been canceled.
-user_id="$(aws iam list-users --query "Users[? UserName=='tech1'].UserId" --output text)" 
-    
-if test -z "${user_id}"
-then
-   echo 'ERROR: testing delete_group, the user has been canceled.'
-   counter=$((counter +1))
-fi  
-
-echo 'delete_group tests completed.'   
-
-###########################################
-## TEST 2: __detach_policy_from_group
-###########################################
-
-__helper_clear_resources > /dev/null 2>&1
-
-# Create a group and attach a policy.
-aws iam create-group --group-name 'techies' > /dev/null
-__helper_create_policy 'Route-53-policy' > /dev/null 2>&1
-policy_arn="${__RESULT}"
-aws iam attach-group-policy --group-name 'techies' --policy-arn "${policy_arn}"
-
-__detach_policy_from_group 'techies' 'Route-53-policy' > /dev/null
-
-policy_arn="$(aws iam list-attached-group-policies --group-name  'techies' \
-    --query "AttachedPolicies[? PolicyName=='Route-53-policy'].PolicyArn" --output text)"
-
-if test -n "${policy_arn}"
-then
-   echo 'ERROR: testing __detach_policy_from_group.'
-   counter=$((counter +1))
+   if test -z "${user_id}"
+   then
+      echo 'ERROR: testing create_user, user not found.'
+      counter=$((counter +1))
+   fi
 fi
+ 
+#
+# Same user twice.
+#
 
-echo '__detach_policy_from_group tests completed.'  
+set +e
+create_user 'tech1' > /dev/null 2>&1
+exit_code=$?
+set -e
 
-###########################################
-## TEST 3: __get_policy_arn
-###########################################
-
-__helper_clear_resources > /dev/null 2>&1
-
-# Create a policy
-__helper_create_policy 'Route-53-policy' > /dev/null 2>&1
-
-__get_policy_arn 'Route-53-policy'
-policy_arn="${__RESULT}"
-
-if test -z "${policy_arn}"
+# An error is expected.
+if [[ 0 -eq "${exit_code}" ]]
 then
-   echo 'ERROR: testing __get_policy_arn.'
-   counter=$((counter +1))
-fi
-
-echo '__get_policy_arn tests completed.' 
-
-###########################################
-## TEST 4: create_group
-###########################################
-
-__helper_clear_resources > /dev/null 2>&1 
-
-create_group 'techies' > /dev/null
-group_arn="${__RESULT}"
-
-if test -z "${group_arn}"
-then
-   echo 'ERROR: testing create_group, group ARN not found.'
-   counter=$((counter +1))
-fi 
-
-# Check the group has been created.
-group_id="$(aws iam list-groups --query "Groups[? GroupName=='techies' ].GroupId" --output text)"
-
-if test -z "${group_id}"
-then
-   echo 'ERROR: testing create_group, the group hasn''t been created.'
-   counter=$((counter +1))
-fi 
-
-echo 'create_group tests completed.'    
-
-###########################################
-## TEST 5: __remove_user_from_group
-###########################################
-
-__helper_clear_resources > /dev/null 2>&1 
-
-# Create a user and add it to a group.
-aws iam create-user --user-name 'tech1' > /dev/null 
-aws iam create-group --group-name 'techies' > /dev/null
-aws iam add-user-to-group --user-name 'tech1' --group-name 'techies'
-
-__remove_user_from_group 'techies' 'tech1' > /dev/null
-
-group_nm="$(aws iam list-groups-for-user --user-name 'tech1' --query Groups[].GroupName --output text)" 
-      
-if test -n "${group_nm}" 
-then
-    echo 'ERROR: testing __remove_user_from_group.'
-   counter=$((counter +1))
-fi
-
-echo '__remove_user_from_group tests completed.'
-
-###########################################
-## TEST 6: add_user_to_group
-###########################################
-
-__helper_clear_resources > /dev/null 2>&1 
-
-# Create a user and a group.
-aws iam create-user --user-name 'tech1' > /dev/null 
-aws iam create-group --group-name 'techies' > /dev/null
-
-add_user_to_group 'tech1' 'techies' > /dev/null
-
-group_nm="$(aws iam list-groups-for-user --user-name 'tech1' --query Groups[].GroupName --output text)" 
-      
-if test -z "${group_nm}" 
-then
-    echo 'ERROR: testing add_user_to_group.'
-   counter=$((counter +1))
-fi
-
-echo 'add_user_to_group tests completed.' 
-
-###########################################
-## TEST 7: delete_user
-###########################################
-
-__helper_clear_resources > /dev/null 2>&1 
-
-aws iam create-user --user-name 'tech1' > /dev/null 
-       
-delete_user 'tech1'       
-
-user_id="$(aws iam list-users --query "Users[? UserName=='tech1' ].UserId" \
-     --output text)"
-    
-if test -n "${user_id}"
-then
-   echo 'ERROR: testing delete_user.'
-   counter=$((counter +1))
-fi 
-
-echo 'delete_user tests completed.'   
-
-###########################################
-## TEST 8: create_user
-###########################################
-
-create_user 'tech1'
-
-user_id="$(aws iam list-users --query "Users[? UserName=='tech1' ].UserId" \
-     --output text)"
-    
-if test -z "${user_id}"
-then
-   echo 'ERROR: testing create_user, user not found.'
+   echo 'ERROR: testing create_user twice.'
    counter=$((counter +1))
 fi 
 
@@ -338,17 +176,209 @@ echo 'create_user tests completed.'
 
 __helper_clear_resources > /dev/null 2>&1 
 
-#################################################
-## TEST 9: __build_route53_policy_document
-#################################################
+###########################################
+## TEST 10: delete_user
+###########################################
+
+__helper_clear_resources > /dev/null 2>&1 
+
+# Create a user with a policy attached.
+aws iam create-user --user-name 'tech1' > /dev/null 2>&1 
+__helper_create_managed_policy 'Route-53-policy' > /dev/null 2>&1
+policy_arn="${__RESULT}"
+__RESULT=''
+aws iam attach-user-policy --user-name 'tech1' --policy-arn "${policy_arn}" 
+
+#
+# Missing argument.
+#
+
+set +e
+delete_user > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing delete_user with missing arguments.'
+fi 
+
+#
+# Not existing user.
+#
+
+set +e
+delete_user 'techxxx' > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 0 -eq "${exit_code}" ]]
+then
+   echo 'ERROR: testing delete_user with not existing user.'
+   counter=$((counter +1))
+fi 
+
+#
+# User with policy attached.
+#
+
+set +e
+delete_user 'tech1' > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# No error is expected.
+if [[ 0 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing delete_user with policy attached.'
+   counter=$((counter +1))
+else
+    # Check the user has been deleted.
+   user_id="$(aws iam list-users --query "Users[? UserName=='tech1' ].UserId" \
+        --output text)"
+    
+   if test -n "${user_id}"
+   then
+      echo 'ERROR: testing delete_user.'
+      counter=$((counter +1))
+   fi 
+
+   # Check the policy hasn't been canceled.
+   policy_arn="$(aws iam list-policies --query "Policies[? PolicyName=='Route-53-policy' ].Arn" \
+       --output text)"
+    
+   if test -z "${policy_arn}"
+   then
+      echo 'ERROR: testing delete_user, the policy has been canceled.'
+      counter=$((counter +1))
+   fi 
+fi
+
+#
+# User without policy attached.
+#
+
+# Create a user without a policy attached.
+aws iam create-user --user-name 'tech1' > /dev/null 2>&1 
+
+set +e
+delete_user 'tech1' > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# No error is expected.
+if [[ 0 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing delete_user without policy attached.'
+   counter=$((counter +1))
+fi
+
+echo 'delete_user tests completed.'
+
+###########################################
+## TEST 1: attach_managed_policy_to_user
+###########################################
+
+__helper_clear_resources > /dev/null 2>&1
+
+# Create a user and a policy.
+aws iam create-user --user-name 'tech1' > /dev/null 2>&1
+__helper_create_managed_policy 'Route-53-policy' > /dev/null 2>&1
+
+#
+# Missing argument.
+#
+
+set +e
+attach_managed_policy_to_user 'tech1' > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing attach_managed_policy_to_user with missing arguments.'
+fi
+
+#
+# Managed policy not found.
+#
+
+set +e
+attach_managed_policy_to_user 'tech1' 'XXXX-53-policy' > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 0 -eq "${exit_code}" ]] 
+then
+   echo 'ERROR: testing attach_managed_policy_to_user with not existing policy.'
+   counter=$((counter +1))
+fi
+
+#
+# Attach policy successfully.
+#
+
+set +e
+attach_managed_policy_to_user 'tech1' 'Route-53-policy' > /dev/null 2>&1 
+exit_code=$?
+set -e
+
+if [[ 0 -ne "${exit_code}" ]] 
+then
+   echo 'ERROR: testing attach_managed_policy_to_user with existing policy.'
+   counter=$((counter +1))
+else
+   policy_arn="$(aws iam list-attached-user-policies --user-name  'tech1' \
+       --query "AttachedPolicies[? PolicyName=='Route-53-policy'].PolicyArn" --output text)"
+
+   if test -z "${policy_arn}"
+   then
+      echo 'ERROR: testing attach_managed_policy_to_user, policy ARN not found.'
+      counter=$((counter +1))
+   fi       
+fi
+
+echo 'attach_managed_policy_to_user tests completed.'  
+
+__helper_clear_resources > /dev/null 2>&1
+
+###########################################
+## TEST 6: __get_managed_policy_arn
+###########################################
+
+__helper_clear_resources > /dev/null 2>&1
+
+# Create a policy
+__helper_create_managed_policy 'Route-53-policy' > /dev/null 2>&1
+
+__get_managed_policy_arn 'Route-53-policy'
+policy_arn="${__RESULT}"
+__RESULT=''
+
+if test -z "${policy_arn}"
+then
+   echo 'ERROR: testing __get_managed_policy_arn.'
+   counter=$((counter +1))
+fi
+
+echo '__get_managed_policy_arn tests completed.' 
+
+#######################################################
+## TEST 12: __build_route53_managed_policy_document
+#######################################################
 
 #
 # Create a document policy for Route 53.
 #
 
 document_policy=''
-__build_route53_policy_document
+__build_route53_managed_policy_document
 document_policy="${__RESULT}"
+__RESULT=''
 
 ## Validate JSON.
 if jq -e . >/dev/null 2>&1 <<< "${document_policy}"
@@ -359,7 +389,7 @@ then
 
     if [[ '2012-10-17' != "${version}" ]]
     then
-       echo "ERROR: testing __build_route53_policy_document wrong Version element."
+       echo "ERROR: testing __build_route53_managed_policy_document wrong Version element."
        counter=$((counter +1))
     fi
     
@@ -368,7 +398,7 @@ then
     
     if [[ 'Allow' != "${effect}" ]]
     then
-       echo "ERROR: testing __build_route53_policy_document wrong Effect element."
+       echo "ERROR: testing __build_route53_managed_policy_document wrong Effect element."
        counter=$((counter +1))
     fi
     
@@ -377,7 +407,7 @@ then
     
     if [[ 'route53:DeleteTrafficPolicy' != "${action}" ]]
     then
-       echo "ERROR: testing __build_route53_policy_document wrong first Action element."
+       echo "ERROR: testing __build_route53_managed_policy_document wrong first Action element."
        counter=$((counter +1))
     fi
     
@@ -386,7 +416,16 @@ then
     
     if [[ 'route53:CreateTrafficPolicy' != "${action}" ]]
     then
-       echo "ERROR: testing __build_route53_policy_document wrong second Action element."
+       echo "ERROR: testing __build_route53_managed_policy_document wrong second Action element."
+       counter=$((counter +1))
+    fi
+    
+    # Get the third Action element.
+    action="$(echo "${document_policy}" | jq -r '.Statement[0].Action[2]')"
+    
+    if [[ 'sts:AssumeRole' != "${action}" ]]
+    then
+       echo "ERROR: testing __build_route53_managed_policy_document wrong third Action element."
        counter=$((counter +1))
     fi
     
@@ -395,118 +434,206 @@ then
     
     if [[ '*' != "${resource}" ]]
     then
-       echo "ERROR: testing __build_route53_policy_document wrong Resource element."
+       echo "ERROR: testing __build_route53_managed_policy_document wrong Resource element."
        counter=$((counter +1))
     fi       
 else
-    echo "ERROR: Failed to parse JSON __build_route53_policy_document request batch."
+    echo "ERROR: Failed to parse JSON __build_route53_managed_policy_document request batch."
     counter=$((counter +1))
 fi
 
-echo '__build_route53_policy_document tests completed.'
+echo '__build_route53_managed_policy_document tests completed.'
 
 ###########################################
-## TEST 10: create_route53_policy
+## TEST 13: create_managed_policy
 ###########################################
+
+__helper_clear_resources > /dev/null 2>&1
 
 #
 # Missing argument.
 #
 
 set +e
-create_route53_policy > /dev/null
+create_managed_policy 'Route-53-policy' > /dev/null 2>&1
 exit_code=$?
 set -e
 
-if test 0 -eq "${exit_code}"
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
 then
-   echo 'ERROR: testing create_route53_policy with missing argument.'
-   counter=$((counter +1))
+   echo 'ERROR: testing create_managed_policy with missing arguments.'
 fi
 
 #
 # Create a policy successfully.
 #
-policy_arn=''
-create_route53_policy 'Route-53-policy'
-policy_arn="${__RESULT}"
 
-if test -z "${policy_arn}"
+# Create the policy document.
+__helper_create_managed_policy_document
+policy_document="${__RESULT}"
+__RESULT=''
+
+set +e
+create_managed_policy 'Route-53-policy' 'Route 53 create and delete records policy.' \
+    "${policy_document}" > /dev/null 2>&1 
+exit_code=$?
+set -e
+
+# No error is expected.
+if [[ 0 -ne "${exit_code}" ]]
 then
-   echo 'ERROR: testing create_route53_policy.'
-   counter=$((counter +1))
-fi
-
-name="$(aws iam list-policies --query "Policies[? PolicyName=='Route-53-policy' ].PolicyName" --output text)"   
+   echo 'ERROR: testing create_managed_policy with missing arguments.'
+else
+   policy_arn="${__RESULT}"
+   __RESULT=''
    
-if [[ "${name}" != 'Route-53-policy' ]]
-then
-   echo 'ERROR: testing create_route53_policy, name not found.'
-   counter=$((counter +1))
-fi 
+   if test -z "${policy_arn}"
+   then
+      echo 'ERROR: testing create_managed_policy.'
+      counter=$((counter +1))
+   fi
+   
+   policy_name="$(aws iam list-policies --query "Policies[? PolicyName=='Route-53-policy' ].PolicyName" \
+       --output text)"   
+   
+   if [[ "${policy_name}" != 'Route-53-policy' ]]
+   then
+      echo 'ERROR: testing create_managed_policy, name not found.'
+      counter=$((counter +1))
+   fi
+fi
 
 #
 # Create a policy twice.
 #
 
-# An empty string is expected.
+# An error is expected.
 
-policy_arn=''
-create_route53_policy 'Route-53-policy'
-policy_arn="${__RESULT}"
+set +e
+create_managed_policy 'Route-53-policy' 'Route 53 create and delete records policy.' \
+    "${policy_document}" > /dev/null 2>&1 
+exit_code=$?
+set -e
 
-if test -n "${policy_arn}"
+
+# An error is expected.
+if [[ 0 -eq "${exit_code}" ]]
 then
-   echo 'ERROR: testing create_route53_policy twice.'
-   counter=$((counter +1))
+   echo 'ERROR: testing create_managed_policy twice.'
 fi
 
-####### TODO
-######## Verify the policy.
-#######
+######## TODO
+######## Verify the policy grants work.
+######## TODO
 
-echo 'create_route53_policy tests completed.'
+echo 'create_managed_policy tests completed.'
 
 __helper_clear_resources > /dev/null 2>&1 
 
 ###########################################
-## TEST 11: delete_policy
+## TEST 14: delete_managed_policy
 ###########################################
 
-__helper_create_policy 'Route-53-policy' > /dev/null 2>&1
+__helper_create_managed_policy 'Route-53-policy' > /dev/null 2>&1
 
 #
 # Missing argument.
 #
 
 set +e
-delete_policy > /dev/null
+delete_managed_policy > /dev/null 2>&1
 exit_code=$?
 set -e
 
 # An error is expected.
-if test 0 -eq "${exit_code}"
+if [[ 128 -ne "${exit_code}" ]]
 then
-   echo 'ERROR: testing delete_policy with missing argument.'
-   counter=$((counter +1))
+   echo 'ERROR: testing delete_managed_policy with missing arguments.'
 fi
 
 #
 # Delete a policy successfully.
 #
 
-delete_policy 'Route-53-policy'
+delete_managed_policy 'Route-53-policy' > /dev/null 2>&1        
 
 policy_arn="$(aws iam list-policies --query "Policies[? PolicyName=='Route-53-policy' ].Arn" --output text)"
 
 # Emptry string is expected.
 if [[ -n "${policy_arn}" ]]
 then
-   echo 'ERROR: testing delete_policy.'
+   echo 'ERROR: testing delete_managed_policy.'
    counter=$((counter +1))
 fi
 
-echo 'delete_policy tests completed.'
+#
+# Not existing policy.
+#
+
+delete_managed_policy 'xxxxx-53-policy' > /dev/null 2>&1
+
+# An error is expected.
+if [[ 0 -eq "${exit_code}" ]]
+then
+   echo 'ERROR: testing delete_managed_policy with not existing policy.'
+fi
+
+echo 'delete_managed_policy tests completed.'
+
+##############################################################
+## TEST 3: __build_route53_permission_managed_policy_document
+##############################################################
+
+#### TODO
+#### TODO
+#### TODO
+#### TODO 
+
+###########################################
+## TEST 3: create_role
+###########################################
+
+#### TODO
+#### TODO
+#### TODO
+#### TODO 
+
+###########################################
+## TEST 3: get_managed_policy_arn
+###########################################
+
+#### TODO
+#### TODO
+#### TODO
+#### TODO  
+
+###########################################
+## TEST 3: get_user_arn
+###########################################
+
+#### TODO
+#### TODO
+#### TODO
+#### TODO  
+
+###########################################
+## TEST 3: check_user_exists
+###########################################
+
+#### TODO
+#### TODO
+#### TODO
+#### TODO  
+
+###########################################
+## TEST 4: detach_managed_policy_from_user
+###########################################
+
+#### TODO
+#### TODO
+#### TODO
+#### TODO  
    
 ##############################################
 # Count the errors.

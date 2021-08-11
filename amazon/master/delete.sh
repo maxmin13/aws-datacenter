@@ -40,7 +40,7 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi 
-       
+   
    echo 
 
    # Make a backup of the database.
@@ -71,7 +71,10 @@ echo
    . "${PROJECT_DIR}"/amazon/shared/image/delete.sh            
 
    # Release the public IP addresses assigned to the account.
-   . "${PROJECT_DIR}"/amazon/account/delete.sh               
+   . "${PROJECT_DIR}"/amazon/account/delete.sh  
+   
+   # Delete AWS users and policies.
+   #. "${PROJECT_DIR}"/amazon/user/delete.sh                
 
    # Delete the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/delete.sh    

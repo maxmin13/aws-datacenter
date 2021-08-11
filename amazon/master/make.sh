@@ -47,7 +47,10 @@ echo
    echo
        
    # Create the datacenter.
-   . "${PROJECT_DIR}"/amazon/datacenter/make.sh              
+   . "${PROJECT_DIR}"/amazon/datacenter/make.sh  
+   
+   # Create AWS users and policies
+   #. "${PROJECT_DIR}"/amazon/user/make.sh             
 
    # Create a base shared image.
    . "${PROJECT_DIR}"/amazon/shared/instance/make.sh              
