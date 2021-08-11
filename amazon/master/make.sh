@@ -43,7 +43,14 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi  
-      
+   
+  
+   # Create AWS users and policies
+   . "${PROJECT_DIR}"/amazon/user/delete.sh  
+   
+   exit
+   exit
+         
    echo
        
    # Create the datacenter.

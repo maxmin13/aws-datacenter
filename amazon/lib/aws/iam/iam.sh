@@ -484,6 +484,52 @@ function attach_managed_policy_to_user()
 }
 
 #===============================================================================
+# Checks if the specified IAM user has a policy attached.
+#
+# Globals:
+#  None
+# Arguments:
+# +user_nm   -- the user name.
+# +policy_nm -- the policy name.
+# Returns:      
+#  true or false value in the __RESULT global variable.  
+#===============================================================================
+function check_user_has_managed_policy()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   declare -r user_nm="${1}"
+   declare -r policy_nm="${2}"
+   local attached='false'
+   local exit_code=0
+   local policy_arn=''
+
+   policy_arn="$(aws iam list-attached-user-policies --user-name "${user_nm}" \
+       --query "AttachedPolicies[? PolicyName=='${policy_nm}'].PolicyArn" --output text)"
+   
+   # If the caller sets 'set +e' to analyze the return code, this functions
+   # doesn't exit immediately with error, so it is necessary to get the error
+   # code in any case and return it.
+   exit_code=$?
+   
+   if [[ 0 -eq "${exit_code}" ]]
+   then
+      if [[ -n "${policy_arn}" ]]
+      then
+         attached='true' 
+      fi
+   fi
+       
+   eval "__RESULT='${attached}'"
+
+   return "${exit_code}" 
+}
+
+#===============================================================================
 # Removes the specified managed permissions policy from the specified IAM user.
 #
 # Globals:

@@ -109,8 +109,84 @@ echo
 
 trap "__helper_clear_resources > /dev/null 2>&1" EXIT
 
+##############################################################
+## TEST 3: check_user_has_managed_policy
+##############################################################
 
+__helper_clear_resources > /dev/null 2>&1 
 
+# Create a user with a policy attached.
+aws iam create-user --user-name 'tech1' > /dev/null 2>&1 
+__helper_create_managed_policy 'Route-53-policy' > /dev/null 2>&1
+policy_arn="${__RESULT}"
+__RESULT=''
+aws iam attach-user-policy --user-name 'tech1' --policy-arn "${policy_arn}" 
+
+#
+# Missing argument.
+#
+
+set +e
+check_user_has_managed_policy 'tech1' > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing check_user_has_managed_policy with missing arguments.'
+   counter=$((counter +1))
+fi
+
+#
+# Not existing user.
+#
+
+set +e
+check_user_has_managed_policy 'tech33' 'Route-53-policy' > /dev/null 2>&1
+exit_code=$?
+set -e
+policy_attached="${__RESULT}"
+__RESULT=''
+
+# An error is expected.
+if [[ 0 -eq "${exit_code}" ]]
+then
+   echo 'ERROR: testing check_user_has_managed_policy with not existing user.'
+   counter=$((counter +1))
+fi
+
+# false is expected.
+if [[ 'false' != "${policy_attached}" ]]
+then
+   echo 'ERROR: testing check_user_has_managed_policy with not existing user.'
+   counter=$((counter +1))
+fi
+
+#
+# Not existing policy.
+#
+
+check_user_has_managed_policy 'tech1' 'xxxxx-53-policy' > /dev/null 2>&1
+exit_code=$?
+policy_attached="${__RESULT}"
+__RESULT=''
+
+# No error is expected.
+if [[ 0 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing check_user_has_managed_policy with not existing policy.'
+   counter=$((counter +1))
+fi
+
+# false is expected.
+if [[ 'false' != "${policy_attached}" ]]
+then
+   echo 'ERROR: testing check_user_has_managed_policy with not existing policy.'
+   counter=$((counter +1))
+fi
+
+echo 'check_user_has_managed_policy tests completed.'
 
 ##############################################################
 ## TEST 3: check_managed_policy_exists
@@ -536,6 +612,7 @@ set -e
 if [[ 128 -ne "${exit_code}" ]]
 then
    echo 'ERROR: testing delete_user with missing arguments.'
+   counter=$((counter +1))
 fi 
 
 #
@@ -634,6 +711,7 @@ set -e
 if [[ 128 -ne "${exit_code}" ]]
 then
    echo 'ERROR: testing attach_managed_policy_to_user with missing arguments.'
+   counter=$((counter +1))
 fi
 
 #
@@ -776,6 +854,7 @@ set -e
 if [[ 128 -ne "${exit_code}" ]]
 then
    echo 'ERROR: testing create_managed_policy with missing arguments.'
+   counter=$((counter +1))
 fi
 
 #
@@ -797,22 +876,15 @@ set -e
 if [[ 0 -ne "${exit_code}" ]]
 then
    echo 'ERROR: testing create_managed_policy with missing arguments.'
+   counter=$((counter +1))
 else
-   policy_arn="${__RESULT}"
-   __RESULT=''
-   
-   if test -z "${policy_arn}"
-   then
-      echo 'ERROR: testing create_managed_policy.'
-      counter=$((counter +1))
-   fi
-   
+   # Check the policy.
    policy_name="$(aws iam list-policies --query "Policies[? PolicyName=='Route-53-policy' ].PolicyName" \
        --output text)"   
    
-   if [[ "${policy_name}" != 'Route-53-policy' ]]
+   if [[ -z "${policy_name}" ]]
    then
-      echo 'ERROR: testing create_managed_policy, name not found.'
+      echo 'ERROR: testing create_managed_policy, policy not found.'
       counter=$((counter +1))
    fi
 fi
@@ -834,6 +906,7 @@ set -e
 if [[ 0 -eq "${exit_code}" ]]
 then
    echo 'ERROR: testing create_managed_policy twice.'
+   counter=$((counter +1))
 fi
 
 ######## TODO
@@ -848,7 +921,7 @@ __helper_clear_resources > /dev/null 2>&1
 ## TEST 14: delete_managed_policy
 ###########################################
 
-__helper_create_managed_policy 'Route-53-policy' > /dev/null 2>&1
+__helper_clear_resources > /dev/null 2>&1 
 
 #
 # Missing argument.
@@ -863,7 +936,10 @@ set -e
 if [[ 128 -ne "${exit_code}" ]]
 then
    echo 'ERROR: testing delete_managed_policy with missing arguments.'
+   counter=$((counter +1))
 fi
+
+__helper_create_managed_policy 'Route-53-policy' > /dev/null 2>&1
 
 #
 # Delete a policy successfully.
@@ -873,7 +949,7 @@ delete_managed_policy 'Route-53-policy' > /dev/null 2>&1
 
 policy_arn="$(aws iam list-policies --query "Policies[? PolicyName=='Route-53-policy' ].Arn" --output text)"
 
-# Emptry string is expected.
+# Empty string is expected.
 if [[ -n "${policy_arn}" ]]
 then
    echo 'ERROR: testing delete_managed_policy.'
@@ -884,12 +960,16 @@ fi
 # Not existing policy.
 #
 
+set +e
 delete_managed_policy 'xxxxx-53-policy' > /dev/null 2>&1
+exit_code=$?
+set -e
 
 # An error is expected.
 if [[ 0 -eq "${exit_code}" ]]
 then
    echo 'ERROR: testing delete_managed_policy with not existing policy.'
+   counter=$((counter +1))
 fi
 
 echo 'delete_managed_policy tests completed.'
