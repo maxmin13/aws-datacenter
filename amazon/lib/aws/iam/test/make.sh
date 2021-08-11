@@ -109,6 +109,340 @@ echo
 
 trap "__helper_clear_resources > /dev/null 2>&1" EXIT
 
+
+
+
+##############################################################
+## TEST 3: check_managed_policy_exists
+##############################################################
+
+__helper_clear_resources > /dev/null 2>&1 
+
+#
+# Missing argument.
+#
+
+set +e
+check_managed_policy_exists > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing check_managed_policy_exists with missing arguments.'
+   counter=$((counter +1))
+fi 
+
+#
+# Not existing policy.
+#
+
+check_managed_policy_exists 'xxxxx-53-policy' > /dev/null 2>&1
+policy_exists="${__RESULT}"
+__RESULT=''
+
+if [[ 'false' != "${policy_exists}" ]]
+then
+   echo 'ERROR: testing check_managed_policy_exists with not existing policy.'
+   counter=$((counter +1))
+fi
+
+#
+# Success.
+#
+
+__helper_create_managed_policy 'Route-53-policy' > /dev/null 2>&1
+__RESULT=''
+
+check_managed_policy_exists 'Route-53-policy' > /dev/null 2>&1
+policy_exists="${__RESULT}"
+__RESULT=''
+
+if [[ 'true' != "${policy_exists}" ]]
+then
+   echo 'ERROR: testing check_managed_policy_exists with valid policy.'
+   counter=$((counter +1))
+fi
+
+echo 'check_managed_policy_exists tests completed.'
+
+###########################################
+## TEST 3: get_managed_policy_arn
+###########################################
+
+__helper_clear_resources > /dev/null 2>&1 
+
+#
+# Missing argument.
+#
+
+set +e
+get_managed_policy_arn > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing get_managed_policy_arn with missing arguments.'
+   counter=$((counter +1))
+fi 
+
+#
+# Not existing policy.
+#
+
+get_managed_policy_arn 'xxxxx-53-policy' > /dev/null 2>&1
+policy_arn="${__RESULT}"
+__RESULT=''
+
+# Empty string expected
+if [[ -n "${policy_arn}" ]]
+then
+   echo 'ERROR: testing get_managed_policy_arn with not existing policy.'
+   counter=$((counter +1))
+fi
+
+#
+# Success.
+#
+
+__helper_create_managed_policy 'Route-53-policy' > /dev/null 2>&1
+__RESULT=''
+
+get_managed_policy_arn 'Route-53-policy' > /dev/null 2>&1
+policy_arn="${__RESULT}"
+__RESULT=''
+
+if [[ -z "${policy_arn}" ]]
+then
+   echo 'ERROR: testing get_managed_policy_arn with valid policy.'
+   counter=$((counter +1))
+fi
+
+echo 'get_managed_policy_arn tests completed.' 
+
+###########################################
+## TEST 3: check_user_exists
+###########################################
+
+__helper_clear_resources > /dev/null 2>&1 
+
+#
+# Missing argument.
+#
+
+set +e
+check_user_exists > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing check_user_exists with missing arguments.'
+   counter=$((counter +1))
+fi 
+
+#
+# Not existing user.
+#
+
+check_user_exists 'tech22' > /dev/null 2>&1
+user_exists="${__RESULT}"
+__RESULT=''
+
+# false is expected
+if [[ 'false' != "${user_exists}" ]]
+then
+   echo 'ERROR: testing check_user_exists with not existing user.'
+   counter=$((counter +1))
+fi
+
+#
+# Success.
+#
+
+aws iam create-user --user-name 'tech1' > /dev/null 2>&1 
+
+check_user_exists 'tech1' > /dev/null 2>&1
+user_exists="${__RESULT}"
+__RESULT=''
+
+if [[ 'true' != "${user_exists}" ]]
+then
+   echo 'ERROR: testing check_user_exists with valid user.'
+   counter=$((counter +1))
+fi
+
+echo 'check_user_exists tests completed.'
+
+###########################################
+## TEST 3: get_user_arn
+###########################################
+
+__helper_clear_resources > /dev/null 2>&1 
+
+#
+# Missing argument.
+#
+
+set +e
+get_user_arn > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing get_user_arn with missing arguments.'
+   counter=$((counter +1))
+fi 
+
+#
+# Not existing user.
+#
+
+get_user_arn 'tech22' > /dev/null 2>&1
+user_arn="${__RESULT}"
+__RESULT=''
+
+# Empty string expected
+if [[ -n "${user_arn}" ]]
+then
+   echo 'ERROR: testing get_user_arn with not existing user.'
+   counter=$((counter +1))
+fi
+
+#
+# Success.
+#
+
+aws iam create-user --user-name 'tech1' > /dev/null 2>&1 
+
+get_user_arn 'tech22' > /dev/null 2>&1
+user_arn="${__RESULT}"
+__RESULT=''
+
+if [[ -n "${user_arn}" ]]
+then
+   echo 'ERROR: testing get_user_arn with valid user.'
+   counter=$((counter +1))
+fi
+
+echo 'get_user_arn tests completed.' 
+
+###########################################
+## TEST 3: check_user_exists
+###########################################
+
+__helper_clear_resources > /dev/null 2>&1 
+
+#
+# Missing argument.
+#
+
+set +e
+check_user_exists > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing check_user_exists with missing arguments.'
+   counter=$((counter +1))
+fi 
+
+#
+# Not existing user.
+#
+
+check_user_exists 'tech22' > /dev/null 2>&1
+user_exists="${__RESULT}"
+__RESULT=''
+
+# false is expected
+if [[ 'false' != "${user_exists}" ]]
+then
+   echo 'ERROR: testing check_user_exists with not existing user.'
+   counter=$((counter +1))
+fi
+
+#
+# Success.
+#
+
+aws iam create-user --user-name 'tech1' > /dev/null 2>&1 
+
+check_user_exists 'tech1' > /dev/null 2>&1
+user_exists="${__RESULT}"
+__RESULT=''
+
+if [[ 'true' != "${user_exists}" ]]
+then
+   echo 'ERROR: testing check_user_exists with valid user.'
+   counter=$((counter +1))
+fi
+
+echo 'check_user_exists tests completed.'
+
+###########################################
+## TEST 3: get_user_arn
+###########################################
+
+__helper_clear_resources > /dev/null 2>&1 
+
+#
+# Missing argument.
+#
+
+set +e
+get_user_arn > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing get_user_arn with missing arguments.'
+   counter=$((counter +1))
+fi 
+
+#
+# Not existing user.
+#
+
+get_user_arn 'tech22' > /dev/null 2>&1
+user_arn="${__RESULT}"
+__RESULT=''
+
+# Empty string expected
+if [[ -n "${user_arn}" ]]
+then
+   echo 'ERROR: testing get_user_arn with not existing user.'
+   counter=$((counter +1))
+fi
+
+#
+# Success.
+#
+
+aws iam create-user --user-name 'tech1' > /dev/null 2>&1 
+
+get_user_arn 'tech22' > /dev/null 2>&1
+user_arn="${__RESULT}"
+__RESULT=''
+
+if [[ -n "${user_arn}" ]]
+then
+   echo 'ERROR: testing get_user_arn with valid user.'
+   counter=$((counter +1))
+fi
+
+echo 'get_user_arn tests completed.' 
+
 ###########################################
 ## TEST 11: create_user
 ###########################################
@@ -346,27 +680,6 @@ echo 'attach_managed_policy_to_user tests completed.'
 
 __helper_clear_resources > /dev/null 2>&1
 
-###########################################
-## TEST 6: __get_managed_policy_arn
-###########################################
-
-__helper_clear_resources > /dev/null 2>&1
-
-# Create a policy
-__helper_create_managed_policy 'Route-53-policy' > /dev/null 2>&1
-
-__get_managed_policy_arn 'Route-53-policy'
-policy_arn="${__RESULT}"
-__RESULT=''
-
-if test -z "${policy_arn}"
-then
-   echo 'ERROR: testing __get_managed_policy_arn.'
-   counter=$((counter +1))
-fi
-
-echo '__get_managed_policy_arn tests completed.' 
-
 #######################################################
 ## TEST 12: __build_route53_managed_policy_document
 #######################################################
@@ -598,33 +911,6 @@ echo 'delete_managed_policy tests completed.'
 #### TODO
 #### TODO
 #### TODO 
-
-###########################################
-## TEST 3: get_managed_policy_arn
-###########################################
-
-#### TODO
-#### TODO
-#### TODO
-#### TODO  
-
-###########################################
-## TEST 3: get_user_arn
-###########################################
-
-#### TODO
-#### TODO
-#### TODO
-#### TODO  
-
-###########################################
-## TEST 3: check_user_exists
-###########################################
-
-#### TODO
-#### TODO
-#### TODO
-#### TODO  
 
 ###########################################
 ## TEST 4: detach_managed_policy_from_user

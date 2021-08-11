@@ -20,17 +20,43 @@ echo 'AWS Users'
 echo '*********'
 echo
 
-# Create the IAM policy.
-__build_route53_policy_document
-policy_document="${__RESULT}"
+check_user_exists "${AWS_USER_NM}"
+user_exists="${__RESULT}"
+__RESULT=''
+user_arn=''
 
-create_policy "${AWS_ROUTE53_POLICY_NM}" 'Route 53 create and delete records policy.' 
-    "${policy_document}"
+if [[ 'false' == "${user_exists}" ]]
+then
+   # Create an IAM user that has permissions to assume roles and to manipulate DNS records.
+   create_user "${AWS_USER_NM}"
+   user_arn="${__RESULT}"
+   
+   echo 'AWS user created.'
+else
+   echo 'WARN: AWS user already created.'
+fi
 
-# Create an IAM user that has permissions to assume roles and to manipulate DNS records.
-create_user "${AWS_USER_NM}"
-user_arn="${__RESULT}"
-attach_policy_to_user "${AWS_USER_NM}" "${AWS_ROUTE53_POLICY_NM}"
+check_managed_policy_exists "${AWS_ROUTE53_POLICY_NM}"
+policy_exists="${__RESULT}"
+__RESULT=''
+
+if [[ 'false' == "${policy_exists}" ]]
+then
+   # Create the IAM policy.
+   __build_route53_managed_policy_document
+   policy_document="${__RESULT}"
+
+   create_managed_policy "${AWS_ROUTE53_POLICY_NM}" 'Route 53 create and delete records policy.' \
+       "${policy_document}"
+
+   attach_managed_policy_to_user "${AWS_USER_NM}" "${AWS_ROUTE53_POLICY_NM}"
+   
+   echo 'Managed policy created.'
+else
+   echo 'WARN: managed policy already created.'
+fi
+
+
 
 # Create the JSON file that defines the trust relationship of the IAM role.
 

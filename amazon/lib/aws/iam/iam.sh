@@ -185,7 +185,8 @@ function check_user_exists()
    local user_arn=''
    local exists='false'
 
-   user_arn="$(get_user_arn "${user_nm}")"
+   get_user_arn "${user_nm}"
+   user_arn="${__RESULT}"
    
    if [[ -n "${user_arn}" ]]
    then
@@ -279,7 +280,7 @@ function delete_user()
 # Returns:      
 #  the policy ARN, returns the value in the __RESULT global variable.  
 #===============================================================================
-function __get_managed_policy_arn()
+function get_managed_policy_arn()
 {
    if [[ $# -lt 1 ]]
    then
@@ -294,6 +295,41 @@ function __get_managed_policy_arn()
        --output text)"
    
    eval "__RESULT='${policy_arn}'"
+   
+   return 0
+}
+
+#===============================================================================
+# Checks if a IAM managed policy exists.
+#
+# Globals:
+#  None
+# Arguments:
+# +policy_nm -- the policy name.
+# Returns:      
+#  true or false value in the __RESULT global variable.  
+#===============================================================================
+function check_managed_policy_exists()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   declare -r policy_nm="${1}"
+   local policy_arn=''
+   local exists='false'
+
+   get_managed_policy_arn "${policy_nm}"
+   policy_arn="${__RESULT}"
+   
+   if [[ -n "${policy_arn}" ]]
+   then
+      exists='true'
+   fi
+       
+   eval "__RESULT='${exists}'"      
    
    return 0
 }
@@ -320,14 +356,8 @@ function delete_managed_policy()
    local policy_arn=''
    local exit_code=0
 
-   __get_managed_policy_arn "${policy_nm}"
+   get_managed_policy_arn "${policy_nm}"
    policy_arn="${__RESULT}"
-
-   if [[ -z "${policy_arn}" ]]
-   then
-      echo 'WARN: managed policy not found.'
-      return 0
-   fi
    
    aws iam delete-policy --policy-arn "${policy_arn}"
    
@@ -440,7 +470,7 @@ function attach_managed_policy_to_user()
    declare -r policy_nm="${2}"
    local exit_code=0
 
-   __get_managed_policy_arn "${policy_nm}"
+   get_managed_policy_arn "${policy_nm}"
    policy_arn="${__RESULT}"
 
    aws iam attach-user-policy --user-name "${user_nm}" --policy-arn "${policy_arn}" > /dev/null
@@ -477,7 +507,7 @@ function __detach_managed_policy_from_user()
    local policy_arn=''
    local exit_code=0
 
-   __get_managed_policy_arn "${policy_nm}"
+   get_managed_policy_arn "${policy_nm}"
    policy_arn="${__RESULT}"
    
    aws iam detach-user-policy --user-name "${user_nm}" --policy-arn "${policy_arn}" > /dev/null
