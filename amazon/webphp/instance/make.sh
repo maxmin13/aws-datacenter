@@ -280,13 +280,15 @@ then
 else
    echo "Creating the Webphp box ..."
 
-   instance_id="$(run_instance \
+   run_instance \
        "${webphp_nm}" \
        "${sgp_id}" \
        "${subnet_id}" \
        "${webphp_private_ip}" \
        "${shared_image_id}" \
-       "${TMP_DIR}"/"${webphp_dir}"/cloud_init.yml)"
+       "${TMP_DIR}"/"${webphp_dir}"/cloud_init.yml
+       
+   instance_id="$(get_instance_id "${webphp_nm}")"    
 
    echo "Webphp box created."
 fi

@@ -46,7 +46,7 @@ echo
    echo
 
    # Route 53 tests.
-   #. "${PROJECT_DIR}"/amazon/lib/aws/route53/test/make.sh  
+   . "${PROJECT_DIR}"/amazon/lib/aws/route53/test/make.sh  
    
    # IAM tests.
    . "${PROJECT_DIR}"/amazon/lib/aws/iam/test/make.sh 

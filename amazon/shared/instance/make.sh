@@ -148,13 +148,15 @@ then
 else
    echo 'Creating the Shared box ...'
    
-   instance_id="$(run_instance \
+   run_instance \
        "${SHARED_INST_NM}" \
        "${sgp_id}" \
        "${subnet_id}" \
        "${SHARED_INST_PRIVATE_IP}" \
        "${AWS_BASE_IMG_ID}" \
-       "${TMP_DIR}"/"${shared_dir}"/cloud_init.yml)"
+       "${TMP_DIR}"/"${shared_dir}"/cloud_init.yml
+       
+   instance_id="$(get_instance_id "${SHARED_INST_NM}")"    
 
    echo "Shared box created."
 fi  
@@ -274,7 +276,7 @@ ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     "${SHARED_INST_SSH_PORT}" \
     "${SHARED_INST_USER_NM}"    
     
-# After the instance is created, stop it before creating the image, to ensure data integrity. 
+# After the instance is created, stop it before creating the image, to ensure data integrity.
 
 stop_instance "${instance_id}"   
 

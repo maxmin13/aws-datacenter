@@ -18,7 +18,7 @@ echo
 
 lbal_dns_nm="${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
 
-get_loadbalancer_record_dns_name_value "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+get_loadbalancer_record_dns_name_value "${lbal_dns_nm}"
 lbal_record_dns_nm="${__RESULT}"
        
 if [[ -z "${lbal_record_dns_nm}" ]]
@@ -29,7 +29,7 @@ else
    echo "* Load balancer record DNS name: ${lbal_record_dns_nm}"
 fi
 
-get_loadbalancer_record_hosted_zone_value "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" 
+get_loadbalancer_record_hosted_zone_value "${lbal_dns_nm}" 
 lbal_record_hz_id="${__RESULT}"
 
 if [[ -z "${lbal_record_hz_id}" ]]
@@ -40,7 +40,7 @@ else
 fi
 
 admin_dns_nm="${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
-get_record_value 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+get_record_value 'A' "${admin_dns_nm}"
 admin_record_ip_addr="${__RESULT}"
 
 if [[ -z "${admin_record_ip_addr}" ]]
@@ -57,7 +57,7 @@ echo
 ## load balancer www.admin.it record.
 ##
 
-check_hosted_zone_has_loadbalancer_record "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+check_hosted_zone_has_loadbalancer_record "${lbal_dns_nm}"
 has_lbal_record="${__RESULT}"
 
 if [[ 'true' == "${has_lbal_record}" ]]
@@ -65,7 +65,7 @@ then
    echo 'Deleting load balance record ...'
 
    delete_loadbalancer_record \
-       "${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" "${lbal_record_dns_nm}" "${lbal_record_hz_id}"
+       "${lbal_dns_nm}" "${lbal_record_dns_nm}" "${lbal_record_hz_id}"
    request_id="${__RESULT}"          
                                    
    get_record_request_status "${request_id}"
@@ -78,15 +78,15 @@ fi
 ## Admin website admin.maxmin.it
 ##
 
-check_hosted_zone_has_record 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}"."${MAXMIN_TLD}"
+check_hosted_zone_has_record 'A' "${admin_dns_nm}"
 has_admin_record="${__RESULT}"
 
 if [[ 'true' == "${has_admin_record}" ]]
 then
    echo 'Deleting Admin web site record ...'
 
-   delete_record 'A' "${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}" "${admin_record_ip_addr}"
-   request_id="${__RESULT}"  
+   delete_record 'A' "${admin_dns_nm}" "${admin_record_ip_addr}"
+   request_id="${__RESULT}" 
                             
    get_record_request_status "${request_id}" 
    status="${__RESULT}"

@@ -22,6 +22,8 @@ set +o xtrace
 #
 ###############################################
 
+ADMIN_INST_PROFILE_NM="Route53InstanceProfile"
+AWS_ROUTE53_ROLE_NM='Route53role'
 APACHE_INSTALL_DIR='/etc/httpd'
 APACHE_DOCROOT_DIR='/var/www/html'
 APACHE_SITES_AVAILABLE_DIR='/etc/httpd/sites-available'
@@ -91,6 +93,17 @@ else
    echo "* Shared image ID: ${shared_image_id}."
 fi
 
+get_role_id "${AWS_ROUTE53_ROLE_NM}"
+role_id="${__RESULT}"
+
+if [[ -z "${role_id}" ]]
+then
+   echo '* ERROR: Route 53 role not found.'
+   exit 1
+else
+   echo "* Route 53 role ID: ${role_id}."
+fi
+
 echo
 
 # Removing old files
@@ -98,7 +111,7 @@ rm -rf "${TMP_DIR:?}"/"${admin_dir}"
 mkdir "${TMP_DIR}"/"${admin_dir}"
 
 ## 
-## Security group 
+## Security group.
 ## 
 
 sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
@@ -124,7 +137,7 @@ else
 fi
  
 ##
-## Database access 
+## Database access.
 ##
 
 granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}")"
@@ -138,8 +151,43 @@ else
    echo 'Granted access to the database.'
 fi
 
+#
+# Instance profile.
+#
+
+# Applications that run on EC2 instances must sign their API requests with AWS credentials.
+# For applications, AWS CLI, and Tools for Windows PowerShell commands that run on the instance, 
+# you do not have to explicitly get the temporary security credentials, the AWS SDKs, AWS CLI, and 
+# Tools for Windows PowerShell automatically get the credentials from the EC2 instance metadata 
+# service and use them. 
+
+check_instance_profile_exists "${ADMIN_INST_PROFILE_NM}"
+instance_profile_exists="${__RESULT}"
+
+if [[ 'false' == "${instance_profile_exists}" ]]
+then
+   create_instance_profile "${ADMIN_INST_PROFILE_NM}"
+
+   echo 'Admin instance profile created.'
+else
+   echo 'WARN: Admin instance profile already created.'
+fi
+
+## Check instance profile has the Route 53 role associated.
+check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}"
+has_role_associated="${__RESULT}"
+
+if [[ 'false' == "${has_role_associated}" ]]
+then
+   associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}"
+   
+   echo 'Route 53 role associated to the instance profile.'
+else
+   echo 'WARN: Route 53 role already associated to the instance profile.'
+fi
+
 ##
-## Cloud init
+## Cloud init.
 ##   
 
 ## Removes the default user, creates the admin-user user and sets the instance's hostname.     
@@ -171,7 +219,7 @@ echo
 echo 'cloud_init.yml ready.'  
 
 ## 
-## Admin box 
+## Admin box. 
 ## 
 
 instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
@@ -192,13 +240,16 @@ then
 else
    echo "Creating the Admin box ..."
 
-   instance_id="$(run_instance \
+   ### TODO run with profile
+   run_instance \
        "${ADMIN_INST_NM}" \
        "${sgp_id}" \
        "${subnet_id}" \
        "${ADMIN_INST_PRIVATE_IP}" \
        "${shared_image_id}" \
-       "${TMP_DIR}"/"${admin_dir}"/cloud_init.yml)"
+       "${TMP_DIR}"/"${admin_dir}"/cloud_init.yml
+       
+   instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
 
    echo "Admin box created."
 fi
@@ -209,7 +260,7 @@ eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
 echo "Admin box public address: ${eip}."
 
 ##
-## Upload scripts
+## Upload scripts.
 ## 
 
 echo 'Uploading the scripts to the Admin box ...'

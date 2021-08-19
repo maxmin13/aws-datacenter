@@ -30,7 +30,7 @@ else
    echo "* security group ID: ${sgp_id}."
 fi
 
-get_server_certificate_arn "${CRT_NM}"
+get_server_certificate_arn "${CRT_NM}" > /dev/null
 cert_arn="${__RESULT}"
 
 if [[ -z "${cert_arn}" ]]

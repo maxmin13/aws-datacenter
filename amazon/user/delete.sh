@@ -5,60 +5,64 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-AWS_USER_NM='aws-user'
 AWS_ROUTE53_POLICY_NM='Route53policy'
+AWS_ROUTE53_ROLE_NM='Route53role'
 
-echo '*********'
-echo 'AWS Users'
-echo '*********'
+echo '***************'
+echo 'AWS Permissions'
+echo '***************'
 echo
 
-check_user_exists "${AWS_USER_NM}"
-user_exists="${__RESULT}"
-__RESULT=''
-get_user_arn "${AWS_USER_NM}"
-user_arn="${__RESULT}"
-__RESULT=''
+check_role_exists "${AWS_ROUTE53_ROLE_NM}" > /dev/null
+role_exists="${__RESULT}"
 
-if [[ 'false' == "${user_exists}" ]]
+if [[ 'false' == "${role_exists}" ]]
 then
-   echo '* WARN: IAM user not found.'
+   echo '* WARN: role not found.'
 else
-   echo "* IAM user ARN: ${user_arn}"
+   get_role_arn "${AWS_ROUTE53_ROLE_NM}" > /dev/null
+   role_arn="${__RESULT}"
+
+   echo "* Role ARN: ${role_arn}"
 fi
 
-check_managed_policy_exists "${AWS_ROUTE53_POLICY_NM}"
+check_permission_policy_exists "${AWS_ROUTE53_POLICY_NM}" > /dev/null
 policy_exists="${__RESULT}"
-__RESULT=''
-get_managed_policy_arn "${AWS_ROUTE53_POLICY_NM}"
-policy_arn="${__RESULT}"
-__RESULT=''
 
 if [[ 'false' == "${policy_exists}" ]]
 then
    echo '* WARN: Policy not found.'
-else
+else  
+   get_permission_policy_arn "${AWS_ROUTE53_POLICY_NM}" > /dev/null
+   policy_arn="${__RESULT}"
+
    echo "* Policy ARN: ${policy_arn}"
 fi
 
 echo
 
-if [[ 'true' == "${user_exists}" ]]
+#
+# AWS role.
+#
+
+if [[ 'true' == "${role_exists}" ]]
 then
-   delete_user "${AWS_USER_NM}"
+   delete_role "${AWS_ROUTE53_ROLE_NM}"
    
-   echo 'AWS user deleted.'
+   echo 'AWS role deleted.'
 fi
+
+#
+# Permission policy.
+#
 
 if [[ 'true' == "${policy_exists}" ]]
 then
-   delete_managed_policy "${AWS_ROUTE53_POLICY_NM}"
+   delete_permission_policy "${AWS_ROUTE53_POLICY_NM}"
    
-   echo 'Managed policy deleted.'
+   echo 'Permission policy deleted.'
+   echo
 fi
-
-
-
-echo 
+ 
                   
 

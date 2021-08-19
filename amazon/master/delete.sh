@@ -74,7 +74,7 @@ echo
    . "${PROJECT_DIR}"/amazon/account/delete.sh  
    
    # Delete AWS users and policies.
-   #. "${PROJECT_DIR}"/amazon/user/delete.sh                
+   . "${PROJECT_DIR}"/amazon/user/delete.sh                
 
    # Delete the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/delete.sh    

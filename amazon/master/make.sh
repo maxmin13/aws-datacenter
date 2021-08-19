@@ -43,14 +43,12 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi  
-         
-   echo
-       
+        
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh  
    
    # Create AWS users and policies
-   #. "${PROJECT_DIR}"/amazon/user/make.sh             
+   . "${PROJECT_DIR}"/amazon/user/make.sh             
 
    # Create a base shared image.
    . "${PROJECT_DIR}"/amazon/shared/instance/make.sh              
@@ -65,7 +63,7 @@ echo
    . "${PROJECT_DIR}"/amazon/admin/instance/make.sh               
    . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1   
    
-   # TODO only development works.
+   # TODO only development works, complete cert automation production.
    ####. "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh                     
 
    # Deploy database objects.

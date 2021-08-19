@@ -5,6 +5,8 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+ADMIN_INST_PROFILE_NM="Route53InstanceProfile"
+
 echo '*********'
 echo 'Admin box'
 echo '*********'
@@ -47,15 +49,39 @@ else
    echo "* database security group ID: ${db_sgp_id}."
 fi
 
+get_instance_profile_id "${ADMIN_INST_PROFILE_NM}"
+profile_id="${__RESULT}"
+
+if [[ -z "${profile_id}" ]]
+then
+   echo '* WARN: Admin instance profile not found.'
+else
+   echo "* Admin instance profile ID: ${profile_id}."
+fi
+
 echo
 
 ## 
-## Clearing local files
+## Clearing local files.
 ## 
 rm -rf "${TMP_DIR:?}"/admin
 
 ##
-## Admin box 
+## Instance profile.
+##
+
+check_instance_profile_exists "${ADMIN_INST_PROFILE_NM}"
+instance_profile_exists="${__RESULT}"
+
+if [[ 'true' == "${instance_profile_exists}" ]]
+then
+   delete_instance_profile "${ADMIN_INST_PROFILE_NM}"
+
+   echo 'Admin instance profile deleted.'
+fi
+
+##
+## Admin box. 
 ## 
 
 if [[ -n "${instance_id}" ]]
@@ -71,7 +97,7 @@ then
 fi
 
 ## 
-## Database grants 
+## Database grants. 
 ## 
 
 db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
@@ -89,7 +115,7 @@ then
 fi
 
 ## 
-## Security group 
+## Security group. 
 ## 
   
 if [[ -n "${sgp_id}" ]]
@@ -100,7 +126,7 @@ then
 fi
 
 ## 
-## Public IP 
+## Public IP. 
 ## 
 
 if [[ -n "${eip}" ]]
@@ -116,7 +142,7 @@ then
 fi
 
 ## 
-## SSH Access 
+## SSH Access. 
 ## 
 
 key_pair_file="$(get_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
@@ -129,6 +155,6 @@ then
    echo
 fi
 
-## Clearing
+## Clearing.
 rm -rf "${TMP_DIR:?}"/admin
 

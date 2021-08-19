@@ -33,7 +33,7 @@ function get_datacenter_id()
       return 1
    fi
 
-   local dtc_nm="${1}"
+   declare -r dtc_nm="${1}"
    local dtc_id=''
  
    dtc_id="$(aws ec2 describe-vpcs \
@@ -65,7 +65,7 @@ function create_datacenter()
       return 1
    fi
   
-   local dtc_nm="${1}"
+   declare -r dtc_nm="${1}"
    local dtc_id=''
   
    dtc_id="$(aws ec2 create-vpc \
@@ -101,7 +101,7 @@ function delete_datacenter()
       return 1
    fi
   
-   local dtc_id="${1}"
+   declare -r dtc_id="${1}"
   
    aws ec2 delete-vpc --vpc-id "${dtc_id}"
   
@@ -135,7 +135,7 @@ function get_subnet_ids()
       return 1
    fi
 
-   local dtc_id="${1}"
+   declare -r dtc_id="${1}"
    local subnet_ids=''
    
    subnet_ids="$(aws ec2 describe-subnets \
@@ -165,7 +165,7 @@ function get_subnet_id()
       return 1
    fi
 
-   local subnet_nm="${1}"
+   declare -r subnet_nm="${1}"
    local subnet_id=''
   
    subnet_id="$(aws ec2 describe-subnets \
@@ -202,11 +202,11 @@ function create_subnet()
       return 1
    fi
 
-   local subnet_nm="${1}"
-   local subnet_cidr="${2}"
-   local subnet_az="${3}"
-   local dtc_id="${4}"
-   local rtb_id="${5}"
+   declare -r subnet_nm="${1}"
+   declare -r subnet_cidr="${2}"
+   declare -r subnet_az="${3}"
+   declare -r dtc_id="${4}"
+   declare -r rtb_id="${5}"
    local subnet_id=''
  
    subnet_id="$(aws ec2 create-subnet \
@@ -248,7 +248,7 @@ function delete_subnet()
       return 1
    fi
 
-   local subnet_id="${1}"
+   declare -r subnet_id="${1}"
  
    aws ec2 delete-subnet --subnet-id "${subnet_id}"
  
@@ -272,7 +272,7 @@ function get_internet_gateway_id()
      return 1
   fi
 
-   local igw_nm="${1}"
+   declare -r igw_nm="${1}"
    local igw_id=''
   
    igw_id="$(aws ec2 describe-internet-gateways \
@@ -308,8 +308,8 @@ function get_internet_gateway_attachment_status()
      return 1
   fi
 
-   local igw_nm="${1}"
-   local dtc_id="${2}"
+   declare -r igw_nm="${1}"
+   declare -r dtc_id="${2}"
    local attachment_status=''
   
    attachment_status="$(aws ec2 describe-internet-gateways \
@@ -342,8 +342,8 @@ function create_internet_gateway()
       return 1
    fi
   
-   local igw_nm="${1}"
-   local dtc_id="{2}"
+   declare -r igw_nm="${1}"
+   declare -r dtc_id="{2}"
    local igw_id=''
   
    igw_id="$(aws ec2 create-internet-gateway \
@@ -374,7 +374,7 @@ function delete_internet_gateway()
       return 1
    fi
   
-   local igw_id="${1}"
+   declare -r igw_id="${1}"
  
    aws ec2 delete-internet-gateway --internet-gateway-id "${igw_id}"
    
@@ -400,8 +400,8 @@ function attach_internet_gateway()
       return 1
    fi
   
-   local igw_id="${1}"
-   local dtc_id="${2}"
+   declare -r igw_id="${1}"
+   declare -r dtc_id="${2}"
   
    aws ec2 attach-internet-gateway --vpc-id "${dtc_id}" --internet-gateway-id "${igw_id}"
  
@@ -426,7 +426,7 @@ function get_route_table_id()
       return 1
    fi
 
-   local rtb_nm="${1}"
+   declare -r rtb_nm="${1}"
    local rtb_id=''
   
    rtb_id="$(aws ec2 describe-route-tables \
@@ -460,8 +460,8 @@ function create_route_table()
       return 1
    fi
 
-   local rtb_nm="${1}"
-   local dtc_id="${2}"
+   declare -r rtb_nm="${1}"
+   declare -r dtc_id="${2}"
    local rtb_id=''
   
    rtb_id="$(aws ec2 create-route-table \
@@ -494,7 +494,7 @@ function delete_route_table()
       return 1
    fi
 
-   local rtb_id="${1}"
+   declare -r rtb_id="${1}"
   
    aws ec2 delete-route-table --route-table-id "${rtb_id}"
  
@@ -523,9 +523,9 @@ function set_route()
       return 1
    fi
 
-   local rtb_id="${1}"
-   local target_id="${2}"
-   local destination_cidr="${3}"
+   declare -r rtb_id="${1}"
+   declare -r target_id="${2}"
+   declare -r destination_cidr="${3}"
    
    aws ec2 create-route --route-table-id "${rtb_id}" \
        --destination-cidr-block "${destination_cidr}" \
@@ -552,7 +552,7 @@ function get_security_group_id()
       return 1
    fi
 
-   local sgp_nm="${1}"
+   declare -r sgp_nm="${1}"
    local sgp_id=''
   
    sgp_id="$(aws ec2 describe-security-groups \
@@ -586,9 +586,9 @@ function create_security_group()
       return 1
    fi
 
-   local dtc_id="${1}" 
-   local sgp_nm="${2}"
-   local sgp_desc="${3}"  
+   declare -r dtc_id="${1}" 
+   declare -r sgp_nm="${2}"
+   declare -r sgp_desc="${3}"  
    local sgp_id=''
    
    sgp_id="$(aws ec2 create-security-group \
@@ -622,7 +622,7 @@ function delete_security_group()
       return 1
    fi
 
-   local sgp_id="${1}"
+   declare -r sgp_id="${1}"
    local exit_code=0
    
    set +e
@@ -654,10 +654,10 @@ function allow_access_from_cidr()
       return 1
    fi
 
-   local sgp_id="${1}"
-   local port="${2}"
-   local protocol="${3}"
-   local from_cidr="${4}"
+   declare -r sgp_id="${1}"
+   declare -r port="${2}"
+   declare -r protocol="${3}"
+   declare -r from_cidr="${4}"
    
    aws ec2 authorize-security-group-ingress \
        --group-id "${sgp_id}" \
@@ -691,10 +691,10 @@ function allow_access_from_security_group()
       return 1
    fi
 
-   local sgp_id="${1}"
-   local port="${2}"
-   local protocol="${3}"
-   local from_sgp_id="${4}" 
+   declare -r sgp_id="${1}"
+   declare -r port="${2}"
+   declare -r protocol="${3}"
+   declare -r from_sgp_id="${4}" 
 
    aws ec2 authorize-security-group-ingress \
        --group-id "${sgp_id}" \
@@ -728,10 +728,10 @@ function revoke_access_from_security_group()
       return 1
    fi
 
-   local sgp_id="${1}"
-   local port="${2}"
-   local protocol="${3}"
-   local from_sgp_id="${4}"   
+   declare -r sgp_id="${1}"
+   declare -r port="${2}"
+   declare -r protocol="${3}"
+   declare -r from_sgp_id="${4}"   
 
    aws ec2 revoke-security-group-ingress \
        --group-id "${sgp_id}" \
@@ -763,10 +763,10 @@ function revoke_access_from_cidr()
       return 1
    fi
 
-   local sgp_id="${1}"
-   local port="${2}"
-   local protocol="${3}"
-   local from_cidr="${4}"
+   declare -r sgp_id="${1}"
+   declare -r port="${2}"
+   declare -r protocol="${3}"
+   declare -r from_cidr="${4}"
         
    aws ec2 revoke-security-group-ingress \
        --group-id "${sgp_id}" \
@@ -801,10 +801,10 @@ function check_access_from_security_group_is_granted()
       return 1
    fi
 
-   local sgp_id="${1}"
-   local port="${2}"
-   local protocol="${3}"
-   local from_sgp_id="${4}"  
+   declare -r sgp_id="${1}"
+   declare -r port="${2}"
+   declare -r protocol="${3}"
+   declare -r from_sgp_id="${4}"  
    local id=''
 
    id="$(aws ec2 describe-security-groups \
@@ -840,10 +840,10 @@ function check_access_from_cidr_is_granted()
       return 1
    fi
 
-   local sgp_id="${1}"
-   local port="${2}"
-   local protocol="${3}"
-   local from_cidr="${4}"
+   declare -r sgp_id="${1}"
+   declare -r port="${2}"
+   declare -r protocol="${3}"
+   declare -r from_cidr="${4}"
    local id=''
      
    id="$(aws ec2 describe-security-groups \
@@ -875,7 +875,7 @@ function get_instance_state()
       return 1
    fi
 
-   local instance_nm="${1}"
+   declare -r instance_nm="${1}"
    local instance_st=''
   
    instance_st="$(aws ec2 describe-instances \
@@ -907,7 +907,7 @@ function get_public_ip_address_associated_with_instance()
       return 1
    fi
 
-   local instance_nm="${1}"
+   declare -r instance_nm="${1}"
    local instance_ip=''
   
    instance_ip="$(aws ec2 describe-instances \
@@ -939,7 +939,7 @@ function get_private_ip_address_associated_with_instance()
       return 1
    fi
 
-   local instance_nm="${1}"
+   declare -r instance_nm="${1}"
    local instance_ip=''
   
    instance_ip="$(aws ec2 describe-instances \
@@ -971,7 +971,7 @@ function get_instance_id()
       return 1
    fi
 
-   local instance_nm="${1}"
+   declare -r instance_nm="${1}"
    local instance_id=''
 
    instance_id="$(aws ec2 describe-instances \
@@ -998,7 +998,7 @@ function get_instance_id()
 #                     derived.
 # +cloud_init_file -- Cloud Init configuration file.
 # Returns:      
-#  the instance identifier.   
+#  none.   
 #===============================================================================
 function run_instance()
 {
@@ -1008,12 +1008,13 @@ function run_instance()
       return 1
    fi
    
-   local instance_nm="${1}"
-   local sgp_id="${2}"
-   local subnet_id="${3}"
-   local private_ip="${4}"
-   local image_id="${5}"
-   local cloud_init_file="${6}"
+   declare -r instance_nm="${1}"
+   declare -r sgp_id="${2}"
+   declare -r subnet_id="${3}"
+   declare -r private_ip="${4}"
+   declare -r image_id="${5}"
+   declare -r cloud_init_file="${6}"
+   local exit_code=0
    local instance_id=''
      
    instance_id="$(aws ec2 run-instances \
@@ -1030,11 +1031,23 @@ function run_instance()
        --output text \
        --query 'Instances[*].InstanceId')"
        
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: running Admin instance.'
+      return "${exit_code}"
+   fi    
+   
    aws ec2 wait instance-status-ok --instance-ids "${instance_id}"
- 
-   echo "${instance_id}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: waiting for Admin instance.'
+   fi   
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1055,7 +1068,7 @@ function stop_instance()
       return 1
    fi
 
-   local instance_id="${1}"
+   declare -r instance_id="${1}"
 
    aws ec2 stop-instances --instance-ids "${instance_id}" > /dev/null
    aws ec2 wait instance-stopped --instance-ids "${instance_id}" 
@@ -1086,7 +1099,7 @@ function delete_instance()
       return 1
    fi
 
-   local instance_id="${1}"
+   declare -r instance_id="${1}"
    local wait_terminated=''
    
    if [[ $# -eq 2 ]]
@@ -1105,6 +1118,75 @@ function delete_instance()
 }
 
 #===============================================================================
+# Checks if the specified EC2 instance has an IAM instance profile associated.
+#
+# Globals:
+#  None
+# Arguments:
+# +instance_nm -- the instance name.
+# +instance_id -- the instance ID.
+# +profile_nm  -- the IAM instance profile name.
+# Returns:      
+#  true or false value in the __RESULT global variable.  
+#===============================================================================
+function check_instance_has_instance_profile_associated()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi 
+   
+   __RESULT=''
+   declare -r instance_nm="${1}"
+   declare -r profile_nm="${2}"
+   local instance_id=''
+   local profile_id=''
+   local profile_arn=''
+   local has_profile='false'
+   local exit_code=0
+   
+   instance_id="$(get_instance_id "${instance_nm}")"
+   if [[ -z "${instance_id}" ]]
+   then
+      echo 'ERROR: instance not found.'
+      return 1
+   fi
+   
+   get_instance_profile_id "${profile_nm}" 
+   profile_id="${__RESULT}"
+   
+   if [[ -z "${profile_id}" ]]
+   then
+      echo 'WARN: profile not found.'
+      __RESULT="${has_profile}"
+      return 0
+   fi
+   
+   # Check if the profile is associated to the instance.      
+   profile_arn="$(aws ec2 describe-iam-instance-profile-associations \
+       --query "IamInstanceProfileAssociations[? InstanceId == '${instance_id}' && IamInstanceProfile.Id == '${profile_id}'].IamInstanceProfile.Arn" \
+       --output text)"    
+   
+   # If the caller sets 'set +e' to analyze the return code, this functions
+   # doesn't exit immediately with error, so it is necessary to get the error
+   # code in any case and return it.
+   exit_code=$?
+   
+   if [[ 0 -eq "${exit_code}" ]]
+   then
+      if [[ -n "${profile_arn}" ]]
+      then
+         has_profile='true' 
+      fi
+   fi
+       
+   __RESULT="${has_profile}"
+
+   return "${exit_code}" 
+}
+
+#===============================================================================
 # Creates an image from an Amazon EBS-backed instance and waits until the image
 # is ready.
 # Globals:
@@ -1114,20 +1196,21 @@ function delete_instance()
 # +img_nm      -- the image name.
 # +img_desc    -- the image description.
 # Returns:      
-#  the image identifier.    
+#  none.    
 #===============================================================================
 function create_image()
 {
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
-   local instance_id="${1}"
-   local img_nm="${2}"
-   local img_desc="${3}"
+   declare -r instance_id="${1}"
+   declare -r img_nm="${2}"
+   declare -r img_desc="${3}"
    local img_id=''
+   local exit_code=0
 
    img_id="$(aws ec2 create-image \
         --instance-id "${instance_id}" \
@@ -1136,11 +1219,17 @@ function create_image()
         --query 'ImageId' \
         --output text)" > /dev/null
   
-   aws ec2 wait image-available --image-ids "${img_id}"
- 
-   echo "${img_id}"
-
-   return 0
+   # If the caller sets 'set +e' to analyze the return code, this functions
+   # doesn't exit immediately with error, so it is necessary to get the error
+   # code in any case and return it.
+   exit_code=$?    
+   
+   if [[ 0 -eq "${exit_code}" ]]    
+   then
+      aws ec2 wait image-available --image-ids "${img_id}"
+   fi
+   
+   return "${exit_code}" 
 }
 
 #===============================================================================
@@ -1160,7 +1249,7 @@ function get_image_id()
       return 1
    fi
 
-   local img_nm="${1}"
+   declare -r img_nm="${1}"
    local img_id=''
 
    img_id="$(aws ec2 describe-images \
@@ -1190,7 +1279,7 @@ function get_image_state()
       return 1
    fi
 
-   local img_nm="${1}"
+   declare -r img_nm="${1}"
    local img_state=''
 
    img_state="$(aws ec2 describe-images \
@@ -1222,7 +1311,7 @@ function get_image_snapshot_ids()
       return 1
    fi
 
-   local img_nm="${1}"
+   declare -r img_nm="${1}"
 
    # AWS CLI provides built-in JSON-based output filtering capabilities with the --query option,
    # a JMESPATH expression is used as a filter. 
@@ -1256,7 +1345,7 @@ function delete_image()
       return 1
    fi
 
-   local img_id="${1}"
+   declare -r img_id="${1}"
 
    aws ec2 deregister-image --image-id "${img_id}"
 
@@ -1282,7 +1371,7 @@ function delete_image_snapshot()
       return 1
    fi
 
-   local img_snapshot_id="${1}"
+   declare -r img_snapshot_id="${1}"
 
    aws ec2 delete-snapshot --snapshot-id "${img_snapshot_id}" > /dev/null
 
@@ -1309,7 +1398,7 @@ function get_allocation_id()
       return 1
    fi
 
-   local eip="${1}"
+   declare -r eip="${1}"
    local allocation_id=''
           
    allocation_id="$(aws ec2 describe-addresses \
@@ -1423,7 +1512,7 @@ function release_public_ip_address()
       return 1
    fi
 
-   local allocation_id="${1}"
+   declare -r allocation_id="${1}"
 
    aws ec2 release-address --allocation-id "${allocation_id}" > /dev/null
 
@@ -1451,7 +1540,7 @@ function release_all_public_ip_addresses()
       return 1
    fi
    
-   local allocation_ids="${1}"
+   declare -r allocation_ids="${1}"
           
    for id in ${allocation_ids}
    do
@@ -1482,8 +1571,8 @@ function associate_public_ip_address_to_instance()
       return 1
    fi
 
-   local eip="${1}"
-   local instance_id="${2}"
+   declare -r eip="${1}"
+   declare -r instance_id="${2}"
   
    aws ec2 associate-address \
        --instance-id "${instance_id}" \

@@ -21,41 +21,6 @@ set +o xtrace
 # If you want to use the same name servers for multiple public hosted zones, 
 # you can optionally associate a reusable delegation set with the hosted zone.
 #
-# SOA: Start of authority, used to designate the primary name server and 
-# administrator responsible for a zone. Each zone hosted on a DNS server must 
-# have an SOA (start of authority) record. You can modify the record as needed 
-# (for example, you can change the serial number to an arbitrary number to 
-# support date-based versioning).
-#
-# NS: Name server record, which delegates a DNS zone to an authoritative server.
-#
-# You can delete a hosted zone only if there are no records other than the 
-# default SOA and NS records. If your hosted zone contains other records, 
-# you must delete them before you can delete your hosted zone.
-#
-# If you want to keep your domain registration but you want to stop routing 
-# internet traffic to your website or web application, we recommend that you 
-# delete records in the hosted zone instead of deleting the hosted zone.
-#
-# If you delete a hosted zone, you can't undelete it. You must create a new 
-# hosted zone and update the name servers for your domain registration, which 
-# can require up to 48 hours to take effect. In addition, if you delete a hosted 
-# zone, someone could hijack the domain and route traffic to their own 
-# resources using your domain name.
-#
-# If you want to avoid the monthly charge for the hosted zone, you can transfer 
-# DNS service for the domain to a free DNS service. When you transfer DNS 
-# service, you have to update the name servers for the domain registration.
-#
-#
-# Both Route53 and ELB are used to distribute the network traffic. 
-# These AWS services appear similar but there are minor differences between them.
-
-# ELB distributes traffic among Multiple Availability Zone but not to multiple Regions. 
-# Route53 can distribute traffic among multiple Regions. 
-# In short, ELBs are intended to load balance across EC2 instances in a single region whereas DNS 
-# load-balancing (Route53) is intended to help balance traffic across regions.
-#
 #===============================================================================
 
 #===============================================================================
@@ -89,6 +54,7 @@ function create_hosted_zone()
       return 128
    fi
    
+   __RESULT=''
    declare -r hosted_zone_nm="${1}"
    declare -r caller_reference="${2}"
    declare -r comment="${3}"
@@ -102,16 +68,13 @@ function create_hosted_zone()
        --query 'HostedZone.Id' \
        --output text)"
    
-   # If the caller sets 'set +e' to analyze the return code, this functions
-   # doesn't exit immediately with error, so it is necessary to get the error
-   # code in any case and return it.
    exit_code=$?
    
    if [[ 0 -eq "${exit_code}" ]]
    then
-     eval "__RESULT='${hosted_zone_id}'"
+     __RESULT="${hosted_zone_id}"
    else
-      eval "__RESULT=''"
+      __RESULT=''
    fi 
 
    return "${exit_code}"  
@@ -141,25 +104,29 @@ function delete_hosted_zone()
       return 128
    fi
    
+   __RESULT=''
    declare -r hosted_zone_nm="${1}"
    local hosted_zone_id=''
    local exit_code=0
    
    __get_hosted_zone_id "${hosted_zone_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving the hosted zone ID.' 
+      return "${exit_code}"
+   fi 
+   
    hosted_zone_id="${__RESULT}"
    
    if [[ -z "${hosted_zone_id}" ]]  
    then 
-      # Hosted zone not found.
-      eval "__RESULT=''"
-      return 0
+      echo 'ERROR: hosted zone not found.' 
+      return 1
    fi    
    
    aws route53 delete-hosted-zone --id "${hosted_zone_id}"
-   
-   # If the caller sets 'set +e' to analyze the return code, this functions
-   # doesn't exit immediately with error, so it is necessary to get the error
-   # code in any case and return it.
    exit_code=$?
 
    return "${exit_code}"  
@@ -186,11 +153,21 @@ function check_hosted_zone_exists()
       return 128
    fi
    
+   __RESULT=''
    declare -r hosted_zone_nm="${1}"
    local exists='false'
    local hosted_zone_id=''
+   local exit_code=0
    
    __get_hosted_zone_id "${hosted_zone_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving the hosted zone ID.' 
+      return "${exit_code}"
+   fi 
+   
    hosted_zone_id="${__RESULT}"
    
    if [[ -n "${hosted_zone_id}" ]]
@@ -198,7 +175,7 @@ function check_hosted_zone_exists()
       exists='true'
    fi
    
-   eval "__RESULT='${exists}'"
+   __RESULT="${exists}"
    
    return 0
 }
@@ -230,18 +207,28 @@ function get_hosted_zone_name_servers()
       return 128
    fi
    
+   __RESULT=''
    declare -r hosted_zone_nm="${1}"
    local name_servers=''
    local hosted_zone_id=''
+   local exit_code=0
    
    __get_hosted_zone_id "${hosted_zone_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving the hosted zone ID.' 
+      return "${exit_code}"
+   fi 
+   
    hosted_zone_id="${__RESULT}"
+   __RESULT=''
    
    if [[ -z "${hosted_zone_id}" ]]  
    then 
-      echo 'WARN: hosted zone not found.'
-      eval "__RESULT=''"
-      return 0
+      echo 'ERROR: hosted zone not found.'
+      return 1
    fi 
    
    if [[ -n "${hosted_zone_id}" ]]
@@ -250,11 +237,12 @@ function get_hosted_zone_name_servers()
           --id "${hosted_zone_id}" \
           --query DelegationSet.NameServers[*] \
           --output text)"
+      exit_code=$?
    fi   
    
-   eval "__RESULT='${name_servers}'"
+   __RESULT="${name_servers}"
    
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -267,7 +255,7 @@ function get_hosted_zone_name_servers()
 #  None
 # Arguments:
 # +record_type -- the record type, eg: A, NS, or aws-alias.
-# +domain_nm   -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm   -- the fully qualified domain name, eg: 'www.maxmin.it'
 # Returns:      
 #  true/false value, returns the value in the __RESULT global variable.
 #===============================================================================
@@ -279,22 +267,33 @@ function check_hosted_zone_has_record()
       return 128
    fi
    
+   __RESULT=''
    declare -r record_type="${1}"
    declare -r domain_nm="${2}"
    local has_record='false'
    local record=''
+   local exit_code=0
       
    get_record_value "${record_type}" "${domain_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving record value.' 
+      return "${exit_code}"
+   fi
+   
    record="${__RESULT}" 
+   __RESULT=''
       
    if [[ -n "${record}" ]]
    then
       has_record='true'
    fi                 
     
-   eval "__RESULT='${has_record}'"
+   __RESULT="${has_record}"
    
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -307,7 +306,7 @@ function check_hosted_zone_has_record()
 #  None
 # Arguments:
 # +record_type -- the record type, eg: A, NS, or aws-alias.
-# +domain_nm   -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm   -- the fully qualified domain name, eg: 'www.maxmin.it'
 # Returns:      
 #  the record value, returns the value in the __RESULT global variable.  
 #===============================================================================
@@ -319,21 +318,31 @@ function get_record_value()
       return 128
    fi
    
+   __RESULT=''
    declare -r record_type="${1}"
    declare -r domain_nm="${2}"
    local record=''
    local hosted_zone_nm=''
    local hosted_zone_id=''
+   local exit_code=0
 
    hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')
    __get_hosted_zone_id "${hosted_zone_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving hosted zone ID.' 
+      return "${exit_code}"
+   fi
+   
    hosted_zone_id="${__RESULT}"
+   __RESULT=''
 
    if [[ -z "${hosted_zone_id}" ]]  
    then 
-      echo 'WARN: hosted zone not found.'
-      eval "__RESULT=''"
-      return 0
+      echo 'ERROR: hosted zone not found.'
+      return 1
    fi
       
    if [[ 'aws-alias' == "${record_type}" ]]
@@ -348,11 +357,18 @@ function get_record_value()
            --hosted-zone-id "${hosted_zone_id}" \
            --query "ResourceRecordSets[? Type == '${record_type}' && Name == '${domain_nm}' ].ResourceRecords[*].Value" \
            --output text)"
-   fi                  
-           
-   eval "__RESULT='${record}'"
+   fi  
    
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving record value.'
+   fi                
+           
+   __RESULT="${record}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -364,7 +380,7 @@ function get_record_value()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm    -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm    -- the fully qualified domain name, eg: 'www.maxmin.it'
 # +record_value -- the value associated to the domain, eg: an IP address in case
 #                  of a type A record, a domain name in case of a NS type 
 #                  record.
@@ -382,6 +398,7 @@ function __create_record_change_batch()
       return 128
    fi
    
+   __RESULT=''
    declare -r action="${1}"
    declare -r record_type="${2}"
    declare -r domain_nm="${3}"
@@ -422,7 +439,7 @@ function __create_record_change_batch()
              -e "s/SEDcommentSED/${comment}/g" \
              -e "s/SEDactionSED/${action}/g")" 
    
-   eval "__RESULT='${change_batch}'"
+   __RESULT="${change_batch}"
    
    return 0
 }
@@ -434,7 +451,7 @@ function __create_record_change_batch()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.it'
 # +target_domain_nm      -- the DNS name referred by the alias.
 # +target_hosted_zone_id -- the identifier of the hosted zone of the DNS domain 
 #                           name.
@@ -453,6 +470,7 @@ function __create_alias_record_change_batch()
       return 128
    fi
    
+   __RESULT=''
    declare -r action="${1}"
    declare -r domain_nm="${2}"
    declare -r record_value="${3}"
@@ -492,7 +510,7 @@ function __create_alias_record_change_batch()
              -e "s/SEDcommentSED/${comment}/g" \
              -e "s/SEDactionSED/${action}/g")" 
    
-   eval "__RESULT='${change_batch}'"
+   __RESULT="${change_batch}"
    
    return 0
 }
@@ -512,7 +530,7 @@ function __create_alias_record_change_batch()
 # Arguments:
 # +action                -- either CREATE or DELETE.
 # +record_type           -- the type of the record, either A, NS or aws-alias.
-# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.it'
 # +record_value          -- the value of the record type, eg: an IP address, a  
 #                           DNS domain.
 # +target_hosted_zone_id -- optional, if the record is a aws-alias, the targeted
@@ -529,11 +547,13 @@ function __create_delete_record()
       return 128
    fi
    
+   __RESULT=''
    declare -r action="${1}"
    declare -r record_type="${2}"
    declare -r domain_nm="${3}"
    declare -r record_value="${4}"
    local target_hosted_zone_id=''
+   local exit_code=0
       
    if [[ $# -eq 5 ]]
    then
@@ -548,28 +568,34 @@ function __create_delete_record()
    if [[ 'CREATE' != "${action}" && 'DELETE' != "${action}" ]]
    then
       echo 'ERROR: the action can only be CREATE and DELETE.'
-      eval "__RESULT=''"
       return 128
    fi
    
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" && 'aws-alias' != "${record_type}" ]]
    then
       echo 'ERROR: the record type can only be A, NS, aws-alias.'
-      eval "__RESULT=''"
       return 128
    fi   
    
    hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')
    __get_hosted_zone_id "${hosted_zone_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving hosted zone ID.' 
+      return "${exit_code}"
+   fi
+   
    hosted_zone_id="${__RESULT}"
+   __RESULT=''
 
    if [[ -z "${hosted_zone_id}" ]]  
    then 
-      echo 'WARN: Hosted zone not found.'
-      eval "__RESULT=''"
-      return 0
-   fi 
- 
+      echo 'ERROR: hosted zone not found.'
+      return 1
+   fi
+   
    if [[ 'aws-alias' == "${record_type}" ]]
    then       
       # aws-alias record type.
@@ -584,19 +610,16 @@ function __create_delete_record()
    fi
 
    __submit_change_batch "${hosted_zone_id}" "${request_body}" 
-      
-   # If the caller sets 'set +e' to analyze the return code, this functions
-   # doesn't exit immediately with error, so it is necessary to get the error
-   # code in any case and return it.
    exit_code=$?
    
-   if [[ 0 -eq "${exit_code}" ]]
+   if [[ 0 -ne "${exit_code}" ]]
    then
-      request_id="${__RESULT}"
-      eval "__RESULT='${request_id}'"
-   else
-      eval "__RESULT=''"
-   fi 
+      echo 'ERROR: submitting request.' 
+      return "${exit_code}"
+   fi
+   
+   request_id="${__RESULT}"
+   __RESULT="${request_id}"
 
    return "${exit_code}"           
 }
@@ -626,6 +649,7 @@ function get_record_request_status()
       return 128
    fi
    
+   __RESULT=''
    declare -r request_id="${1}"
    local exit_code=0
    local status=''
@@ -633,18 +657,15 @@ function get_record_request_status()
    # Returns an error if the request is not found.
    status="$(aws route53 get-change --id "${request_id}" \
        --query ChangeInfo.Status --output text)"
-   
-   # If the caller sets 'set +e' to analyze the return code, this functions
-   # doesn't exit immediately with error, so it is necessary to get the error
-   # code in any case and return it.
    exit_code=$?
    
-   if [[ 0 -eq "${exit_code}" ]]
+   if [[ 0 -ne "${exit_code}" ]]
    then
-      eval "__RESULT='${status}'"
-   else
-      eval "__RESULT=''"
-   fi 
+      echo 'ERROR: retrieving the request status.' 
+      return "${exit_code}"
+   fi
+   
+   __RESULT="${status}"
 
    return "${exit_code}"
 }
@@ -670,6 +691,7 @@ function __submit_change_batch()
       return 128
    fi
    
+   __RESULT=''
    declare -r hosted_zone_id="${1}"
    declare -r request_body="${2}"
    local request_id=''
@@ -680,18 +702,15 @@ function __submit_change_batch()
        --change-batch "${request_body}" \
        --query ChangeInfo.Id \
        --output text)"
-
-   # If the caller sets 'set +e' to analyze the return code, this functions
-   # doesn't exit immediately with error, so it is necessary to get the error
-   # code in any case and return it.
    exit_code=$?
-
-   if [[ 0 -eq "${exit_code}" ]]
+   
+   if [[ 0 -ne "${exit_code}" ]]
    then
-      eval "__RESULT='${request_id}'"
-   else
-      eval "__RESULT=''"
-   fi 
+      echo 'ERROR: submitting the change batch request.' 
+      return "${exit_code}"
+   fi
+
+   __RESULT="${request_id}" 
 
    return "${exit_code}"                             
 }
@@ -718,21 +737,31 @@ function __get_hosted_zone_id()
       return 128
    fi
    
+   __RESULT=''
    declare -r hosted_zone_nm="${1}"
    local hosted_zone_id=''
+   local exit_code=0
 
    hosted_zone_id="$(aws route53 list-hosted-zones \
        --query "HostedZones[? Name=='${hosted_zone_nm}'].{Id: Id}" \
-       --output text)"     
+       --output text)"   
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving the hosted zone ID.' 
+      return "${exit_code}"
+   fi  
        
    if [[ -n "${hosted_zone_id}" ]]
    then
       hosted_zone_id=$(echo "${hosted_zone_id}" | awk -F / '{printf("%s", $3)}')
+      exit_code=$?
    fi       
              
-   eval "__RESULT='${hosted_zone_id}'"          
+   __RESULT="${hosted_zone_id}"          
    
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -743,7 +772,7 @@ function __get_hosted_zone_id()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.it'
 # Returns:      
 #  true/false value, returns the value in the __RESULT global variable.  
 #===============================================================================
@@ -755,19 +784,30 @@ function check_hosted_zone_has_loadbalancer_record()
       return 128
    fi
    
+   __RESULT=''
    declare -r domain_nm="${1}"
    local has_record='false'
    local record=''
+   local exit_code=0
       
-   get_record_value 'aws-alias' "${domain_nm}"   
+   get_record_value 'aws-alias' "${domain_nm}"  
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving the record value.' 
+      return "${exit_code}"
+   fi
+    
    record="${__RESULT}"
+   __RESULT=''
    
    if [[ -n "${record}" ]]
    then
       has_record='true'
    fi                 
      
-   eval "__RESULT='${has_record}'"   
+   __RESULT="${has_record}"   
    
    return 0
 }
@@ -782,7 +822,7 @@ function check_hosted_zone_has_loadbalancer_record()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.it'
 # +record_value          -- the targeted load balancer domain name.
 # +target_hosted_zone_id -- the targeted load balancer hosted zone identifier.  
 # Returns:      
@@ -797,26 +837,26 @@ function create_loadbalancer_record()
       return 128
    fi
    
+   __RESULT=''
    declare -r domain_nm="${1}"
    declare -r record_value="${2}"
    declare -r target_hosted_zone_id="${3}"
-   local request_id=''    
+   local request_id='' 
+   local exit_code=0   
 
    __create_delete_record \
        'CREATE' 'aws-alias' "${domain_nm}" "${record_value}" "${target_hosted_zone_id}"
-
-   # If the caller sets 'set +e' to analyze the return code, this functions
-   # doesn't exit immediately with error, so it is necessary to get the error
-   # code in any case and return it.
    exit_code=$?
    
-   if [[ 0 -eq "${exit_code}" ]]
+   if [[ 0 -ne "${exit_code}" ]]
    then
-      request_id="${__RESULT}"
-      eval "__RESULT='${request_id}'"
-   else
-      eval "__RESULT=''"
-   fi 
+      echo 'ERROR: creating load balancer record.' 
+      return "${exit_code}"
+   fi
+   
+   request_id="${__RESULT}"
+   
+   __RESULT="${request_id}"
 
    return "${exit_code}"
 }
@@ -831,7 +871,7 @@ function create_loadbalancer_record()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm             -- the fully qualified domain name, eg: 'www.maxmin.it'
 # +record_value          -- the targeted load balancer domain name.
 # +target_hosted_zone_id -- the targeted load balancer hosted zone identifier. 
 # Returns:      
@@ -840,32 +880,32 @@ function create_loadbalancer_record()
 #===============================================================================
 function delete_loadbalancer_record()
 {
-if [[ $# -lt 2 ]]
+if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
    fi
    
+   __RESULT=''
    declare -r domain_nm="${1}"
    declare -r record_value="${2}"
    declare -r target_hosted_zone_id="${3}"
    local request_id=''
+   local exit_code=0
    
    __create_delete_record \
        'DELETE' 'aws-alias' "${domain_nm}" "${record_value}" "${target_hosted_zone_id}"
-
-   # If the caller sets 'set +e' to analyze the return code, this functions
-   # doesn't exit immediately with error, so it is necessary to get the error
-   # code in any case and return it.
    exit_code=$?
    
-   if [[ 0 -eq "${exit_code}" ]]
+   if [[ 0 -ne "${exit_code}" ]]
    then
-      request_id="${__RESULT}"
-      eval "__RESULT='${request_id}'"
-   else
-      eval "__RESULT=''"
-   fi 
+      echo 'ERROR: deleting load balancer record.' 
+      return "${exit_code}"
+   fi
+   
+   request_id="${__RESULT}"
+   
+   __RESULT="${request_id}" 
 
    return "${exit_code}"
 }
@@ -881,7 +921,7 @@ if [[ $# -lt 2 ]]
 # Globals:
 #  None
 # Arguments:
-# +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.it'
 # Returns:      
 #  the targeted hosted zone ID, returns the value in the __RESULT global variable.  
 #===============================================================================
@@ -893,29 +933,48 @@ function get_loadbalancer_record_hosted_zone_value()
       return 128
    fi
    
+   __RESULT=''
    declare -r domain_nm="${1}"
    local hosted_zone_nm=''
    local hosted_zone_id=''
    local target_hosted_zone_id=''
+   local exit_code=0
       
    hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')  
    
    __get_hosted_zone_id "${hosted_zone_nm}"
-   hosted_zone_id="${__RESULT}"
+   exit_code=$?
    
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving hosted zone ID.' 
+      return "${exit_code}"
+   fi
+   
+   hosted_zone_id="${__RESULT}"
+   __RESULT=''
+
    if [[ -z "${hosted_zone_id}" ]]  
    then 
-      echo 'WARN: hosted zone not found.'
-      eval "__RESULT=''"
-      return 0
+      echo 'ERROR: hosted zone not found.'
+      return 1
    fi
-     
+    
    target_hosted_zone_id="$(aws route53 list-resource-record-sets \
        --hosted-zone-id "${hosted_zone_id}" \
        --query "ResourceRecordSets[? contains(Name,'${domain_nm}')].AliasTarget.HostedZoneId" \
        --output text)"
+   exit_code=$?    
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving the target hosted zone.' 
+      return "${exit_code}"
+   fi
+   
+   __RESULT="${target_hosted_zone_id}"
            
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -927,7 +986,7 @@ function get_loadbalancer_record_hosted_zone_value()
 # Globals:
 #  None
 # Arguments:
-# +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm -- the fully qualified domain name, eg: 'www.maxmin.it'
 # Returns:      
 #  the DNS address where the alias record routes the traffic to, or blanc if not 
 #  found, returns the value in the __RESULT global variable. 
@@ -940,15 +999,24 @@ function get_loadbalancer_record_dns_name_value()
       return 128
    fi
    
+   __RESULT=''
    declare -r domain_nm="${1}"
    local record_value=''
+   local exit_code=0
    
    get_record_value 'aws-alias' "${domain_nm}"
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving load balancer DNS name.' 
+      return "${exit_code}"
+   fi
+   
    record_value="${__RESULT}"
    
-   eval "__RESULT='${record_value}'"
+   __RESULT="${record_value}"
    
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -960,7 +1028,7 @@ function get_loadbalancer_record_dns_name_value()
 #  None
 # Arguments:
 # +record_type  -- the type of the record, either A, NS or aws-alias.
-# +domain_nm    -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm    -- the fully qualified domain name, eg: 'www.maxmin.it'
 # +record_value -- the value of the record type, eg: an IP address, a  
 #                  DNS domain.
 # Returns:      
@@ -975,10 +1043,12 @@ function create_record()
       return 128
    fi
    
+   __RESULT=''
    declare -r record_type="${1}"
    declare -r domain_nm="${2}"
    declare -r record_value="${3}"
    local request_id=''
+   local exit_code=0
     
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" ]]
    then
@@ -987,19 +1057,17 @@ function create_record()
    fi     
 
    __create_delete_record 'CREATE' "${record_type}" "${domain_nm}" "${record_value}" 
-
-   # If the caller sets 'set +e' to analyze the return code, this functions
-   # doesn't exit immediately with error, so it is necessary to get the error
-   # code in any case and return it.
    exit_code=$?
    
-   if [[ 0 -eq "${exit_code}" ]]
+   if [[ 0 -ne "${exit_code}" ]]
    then
-      request_id="${__RESULT}"
-      eval "__RESULT='${request_id}'"
-   else
-      eval "__RESULT=''"
-   fi 
+      echo 'ERROR: creating record.' 
+      return "${exit_code}"
+   fi
+   
+   request_id="${__RESULT}"
+   
+   __RESULT="${request_id}" 
 
    return "${exit_code}"
 }
@@ -1013,7 +1081,7 @@ function create_record()
 #  None
 # Arguments:
 # +record_type  -- the type of the record, either A, NS or aws-alias.
-# +domain_nm    -- the fully qualified domain name, eg: 'www.maxmin.'
+# +domain_nm    -- the fully qualified domain name, eg: 'www.maxmin.it'
 # +record_value -- the value of the record type, eg: an IP address, a  
 #                  DNS domain.
 # Returns:      
@@ -1027,10 +1095,12 @@ function delete_record()
       return 128
    fi
    
+   __RESULT=''
    declare -r record_type="${1}"
    declare -r domain_nm="${2}"
    declare -r record_value="${3}"
    local request_id=''
+   local exit_code=0
     
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" ]]
    then
@@ -1039,19 +1109,17 @@ function delete_record()
    fi     
 
    __create_delete_record 'DELETE' "${record_type}" "${domain_nm}" "${record_value}"
-
-   # If the caller sets 'set +e' to analyze the return code, this functions
-   # doesn't exit immediately with error, so it is necessary to get the error
-   # code in any case and return it.
-   exit_code=$?
+      exit_code=$?
    
-   if [[ 0 -eq "${exit_code}" ]]
+   if [[ 0 -ne "${exit_code}" ]]
    then
-      request_id="${__RESULT}"
-      eval "__RESULT='${request_id}'"
-   else
-      eval "__RESULT=''"
-   fi 
+      echo 'ERROR: deleting record.' 
+      return "${exit_code}"
+   fi
+   
+   request_id="${__RESULT}"
+   
+   __RESULT="${request_id}"
 
    return "${exit_code}"
 }
