@@ -124,7 +124,8 @@ echo 'cloud_init.yml ready.'
 ## Shared box
 ## 
 
-instance_id="$(get_instance_id "${SHARED_INST_NM}")"
+get_instance_id "${SHARED_INST_NM}"
+instance_id="${__RESULT}"
 instance_state="$(get_instance_state "${SHARED_INST_NM}")"
 
 if [[ -n "${image_id}" && 'available' == "${image_state}" ]]
@@ -156,7 +157,8 @@ else
        "${AWS_BASE_IMG_ID}" \
        "${TMP_DIR}"/"${shared_dir}"/cloud_init.yml
        
-   instance_id="$(get_instance_id "${SHARED_INST_NM}")"    
+   get_instance_id "${SHARED_INST_NM}"
+   instance_id="${__RESULT}"   
 
    echo "Shared box created."
 fi  

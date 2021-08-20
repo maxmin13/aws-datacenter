@@ -62,7 +62,8 @@ fi
 
 if [[ 'production' == "${ENV}" ]]
 then
-   admin_instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
+   get_instance_id "${ADMIN_INST_NM}"
+   admin_instance_id="${__RESULT}"
 
    if [[ -z "${admin_instance_id}" ]]
    then

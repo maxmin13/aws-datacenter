@@ -53,7 +53,8 @@ fi
 # Amazon EC2 powers down the instance before creating the AMI to ensure that everything on the 
 # instance is stopped and in a consistent state during the creation process.
 
-instance_id="$(get_instance_id "${SHARED_INST_NM}")"
+get_instance_id "${SHARED_INST_NM}"
+instance_id="${__RESULT}"
 instance_state="$(get_instance_state "${SHARED_INST_NM}")"
 
 if [[ -z "${instance_id}" ]]

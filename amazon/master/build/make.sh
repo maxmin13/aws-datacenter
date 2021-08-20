@@ -17,14 +17,12 @@ source "${PROJECT_DIR}"/amazon/lib/utils/ssh_utils.sh
 source "${PROJECT_DIR}"/amazon/lib/utils/general_utils.sh
 source "${PROJECT_DIR}"/amazon/lib/utils/httpd_utils.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/rds.sh
-source "${PROJECT_DIR}"/amazon/lib/aws/ec2.sh
+source "${PROJECT_DIR}"/amazon/lib/aws/ec2/ec2.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/elb.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/iam/iam.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53/route53.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
-source "${PROJECT_DIR}"/amazon/credential/recaptcha.sh
-source "${PROJECT_DIR}"/amazon/credential/passwords.sh
 
 ###log_file="${LOG_DIR}"/test-$(date +"%d-%m-%Y-%H.%M"."%S")
  
@@ -44,6 +42,9 @@ echo
    fi
    
    echo
+   
+   # EC2 tests.
+   . "${PROJECT_DIR}"/amazon/lib/aws/ec2/test/make.sh
 
    # Route 53 tests.
    . "${PROJECT_DIR}"/amazon/lib/aws/route53/test/make.sh  

@@ -55,11 +55,11 @@ function create_hosted_zone()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r hosted_zone_nm="${1}"
    declare -r caller_reference="${2}"
    declare -r comment="${3}"
    local hosted_zone_id=''
-   local exit_code=0
 
    hosted_zone_id="$(aws route53 create-hosted-zone \
        --name "${hosted_zone_nm}" \
@@ -70,12 +70,13 @@ function create_hosted_zone()
    
    exit_code=$?
    
-   if [[ 0 -eq "${exit_code}" ]]
+   if [[ 0 -ne "${exit_code}" ]]
    then
-     __RESULT="${hosted_zone_id}"
-   else
-      __RESULT=''
-   fi 
+      echo 'ERROR: creating the hosted zone.' 
+      return "${exit_code}"
+   fi
+   
+   __RESULT="${hosted_zone_id}" 
 
    return "${exit_code}"  
 }
@@ -105,9 +106,9 @@ function delete_hosted_zone()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r hosted_zone_nm="${1}"
    local hosted_zone_id=''
-   local exit_code=0
    
    __get_hosted_zone_id "${hosted_zone_nm}"
    exit_code=$?
@@ -154,10 +155,10 @@ function check_hosted_zone_exists()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r hosted_zone_nm="${1}"
    local exists='false'
    local hosted_zone_id=''
-   local exit_code=0
    
    __get_hosted_zone_id "${hosted_zone_nm}"
    exit_code=$?
@@ -208,10 +209,10 @@ function get_hosted_zone_name_servers()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r hosted_zone_nm="${1}"
    local name_servers=''
    local hosted_zone_id=''
-   local exit_code=0
    
    __get_hosted_zone_id "${hosted_zone_nm}"
    exit_code=$?
@@ -223,7 +224,6 @@ function get_hosted_zone_name_servers()
    fi 
    
    hosted_zone_id="${__RESULT}"
-   __RESULT=''
    
    if [[ -z "${hosted_zone_id}" ]]  
    then 
@@ -231,14 +231,17 @@ function get_hosted_zone_name_servers()
       return 1
    fi 
    
-   if [[ -n "${hosted_zone_id}" ]]
+   name_servers="$(aws route53 get-hosted-zone \
+       --id "${hosted_zone_id}" \
+       --query DelegationSet.NameServers[*] \
+       --output text)"
+   exit_code=$?
+  
+   if [[ 0 -ne "${exit_code}" ]]
    then
-      name_servers="$(aws route53 get-hosted-zone \
-          --id "${hosted_zone_id}" \
-          --query DelegationSet.NameServers[*] \
-          --output text)"
-      exit_code=$?
-   fi   
+      echo 'ERROR: retrieving the name servers.' 
+      return "${exit_code}"
+   fi
    
    __RESULT="${name_servers}"
    
@@ -268,11 +271,11 @@ function check_hosted_zone_has_record()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r record_type="${1}"
    declare -r domain_nm="${2}"
    local has_record='false'
    local record=''
-   local exit_code=0
       
    get_record_value "${record_type}" "${domain_nm}"
    exit_code=$?
@@ -284,7 +287,6 @@ function check_hosted_zone_has_record()
    fi
    
    record="${__RESULT}" 
-   __RESULT=''
       
    if [[ -n "${record}" ]]
    then
@@ -319,14 +321,22 @@ function get_record_value()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r record_type="${1}"
    declare -r domain_nm="${2}"
    local record=''
    local hosted_zone_nm=''
    local hosted_zone_id=''
-   local exit_code=0
 
    hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: parsing domain name.' 
+      return "${exit_code}"
+   fi
+   
    __get_hosted_zone_id "${hosted_zone_nm}"
    exit_code=$?
    
@@ -337,7 +347,6 @@ function get_record_value()
    fi
    
    hosted_zone_id="${__RESULT}"
-   __RESULT=''
 
    if [[ -z "${hosted_zone_id}" ]]  
    then 
@@ -548,12 +557,12 @@ function __create_delete_record()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r action="${1}"
    declare -r record_type="${2}"
    declare -r domain_nm="${3}"
    declare -r record_value="${4}"
    local target_hosted_zone_id=''
-   local exit_code=0
       
    if [[ $# -eq 5 ]]
    then
@@ -578,6 +587,7 @@ function __create_delete_record()
    fi   
    
    hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')
+   
    __get_hosted_zone_id "${hosted_zone_nm}"
    exit_code=$?
    
@@ -589,7 +599,7 @@ function __create_delete_record()
    
    hosted_zone_id="${__RESULT}"
    __RESULT=''
-
+   
    if [[ -z "${hosted_zone_id}" ]]  
    then 
       echo 'ERROR: hosted zone not found.'
@@ -650,8 +660,8 @@ function get_record_request_status()
    fi
    
    __RESULT=''
-   declare -r request_id="${1}"
    local exit_code=0
+   declare -r request_id="${1}"
    local status=''
 
    # Returns an error if the request is not found.
@@ -692,10 +702,10 @@ function __submit_change_batch()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r hosted_zone_id="${1}"
    declare -r request_body="${2}"
-   local request_id=''
-   local exit_code=0
+   local request_id
 
    request_id="$(aws route53 change-resource-record-sets \
        --hosted-zone-id "${hosted_zone_id}" \
@@ -738,9 +748,9 @@ function __get_hosted_zone_id()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r hosted_zone_nm="${1}"
    local hosted_zone_id=''
-   local exit_code=0
 
    hosted_zone_id="$(aws route53 list-hosted-zones \
        --query "HostedZones[? Name=='${hosted_zone_nm}'].{Id: Id}" \
@@ -753,11 +763,20 @@ function __get_hosted_zone_id()
       return "${exit_code}"
    fi  
        
-   if [[ -n "${hosted_zone_id}" ]]
+   if [[ -z "${hosted_zone_id}" ]]
    then
-      hosted_zone_id=$(echo "${hosted_zone_id}" | awk -F / '{printf("%s", $3)}')
-      exit_code=$?
-   fi       
+      echo 'ERROR: hosted zone not found.' 
+      return "${exit_code}"
+   fi 
+   
+   hosted_zone_id=$(echo "${hosted_zone_id}" | awk -F / '{printf("%s", $3)}')
+   exit_code=$?   
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: parsing hosted zone ID.' 
+      return "${exit_code}"
+   fi   
              
    __RESULT="${hosted_zone_id}"          
    
@@ -785,10 +804,10 @@ function check_hosted_zone_has_loadbalancer_record()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r domain_nm="${1}"
    local has_record='false'
    local record=''
-   local exit_code=0
       
    get_record_value 'aws-alias' "${domain_nm}"  
    exit_code=$?
@@ -800,7 +819,6 @@ function check_hosted_zone_has_loadbalancer_record()
    fi
     
    record="${__RESULT}"
-   __RESULT=''
    
    if [[ -n "${record}" ]]
    then
@@ -838,11 +856,11 @@ function create_loadbalancer_record()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r domain_nm="${1}"
    declare -r record_value="${2}"
    declare -r target_hosted_zone_id="${3}"
-   local request_id='' 
-   local exit_code=0   
+   local request_id=''  
 
    __create_delete_record \
        'CREATE' 'aws-alias' "${domain_nm}" "${record_value}" "${target_hosted_zone_id}"
@@ -887,11 +905,11 @@ if [[ $# -lt 3 ]]
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r domain_nm="${1}"
    declare -r record_value="${2}"
    declare -r target_hosted_zone_id="${3}"
    local request_id=''
-   local exit_code=0
    
    __create_delete_record \
        'DELETE' 'aws-alias' "${domain_nm}" "${record_value}" "${target_hosted_zone_id}"
@@ -934,11 +952,11 @@ function get_loadbalancer_record_hosted_zone_value()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r domain_nm="${1}"
    local hosted_zone_nm=''
    local hosted_zone_id=''
    local target_hosted_zone_id=''
-   local exit_code=0
       
    hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')  
    
@@ -1000,11 +1018,12 @@ function get_loadbalancer_record_dns_name_value()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r domain_nm="${1}"
    local record_value=''
-   local exit_code=0
    
    get_record_value 'aws-alias' "${domain_nm}"
+   exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
    then
@@ -1044,11 +1063,11 @@ function create_record()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r record_type="${1}"
    declare -r domain_nm="${2}"
    declare -r record_value="${3}"
    local request_id=''
-   local exit_code=0
     
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" ]]
    then
@@ -1096,11 +1115,11 @@ function delete_record()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r record_type="${1}"
    declare -r domain_nm="${2}"
    declare -r record_value="${3}"
    local request_id=''
-   local exit_code=0
     
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" ]]
    then

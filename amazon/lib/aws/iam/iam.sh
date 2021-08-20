@@ -33,8 +33,8 @@ function get_server_certificate_arn()
    fi
 
    __RESULT=''
-   declare -r crt_nm="${1}"
    local exit_code=0
+   declare -r crt_nm="${1}"
 
    cert_arn="$(aws iam list-server-certificates \
        --query "ServerCertificateMetadataList[?ServerCertificateName=='${crt_nm}'].Arn" \
@@ -86,12 +86,12 @@ function upload_server_certificate()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r crt_nm="${1}"
    declare -r crt_file="${2}"
    declare -r key_file="${3}"
    declare -r cert_dir="${4}"
    local chain_file=''
-   local exit_code=0
    
    if [[ $# -gt 4 ]]; then
       chain_file="${5}"
@@ -141,8 +141,8 @@ function delete_server_certificate()
    fi
 
    __RESULT=''
-   declare -r crt_nm="${1}"
    local exit_code=0
+   declare -r crt_nm="${1}"
 
    aws iam delete-server-certificate --server-certificate-name "${crt_nm}" > /dev/null
    
@@ -175,9 +175,9 @@ function get_permission_policy_arn()
    fi
 
    __RESULT=''
+   local exit_code=0
    declare -r policy_nm="${1}"
    local policy_arn=''
-   local exit_code=0
 
    policy_arn="$(aws iam list-policies --query "Policies[? PolicyName=='${policy_nm}' ].Arn" \
        --output text)"
@@ -218,21 +218,21 @@ function check_permission_policy_exists()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r policy_nm="${1}"
    local policy_arn=''
    local exists='false'
-   local exit_code=0
 
    get_permission_policy_arn "${policy_nm}"
    exit_code=$?
-   policy_arn="${__RESULT}"
-   __RESULT=''
-   
+      
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving permission policy.' 
       return "${exit_code}"
    fi 
+   
+   policy_arn="${__RESULT}"
     
    if [[ -n "${policy_arn}" ]]
    then
@@ -263,21 +263,21 @@ function delete_permission_policy()
    fi
 
    __RESULT=''
+   local exit_code=0
    declare -r policy_nm="${1}"
    local policy_arn=''
    local policy_exists='false'
-   local exit_code=0
    
    check_permission_policy_exists "${policy_nm}"
    exit_code=$?
-   policy_exists="${__RESULT}"
-   __RESULT=''
 
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving permission policy.' 
       return "${exit_code}"
    fi
+   
+   policy_exists="${__RESULT}"
    
    if [[ 'false' == "${policy_exists}" ]]
    then
@@ -287,14 +287,15 @@ function delete_permission_policy()
     
    get_permission_policy_arn "${policy_nm}"
    exit_code=$?
-   policy_arn="${__RESULT}"
-   __RESULT=''
+   
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving permission policy ARN.' 
       return "${exit_code}"
    fi
+   
+   policy_arn="${__RESULT}"
    
    aws iam delete-policy --policy-arn "${policy_arn}"
    exit_code=$?
@@ -328,10 +329,10 @@ function create_permission_policy()
    fi
 
    __RESULT=''
+   local exit_code=0
    declare -r policy_nm="${1}"
    declare -r policy_desc="${2}"
    declare -r policy_document="${3}"
-   local exit_code=0
        
    aws iam create-policy \
        --policy-name "${policy_nm}" \
@@ -408,21 +409,21 @@ function attach_permission_policy_to_role()
    fi
 
    __RESULT=''
+   local exit_code=0
    declare -r role_nm="${1}"
    declare -r policy_nm="${2}"
    local policy_exists='false'
-   local exit_code=0
 
    check_permission_policy_exists "${policy_nm}"
    exit_code=$?
-   policy_exists="${__RESULT}"
-   __RESULT=''
-
+   
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving permission policy.' 
       return "${exit_code}"
    fi
+   
+   policy_exists="${__RESULT}"
    
    if [[ 'false' == "${policy_exists}" ]]
    then
@@ -432,15 +433,15 @@ function attach_permission_policy_to_role()
     
    get_permission_policy_arn "${policy_nm}"
    exit_code=$?
-   policy_arn="${__RESULT}"
-   __RESULT=''
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving permission policy ARN.' 
       return "${exit_code}"
    fi
-
+   
+   policy_arn="${__RESULT}"
+   
    aws iam attach-role-policy --role-name "${role_nm}" --policy-arn "${policy_arn}" > /dev/null
    exit_code=$?
    
@@ -472,24 +473,24 @@ function check_role_has_permission_policy_attached()
    fi
 
    __RESULT=''
+   local exit_code=0
    declare -r role_nm="${1}"
    declare -r policy_nm="${2}"
    local attached='false'
    local role_exists='false'
    local policy_exists='false'
-   local exit_code=0
    local policy_arn=''
    
    check_role_exists "${role_nm}"
    exit_code=$?
-   role_exists="${__RESULT}"
-   __RESULT=''
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving role.' 
       return "${exit_code}"
    fi
+   
+   role_exists="${__RESULT}"
    
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -499,14 +500,14 @@ function check_role_has_permission_policy_attached()
    
    check_permission_policy_exists "${policy_nm}"
    exit_code=$?
-   policy_exists="${__RESULT}"
-   __RESULT=''
 
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving permission policy.' 
       return "${exit_code}"
    fi
+   
+   policy_exists="${__RESULT}"
    
    if [[ 'false' == "${policy_exists}" ]]
    then
@@ -522,12 +523,12 @@ function check_role_has_permission_policy_attached()
    then
       echo 'ERROR: retrieving permission policy.' 
       return "${exit_code}"
-   else
-      if [[ -n "${policy_arn}" ]]
-      then
-         attached='true' 
-      fi
    fi 
+   
+   if [[ -n "${policy_arn}" ]]
+   then
+      attached='true' 
+   fi
        
    __RESULT="${attached}"
 
@@ -554,23 +555,23 @@ function __detach_permission_policy_from_role()
    fi
 
    __RESULT=''
+   local exit_code=0
    declare -r role_nm="${1}"
    declare -r policy_nm="${2}"
    local policy_arn=''
    local role_exists='false'
    local policy_exists='false'
-   local exit_code=0
    
    check_role_exists "${role_nm}"
    exit_code=$?
-   role_exists="${__RESULT}"
-   __RESULT=''
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving role.' 
       return "${exit_code}"
    fi
+   
+   role_exists="${__RESULT}"
    
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -580,14 +581,14 @@ function __detach_permission_policy_from_role()
    
    check_permission_policy_exists "${policy_nm}"
    exit_code=$?
-   policy_exists="${__RESULT}"
-   __RESULT=''
 
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving permission policy.' 
       return "${exit_code}"
    fi
+   
+   policy_exists="${__RESULT}"
    
    if [[ 'false' == "${policy_exists}" ]]
    then
@@ -597,14 +598,14 @@ function __detach_permission_policy_from_role()
    
    get_permission_policy_arn "${policy_nm}"
    exit_code=$?
-   policy_arn="${__RESULT}"
-   __RESULT=''
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving permission policy ARN.' 
       return "${exit_code}"
    fi
+   
+   policy_arn="${__RESULT}"
 
    aws iam detach-role-policy --role-name "${role_nm}" --policy-arn "${policy_arn}" > /dev/null
    exit_code=$?
@@ -673,10 +674,10 @@ function create_role()
    fi
 
    __RESULT=''
+   local exit_code=0
    declare -r role_nm="${1}"
    declare -r role_desc="${2}"
    declare -r role_policy_document="${3}"
-   local exit_code=0
 
    aws iam create-role --role-name "${role_nm}" --description "${role_desc}" \
        --assume-role-policy-document "${role_policy_document}" \
@@ -712,20 +713,20 @@ function delete_role()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r role_nm="${1}"
    local role_exists='false'
-   local exit_code=0
    
    check_role_exists "${role_nm}"
    exit_code=$?
-   role_exists="${__RESULT}"
-   __RESULT=''
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving the role.' 
       return "${exit_code}"
    fi
+   
+   role_exists="${__RESULT}"
    
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -815,21 +816,21 @@ function check_role_exists()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r role_nm="${1}"
    local role_id=''
    local exists='false'
-   local exit_code=0
 
    get_role_id "${role_nm}"
    exit_code=$?
-   role_id="${__RESULT}"
-   __RESULT=''
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving role.'
       return "${exit_code}"
    fi
+   
+   role_id="${__RESULT}"
    
    if [[ -n "${role_id}" ]]
    then
@@ -860,9 +861,9 @@ function get_role_arn()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r role_nm="${1}"
    local role_arn=''
-   local exit_code=0
 
    role_arn="$(aws iam list-roles --query "Roles[? RoleName=='${role_nm}'].Arn" --output text)"
    exit_code=$?
@@ -902,8 +903,8 @@ function get_role_id()
    fi
 
    __RESULT=''
-   declare -r role_nm="${1}"
    local exit_code=0
+   declare -r role_nm="${1}"
    local role_id=''
 
    role_id="$(aws iam list-roles \
@@ -941,8 +942,8 @@ function create_instance_profile()
    fi
 
    __RESULT=''
-   declare -r profile_nm="${1}"
    local exit_code=0
+   declare -r profile_nm="${1}"
 
    aws iam create-instance-profile --instance-profile-name "${profile_nm}" \
        > /dev/null
@@ -976,9 +977,9 @@ function delete_instance_profile()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r profile_nm="${1}"
    local role_nm=''
-   local exit_code=0
    
    # Retrieve role attached to the instance profiles.
    # Only one role can be attached to an instance profile.
@@ -994,7 +995,7 @@ function delete_instance_profile()
 
    # Detach the role from the instance profile.
    __remove_role_from_instance_profile "${profile_nm}" "${role_nm}" > /dev/null
-      exit_code=$?
+   exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
    then
@@ -1032,21 +1033,21 @@ function check_instance_profile_exists()
    fi
    
    __RESULT=''
+   local exit_code=0
    declare -r profile_nm="${1}"
    local profile_id=''
    local exists='false'
-   local exit_code=0
 
    get_instance_profile_id "${profile_nm}"
    exit_code=$?
-   profile_id="${__RESULT}"
-   __RESULT=''
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving instance profile.'
       return "${exit_code}"
    fi
+   
+   profile_id="${__RESULT}"
    
    if [[ -n "${profile_id}" ]]
    then
@@ -1077,10 +1078,10 @@ function get_instance_profile_id()
    fi
 
    __RESULT=''
+   local exit_code=0
    declare -r profile_nm="${1}"
    local profile_id=''
-   local exit_code=0
-
+   
    profile_id="$(aws iam list-instance-profiles \
        --query "InstanceProfiles[?InstanceProfileName=='${profile_nm}'].InstanceProfileId" \
        --output text)"
@@ -1094,7 +1095,7 @@ function get_instance_profile_id()
   
    __RESULT="${profile_id}"
 
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1117,9 +1118,9 @@ function check_instance_profile_has_role_associated()
    fi    
     
    __RESULT=''
+   local exit_code=0
    declare -r profile_nm="${1}"
    declare -r role_nm="${2}"
-   local exit_code=0
    local associated='false'
    local role_exists=''
    local profile_exists=''
@@ -1127,14 +1128,14 @@ function check_instance_profile_has_role_associated()
    
    check_role_exists "${role_nm}"
    exit_code=$?
-   role_exists="${__RESULT}"
-   __RESULT=''
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving the role.' 
       return "${exit_code}"
    fi
+   
+   role_exists="${__RESULT}"
    
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -1144,14 +1145,14 @@ function check_instance_profile_has_role_associated()
    
    check_instance_profile_exists "${profile_nm}"
    exit_code=$?
-   profile_exists="${__RESULT}"
-   __RESULT=''
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving the instance profile.' 
       return "${exit_code}"
    fi
+   
+   profile_exists="${__RESULT}"
    
    if [[ 'false' == "${profile_exists}" ]]
    then
@@ -1200,9 +1201,9 @@ function associate_role_to_instance_profile()
    fi
 
    __RESULT=''
+   local exit_code=0
    declare -r profile_nm="${1}"
    declare -r role_nm="${2}"
-   local exit_code=0
    
    aws iam add-role-to-instance-profile --instance-profile-name "${profile_nm}" \
        --role-name "${role_nm}" > /dev/null
@@ -1237,9 +1238,9 @@ function __remove_role_from_instance_profile()
    fi
 
    __RESULT=''
+   local exit_code=0
    declare -r profile_nm="${1}"
    declare -r role_nm="${2}"
-   local exit_code=0
    
    aws iam remove-role-from-instance-profile --instance-profile-name "${profile_nm}" \
        --role-name "${role_nm}" > /dev/null

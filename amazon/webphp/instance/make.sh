@@ -102,7 +102,8 @@ else
    echo "* database endpoint: ${db_endpoint}."
 fi
 
-adm_instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
+get_instance_id "${ADMIN_INST_NM}"
+adm_instance_id="${__RESULT}"
 
 if [[ -z "${adm_instance_id}" ]]
 then
@@ -261,7 +262,8 @@ echo 'cloud_init.yml ready.'
 ## WebPhp box 
 ##
 
-instance_id="$(get_instance_id "${webphp_nm}")"
+get_instance_id "${webphp_nm}"
+instance_id="${__RESULT}"
 
 if [[ -n "${instance_id}" ]]
 then
@@ -288,7 +290,8 @@ else
        "${shared_image_id}" \
        "${TMP_DIR}"/"${webphp_dir}"/cloud_init.yml
        
-   instance_id="$(get_instance_id "${webphp_nm}")"    
+   get_instance_id "${webphp_nm}"
+   instance_id="${__RESULT}"    
 
    echo "Webphp box created."
 fi

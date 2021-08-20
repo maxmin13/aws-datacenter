@@ -22,7 +22,8 @@ echo
 webphp_nm="${WEBPHP_INST_NM/<ID>/"${webphp_id}"}"
 keypair_nm="${WEBPHP_INST_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
 webphp_sgp_nm="${WEBPHP_INST_SEC_GRP_NM/<ID>/"${webphp_id}"}"
-instance_id="$(get_instance_id "${webphp_nm}")"
+get_instance_id "${webphp_nm}"
+instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then

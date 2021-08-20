@@ -13,7 +13,8 @@ echo
 shared_dir='shared'
 
 # The temporary box used to build the image, it should be already deleted.
-instance_id="$(get_instance_id "${SHARED_INST_NM}")"
+get_instance_id "${SHARED_INST_NM}"
+instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then

@@ -37,7 +37,8 @@ echo 'SSL Admin box'
 echo '*************'
 echo
 
-instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
+get_instance_id "${ADMIN_INST_NM}"
+instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then

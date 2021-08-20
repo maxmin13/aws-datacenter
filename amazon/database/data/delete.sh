@@ -19,7 +19,8 @@ echo
 rm -rf "${TMP_DIR:?}"/"${database_dir}"
 mkdir "${TMP_DIR}"/"${database_dir}"
 
-instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
+get_instance_id "${ADMIN_INST_NM}"
+instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then

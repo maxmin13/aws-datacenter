@@ -13,7 +13,8 @@ echo
 shared_dir='shared'
 
 # The temporary box used to build the image may already be gone
-instance_id="$(get_instance_id "${SHARED_INST_NM}")"
+get_instance_id "${SHARED_INST_NM}"
+instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then

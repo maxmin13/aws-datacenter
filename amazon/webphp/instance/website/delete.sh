@@ -40,7 +40,8 @@ echo "Webphp website ${webphp_id}"
 echo '****************'
 echo
 
-instance_id="$(get_instance_id "${webphp_nm}")"
+get_instance_id "${webphp_nm}"
+instance_id="${__RESULT}"
 
 if [[ -z "${instance_id}" ]]
 then

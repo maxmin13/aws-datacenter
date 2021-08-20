@@ -222,7 +222,8 @@ echo 'cloud_init.yml ready.'
 ## Admin box. 
 ## 
 
-instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
+get_instance_id "${ADMIN_INST_NM}"
+instance_id="${__RESULT}"
 
 if [[ -n "${instance_id}" ]]
 then
@@ -240,7 +241,6 @@ then
 else
    echo "Creating the Admin box ..."
 
-   ### TODO run with profile
    run_instance \
        "${ADMIN_INST_NM}" \
        "${sgp_id}" \
@@ -249,10 +249,16 @@ else
        "${shared_image_id}" \
        "${TMP_DIR}"/"${admin_dir}"/cloud_init.yml
        
-   instance_id="$(get_instance_id "${ADMIN_INST_NM}")"
+   get_instance_id "${ADMIN_INST_NM}"
+   instance_id="${__RESULT}"
 
    echo "Admin box created."
 fi
+
+# Associate a profile with a role that allow access to Route 53.
+associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null
+
+echo 'Instance profile associated to the instance.'
 
 # Get the public IP address assigned to the instance. 
 eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"

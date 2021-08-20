@@ -14,15 +14,15 @@ source "${PROJECT_DIR}"/amazon/lib/const/dev_consts.sh
 source "${PROJECT_DIR}"/amazon/lib/utils/ssh_utils.sh
 source "${PROJECT_DIR}"/amazon/lib/utils/general_utils.sh
 source "${PROJECT_DIR}"/amazon/lib/utils/httpd_utils.sh
+source "${PROJECT_DIR}"/amazon/lib/credential/recaptcha.sh
+source "${PROJECT_DIR}"/amazon/lib/credential/passwords.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/rds.sh
-source "${PROJECT_DIR}"/amazon/lib/aws/ec2.sh
+source "${PROJECT_DIR}"/amazon/lib/aws/ec2/ec2.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/elb.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/iam/iam.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53/route53.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
-source "${PROJECT_DIR}"/amazon/credential/recaptcha.sh
-source "${PROJECT_DIR}"/amazon/credential/passwords.sh
 
 log_file="${LOG_DIR}"/delete-$(date +"%d-%m-%Y-%H.%M"."%S")
 
