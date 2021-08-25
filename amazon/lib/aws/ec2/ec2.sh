@@ -30,7 +30,7 @@ function get_datacenter_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r dtc_nm="${1}"
@@ -62,7 +62,7 @@ function create_datacenter()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
   
    declare -r dtc_nm="${1}"
@@ -98,7 +98,7 @@ function delete_datacenter()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
   
    declare -r dtc_id="${1}"
@@ -132,7 +132,7 @@ function get_subnet_ids()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r dtc_id="${1}"
@@ -162,7 +162,7 @@ function get_subnet_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r subnet_nm="${1}"
@@ -199,7 +199,7 @@ function create_subnet()
    if [[ $# -lt 5 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r subnet_nm="${1}"
@@ -223,7 +223,7 @@ function create_subnet()
   ####################### TODO ASSOCIATE THE SUBNET IN ANOTHER FUNCTION FOR ATOMICITY ############################## 
   
    ## Associate this subnet with our route table 
-   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" > /dev/null
+   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" 
   
    echo "${subnet_id}"
  
@@ -245,7 +245,7 @@ function delete_subnet()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r subnet_id="${1}"
@@ -269,7 +269,7 @@ function get_internet_gateway_id()
    if [[ $# -lt 1 ]]
    then
      echo 'ERROR: missing mandatory arguments.'
-     return 1
+     return 128
   fi
 
    declare -r igw_nm="${1}"
@@ -305,7 +305,7 @@ function get_internet_gateway_attachment_status()
    if [[ $# -lt 2 ]]
    then
      echo 'ERROR: missing mandatory arguments.'
-     return 1
+     return 128
   fi
 
    declare -r igw_nm="${1}"
@@ -339,7 +339,7 @@ function create_internet_gateway()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
   
    declare -r igw_nm="${1}"
@@ -371,7 +371,7 @@ function delete_internet_gateway()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
   
    declare -r igw_id="${1}"
@@ -397,7 +397,7 @@ function attach_internet_gateway()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
   
    declare -r igw_id="${1}"
@@ -423,7 +423,7 @@ function get_route_table_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r rtb_nm="${1}"
@@ -457,7 +457,7 @@ function create_route_table()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r rtb_nm="${1}"
@@ -491,7 +491,7 @@ function delete_route_table()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r rtb_id="${1}"
@@ -520,7 +520,7 @@ function set_route()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r rtb_id="${1}"
@@ -529,7 +529,7 @@ function set_route()
    
    aws ec2 create-route --route-table-id "${rtb_id}" \
        --destination-cidr-block "${destination_cidr}" \
-       --gateway-id "${target_id}" > /dev/null
+       --gateway-id "${target_id}" 
 
    return 0
 }
@@ -549,7 +549,7 @@ function get_security_group_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r sgp_nm="${1}"
@@ -583,7 +583,7 @@ function create_security_group()
    if [[ $# -lt 3 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r dtc_id="${1}" 
@@ -619,14 +619,14 @@ function delete_security_group()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r sgp_id="${1}"
    local exit_code=0
    
    set +e
-   aws ec2 delete-security-group --group-id "${sgp_id}" > /dev/null
+   aws ec2 delete-security-group --group-id "${sgp_id}" 
    exit_code=$?
    set -e
    
@@ -651,7 +651,7 @@ function allow_access_from_cidr()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r sgp_id="${1}"
@@ -663,7 +663,7 @@ function allow_access_from_cidr()
        --group-id "${sgp_id}" \
        --protocol "${protocol}" \
        --port "${port}" \
-       --cidr "${from_cidr}" > /dev/null
+       --cidr "${from_cidr}" 
  
    return 0
 }
@@ -688,7 +688,7 @@ function allow_access_from_security_group()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r sgp_id="${1}"
@@ -700,7 +700,7 @@ function allow_access_from_security_group()
        --group-id "${sgp_id}" \
        --protocol "${protocol}" \
        --port "${port}" \
-       --source-group "${from_sgp_id}" > /dev/null 
+       --source-group "${from_sgp_id}" 
 
    return 0
 }
@@ -725,7 +725,7 @@ function revoke_access_from_security_group()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r sgp_id="${1}"
@@ -737,7 +737,7 @@ function revoke_access_from_security_group()
        --group-id "${sgp_id}" \
        --protocol "${protocol}" \
        --port "${port}" \
-       --source-group "${from_sgp_id}" > /dev/null
+       --source-group "${from_sgp_id}" 
 
    return 0
 }
@@ -760,7 +760,7 @@ function revoke_access_from_cidr()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r sgp_id="${1}"
@@ -772,7 +772,7 @@ function revoke_access_from_cidr()
        --group-id "${sgp_id}" \
        --protocol "${protocol}" \
        --port "${port}" \
-       --cidr "${from_cidr}" > /dev/null
+       --cidr "${from_cidr}" 
 
    return 0
 }
@@ -798,7 +798,7 @@ function check_access_from_security_group_is_granted()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r sgp_id="${1}"
@@ -837,7 +837,7 @@ function check_access_from_cidr_is_granted()
    if [[ $# -lt 4 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r sgp_id="${1}"
@@ -872,7 +872,7 @@ function get_instance_state()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r instance_nm="${1}"
@@ -904,7 +904,7 @@ function get_public_ip_address_associated_with_instance()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r instance_nm="${1}"
@@ -936,7 +936,7 @@ function get_private_ip_address_associated_with_instance()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r instance_nm="${1}"
@@ -968,7 +968,7 @@ function get_instance_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    __RESULT=''
@@ -1015,7 +1015,7 @@ function run_instance()
    if [[ $# -lt 6 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
    declare -r instance_nm="${1}"
@@ -1075,12 +1075,12 @@ function stop_instance()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r instance_id="${1}"
 
-   aws ec2 stop-instances --instance-ids "${instance_id}" > /dev/null
+   aws ec2 stop-instances --instance-ids "${instance_id}" 
    aws ec2 wait instance-stopped --instance-ids "${instance_id}" 
 
    return 0
@@ -1106,7 +1106,7 @@ function delete_instance()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r instance_id="${1}"
@@ -1117,7 +1117,7 @@ function delete_instance()
       wait_terminated="${2}"
    fi
 
-   aws ec2 terminate-instances --instance-ids "${instance_id}" > /dev/null
+   aws ec2 terminate-instances --instance-ids "${instance_id}" 
    
    if [[ 'and_wait' == "${wait_terminated}" ]]
    then
@@ -1153,62 +1153,26 @@ function check_instance_has_instance_profile_associated()
    declare -r profile_nm="${2}"
    local instance_id=''
    local profile_id=''
-   local profile_arn=''
-   local has_profile='false'
+   local association_id=''
+   local associated='false'
    
-   get_instance_id "${instance_nm}"
-   exit_code=$?
-   
+   __get_association_id "${instance_nm}" "${profile_nm}"
+
    if [[ 0 -ne "${exit_code}" ]]
    then
-      echo 'ERROR: retrieving instance ID.' 
+      echo 'ERROR: retrieving the association ID.' 
       return "${exit_code}"
    fi
    
-   instance_id="${__RESULT}"
+   association_id="${__RESULT}"
+   __RESULT=''
    
-   if [[ -z "${instance_id}" ]]
+   if [[ -n "${association_id}" ]]
    then
-      echo 'ERROR: EC2 instance not found.'
-      return 1
-   fi
-   
-   get_instance_profile_id "${profile_nm}" 
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: retrieving instance profile ID.' 
-      return "${exit_code}"
-   fi
-   
-   instance_id="${__RESULT}"
-   
-   if [[ -z "${instance_id}" ]]
-   then
-      echo 'ERROR: EC2 instance not found.'
-      return 1
-   fi
-   
-   # Check if the profile is associated to the instance.      
-   profile_arn="$(aws ec2 describe-iam-instance-profile-associations \
-       --query "IamInstanceProfileAssociations[? InstanceId == '${instance_id}' && IamInstanceProfile.Id == '${profile_id}'].IamInstanceProfile.Arn" \
-       --output text)"    
-   
-   exit_code=$?
-   
-   if [[ 0 -ne "${exit_code}" ]]
-   then
-      echo 'ERROR: checking instance profile is associated to the EC2 instance.'
-      return "${exit_code}"
-   fi
-   
-   if [[ -n "${profile_arn}" ]]
-   then
-      has_profile='true' 
+      associated='true' 
    fi
        
-   __RESULT="${has_profile}"
+   __RESULT="${associated}"
 
    return "${exit_code}" 
 }
@@ -1222,7 +1186,7 @@ function check_instance_has_instance_profile_associated()
 # +instance_nm -- the instance name.
 # +profile_nm  -- the IAM instance profile name.
 # Returns:      
-#  true or false value in the __RESULT global variable.  
+#  none.  
 #===============================================================================
 function associate_instance_profile_to_instance()
 {
@@ -1249,6 +1213,7 @@ function associate_instance_profile_to_instance()
    fi
    
    instance_id="${__RESULT}"
+   __RESULT=''
    
    if [[ -z "${instance_id}" ]]
    then
@@ -1265,6 +1230,7 @@ function associate_instance_profile_to_instance()
    fi
    
    profile_id="${__RESULT}"
+   __RESULT=''
    
    if [[ -z "${profile_id}" ]]
    then
@@ -1283,6 +1249,145 @@ function associate_instance_profile_to_instance()
    fi
    
    return "${exit_code}" 
+}
+
+#===============================================================================
+# Disassociate the specified instance profile to an EC2 instance.
+#
+# Globals:
+#  None
+# Arguments:
+# +instance_nm -- the instance name.
+# +profile_nm  -- the IAM instance profile name.
+# Returns:      
+#  none.  
+#===============================================================================
+function disassociate_instance_profile_from_instance()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi 
+   
+   __RESULT=''
+   local exit_code=0
+   declare -r instance_nm="${1}"
+   declare -r profile_nm="${2}"
+   local instance_id=''
+   local profile_id=''
+   local association_id=''
+   
+   __get_association_id "${instance_nm}" "${profile_nm}"
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving the association ID.' 
+      return "${exit_code}"
+   fi
+   
+   association_id="${__RESULT}"
+   __RESULT=''
+   
+   if [[ -z "${association_id}" ]]
+   then
+      echo 'ERROR: association ID not found.'
+      return 1
+   fi
+   
+   aws ec2 disassociate-iam-instance-profile --association-id "${association_id}"  
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: disassociating instance profile to EC2 instance.'
+   fi
+   
+   return "${exit_code}" 
+}
+
+#===============================================================================
+# Returns the association ID of an association in state 'associated' between
+# an instance profile and an EC2 instance.
+#
+# Globals:
+#  None
+# Arguments:
+# +instance_nm -- the instance name.
+# +profile_nm  -- the IAM instance profile name.
+# Returns:      
+#  the association ID in the __RESULT global variable.  
+#===============================================================================
+function __get_association_id()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi 
+   
+   __RESULT=''
+   local exit_code=0
+   declare -r instance_nm="${1}"
+   declare -r profile_nm="${2}"
+   local instance_id=''
+   local profile_id=''
+   local association_id=''
+   
+   get_instance_id "${instance_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving instance ID.' 
+      return "${exit_code}"
+   fi
+   
+   instance_id="${__RESULT}"
+   __RESULT=''
+   
+   if [[ -z "${instance_id}" ]]
+   then
+      echo 'ERROR: EC2 instance not found.'
+      return 1
+   fi
+   
+   get_instance_profile_id "${profile_nm}" 
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving instance profile ID.' 
+      return "${exit_code}"
+   fi
+   
+   profile_id="${__RESULT}"
+   __RESULT=''
+
+   if [[ -z "${profile_id}" ]]
+   then
+      echo 'ERROR: instance profile not found.'
+      return 1
+   fi
+   
+   association_id="$(aws ec2 describe-iam-instance-profile-associations \
+       --query "IamInstanceProfileAssociations[? InstanceId == '${instance_id}' && IamInstanceProfile.Id == '${profile_id}' ].AssociationId" \
+       --output text)"
+   exit_code=$?
+
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving the association ID.' 
+      return "${exit_code}"
+   fi
+   
+   if [[ -z "${association_id}" ]]
+   then
+      echo 'Association ID not found.'
+   fi
+   
+   __RESULT="${association_id}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1316,7 +1421,7 @@ function create_image()
         --name "${img_nm}" \
         --description "${img_desc}" \
         --query 'ImageId' \
-        --output text)" > /dev/null
+        --output text)" 
   
    # If the caller sets 'set +e' to analyze the return code, this functions
    # doesn't exit immediately with error, so it is necessary to get the error
@@ -1345,7 +1450,7 @@ function get_image_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r img_nm="${1}"
@@ -1375,7 +1480,7 @@ function get_image_state()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r img_nm="${1}"
@@ -1407,7 +1512,7 @@ function get_image_snapshot_ids()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r img_nm="${1}"
@@ -1441,7 +1546,7 @@ function delete_image()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r img_id="${1}"
@@ -1467,12 +1572,12 @@ function delete_image_snapshot()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r img_snapshot_id="${1}"
 
-   aws ec2 delete-snapshot --snapshot-id "${img_snapshot_id}" > /dev/null
+   aws ec2 delete-snapshot --snapshot-id "${img_snapshot_id}" 
 
    return 0
 }
@@ -1494,7 +1599,7 @@ function get_allocation_id()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r eip="${1}"
@@ -1608,12 +1713,12 @@ function release_public_ip_address()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r allocation_id="${1}"
 
-   aws ec2 release-address --allocation-id "${allocation_id}" > /dev/null
+   aws ec2 release-address --allocation-id "${allocation_id}" 
 
    return 0
 }
@@ -1636,14 +1741,14 @@ function release_all_public_ip_addresses()
    if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
    
    declare -r allocation_ids="${1}"
           
    for id in ${allocation_ids}
    do
-      aws ec2 release-address --allocation-id "${id}" > /dev/null
+      aws ec2 release-address --allocation-id "${id}" 
    done
 
    return 0
@@ -1667,7 +1772,7 @@ function associate_public_ip_address_to_instance()
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
-      return 1
+      return 128
    fi
 
    declare -r eip="${1}"
@@ -1675,7 +1780,7 @@ function associate_public_ip_address_to_instance()
   
    aws ec2 associate-address \
        --instance-id "${instance_id}" \
-       --public-ip "${eip}" > /dev/null
+       --public-ip "${eip}" 
 
    return 0
 }

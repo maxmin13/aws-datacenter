@@ -274,9 +274,13 @@ function __helper_clear_resources
    __helper_delete_alias_record \
        'lbal.maxmin.it.' '1203266565.eu-west-1.elb.amazonaws.com.' \
        "${ALIAS_TARGET_HOSTED_ZONE_ID}"
+       
+   echo 'Test resources cleared.'     
         
    return 0
 }
+
+trap "__helper_clear_resources" EXIT
 
 ##
 ##
@@ -291,7 +295,7 @@ echo
 ## TEST: create_record
 ###########################################
 
-__helper_clear_resources > /dev/null 2>&1 
+__helper_clear_resources ###> /dev/null 2>&1 
 
 #
 # Missing parameter.
@@ -2564,4 +2568,5 @@ fi
 
 echo
 
+exit 0
 

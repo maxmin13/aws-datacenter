@@ -153,7 +153,9 @@ function __helper_clear_resources()
       aws iam delete-instance-profile --instance-profile-name "${PROFILE_NM}"
    
       echo 'Instance profile deleted'
-   fi   
+   fi
+   
+   echo 'Test resources cleared.'   
    
    return 0   
 }
@@ -167,7 +169,285 @@ echo
 ##
 ##
 
-trap "__helper_clear_resources > /dev/null 2>&1" EXIT
+trap "__helper_clear_resources" EXIT
+
+#######################################################
+## TEST: build_route53_permission_policy_document
+#######################################################
+
+document_policy=''; version=''; effect=''; action=''; resource='';
+
+#
+# Create a document policy.
+#
+
+build_route53_permission_policy_document
+document_policy="${__RESULT}"
+
+## Validate JSON.
+if jq -e . >/dev/null 2>&1 <<< "${document_policy}"
+then
+    
+    # Get the Version element.
+    version="$(echo "${document_policy}" | jq -r '.Version')"
+
+    if [[ '2012-10-17' != "${version}" ]]
+    then
+       echo "ERROR: testing build_route53_permission_policy_document wrong Version element."
+       counter=$((counter +1))
+    fi
+    
+    # Get the Effect element.
+    effect="$(echo "${document_policy}" | jq -r '.Statement[0].Effect')"
+    
+    if [[ 'Allow' != "${effect}" ]]
+    then
+       echo "ERROR: testing build_route53_permission_policy_document wrong Effect element."
+       counter=$((counter +1))
+    fi
+    
+    # Get the first Action element.
+    action="$(echo "${document_policy}" | jq -r '.Statement[0].Action[0]')"
+    
+    if [[ 'route53:*' != "${action}" ]]
+    then
+       echo "ERROR: testing build_route53_permission_policy_document wrong first Action element."
+       counter=$((counter +1))
+    fi
+    
+    # Get the second Action element.
+    action=''
+    action="$(echo "${document_policy}" | jq -r '.Statement[0].Action[1]')"
+    
+    if [[ 'route53domains:*' != "${action}" ]]
+    then
+       echo "ERROR: testing build_route53_permission_policy_document wrong second Action element."
+       counter=$((counter +1))
+    fi
+    
+    # Get the third Action element.
+    action=''
+    action="$(echo "${document_policy}" | jq -r '.Statement[0].Action[2]')"
+    
+    if [[ 'sts:AssumeRole' != "${action}" ]]
+    then
+       echo "ERROR: testing build_route53_permission_policy_document wrong third Action element."
+       counter=$((counter +1))
+    fi
+    
+    # Get the Resource element.
+    resource="$(echo "${document_policy}" | jq -r '.Statement[0].Resource')"
+    
+    if [[ '*' != "${resource}" ]]
+    then
+       echo "ERROR: testing build_route53_permission_policy_document wrong Resource element."
+       counter=$((counter +1))
+    fi       
+else
+    echo "ERROR: Failed to parse JSON build_route53_permission_policy_document request batch."
+    counter=$((counter +1))
+fi
+
+echo 'build_route53_permission_policy_document tests completed.'
+
+###########################################################
+## TEST: build_assume_role_policy_document_for_ec2_entities
+###########################################################
+
+version=''; effect=''; action=''; service=''; document_policy='';
+
+#
+# Create a document policy.
+#
+
+build_assume_role_policy_document_for_ec2_entities
+document_policy="${__RESULT}"
+
+## Validate JSON.
+if jq -e . >/dev/null 2>&1 <<< "${document_policy}"
+then
+    
+    # Get the Version element.
+    version="$(echo "${document_policy}" | jq -r '.Version')"
+
+    if [[ '2012-10-17' != "${version}" ]]
+    then
+       echo "ERROR: testing build_assume_role_policy_document_for_ec2_entities wrong Version element."
+       counter=$((counter +1))
+    fi
+    
+    # Get the Effect element.
+    effect="$(echo "${document_policy}" | jq -r '.Statement.Effect')"
+    
+    if [[ 'Allow' != "${effect}" ]]
+    then
+       echo "ERROR: testing build_assume_role_policy_document_for_ec2_entities wrong Effect element."
+       counter=$((counter +1))
+    fi
+    
+    # Get the Action element.
+    action="$(echo "${document_policy}" | jq -r '.Statement.Action')"
+    
+    if [[ 'sts:AssumeRole' != "${action}" ]]
+    then
+       echo "ERROR: testing build_assume_role_policy_document_for_ec2_entities wrong Action element."
+       counter=$((counter +1))
+    fi
+    
+    # Get the Service element.
+    service="$(echo "${document_policy}" | jq -r '.Statement.Principal.Service')"
+    
+    if [[ 'ec2.amazonaws.com' != "${service}" ]]
+    then
+       echo "ERROR: testing build_assume_role_policy_document_for_ec2_entities wrong second Service element."
+       counter=$((counter +1))
+    fi      
+else
+    echo "ERROR: Failed to parse JSON build_assume_role_policy_document_for_ec2_entities request batch."
+    counter=$((counter +1))
+fi
+
+echo 'build_assume_role_policy_document_for_ec2_entities tests completed.' 
+
+##############################################################
+## TEST: check_role_has_permission_policy_attached
+##############################################################
+
+__helper_clear_resources > /dev/null 2>&1 
+exit_code=0; policy_attached=''; policy_arn=''; policy_document='';
+
+# Create a role with a permission policy attached.
+__helper_create_role_policy_document
+policy_document="${__RESULT}"
+
+aws iam create-role --role-name "${ROLE_NM}" --assume-role-policy-document "${policy_document}" > /dev/null 2>&1 
+__helper_create_permission_policy "${POLICY_NM}" > /dev/null 2>&1
+policy_arn="${__RESULT}"
+
+aws iam attach-role-policy --role-name "${ROLE_NM}" --policy-arn "${policy_arn}" 
+
+#
+# Missing argument.
+#
+
+set +e
+check_role_has_permission_policy_attached "${ROLE_NM}" > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 128 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing check_role_has_permission_policy_attached with missing arguments.'
+   counter=$((counter +1))
+fi
+
+#
+# Not existing role.
+#
+
+set +e
+check_role_has_permission_policy_attached 'xxx-assume-role' "${POLICY_NM}" > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# An error is expected.
+if [[ 0 -eq "${exit_code}" ]]
+then
+   echo 'ERROR: testing check_role_has_permission_policy_attached with not existing role.'
+   counter=$((counter +1))
+fi
+
+policy_attached="${__RESULT}"
+
+# And empty string is expected.
+if [[ -n "${policy_attached}" ]]
+then
+   echo 'ERROR: testing check_role_has_permission_policy_attached with not existing role, policy is attached.'
+   counter=$((counter +1))
+fi
+
+#
+# Not existing policy.
+#
+
+set +e
+check_role_has_permission_policy_attached "${ROLE_NM}" 'xxxxx-53-policy' > /dev/null 2>&1
+exit_code=$?
+set -e
+
+policy_attached="${__RESULT}"
+
+# An error is expected.
+if [[ 0 -eq "${exit_code}" ]]
+then
+   echo 'ERROR: testing check_role_has_permission_policy_attached with not existing policy.'
+   counter=$((counter +1))
+fi
+
+# And empty string is expected.
+if [[ -n "${policy_attached}" ]]
+then
+   echo 'ERROR: testing check_role_has_permission_policy_attached with not existing policy.'
+   counter=$((counter +1))
+fi
+
+#
+# Policy attached.
+#
+
+set +e
+check_role_has_permission_policy_attached "${ROLE_NM}" "${POLICY_NM}" > /dev/null 2>&1
+exit_code=$?
+set -e
+
+policy_attached="${__RESULT}"
+
+# No error is expected.
+if [[ 0 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing check_role_has_permission_policy_attached with policy attached.'
+   counter=$((counter +1))
+fi
+
+# true is expected.
+if [[ 'true' != "${policy_attached}" ]]
+then
+   echo 'ERROR: testing check_role_has_permission_policy_attached.'
+   counter=$((counter +1))
+fi
+
+#
+# Policy detached.
+#
+
+# Detach the policy from the role.
+policy_arn="$(aws iam list-attached-role-policies --role-name  "${ROLE_NM}" \
+          --query "AttachedPolicies[? PolicyName=='${POLICY_NM}' ].PolicyArn" --output text)"
+aws iam detach-role-policy --role-name "${ROLE_NM}" --policy-arn "${policy_arn}" > /dev/null
+
+set +e
+check_role_has_permission_policy_attached "${ROLE_NM}" "${POLICY_NM}" > /dev/null 2>&1
+exit_code=$?
+set -e
+
+policy_attached="${__RESULT}"
+
+# No error is expected.
+if [[ 0 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing check_role_has_permission_policy_attached with policy detached.'
+   counter=$((counter +1))
+fi
+
+# false is expected.
+if [[ 'false' != "${policy_attached}" ]]
+then
+   echo 'ERROR: testing check_role_has_permission_policy_attached.'
+   counter=$((counter +1))
+fi
+
+echo 'check_role_has_permission_policy_attached tests completed.'
 
 ###########################################
 ## TEST: get_role_arn
@@ -1416,205 +1696,6 @@ fi
 
 echo 'delete_role tests completed.'
 
-###########################################################
-## TEST: build_assume_role_policy_document_for_ec2_entities
-###########################################################
-
-version=''; effect=''; action=''; service=''; document_policy='';
-
-#
-# Create a document policy.
-#
-
-build_assume_role_policy_document_for_ec2_entities
-document_policy="${__RESULT}"
-
-## Validate JSON.
-if jq -e . >/dev/null 2>&1 <<< "${document_policy}"
-then
-    
-    # Get the Version element.
-    version="$(echo "${document_policy}" | jq -r '.Version')"
-
-    if [[ '2012-10-17' != "${version}" ]]
-    then
-       echo "ERROR: testing build_route53_permission_policy_document wrong Version element."
-       counter=$((counter +1))
-    fi
-    
-    # Get the Effect element.
-    effect="$(echo "${document_policy}" | jq -r '.Statement.Effect')"
-    
-    if [[ 'Allow' != "${effect}" ]]
-    then
-       echo "ERROR: testing build_route53_permission_policy_document wrong Effect element."
-       counter=$((counter +1))
-    fi
-    
-    # Get the Action element.
-    action="$(echo "${document_policy}" | jq -r '.Statement.Action')"
-    
-    if [[ 'sts:AssumeRole' != "${action}" ]]
-    then
-       echo "ERROR: testing build_route53_permission_policy_document wrong Action element."
-       counter=$((counter +1))
-    fi
-    
-    # Get the Service element.
-    service="$(echo "${document_policy}" | jq -r '.Statement.Principal.Service')"
-    
-    if [[ 'ec2.amazonaws.com' != "${service}" ]]
-    then
-       echo "ERROR: testing build_route53_permission_policy_document wrong second Service element."
-       counter=$((counter +1))
-    fi      
-else
-    echo "ERROR: Failed to parse JSON build_route53_permission_policy_document request batch."
-    counter=$((counter +1))
-fi
-
-echo 'build_assume_role_policy_document_for_ec2_entities tests completed.' 
-
-##############################################################
-## TEST: check_role_has_permission_policy_attached
-##############################################################
-
-__helper_clear_resources > /dev/null 2>&1 
-exit_code=0; policy_attached=''; policy_arn=''; policy_document='';
-
-# Create a role with a permission policy attached.
-__helper_create_role_policy_document
-policy_document="${__RESULT}"
-
-aws iam create-role --role-name "${ROLE_NM}" --assume-role-policy-document "${policy_document}" > /dev/null 2>&1 
-__helper_create_permission_policy "${POLICY_NM}" > /dev/null 2>&1
-policy_arn="${__RESULT}"
-
-aws iam attach-role-policy --role-name "${ROLE_NM}" --policy-arn "${policy_arn}" 
-
-#
-# Missing argument.
-#
-
-set +e
-check_role_has_permission_policy_attached "${ROLE_NM}" > /dev/null 2>&1
-exit_code=$?
-set -e
-
-# An error is expected.
-if [[ 128 -ne "${exit_code}" ]]
-then
-   echo 'ERROR: testing check_role_has_permission_policy_attached with missing arguments.'
-   counter=$((counter +1))
-fi
-
-#
-# Not existing role.
-#
-
-set +e
-check_role_has_permission_policy_attached 'xxx-assume-role' "${POLICY_NM}" > /dev/null 2>&1
-exit_code=$?
-set -e
-
-policy_attached="${__RESULT}"
-
-# An error is expected.
-if [[ 0 -eq "${exit_code}" ]]
-then
-   echo 'ERROR: testing check_role_has_permission_policy_attached with not existing role.'
-   counter=$((counter +1))
-fi
-
-# And empty string is expected.
-if [[ -n "${policy_attached}" ]]
-then
-   echo 'ERROR: testing check_role_has_permission_policy_attached with not existing role 2.'
-   counter=$((counter +1))
-fi
-
-#
-# Not existing policy.
-#
-
-set +e
-check_role_has_permission_policy_attached "${ROLE_NM}" 'xxxxx-53-policy' > /dev/null 2>&1
-exit_code=$?
-set -e
-
-policy_attached="${__RESULT}"
-
-# An error is expected.
-if [[ 0 -eq "${exit_code}" ]]
-then
-   echo 'ERROR: testing check_role_has_permission_policy_attached with not existing policy.'
-   counter=$((counter +1))
-fi
-
-# And empty string is expected.
-if [[ -n "${policy_attached}" ]]
-then
-   echo 'ERROR: testing check_role_has_permission_policy_attached with not existing policy.'
-   counter=$((counter +1))
-fi
-
-#
-# Policy attached.
-#
-
-set +e
-check_role_has_permission_policy_attached "${ROLE_NM}" "${POLICY_NM}" > /dev/null 2>&1
-exit_code=$?
-set -e
-
-policy_attached="${__RESULT}"
-
-# No error is expected.
-if [[ 0 -ne "${exit_code}" ]]
-then
-   echo 'ERROR: testing check_role_has_permission_policy_attached with policy attached.'
-   counter=$((counter +1))
-fi
-
-# true is expected.
-if [[ 'true' != "${policy_attached}" ]]
-then
-   echo 'ERROR: testing check_role_has_permission_policy_attached.'
-   counter=$((counter +1))
-fi
-
-#
-# Policy detached.
-#
-
-# Detach the policy from the role.
-policy_arn="$(aws iam list-attached-role-policies --role-name  "${ROLE_NM}" \
-          --query "AttachedPolicies[? PolicyName=='${POLICY_NM}' ].PolicyArn" --output text)"
-aws iam detach-role-policy --role-name "${ROLE_NM}" --policy-arn "${policy_arn}" > /dev/null
-
-set +e
-check_role_has_permission_policy_attached "${ROLE_NM}" "${POLICY_NM}" > /dev/null 2>&1
-exit_code=$?
-set -e
-
-policy_attached="${__RESULT}"
-
-# No error is expected.
-if [[ 0 -ne "${exit_code}" ]]
-then
-   echo 'ERROR: testing check_role_has_permission_policy_attached with policy detached.'
-   counter=$((counter +1))
-fi
-
-# false is expected.
-if [[ 'false' != "${policy_attached}" ]]
-then
-   echo 'ERROR: testing check_role_has_permission_policy_attached.'
-   counter=$((counter +1))
-fi
-
-echo 'check_role_has_permission_policy_attached tests completed.'
-
 ##############################################################
 ## TEST: check_permission_policy_exists
 ##############################################################
@@ -1769,86 +1850,6 @@ then
 fi
 
 echo 'get_permission_policy_arn tests completed.' 
-
-#######################################################
-## TEST: build_route53_permission_policy_document
-#######################################################
-
-document_policy=''; version=''; effect=''; action=''; resource='';
-
-#
-# Create a document policy.
-#
-
-
-build_route53_permission_policy_document
-document_policy="${__RESULT}"
-
-## Validate JSON.
-if jq -e . >/dev/null 2>&1 <<< "${document_policy}"
-then
-    
-    # Get the Version element.
-    version="$(echo "${document_policy}" | jq -r '.Version')"
-
-    if [[ '2012-10-17' != "${version}" ]]
-    then
-       echo "ERROR: testing build_route53_permission_policy_document wrong Version element."
-       counter=$((counter +1))
-    fi
-    
-    # Get the Effect element.
-    effect="$(echo "${document_policy}" | jq -r '.Statement[0].Effect')"
-    
-    if [[ 'Allow' != "${effect}" ]]
-    then
-       echo "ERROR: testing build_route53_permission_policy_document wrong Effect element."
-       counter=$((counter +1))
-    fi
-    
-    # Get the first Action element.
-    action="$(echo "${document_policy}" | jq -r '.Statement[0].Action[0]')"
-    
-    if [[ 'route53:DeleteTrafficPolicy' != "${action}" ]]
-    then
-       echo "ERROR: testing build_route53_permission_policy_document wrong first Action element."
-       counter=$((counter +1))
-    fi
-    
-    # Get the second Action element.
-    action=''
-    action="$(echo "${document_policy}" | jq -r '.Statement[0].Action[1]')"
-    
-    if [[ 'route53:CreateTrafficPolicy' != "${action}" ]]
-    then
-       echo "ERROR: testing build_route53_permission_policy_document wrong second Action element."
-       counter=$((counter +1))
-    fi
-    
-    # Get the third Action element.
-    action=''
-    action="$(echo "${document_policy}" | jq -r '.Statement[0].Action[2]')"
-    
-    if [[ 'sts:AssumeRole' != "${action}" ]]
-    then
-       echo "ERROR: testing build_route53_permission_policy_document wrong third Action element."
-       counter=$((counter +1))
-    fi
-    
-    # Get the Resource element.
-    resource="$(echo "${document_policy}" | jq -r '.Statement[0].Resource')"
-    
-    if [[ '*' != "${resource}" ]]
-    then
-       echo "ERROR: testing build_route53_permission_policy_document wrong Resource element."
-       counter=$((counter +1))
-    fi       
-else
-    echo "ERROR: Failed to parse JSON build_route53_permission_policy_document request batch."
-    counter=$((counter +1))
-fi
-
-echo 'build_route53_permission_policy_document tests completed.'
 
 ###########################################
 ## TEST: create_permission_policy
@@ -2014,4 +2015,6 @@ else
 fi
 
 echo
+
+exit 0
 

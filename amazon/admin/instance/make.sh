@@ -255,10 +255,16 @@ else
    echo "Admin box created."
 fi
 
-# Associate a profile with a role that allow access to Route 53.
-associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null
+check_instance_has_instance_profile_associated "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}"
+is_profile_associated="${__RESULT}"
 
-echo 'Instance profile associated to the instance.'
+if [[ 'false' == "${is_profile_associated}" ]]
+then
+   # Associate a profile with a role that allow access to Route 53.
+   associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null
+   
+   echo 'Instance profile associated to the instance.'
+fi
 
 # Get the public IP address assigned to the instance. 
 eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
@@ -526,7 +532,22 @@ else
    echo 'ERROR: configuring Admin box.'
    exit 1
 fi
+
+## 
+## Instance profile.
+## 
       
+check_instance_has_instance_profile_associated "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}"
+is_profile_associated="${__RESULT}"
+
+if [[ 'true' == "${is_profile_associated}" ]]
+then
+   # Associate a profile with a role that allow access to Route 53.
+   disassociate_instance_profile_from_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null
+   
+   echo 'Instance profile disassociated from the instance.'
+fi
+
 ## 
 ## SSH Access.
 ## 

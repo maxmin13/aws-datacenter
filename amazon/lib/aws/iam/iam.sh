@@ -102,13 +102,13 @@ function upload_server_certificate()
       aws iam upload-server-certificate \
           --server-certificate-name "${crt_nm}" \
           --certificate-body file://"${cert_dir}/${crt_file}" \
-          --private-key file://"${cert_dir}/${key_file}" > /dev/null
+          --private-key file://"${cert_dir}/${key_file}" 
    else
       aws iam upload-server-certificate \
           --server-certificate-name "${crt_nm}" \
           --certificate-body file://"${cert_dir}/${crt_file}" \
           --private-key file://"${cert_dir}/${key_file}" \
-          --certificate-chain file://"${cert_dir}/${chain_file}" > /dev/null
+          --certificate-chain file://"${cert_dir}/${chain_file}" 
    fi
    
    exit_code=$?
@@ -144,7 +144,7 @@ function delete_server_certificate()
    local exit_code=0
    declare -r crt_nm="${1}"
 
-   aws iam delete-server-certificate --server-certificate-name "${crt_nm}" > /dev/null
+   aws iam delete-server-certificate --server-certificate-name "${crt_nm}" 
    
    exit_code=$?
    
@@ -338,7 +338,7 @@ function create_permission_policy()
        --policy-name "${policy_nm}" \
        --description "${policy_desc}" \
        --policy-document "${policy_document}" \
-       > /dev/null
+       
     
    exit_code=$?
    
@@ -368,18 +368,18 @@ function build_route53_permission_policy_document()
 
    policy_document=$(cat <<-'EOF' 
 {
-   "Version":"2012-10-17",
-   "Statement":[
-      {
-         "Effect":"Allow",
-         "Action":[
-            "route53:DeleteTrafficPolicy",
-            "route53:CreateTrafficPolicy",
-            "sts:AssumeRole"
-         ],
-         "Resource":"*"
-      }
-   ]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "route53:*",
+                "route53domains:*",
+                "sts:AssumeRole"
+            ],
+            "Resource": "*"
+        }
+    ]
 }      
 	EOF
    )
@@ -442,7 +442,7 @@ function attach_permission_policy_to_role()
    
    policy_arn="${__RESULT}"
    
-   aws iam attach-role-policy --role-name "${role_nm}" --policy-arn "${policy_arn}" > /dev/null
+   aws iam attach-role-policy --role-name "${role_nm}" --policy-arn "${policy_arn}" 
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -491,6 +491,7 @@ function check_role_has_permission_policy_attached()
    fi
    
    role_exists="${__RESULT}"
+   __RESULT=''
    
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -508,6 +509,7 @@ function check_role_has_permission_policy_attached()
    fi
    
    policy_exists="${__RESULT}"
+   __RESULT=''
    
    if [[ 'false' == "${policy_exists}" ]]
    then
@@ -572,6 +574,7 @@ function __detach_permission_policy_from_role()
    fi
    
    role_exists="${__RESULT}"
+   __RESULT=''
    
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -589,6 +592,7 @@ function __detach_permission_policy_from_role()
    fi
    
    policy_exists="${__RESULT}"
+   __RESULT=''
    
    if [[ 'false' == "${policy_exists}" ]]
    then
@@ -606,8 +610,9 @@ function __detach_permission_policy_from_role()
    fi
    
    policy_arn="${__RESULT}"
+   __RESULT=''
 
-   aws iam detach-role-policy --role-name "${role_nm}" --policy-arn "${policy_arn}" > /dev/null
+   aws iam detach-role-policy --role-name "${role_nm}" --policy-arn "${policy_arn}" 
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -681,7 +686,7 @@ function create_role()
 
    aws iam create-role --role-name "${role_nm}" --description "${role_desc}" \
        --assume-role-policy-document "${role_policy_document}" \
-       > /dev/null
+       
 
    exit_code=$?
    
@@ -727,6 +732,7 @@ function delete_role()
    fi
    
    role_exists="${__RESULT}"
+   __RESULT=''
    
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -759,7 +765,7 @@ function delete_role()
    # Detach the role from the instance profiles.
    for profile_nm in ${instance_profiles}
    do
-      __remove_role_from_instance_profile "${profile_nm}" "${role_nm}" > /dev/null
+      __remove_role_from_instance_profile "${profile_nm}" "${role_nm}" 
       exit_code=$?
       
       if [[ 0 -ne "${exit_code}" ]]
@@ -774,7 +780,7 @@ function delete_role()
    # Detach the policies from role.
    for policy_nm in ${policies}
    do
-      __detach_permission_policy_from_role "${role_nm}" "${policy_nm}" > /dev/null
+      __detach_permission_policy_from_role "${role_nm}" "${policy_nm}" 
       exit_code=$?
       
       if [[ 0 -ne "${exit_code}" ]]
@@ -786,7 +792,7 @@ function delete_role()
       fi      
    done 
     
-   aws iam delete-role --role-name "${role_nm}" > /dev/null
+   aws iam delete-role --role-name "${role_nm}" 
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -831,6 +837,7 @@ function check_role_exists()
    fi
    
    role_id="${__RESULT}"
+   __RESULT=''
    
    if [[ -n "${role_id}" ]]
    then
@@ -946,7 +953,7 @@ function create_instance_profile()
    declare -r profile_nm="${1}"
 
    aws iam create-instance-profile --instance-profile-name "${profile_nm}" \
-       > /dev/null
+       
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -994,7 +1001,7 @@ function delete_instance_profile()
    fi
 
    # Detach the role from the instance profile.
-   __remove_role_from_instance_profile "${profile_nm}" "${role_nm}" > /dev/null
+   __remove_role_from_instance_profile "${profile_nm}" "${role_nm}" 
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1003,7 +1010,7 @@ function delete_instance_profile()
       return "${exit_code}"
    fi
    
-   aws iam delete-instance-profile --instance-profile-name "${profile_nm}" > /dev/null
+   aws iam delete-instance-profile --instance-profile-name "${profile_nm}" 
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1048,6 +1055,7 @@ function check_instance_profile_exists()
    fi
    
    profile_id="${__RESULT}"
+   __RESULT=''
    
    if [[ -n "${profile_id}" ]]
    then
@@ -1136,6 +1144,7 @@ function check_instance_profile_has_role_associated()
    fi
    
    role_exists="${__RESULT}"
+   __RESULT=''
    
    if [[ 'false' == "${role_exists}" ]]
    then
@@ -1153,6 +1162,7 @@ function check_instance_profile_has_role_associated()
    fi
    
    profile_exists="${__RESULT}"
+   __RESULT=''
    
    if [[ 'false' == "${profile_exists}" ]]
    then
@@ -1206,7 +1216,7 @@ function associate_role_to_instance_profile()
    declare -r role_nm="${2}"
    
    aws iam add-role-to-instance-profile --instance-profile-name "${profile_nm}" \
-       --role-name "${role_nm}" > /dev/null
+       --role-name "${role_nm}" 
    
    exit_code=$?
    
@@ -1243,7 +1253,7 @@ function __remove_role_from_instance_profile()
    declare -r role_nm="${2}"
    
    aws iam remove-role-from-instance-profile --instance-profile-name "${profile_nm}" \
-       --role-name "${role_nm}" > /dev/null
+       --role-name "${role_nm}" 
 
    exit_code=$?
    

@@ -120,6 +120,7 @@ function delete_hosted_zone()
    fi 
    
    hosted_zone_id="${__RESULT}"
+   __RESULT=''
    
    if [[ -z "${hosted_zone_id}" ]]  
    then 
@@ -170,6 +171,7 @@ function check_hosted_zone_exists()
    fi 
    
    hosted_zone_id="${__RESULT}"
+   __RESULT=''
    
    if [[ -n "${hosted_zone_id}" ]]
    then
@@ -224,6 +226,7 @@ function get_hosted_zone_name_servers()
    fi 
    
    hosted_zone_id="${__RESULT}"
+   __RESULT=''
    
    if [[ -z "${hosted_zone_id}" ]]  
    then 
@@ -287,6 +290,7 @@ function check_hosted_zone_has_record()
    fi
    
    record="${__RESULT}" 
+   __RESULT=''
       
    if [[ -n "${record}" ]]
    then
@@ -347,6 +351,7 @@ function get_record_value()
    fi
    
    hosted_zone_id="${__RESULT}"
+   __RESULT=''
 
    if [[ -z "${hosted_zone_id}" ]]  
    then 
@@ -819,6 +824,7 @@ function check_hosted_zone_has_loadbalancer_record()
    fi
     
    record="${__RESULT}"
+   __RESULT=''
    
    if [[ -n "${record}" ]]
    then
@@ -873,7 +879,6 @@ function create_loadbalancer_record()
    fi
    
    request_id="${__RESULT}"
-   
    __RESULT="${request_id}"
 
    return "${exit_code}"
@@ -922,7 +927,6 @@ if [[ $# -lt 3 ]]
    fi
    
    request_id="${__RESULT}"
-   
    __RESULT="${request_id}" 
 
    return "${exit_code}"
@@ -1032,7 +1036,6 @@ function get_loadbalancer_record_dns_name_value()
    fi
    
    record_value="${__RESULT}"
-   
    __RESULT="${record_value}"
    
    return "${exit_code}"
@@ -1085,7 +1088,6 @@ function create_record()
    fi
    
    request_id="${__RESULT}"
-   
    __RESULT="${request_id}" 
 
    return "${exit_code}"
@@ -1137,7 +1139,6 @@ function delete_record()
    fi
    
    request_id="${__RESULT}"
-   
    __RESULT="${request_id}"
 
    return "${exit_code}"

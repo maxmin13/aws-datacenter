@@ -41,7 +41,9 @@ echo
       echo '****************'
       echo 'Env: development'
       echo '****************' 
-   fi  
+   fi
+   
+   echo  
         
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh  
@@ -62,8 +64,14 @@ echo
    . "${PROJECT_DIR}"/amazon/admin/instance/make.sh               
    . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1   
    
+   # Register 'maxmin.it' domain with the AWS DNS registrar.
+   . "${PROJECT_DIR}"/amazon/dns/domain/registration/make.sh 
+
+   # Create the application DNS hosted zone.
+   . "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh   
+   
    # TODO only development works, complete cert automation production.
-   ####. "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh                     
+   . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh                     
 
    # Deploy database objects.
    . "${PROJECT_DIR}"/amazon/database/data/make.sh       
@@ -71,13 +79,7 @@ echo
    # Deploy Admin and Webphp websites.
    . "${PROJECT_DIR}"/amazon/admin/instance/website/make.sh      
    . "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 1   
-
-   # Register 'maxmin.it' domain with the AWS DNS registrar.
-   . "${PROJECT_DIR}"/amazon/dns/domain/registration/make.sh 
-
-   # Create the application DNS hosted zone.
-   . "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh  
-   
+ 
    # Configure SSL in the Admin instance.
    . "${PROJECT_DIR}"/amazon/admin/instance/ssl/make.sh    
    
