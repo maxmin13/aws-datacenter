@@ -8,7 +8,7 @@ set +o xtrace
 counter=0; __RESULT='';
 ROLE_NM='EC2-test-assume-role'
 PROFILE_NM='EC2-test-instance-profile'
-INSTANCE_NM='EC2-test-instance'
+INSTANCE_NM='EC2-test-instance1'
 
 ##
 ## Functions used to handle test data.
@@ -138,31 +138,36 @@ __helper_clear_resources > /dev/null 2>&1
 
 echo 'Starting EC2 test instance ...'
 
-instance_st="$(aws ec2 describe-instances \
-    --filters Name=tag-key,Values='Name' \
+instance_id="$(aws ec2 describe-instances \
+    --filters Name=tag-key,Values=Name \
     --filters Name=tag-value,Values="${INSTANCE_NM}" \
-    --query 'Reservations[*].Instances[*].State.Name' \
-    --output text)"
- 
-if [[ -z "${instance_st}" ]]     
-then 
-   # Run an EC2 instance.
+    --query 'Reservations[*].Instances[*].InstanceId' \
+    --output text)"   
+   
+if [[ -n "${instance_id}" ]]
+then
+   instance_state="$(get_instance_state "${INSTANCE_NM}")"
+   
+   if [[ 'running' == "${instance_state}" || \
+         'stopped' == "${instance_state}" || \
+         'pending' == "${instance_state}" ]] 
+   then
+      echo "WARN: EC2 test instance already created (${instance_state})."
+   else
+      echo "ERROR: EC2 test instance already created (${instance_state})."
+      exit 1
+   fi
+else
+   echo "Creating EC2 test instance ..."
+
    instance_id="$(aws ec2 run-instances \
        --image-id "${AWS_BASE_IMG_ID}" \
        --block-device-mapping 'DeviceName=/dev/xvda,Ebs={DeleteOnTermination=true,VolumeSize=10}' \
        --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value='${INSTANCE_NM}'}]" \
        --output text \
-       --query 'Instances[*].InstanceId')" 
-       
-   echo 'EC2 instance started.'
-else
-   instance_id="$(aws ec2 describe-instances \
-       --filters Name=tag-key,Values=Name \
-       --filters Name=tag-value,Values="${INSTANCE_NM}" \
-       --query 'Reservations[*].Instances[*].InstanceId' \
-       --output text)"
-   
-   echo 'EC2 instance already running.'
+       --query 'Instances[*].InstanceId')"
+
+   echo "EC2 test instance created."
 fi
 
 # Create a role.
@@ -556,6 +561,9 @@ fi
 
 echo 'disassociate_instance_profile_from_instance tests with profile associated completed.'
 
+__helper_clear_instance 
+__helper_clear_resources
+
 ##############################################
 # Count the errors.
 ##############################################
@@ -571,6 +579,6 @@ fi
 
 echo
 
-exit 0
+
 
 

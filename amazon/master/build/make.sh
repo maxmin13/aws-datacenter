@@ -42,12 +42,12 @@ echo
    fi
    
    echo
-   
-   # IAM tests.
-   . "${PROJECT_DIR}"/amazon/lib/aws/iam/test/make.sh 
-   
+       
    # EC2 tests.
    . "${PROJECT_DIR}"/amazon/lib/aws/ec2/test/make.sh
+    
+   # IAM tests.
+   . "${PROJECT_DIR}"/amazon/lib/aws/iam/test/make.sh 
 
    # Route 53 tests.
    . "${PROJECT_DIR}"/amazon/lib/aws/route53/test/make.sh  

@@ -2553,6 +2553,8 @@ fi
 
 echo '__create_alias_record_change_batch tests completed.'
 
+__helper_clear_resources
+
 ##############################################
 # Count the errors.
 ##############################################

@@ -2000,6 +2000,8 @@ then
 fi
 
 echo 'delete_permission_policy tests completed.'
+
+__helper_clear_resources
    
 ##############################################
 # Count the errors.
@@ -2016,5 +2018,4 @@ fi
 
 echo
 
-exit 0
 

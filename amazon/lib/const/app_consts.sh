@@ -2,7 +2,9 @@
 
 # shellcheck disable=SC2034
 
+# Development uses a self-signed certificate.
 ENV='development'
+# Production uses a Let's Encrypt certificate.
 #ENV='production'
 
 ## Amazon EBS-backed image:

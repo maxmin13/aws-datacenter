@@ -186,7 +186,7 @@ then
 
    #
    # Development: 
-   # generate and upload a self-signed Server Certificate to IAM.
+   # generate and upload a self-signed certificate to IAM.
    #
    # key.pem
    # cert.pem

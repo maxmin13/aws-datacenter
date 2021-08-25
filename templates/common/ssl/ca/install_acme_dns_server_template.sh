@@ -7,8 +7,8 @@ set +o xtrace
 
 ###################################################################
 # https://jaletzki.de/posts/acme-dns-on-centos-7/
-# In this post an acme-dns server will be set up and a client will 
-# acquire a Let’s Encrypt certificate using the DNS-01 challenge.
+# Set up acme-dns server and a client will acquire a Let’s Encrypt 
+# certificate using the DNS-01 challenge.
 # Acme-dns provides a simple API exclusively for TXT record updates 
 # and should be used with ACME magic “_acme-challenge” - subdomain 
 # CNAME records. This way, in the unfortunate exposure of API keys, 
