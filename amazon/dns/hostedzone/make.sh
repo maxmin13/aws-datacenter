@@ -21,7 +21,7 @@ echo 'DNS hosted zone'
 echo '***************'
 echo
 
-lbal_dns_nm="${LBAL_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+lbal_dns_nm="${LBAL_INST_DNS_DOMAIN_NM}"
 
 get_loadbalancer_record_dns_name_value "${lbal_dns_nm}"
 lbal_record_dns_nm="${__RESULT}"
@@ -44,7 +44,7 @@ else
    echo "* Load balancer record hosted zone ID: ${lbal_record_hz_id}."
 fi
 
-admin_dns_nm="${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}"
+admin_dns_nm="${ADMIN_INST_DNS_DOMAIN_NM}"
 
 get_record_value 'A' "${admin_dns_nm}"
 admin_record_ip_addr="${__RESULT}"

@@ -62,7 +62,7 @@ if [[ -n "${image_id}" ]]
 then
    echo 'Deleting Shared image ...'
    
-   delete_image "${image_id}" 
+   delete_image "${image_id}" > /dev/null 
    
    echo 'Shared image deleted.'
 fi

@@ -1,5 +1,5 @@
 
-find ./ -type f -exec sed -i 's/check_instance_profile_exists/check_instance_profile_exists/g' {} \;
+find ./ -type f -exec sed -i 's/upload_server_certificate_entity/upload_server_certificate_entity_entity/g' {} \;
 
 
 scp -i admin-keys.pem -P 38142 admin-user@3.249.178.61:config.cfg .

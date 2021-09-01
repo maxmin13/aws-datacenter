@@ -97,7 +97,7 @@ then
    then
       echo "Deleting Webphp box ..."
       
-      delete_instance "${instance_id}" 'and_wait'
+      delete_instance "${instance_id}" 'and_wait' > /dev/null
       
       echo 'Webphp box deleted.'
    fi
@@ -115,7 +115,7 @@ then
    
    if [[ -n "${granted}" ]]
    then
-   	revoke_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}"
+   	revoke_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}" > /dev/null
    	
    	echo 'Access to database revoked.'
    fi
@@ -132,7 +132,7 @@ then
    
    if [[ -n "${rsyslog_granted}" ]]
    then
-   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}"
+   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}" > /dev/null
    	
    	echo "Access to Admin Rsyslog revoked."
    fi
@@ -142,7 +142,7 @@ then
    
    if [[ -n "${mmonit_granted}" ]]
    then
-   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}"
+   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}" > /dev/null
    	
    	echo "Access to Admin MMonit revoked."
    fi   

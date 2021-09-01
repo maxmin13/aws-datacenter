@@ -94,7 +94,7 @@ then
 
    if [[ -n "${lbal_granted}" ]]
    then
-      revoke_access_from_security_group "${sgp_id}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" 'tcp' "${loadbalancer_sgp_id}"
+      revoke_access_from_security_group "${sgp_id}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" 'tcp' "${loadbalancer_sgp_id}" > /dev/null
      
       echo 'Load Balancer access to the website revoked.'
    fi
@@ -113,7 +113,7 @@ then
    then
       echo 'WARN: SSH access to the Webphp box already granted.'
    else
-      allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+      allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
   
       echo 'Granted SSH access to the Webphp box.'
    fi
@@ -193,7 +193,7 @@ then
    if [[ -n "${granted_ssh}" ]]
    then
       # Revoke SSH access from the development machine
-      revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+      revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
    
       echo 'Revoked SSH access to the Webphp box.' 
    fi

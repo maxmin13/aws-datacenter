@@ -58,7 +58,9 @@ function get_server_certificate_arn()
 }
 
 #===============================================================================
-# Uploads a server certificate to IAM.
+# Uploads a server certificate entity for the AWS account to IAM.
+# The server certificate entity includes a public key certificate, a private key
+# and an optional certificate chain.
 # Before you can upload a certificate to IAM, you must make sure that the 
 # certificate, private-key and certificate chain are all PEM-encoded. 
 # You must also ensure that the private-key is not protected by a passphrase. 
@@ -66,7 +68,8 @@ function get_server_certificate_arn()
 # Globals:
 #  None
 # Arguments:
-# +crt_nm     -- the certificate name.
+# +crt_nm     -- the name for the server certificate. Do not include the path in 
+#                this value. The name of the certificate cannot contain any spaces.
 # +crt_file   -- the contents of the public-key certificate in PEM-encoded 
 #                format.
 # +key_file   -- the contents of the private-key in PEM-encoded format.
@@ -77,7 +80,7 @@ function get_server_certificate_arn()
 # Returns:      
 #  none.
 #===============================================================================
-function upload_server_certificate()
+function upload_server_certificate_entity()
 {
    if [[ $# -lt 4 ]]
    then

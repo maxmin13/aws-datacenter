@@ -248,7 +248,7 @@ granted_ssh_22="$(check_access_from_cidr_is_granted  "${sgp_id}" '22' 'tcp' '0.0
 
 if [[ -n "${granted_ssh_22}" ]]
 then 
-   revoke_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' > /dev/null
    
    echo 'Revoked SSH access to the Shared box port 22.'
 fi
@@ -280,7 +280,7 @@ ssh_run_remote_command "rm -rf ${remote_dir:?}" \
     
 # After the instance is created, stop it before creating the image, to ensure data integrity.
 
-stop_instance "${instance_id}"   
+stop_instance "${instance_id}" > /dev/null  
 
 echo 'Shared box stopped.'   
 
@@ -293,7 +293,7 @@ granted_ssh_38142="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_IN
 if [[ -n "${granted_ssh_38142}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
    
    echo 'Revoked SSH access to the Shared box.' 
    echo

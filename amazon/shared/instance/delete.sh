@@ -47,7 +47,7 @@ then
    then
       echo 'Deleting Shared box ...' 
       
-      delete_instance "${instance_id}" 
+      delete_instance "${instance_id}" > /dev/null
       
       echo 'Shared box deleted.'
    fi

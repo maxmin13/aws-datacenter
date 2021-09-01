@@ -64,7 +64,7 @@ function get_server_certificate_arn()
 # Returns:      
 #  None
 #===============================================================================
-function upload_server_certificate()
+function upload_server_certificate_entity()
 {
    if [[ $# -lt 4 ]]
    then

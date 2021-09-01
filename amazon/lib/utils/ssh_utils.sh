@@ -125,9 +125,8 @@ function scp_upload_files()
 # +user          -- Name of the user to log with into the server, must be the 
 #                   one with the corresponding public key.
 # +remote_dir    -- The remote directory where the file is.
-# +file          -- The file to download.
 # +local_dir     -- The local directory where to download the file.
-
+# +file          -- The file to download.
 # Returns:      
 #  None  
 #===============================================================================
@@ -144,8 +143,8 @@ function scp_download_file()
    local ssh_port="${3}"
    local user="${4}"
    local remote_dir="${5}"
-   local file="${6}"
-   local local_dir="${7}"
+   local local_dir="${6}"
+   local file="${7}"
    
    scp -q \
        -o StrictHostKeyChecking=no \
@@ -154,6 +153,53 @@ function scp_download_file()
        -P "${ssh_port}" \
        "${user}@${server_ip}:${remote_dir}/${file}" \
        "${local_dir}"
+ 
+   return 0
+}
+
+#===============================================================================
+# Downloads a group of files from a server using SCP. 
+#
+# Globals:
+#  None
+# Arguments:
+# +key_pair_file -- Local private key.
+# +server_ip     -- Server IP address.
+# +ssh_port      -- Server SSH port.
+# +user          -- Name of the user to log with into the server, must be the 
+#                   one with the corresponding public key.
+# +remote_dir    -- The remote directory where the file is.
+# +local_dir     -- The local directory where to download the file.
+# +files          -- The files to download.
+# Returns:      
+#  None  
+#===============================================================================
+function scp_download_files()
+{
+   if [[ $# -lt 7 ]]
+   then
+      echo 'ERROR: missing mandatory arguments'
+      return 1
+   fi
+
+   local key_pair_file="${1}"
+   local server_ip="${2}"
+   local ssh_port="${3}"
+   local user="${4}"
+   local remote_dir="${5}"
+   local local_dir="${6}"
+   local files=("${@:7:$#-6}")
+
+   for file in "${files[@]}"
+   do
+      scp_download_file "${key_pair_file}" \
+          "${server_ip}" \
+          "${ssh_port}" \
+          "${user}" \
+          "${remote_dir}" \
+          "${local_dir}" \
+          "${file}" 
+   done
  
    return 0
 }
@@ -216,13 +262,13 @@ function ssh_run_remote_command()
 # Globals:
 #  None
 # Arguments:
-# +cmd             -- The command to execute on the server.
-# +key_pair_file     -- Local private key.
-# +server_ip       -- Server IP address.
-# +ssh_port        -- Server SSH port.
-# +user            -- Name of the remote user that holds the access public-key
+# +cmd             -- the command to execute on the server.
+# +key_pair_file   -- local private key.
+# +server_ip       -- server IP address.
+# +ssh_port        -- server SSH port.
+# +user            -- name of the remote user that holds the access public-key
 #                     (ec2-user). 
-# +password        -- The remote user's sudo pwd.
+# +password        -- the remote user's sudo pwd.
 # Returns:      
 #  None  
 #===============================================================================

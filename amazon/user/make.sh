@@ -34,7 +34,7 @@ then
    build_assume_role_policy_document_for_ec2_entities 
    trust_policy_document="${__RESULT}"
 
-   create_role "${AWS_ROUTE53_ROLE_NM}" 'Access to Route 53 role' "${trust_policy_document}"
+   create_role "${AWS_ROUTE53_ROLE_NM}" 'Access to Route 53 role' "${trust_policy_document}" > /dev/null
    
    echo 'AWS Route 53 role created.'
 else
@@ -55,7 +55,7 @@ then
    permission_policy_document="${__RESULT}"
 
    create_permission_policy "${AWS_ROUTE53_POLICY_NM}" 'Access to Route 53 permission policy' \
-       "${permission_policy_document}"
+       "${permission_policy_document}" > /dev/null
        
    echo 'Route 53 permission policy created.'
 else

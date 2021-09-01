@@ -7,15 +7,18 @@ Scripts to deploy on Amazon Web Services a datacenter, composed of:
 - Admin web site
 - one or more public accessible web sites
 
-Env: Linux Fedora distribution.
+Development env: 
+
+- Fedora 33 
+- aws-cli/2.1.39 
+- Python/3.8.8 
+- Linux/5.13.10-100.fc33.x86_64 
 
 ## Required programs:
 ```
 ## Install the required programs: 
 
 sudo dnf install -y expect openssl xmlstarlet
-
-## Install Java and add it in path.
 
 ## Install the AWS CLI:
 

@@ -3,9 +3,9 @@
 # shellcheck disable=SC2034
 
 # Development uses a self-signed certificate.
-ENV='development'
+#ENV='development'
 # Production uses a Let's Encrypt certificate.
-#ENV='production'
+ENV='production'
 
 ## Amazon EBS-backed image:
 ## By default, the root volume is deleted when the instance terminates.
@@ -76,7 +76,7 @@ LBAL_INST_NM='lbalmaxmin'
 LBAL_INST_HTTPS_PORT='443'
 LBAL_INST_HTTP_PORT='80'
 LBAL_INST_SEC_GRP_NM='lbal-sgp'
-LBAL_INST_DNS_SUB_DOMAIN='www'
+LBAL_INST_DNS_DOMAIN_NM='www'."${MAXMIN_TLD}"
 LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 
 ## ********* ##
@@ -90,7 +90,7 @@ ADMIN_INST_USER_NM='admin-user'
 ADMIN_INST_EMAIL='minardi.massimiliano@libero.it'
 ADMIN_INST_KEY_PAIR_NM='admin-keys'
 ADMIN_INST_SEC_GRP_NM='admin-box-sgp'
-ADMIN_INST_DNS_SUB_DOMAIN='admin'
+ADMIN_INST_DNS_DOMAIN_NM='admin'."${MAXMIN_TLD}"
 ADMIN_APACHE_CERTBOT_HTTP_PORT='80'
 ADMIN_APACHE_WEBSITE_HTTP_PORT='8060'
 ADMIN_APACHE_WEBSITE_HTTPS_PORT='443'
@@ -101,7 +101,7 @@ ADMIN_APACHE_LOGANALYZER_HTTP_PORT='8081'
 ADMIN_APACHE_LOGANALYZER_HTTPS_PORT='9444'
 ADMIN_APACHE_MONIT_HTTP_PORT='8082'
 ADMIN_ACME_DNS_HTTP_PORT='8082'
-ADMIN_ACME_DNS_HTTPS_PORT='9445'
+ADMIN_ACME_DNS_HTTPS_PORT='9446'
 ADMIN_ACME_DNS_PORT='53'
 ADMIN_MMONIT_HTTP_PORT='8083'
 ADMIN_MMONIT_HTTPS_PORT='9445'

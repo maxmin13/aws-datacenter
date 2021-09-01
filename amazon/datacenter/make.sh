@@ -69,7 +69,7 @@ else
    echo 'Created route table.'
 fi
 
-set_route "${rtb_id}" "${internet_gate_id}" '0.0.0.0/0'
+set_route "${rtb_id}" "${internet_gate_id}" '0.0.0.0/0' > /dev/null
 
 echo 'Created route that points all traffic to the internet gateway.'
 

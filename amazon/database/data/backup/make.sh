@@ -164,9 +164,9 @@ then
           "${SHARED_INST_SSH_PORT}" \
           "${ADMIN_INST_USER_NM}" \
           "${dump_dir}" \
+          "${download_dir}" \
           "${dump_file}" \
-          "${download_dir}"    
-                   
+             
       echo 'Database dump downloaded.'
       echo "Check the directory: ${download_dir}"   
    

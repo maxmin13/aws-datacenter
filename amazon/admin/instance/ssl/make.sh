@@ -206,7 +206,7 @@ then
        -e "s/SEDcitySED/${DEV_ADMIN_CRT_CITY_NM}/g" \
        -e "s/SEDorganizationSED/${DEV_ADMIN_CRT_ORGANIZATION_NM}/g" \
        -e "s/SEDunit_nameSED/${DEV_ADMIN_CRT_UNIT_NM}/g" \
-       -e "s/SEDcommon_nameSED/${DEV_ADMIN_CRT_COMMON_NM}/g" \
+       -e "s/SEDcommon_nameSED/${ADMIN_INST_DNS_DOMAIN_NM}/g" \
        -e "s/SEDemail_addressSED/${ADMIN_INST_EMAIL}/g" \
           "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.sh > "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh
 
@@ -232,7 +232,7 @@ else
        -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
        -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
        -e "s/SEDcrt_email_addressSED/${ADMIN_INST_EMAIL}/g" \
-       -e "s/SEDcrt_domainSED/${ADMIN_INST_DNS_SUB_DOMAIN}.${MAXMIN_TLD}/g" \
+       -e "s/SEDcrt_domainSED/${ADMIN_INST_DNS_DOMAIN_NM}/g" \
           "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_with_http_challenge_template.sh > "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate_with_http_challenge.sh
           
    echo 'request_ca_certificate_with_http_challenge.sh ready.'     
@@ -369,7 +369,7 @@ granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
    
    echo 'Revoked SSH access to the Admin box.' 
 fi
@@ -380,7 +380,7 @@ then
    
    if [[ -n "${granted_ssh}" ]]
    then
-      revoke_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' "0.0.0.0/0"
+      revoke_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' "0.0.0.0/0" > /dev/null
    
       echo 'Revoked Certbot access to the Admin server.'  
       echo

@@ -166,7 +166,7 @@ instance_profile_exists="${__RESULT}"
 
 if [[ 'false' == "${instance_profile_exists}" ]]
 then
-   create_instance_profile "${ADMIN_INST_PROFILE_NM}"
+   create_instance_profile "${ADMIN_INST_PROFILE_NM}" > /dev/null
 
    echo 'Admin instance profile created.'
 else
@@ -174,7 +174,7 @@ else
 fi
 
 ## Check instance profile has the Route 53 role associated.
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}"
+check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}" > /dev/null
 has_role_associated="${__RESULT}"
 
 if [[ 'false' == "${has_role_associated}" ]]
@@ -534,21 +534,6 @@ else
 fi
 
 ## 
-## Instance profile.
-## 
-      
-check_instance_has_instance_profile_associated "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}"
-is_profile_associated="${__RESULT}"
-
-if [[ 'true' == "${is_profile_associated}" ]]
-then
-   # Associate a profile with a role that allow access to Route 53.
-   disassociate_instance_profile_from_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null
-   
-   echo 'Instance profile disassociated from the instance.'
-fi
-
-## 
 ## SSH Access.
 ## 
 
@@ -557,7 +542,7 @@ granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH
 if [[ -n "${granted_ssh}" ]]
 then
    # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
    
    echo 'Revoked SSH access to the Admin box.' 
 fi
