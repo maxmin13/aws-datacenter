@@ -83,7 +83,7 @@ LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 ## Admin box ##
 ## ********* ##
 
-ADMIN_INST_NM='admin-box'
+ADMIN_INST_NM='admin-box1'
 ADMIN_INST_PRIVATE_IP='10.0.0.10'
 ADMIN_INST_HOSTNAME='admin.maxmin.it'
 ADMIN_INST_USER_NM='admin-user'

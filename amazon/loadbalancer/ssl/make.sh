@@ -214,7 +214,7 @@ then
        -e "s/SEDorganizationSED/${DEV_LBAL_CRT_ORGANIZATION_NM}/g" \
        -e "s/SEDunit_nameSED/${DEV_LBAL_CRT_UNIT_NM}/g" \
        -e "s/SEDcommon_nameSED/${LBAL_INST_DNS_DOMAIN_NM}/g" \
-       -e "s/SEDemail_addressSED/${DEV_LBAL_LBAL_EMAIL_ADD}/g" \
+       -e "s/SEDemail_addressSED/${LBAL_EMAIL_ADD}/g" \
           "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_certificate_template.sh > gen_certificate.sh
              
    echo 'gen_certificate.sh ready.'
@@ -229,7 +229,8 @@ then
    echo 'Self-signed SSL certificate created.'
    echo 'Uploading SSL certificate to IAM ...'
    
-   upload_server_certificate_entity "${crt_entity_nm}" cert.pem key.pem "${TMP_DIR}"/"${lbal_dir}"  
+   upload_server_certificate_entity "${crt_entity_nm}" cert.pem key.pem \
+       "${TMP_DIR}"/"${lbal_dir}" > /dev/null  
 else
 
    #
@@ -344,17 +345,20 @@ else
    fi       
 fi
 
-## 
-## SSH Access.
-##
-
-granted_admin_ssh="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
-
-if [[ -n "${granted_admin_ssh}" ]]
+if [[ 'production' == "${ENV}" ]]
 then
-   revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
+   ## 
+   ## SSH Access.
+   ##
+
+   granted_admin_ssh="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
+
+   if [[ -n "${granted_admin_ssh}" ]]
+   then
+      revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
    
-   echo 'Revoked SSH access to the Admin box.' 
+      echo 'Revoked SSH access to the Admin box.' 
+   fi
 fi
     
 # Wait until the certificate is visible in IAM.
