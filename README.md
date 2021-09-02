@@ -2,11 +2,17 @@
 Amazon Web Services datacenter.
 
 Scripts to deploy on Amazon Web Services a datacenter, composed of:
-- loadbalancer
+
+- load balancer
 - relational database
 - Admin web site
-- one or more public accessible web sites
-- obtain SSL certificates from Let's Encrypt CA.
+- one or more public accessible web sites.
+
+The load balancer routes the traffic to the public web sites.
+The admin application is not behind the load balancer.
+
+The SSL certificates for Load Balancer and Admin application are requested to Let's Encrypt
+certification authority.
 
 Development env: 
 
