@@ -6,6 +6,7 @@ Scripts to deploy on Amazon Web Services a datacenter, composed of:
 - relational database
 - Admin web site
 - one or more public accessible web sites
+- obtain SSL certificates from Let's Encrypt CA.
 
 Development env: 
 
