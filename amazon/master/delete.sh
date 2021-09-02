@@ -44,7 +44,7 @@ echo
    echo 
 
    # Make a backup of the database.
-   #. "${PROJECT_DIR}"/amazon/database/data/backup/make.sh 
+   . "${PROJECT_DIR}"/amazon/database/data/backup/make.sh 
 
    # Delete the application DNS hosted zone
    . "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh  
