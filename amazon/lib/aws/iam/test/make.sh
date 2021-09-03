@@ -88,6 +88,7 @@ function __helper_create_permission_policy()
 function __helper_clear_resources()
 {
    local policy_arn=''
+   local role_arn=''
    
    # Clear the global __RESULT variable.
    __RESULT=''
@@ -96,10 +97,10 @@ function __helper_clear_resources()
    # Role.
    #
    
-   role_id="$(aws iam list-roles \
+   role_arn="$(aws iam list-roles \
        --query "Roles[? RoleName=='${ROLE_NM}'].Arn" --output text)" 
        
-   if [[ -n "${role_id}" ]]
+   if [[ -n "${role_arn}" ]]
    then  
       policy_arn="$(aws iam list-attached-role-policies --role-name  "${ROLE_NM}" \
           --query "AttachedPolicies[? PolicyName=='${POLICY_NM}' ].PolicyArn" --output text)"
