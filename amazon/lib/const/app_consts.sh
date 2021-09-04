@@ -12,8 +12,6 @@ ENV='production'
 ## Data on any other EBS volumes persists after instance termination by default.
 AWS_BASE_IMG_ID='ami-058b1b7fe545997ae' 
 AWS_CHECK_IP_URL='http://checkip.amazonaws.com'
-ACME_DNS_GIT_REPOSITORY_URL='https://github.com/joohoi/acme-dns'
-AWS_CLI_REPOSITORY_URL='https://awscli.amazonaws.com'
 
 ## ********** ##
 ## App domain ##
