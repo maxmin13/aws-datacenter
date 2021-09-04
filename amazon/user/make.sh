@@ -71,7 +71,7 @@ then
    
    echo 'Route 53 permission policy attached to role.'
 else
-   echo 'WARN: Route 53 prmission policy already attached to role.'
+   echo 'WARN: Route 53 permission policy already attached to role.'
 fi
 
 echo
