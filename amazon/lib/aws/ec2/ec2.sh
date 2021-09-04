@@ -711,9 +711,9 @@ function allow_access_from_security_group()
 # Globals:
 #  None
 # Arguments:
-# +sgp_id   -- the security group identifier.
-# +port     -- the TCP port.
-# +protocol -- the IP protocol name (tcp , udp , icmp , icmpv6), default is 
+# +sgp_id      -- the security group identifier.
+# +port        -- the TCP port.
+# +protocol    -- the IP protocol name (tcp , udp , icmp , icmpv6), default is 
 #                 tcp. 
 # +from_sgp_id -- the security group identifier representing the origin of the
 #                 traffic. 
