@@ -100,7 +100,7 @@ backup_subnet_id="$(get_subnet_id "${DTC_SUBNET_BACKUP_NM}")"
 	                
 if [[ -n "${backup_subnet_id}" ]]
 then
-   echo 'WARN: the main subnet has already been created.'
+   echo 'WARN: the backup subnet has already been created.'
 else
    backup_subnet_id="$(create_subnet "${DTC_SUBNET_BACKUP_NM}" \
        "${DTC_SUBNET_BACKUP_CIDR}" \
