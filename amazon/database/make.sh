@@ -12,7 +12,8 @@ echo 'Database box'
 echo '************'
 echo
 
-dtc_id="$(get_datacenter_id "${DTC_NM}")"
+get_datacenter_id "${DTC_NM}"
+dtc_id="${__RESULT}"
 
 if [[ -z "${dtc_id}" ]]
 then
@@ -22,7 +23,8 @@ else
    echo "* data center ID: ${dtc_id}."
 fi
 
-subnet_ids="$(get_subnet_ids "${dtc_id}")"
+get_subnet_ids "${dtc_id}"
+subnet_ids="${__RESULT}"
 
 if [[ -z "${subnet_ids}" ]]
 then

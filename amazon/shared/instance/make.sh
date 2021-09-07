@@ -20,7 +20,8 @@ echo
 
 shared_dir='shared'
 
-dtc_id="$(get_datacenter_id "${DTC_NM}")"
+get_datacenter_id "${DTC_NM}"
+dtc_id="${__RESULT}"
   
 if [[ -z "${dtc_id}" ]]
 then
@@ -30,7 +31,8 @@ else
    echo "* data center ID: ${dtc_id}."
 fi
 
-subnet_id="$(get_subnet_id "${DTC_SUBNET_MAIN_NM}")"
+get_subnet_id "${DTC_SUBNET_MAIN_NM}"
+subnet_id="${__RESULT}"
 
 if [[ -z "${subnet_id}" ]]
 then
@@ -71,23 +73,17 @@ else
    echo 'Created Shared security group.'
 fi
 
-granted_ssh_22="$(check_access_from_cidr_is_granted  "${sgp_id}" '22' 'tcp' '0.0.0.0/0')"
-
-if [[ -z "${granted_ssh_22}" ]]
-then
-   allow_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0'
+set +e
+allow_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
    
-   echo 'Granted SSH access on port 22.'
-fi
+echo 'Granted SSH access on port 22.'
 
-granted_ssh_38142="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
-
-if [[ -z "${granted_ssh_38142}" ]]
-then
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+set +e
+allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
    
-   echo "Granted SSH access on port ${SHARED_INST_SSH_PORT}."
-fi
+echo "Granted SSH access on port ${SHARED_INST_SSH_PORT}."
 
 ##
 ## Cloud init
@@ -96,7 +92,7 @@ fi
 ## Removes the default user, creates the admin-user user and sets the instance's hostname.     
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${SHARED_INST_USER_PWD}")" 
-key_pair_file="$(get_keypair_file_path "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}")"
+key_pair_file="$(get_local_keypair_file_path "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
 then
@@ -104,12 +100,13 @@ then
 else
    # Save the private key file in the access directory
    mkdir -p "${SHARED_INST_ACCESS_DIR}"
-   generate_keypair "${key_pair_file}" "${ADMIN_INST_EMAIL}" 
+   generate_local_keypair "${key_pair_file}" "${ADMIN_INST_EMAIL}" 
       
    echo 'SSH key-pair created.'
 fi
 
-public_key="$(get_public_key "${key_pair_file}")"
+get_local_public_key "${key_pair_file}"
+public_key="${__RESULT}"
  
 awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${SHARED_INST_USER_NM}" -v hostname="${SHARED_INST_HOSTNAME}" '{
     sub(/SEDuser_nameSED/,user)
@@ -169,7 +166,8 @@ echo "Shared box public address: ${eip}."
 
 # Verify it the SSH port is still 22 or it has changed.
 
-ssh_port="$(get_ssh_port "${key_pair_file}" "${eip}" "${SHARED_INST_USER_NM}" '22' '38142' )"
+get_ssh_port "${key_pair_file}" "${eip}" "${SHARED_INST_USER_NM}" '22' '38142' 
+ssh_port="${__RESULT}"
 
 echo "The SSH port on the Shared box is ${ssh_port}."
 
@@ -243,15 +241,11 @@ else
 fi
 
 # Finally, remove access from SSH port 22.
+set +e
+revoke_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
 
-granted_ssh_22="$(check_access_from_cidr_is_granted  "${sgp_id}" '22' 'tcp' '0.0.0.0/0')"
-
-if [[ -n "${granted_ssh_22}" ]]
-then 
-   revoke_access_from_cidr "${sgp_id}" '22' 'tcp' '0.0.0.0/0' > /dev/null
-   
-   echo 'Revoked SSH access to the Shared box port 22.'
-fi
+echo 'Revoked SSH access to the Shared box port 22.'
 
 wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${SHARED_INST_USER_NM}"
 
@@ -288,16 +282,12 @@ echo 'Shared box stopped.'
 ## SSH Access
 ## 
 
-granted_ssh_38142="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
-
-if [[ -n "${granted_ssh_38142}" ]]
-then
-   # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
+# Revoke SSH access from the development machine.
+set +e
+revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
    
-   echo 'Revoked SSH access to the Shared box.' 
-   echo
-fi
+echo 'Revoked SSH access to the Shared box.' 
 
 # Removing old files
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"

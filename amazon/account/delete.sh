@@ -28,3 +28,4 @@ then
    echo 'Released all allocated public IP addresses.'
 fi
  
+echo

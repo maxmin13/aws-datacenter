@@ -43,7 +43,8 @@ echo 'Admin box'
 echo '*********'
 echo
 
-dtc_id="$(get_datacenter_id "${DTC_NM}")"
+get_datacenter_id "${DTC_NM}"
+dtc_id="${__RESULT}"
   
 if [[ -z "${dtc_id}" ]]
 then
@@ -53,7 +54,8 @@ else
    echo "* data center ID: ${dtc_id}."
 fi
 
-subnet_id="$(get_subnet_id "${DTC_SUBNET_MAIN_NM}")"
+get_subnet_id "${DTC_SUBNET_MAIN_NM}"
+subnet_id="${__RESULT}"
 
 if [[ -z "${subnet_id}" ]]
 then
@@ -125,31 +127,21 @@ else
    echo 'Created Admin security group.'
 fi
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
+set +e
+allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
 
-if [[ -n "${granted_ssh}" ]]
-then
-   echo 'WARN: SSH access to the Admin box already granted.'
-else
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
-   
-   echo 'Granted SSH access to the Admin box.'
-fi
+echo 'Granted SSH access to the Admin box.'
  
 ##
 ## Database access.
 ##
 
-granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}")"
-
-if [[ -n "${granted_db}" ]]
-then
-   echo 'WARN: database access already granted.'
-else
-   allow_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}"
+set +e
+allow_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}" > /dev/null 2>&1
+set -e
    
-   echo 'Granted access to the database.'
-fi
+echo 'Granted access to the database.'
 
 #
 # Instance profile.
@@ -193,7 +185,7 @@ fi
 ## Removes the default user, creates the admin-user user and sets the instance's hostname.     
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${ADMIN_INST_USER_PWD}")" 
-key_pair_file="$(get_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+key_pair_file="$(get_local_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
 then
@@ -201,12 +193,13 @@ then
 else
    # Save the private key file in the access directory
    mkdir -p "${ADMIN_INST_ACCESS_DIR}"
-   generate_keypair "${key_pair_file}" "${ADMIN_INST_EMAIL}" 
+   generate_local_keypair "${key_pair_file}" "${ADMIN_INST_EMAIL}" 
       
    echo 'SSH key-pair created.'
 fi
 
-public_key="$(get_public_key "${key_pair_file}")"
+get_local_public_key "${key_pair_file}"
+public_key="${__RESULT}"
 
 awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${ADMIN_INST_USER_NM}" -v hostname="${ADMIN_INST_HOSTNAME}" '{
     sub(/SEDuser_nameSED/,user)
@@ -537,15 +530,13 @@ fi
 ## SSH Access.
 ## 
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
+# Revoke SSH access from the development machine
 
-if [[ -n "${granted_ssh}" ]]
-then
-   # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
+set +e
+revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null > /dev/null 2>&1
+set -e
    
-   echo 'Revoked SSH access to the Admin box.' 
-fi
+echo 'Revoked SSH access to the Admin box.' 
     
 # Removing temp files
 rm -rf "${TMP_DIR:?}"/"${admin_dir}"  

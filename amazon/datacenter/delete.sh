@@ -10,7 +10,8 @@ echo 'Data center'
 echo '***********'
 echo
 
-dtc_id="$(get_datacenter_id "${DTC_NM}")"
+get_datacenter_id "${DTC_NM}"
+dtc_id="${__RESULT}"
 
 if [[ -z "${dtc_id}" ]]
 then
@@ -28,7 +29,8 @@ else
    echo "* internet gateway ID: ${internet_gate_id}."
 fi
 
-main_subnet_id="$(get_subnet_id "${DTC_SUBNET_MAIN_NM}")"
+get_subnet_id "${DTC_SUBNET_MAIN_NM}"
+main_subnet_id="${__RESULT}"
 
 if [[ -z "${main_subnet_id}" ]]
 then
@@ -37,7 +39,8 @@ else
    echo "* main subnet ID: ${main_subnet_id}."
 fi
 
-backup_subnet_id="$(get_subnet_id "${DTC_SUBNET_BACKUP_NM}")"
+get_subnet_id "${DTC_SUBNET_BACKUP_NM}"
+backup_subnet_id="${__RESULT}"
 
 if [[ -z "${backup_subnet_id}" ]]
 then

@@ -96,21 +96,16 @@ else
    ## SSH access 
   
    # Check if the Admin security group grants access from the development machine through SSH port
-   access_granted="$(check_access_from_cidr_is_granted "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
+   set +e
+   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   set -e
    
-   if [[ -z "${access_granted}" ]]
-   then
-      allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
-
-      echo 'Granted SSH access to development machine.' 
-   else
-      echo 'SSH access already granted to development machine.'    
-   fi
+   echo 'Granted SSH access to development machine.'
 
    echo 'Uploading database scripts to the Admin box ...'
    
    remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
-   key_pair_file="$(get_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+   key_pair_file="$(get_local_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
    wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
   
    ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir ${remote_dir}" \
@@ -164,13 +159,12 @@ else
    ## SSH Access.
    ## 
 
-   if [[ -n "${sgp_id}" ]]
-   then
-      # Revoke SSH access from the development machine
-      revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
-    
-      echo 'Revoked SSH access to the Admin box.' 
-  fi
+   # Revoke SSH access from the development machine
+   set +e   
+   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   set -e
+   
+   echo 'Revoked SSH access to the Admin box.' 
      
   # Clear local data
   rm -rf "${TMP_DIR:?}"/"${database_dir}"

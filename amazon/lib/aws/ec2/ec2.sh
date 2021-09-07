@@ -23,7 +23,7 @@ set +o xtrace
 # Arguments:
 # +dtc_nm -- the data center name.
 # Returns:      
-#  the data center identifier, or blanc if the data center is not found.  
+#  the data center identifier in the global __RESULT variable.  
 #===============================================================================
 function get_datacenter_id()
 {
@@ -33,6 +33,8 @@ function get_datacenter_id()
       return 128
    fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r dtc_nm="${1}"
    local dtc_id=''
  
@@ -41,10 +43,18 @@ function get_datacenter_id()
        --filters Name=tag-value,Values="${dtc_nm}" \
        --query 'Vpcs[*].VpcId' \
        --output text)" 
+       
+   exit_code=$?    
   
-   echo "${dtc_id}"
- 
-   return 0
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting datacenter ID.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${dtc_id}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -55,7 +65,7 @@ function get_datacenter_id()
 # Arguments:
 # +dtc_nm -- the data center name.
 # Returns:      
-#  the data center identifier.  
+#  none.  
 #===============================================================================
 function create_datacenter()
 {
@@ -65,6 +75,7 @@ function create_datacenter()
       return 128
    fi
   
+   local exit_code=0
    declare -r dtc_nm="${1}"
    local dtc_id=''
   
@@ -73,14 +84,27 @@ function create_datacenter()
        --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value='${dtc_nm}'}]" \
        --query 'Vpc.VpcId' \
        --output text)"
+       
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating datacenter.'
+      return "${exit_code}"
+   fi     
             
    aws ec2 wait vpc-available \
        --filters Name=tag-key,Values='Name' \
        --filters Name=tag-value,Values="${dtc_nm}"  
  
-   echo "${dtc_id}"
+   exit_code=$?    
   
-   return 0
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: waiting for available datacenter.'
+   fi  
+  
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -101,11 +125,19 @@ function delete_datacenter()
       return 128
    fi
   
+   local exit_code=0
    declare -r dtc_id="${1}"
   
    aws ec2 delete-vpc --vpc-id "${dtc_id}"
   
-   return 0
+   exit_code=$?    
+  
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting datacenter.'
+   fi 
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -125,7 +157,8 @@ function delete_datacenter()
 # Arguments:
 # +dtc_id -- the data center identifier.
 # Returns:      
-#  A JSON string containing the list of subnet identifiers in a data center.
+#  A JSON string containing the list of subnet identifiers in a data center in
+#  the global __RESULT variable.
 #===============================================================================
 function get_subnet_ids()
 {
@@ -135,6 +168,8 @@ function get_subnet_ids()
       return 128
    fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r dtc_id="${1}"
    local subnet_ids=''
    
@@ -142,9 +177,17 @@ function get_subnet_ids()
        --filters Name=vpc-id,Values="${dtc_id}" \
        --query 'Subnets[*].SubnetId')" 
   
-   echo "${subnet_ids}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting subnet IDs.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${subnet_ids}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -155,7 +198,7 @@ function get_subnet_ids()
 # Arguments:
 # +subnet_nm -- the subnet name.
 # Returns:      
-#  the subnet identifier, or blanc if it is not found.  
+#  the subnet identifier in the global __RESULT variable.
 #===============================================================================
 function get_subnet_id()
 {
@@ -165,6 +208,8 @@ function get_subnet_id()
       return 128
    fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r subnet_nm="${1}"
    local subnet_id=''
   
@@ -174,9 +219,17 @@ function get_subnet_id()
        --query 'Subnets[*].SubnetId' \
        --output text)"
   
-   echo "${subnet_id}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting subnet IDs.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${subnet_id}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -552,6 +605,7 @@ function get_security_group_id()
       return 128
    fi
 
+   local exit_code=0
    declare -r sgp_nm="${1}"
    local sgp_id=''
   
@@ -560,10 +614,12 @@ function get_security_group_id()
          --filters Name=tag-value,Values="${sgp_nm}" \
          --query 'SecurityGroups[*].GroupId' \
          --output text)"
+         
+   exit_code=$?
   
    echo "${sgp_id}"
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -586,6 +642,7 @@ function create_security_group()
       return 128
    fi
 
+   local exit_code=0
    declare -r dtc_id="${1}" 
    declare -r sgp_nm="${2}"
    declare -r sgp_desc="${3}"  
@@ -598,10 +655,12 @@ function create_security_group()
         --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value='${sgp_nm}'}]" \
         --query 'GroupId' \
         --output text)"
+        
+   exit_code=$?
 
    echo "${sgp_id}"
 
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -622,13 +681,11 @@ function delete_security_group()
       return 128
    fi
 
-   declare -r sgp_id="${1}"
    local exit_code=0
-   
-   set +e
+   declare -r sgp_id="${1}"
+      
    aws ec2 delete-security-group --group-id "${sgp_id}" 
    exit_code=$?
-   set -e
    
    return "${exit_code}"
 }
@@ -654,6 +711,7 @@ function allow_access_from_cidr()
       return 128
    fi
 
+   local exit_code=0
    declare -r sgp_id="${1}"
    declare -r port="${2}"
    declare -r protocol="${3}"
@@ -664,8 +722,10 @@ function allow_access_from_cidr()
        --protocol "${protocol}" \
        --port "${port}" \
        --cidr "${from_cidr}" 
- 
-   return 0
+
+   exit_code=$?
+
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -691,6 +751,7 @@ function allow_access_from_security_group()
       return 128
    fi
 
+   local exit_code=0
    declare -r sgp_id="${1}"
    declare -r port="${2}"
    declare -r protocol="${3}"
@@ -702,7 +763,9 @@ function allow_access_from_security_group()
        --port "${port}" \
        --source-group "${from_sgp_id}" 
 
-   return 0
+   exit_code=$?
+
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -728,6 +791,7 @@ function revoke_access_from_security_group()
       return 128
    fi
 
+   local exit_code=0
    declare -r sgp_id="${1}"
    declare -r port="${2}"
    declare -r protocol="${3}"
@@ -739,7 +803,9 @@ function revoke_access_from_security_group()
        --port "${port}" \
        --source-group "${from_sgp_id}" 
 
-   return 0
+   exit_code=$?
+
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -763,6 +829,7 @@ function revoke_access_from_cidr()
       return 128
    fi
 
+   local exit_code=0
    declare -r sgp_id="${1}"
    declare -r port="${2}"
    declare -r protocol="${3}"
@@ -773,88 +840,10 @@ function revoke_access_from_cidr()
        --protocol "${protocol}" \
        --port "${port}" \
        --cidr "${from_cidr}" 
+       
+   exit_code=$?
 
-   return 0
-}
-
-#===============================================================================
-# Checks if a access on a TCP port is granted to traffic incoming from a 
-# specific security group. 
-#
-# Globals:
-#  None
-# Arguments:
-# +sgp_id      -- the security group identifier.
-# +port        -- the TCP port.
-# +protocol    -- the IP protocol name (tcp , udp , icmp , icmpv6), default is 
-#                 tcp. 
-# +from_sgp_id -- the security group identifier representing the origin of the
-#                 traffic. 
-# Returns:      
-#  the group identifier if the access is granted, blanc otherwise.
-#===============================================================================
-function check_access_from_security_group_is_granted()
-{
-   if [[ $# -lt 4 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   declare -r sgp_id="${1}"
-   declare -r port="${2}"
-   declare -r protocol="${3}"
-   declare -r from_sgp_id="${4}"  
-   local id=''
-
-   id="$(aws ec2 describe-security-groups \
-       --group-ids="${sgp_id}" \
-       --filters Name=ip-permission.to-port,Values="${port}" \
-       --query "SecurityGroups[? IpPermissions[? IpProtocol == '${protocol}' && UserIdGroupPairs[? GroupId == '${from_sgp_id}']]].GroupId" \
-       --output text)"                     
-            
-   echo "${id}"
-   
-   return 0
-}
-
-#===============================================================================
-# Checks if a access on a TCP port is granted to traffic incoming from a 
-# specific CIDR block. 
-#
-# Globals:
-#  None
-# Arguments:
-# +sgp_id    -- the security group identifier.
-# +port      -- the TCP port
-# +protocol  -- the IP protocol name (tcp , udp , icmp , icmpv6), default is tcp. 
-# +from_cidr -- the CIDR block representing the origin of the traffic.
-# Returns:      
-#  the group identifier if the access is granted, blanc otherwise.
-#===============================================================================
-function check_access_from_cidr_is_granted()
-{
-   if [[ $# -lt 4 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 128
-   fi
-
-   declare -r sgp_id="${1}"
-   declare -r port="${2}"
-   declare -r protocol="${3}"
-   declare -r from_cidr="${4}"
-   local id=''
-     
-   id="$(aws ec2 describe-security-groups \
-       --group-ids="${sgp_id}" \
-       --filters Name=ip-permission.to-port,Values="${port}" \
-       --query "SecurityGroups[? IpPermissions[? IpProtocol == '${protocol}' && IpRanges[? CidrIp == '${from_cidr}']]].GroupId" \
-       --output text)"           
-         
-   echo "${id}"
-   
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1410,12 +1399,12 @@ function create_image()
       return 128
    fi
 
+   local exit_code=0
    declare -r instance_id="${1}"
    declare -r img_nm="${2}"
    declare -r img_desc="${3}"
    local img_id=''
-   local exit_code=0
-
+   
    img_id="$(aws ec2 create-image \
         --instance-id "${instance_id}" \
         --name "${img_nm}" \
@@ -1423,9 +1412,6 @@ function create_image()
         --query 'ImageId' \
         --output text)" 
   
-   # If the caller sets 'set +e' to analyze the return code, this functions
-   # doesn't exit immediately with error, so it is necessary to get the error
-   # code in any case and return it.
    exit_code=$?    
    
    if [[ 0 -eq "${exit_code}" ]]    
@@ -1642,33 +1628,42 @@ function get_all_allocation_ids()
 
 #===============================================================================
 # Returns an IP Address allocated to your AWS account not associated with an 
-# Instance. If no Address if found, an empty string is returned.
+# instance. If no Address if found, an empty string is returned.
 #
 # Globals:
 #  None
 # Arguments:
 #  None
 # Returns:      
-#  An unused public IP Address in your account, or blanc if the Address is not 
-#  found.  
+#  An unused public IP Address in your account in the global __RESULT variable.
 #===============================================================================
-function get_public_ip_address_unused()
+function get_unused_public_ip_address()
 {
+   __RESULT=''
+   exit_code=0
    local eip=''
    local eip_list=''
    
    eip_list="$(aws ec2 describe-addresses \
        --query 'Addresses[?InstanceId == null].PublicIp' \
        --output text)"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving unused IP address.' 
+      return "${exit_code}"
+   fi
             
-   if [[ -n "${eip_list}" ]]; then
+   if [[ -n "${eip_list}" ]]
+   then
        #Getting the first
        eip="$(echo "${eip_list}" | awk '{print $1}')"
    fi
             
-   echo "${eip}"
- 
-   return 0
+   __RESULT="${eip}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1680,19 +1675,28 @@ function get_public_ip_address_unused()
 # Arguments:
 #  None
 # Returns:      
-#  the IP address allocated to your account.  
+#  the IP address allocated to your account in the __RESULT global variable.  
 #===============================================================================
 function allocate_public_ip_address()
 {
+   __RESULT=''
+   local exit_code=0
    local eip=''
   
    eip="$(aws ec2 allocate-address \
        --query 'PublicIp' \
        --output text)"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: allocating IP address.' 
+      return "${exit_code}"
+   fi
 
-   echo "${eip}"
- 
-   return 0
+   __RESULT="${eip}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1755,33 +1759,138 @@ function release_all_public_ip_addresses()
 }
 
 #===============================================================================
-# Associates an Elastic IP address with an instance.  
-# Before you can use an Elastic IP address, you must allocate it to your 
-# account.
+# Checks if Amazon EC2 stores a public key.
 #
 # Globals:
 #  None
 # Arguments:
-# +eip         -- the public IP address.
-# +instance_id -- the instance identifier.
+#  +key_nm   -- a unique EC2 name for the key pair.
 # Returns:      
-#  None 
+#  true/false in the global __RESULT variable. 
 #===============================================================================
-function associate_public_ip_address_to_instance()
+function check_keypair_exists()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
+   __RESULT=''
+   local exit_code=0
+   declare -r key_nm="${1}"
+   local exists='false'
+   local key=''
+   
+   key=$(aws ec2 describe-key-pairs --query "KeyPairs[? KeyName=='${key_nm}'].KeyFingerprint" --output text)
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving key pair name.'
+      return "${exit_code}"
+   fi
+   
+   if [[ -n "${key}" ]]
+   then
+      exists='true'
+   fi
+   
+   __RESULT="${exists}"
+   
+   return "${exit_code}"
+}
+
+#===============================================================================
+# Creates a 2048-bit RSA key pair with the specified name. Amazon EC2 stores 
+# the public key and displays the private key for you to save to a file.  
+# The private key is returned as an unencrypted PEM encoded PKCS#1 private key. 
+# If a key with the specified name already exists, Amazon EC2 returns an error.
+#
+# Globals:
+#  None
+# Arguments:
+#  +key_nm   -- a unique EC2 name for the key pair.
+#  +key_file -- the local private key file.
+# Returns:      
+#  none. 
+#===============================================================================
+function generate_keypair()
 {
    if [[ $# -lt 2 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
    fi
+   
+   __RESULT=''
+   local exit_code=0
+   declare -r key_nm="${1}"
+   declare -r key_file="${2}"
 
-   declare -r eip="${1}"
-   declare -r instance_id="${2}"
-  
-   aws ec2 associate-address \
-       --instance-id "${instance_id}" \
-       --public-ip "${eip}" 
-
-   return 0
+   local key=''
+   
+   aws ec2 create-key-pair --key-name "${key_nm}" --query 'KeyMaterial' \
+      --output text > "${key_file}"
+      
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating the key pair.'
+      return "${exit_code}"
+   fi
+   
+   chmod 600 "${key_file}"
+   exit_code=$?
+   
+   return "${exit_code}"
 }
 
+#===============================================================================
+# Deletes the key-pair in AWS EC2 and the local key file.
+#
+# Globals:
+#  None
+# Arguments:
+#  +key_nm   -- a unique EC2 name for the key pair.
+#  +key_file -- the local private key file.
+# Returns:      
+#  None
+#===============================================================================
+function delete_keypair()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 1
+   fi
+
+   local exit_code=0
+   declare -r key_nm="${1}"
+   declare -r key_file="${2}"
+   
+   # Delete the key on AWS EC2.
+   aws ec2 delete-key-pair --key-name "${key_nm}"
+   
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting the key pair in EC2.'
+      return "${exit_code}"
+   fi
+
+   # Delete the local private-key.
+   rm -f "${key_file:?}"
+   rm -f "${key_file:?}.pub"
+   
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting the local key pair file.'
+   fi
+
+   return "${exit_code}"
+}

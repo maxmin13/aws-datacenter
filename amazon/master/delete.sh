@@ -42,6 +42,9 @@ echo
    fi 
    
    echo 
+   
+   # Remove Cloud Foundry.
+   #. "${PROJECT_DIR}"/amazon/cloudfoundry/delete.sh  
 
    # Make a backup of the database.
    . "${PROJECT_DIR}"/amazon/database/data/backup/make.sh 
@@ -49,9 +52,9 @@ echo
    # Delete the application DNS hosted zone
    . "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh  
           
-   # Delete the websites. 
+   # Delete the websites.
    . "${PROJECT_DIR}"/amazon/admin/instance/website/delete.sh      
-   . "${PROJECT_DIR}"/amazon/webphp/instance/website/delete.sh 1 
+   . "${PROJECT_DIR}"/amazon/webphp/instance/website/delete.sh 1
 
    # Delete the database objects.
    . "${PROJECT_DIR}"/amazon/database/data/delete.sh

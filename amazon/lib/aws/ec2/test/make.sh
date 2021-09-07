@@ -561,9 +561,6 @@ fi
 
 echo 'disassociate_instance_profile_from_instance tests with profile associated completed.'
 
-__helper_clear_instance 
-__helper_clear_resources
-
 ##############################################
 # Count the errors.
 ##############################################
@@ -579,6 +576,9 @@ fi
 
 echo
 
+__helper_clear_instance 
+__helper_clear_resources
 
+echo
 
 

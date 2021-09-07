@@ -96,21 +96,16 @@ mkdir "${TMP_DIR}"/"${webphp_dir}"
 ## SSH Access
 ##
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
-
-if [[ -n "${granted_ssh}" ]]
-then
-   echo 'WARN: SSH access to the Webphp box already granted.'
-else
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+set +e
+allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
    
-   echo 'Granted SSH access to the Webphp box.'
-fi
+echo 'Granted SSH access to the Webphp box.'
 
 echo 'Uploading scripts to the Webphp box ...'
 
 remote_dir=/home/"${WEBPHP_INST_USER_NM}"/script
-key_pair_file="$(get_keypair_file_path "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
+key_pair_file="$(get_local_keypair_file_path "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
 wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
@@ -239,31 +234,23 @@ fi
 ## Load Balancer
 ## 
 
-loadbalancer_granted="$(check_access_from_security_group_is_granted "${sgp_id}" \
-    "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" \
-     'tcp' \
-    "${loadbalancer_sgp_id}")"
-
-if [[ -z "${loadbalancer_granted}" ]]
-then
-   # Allow load balancer access to the instance.
-   allow_access_from_security_group "${sgp_id}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" 'tcp' "${loadbalancer_sgp_id}"
-   echo 'Granted the load balancer access to the Webphp box.'
-fi
+# Allow load balancer access to the instance.
+set +e   
+allow_access_from_security_group "${sgp_id}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" 'tcp' "${loadbalancer_sgp_id}" > /dev/null 2>&1
+set -e
+   
+echo 'Granted the load balancer access to the Webphp box.'
     
 ## 
 ## SSH Access.
 ## 
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
-
-if [[ -n "${granted_ssh}" ]]
-then
-   # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
+# Revoke SSH access from the development machine
+set +e   
+revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
    
-   echo 'Revoked SSH access to the Webphp box.' 
-fi
+echo 'Revoked SSH access to the Webphp box.' 
     
 # Removing temp files
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"  

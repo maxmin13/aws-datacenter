@@ -15,8 +15,16 @@ WEBSITE_HTTPS_PORT='SEDwebsite_https_portSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
 admin_log_file='/var/log/admin_website_delete.log'
 
-# Check if SSL is installed.
+
+
+# Check if Apache and SSL is installed.
+apache_installed='false'
 ssl_enabled='false'
+
+if [[ -f "${APACHE_INSTALL_DIR}"/conf/httpd.conf ]]
+then
+   apache_installed='true'
+fi
 
 if [[ -f "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf ]]
 then
@@ -24,7 +32,7 @@ then
 fi
 
 echo "SSL enabled ${ssl_enabled}." >> "${admin_log_file}"
-
+exit
 #
 # Apache virtualhosts.
 #
@@ -38,15 +46,22 @@ echo 'Admin website virtualhosts disabled.' >> "${admin_log_file}" 2>&1
 # Apache ports.
 #
 
-if [[ 'true' == "${ssl_enabled}" ]]
+if [[ 'true' == "${apache_installed}" ]]
 then
-   sed -i "s/^Listen \+${WEBSITE_HTTPS_PORT}/#Listen ${WEBSITE_HTTPS_PORT}/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
-
-   echo "Apache web server disabled listen on ${WEBSITE_HTTPS_PORT} port." >> "${admin_log_file}" 2>&1
-else
+   echo 'Found Apache installed.' >> "${admin_log_file}" 2>&1
+   
    sed -i "s/^Listen \+${WEBSITE_HTTP_PORT}/#Listen ${WEBSITE_HTTP_PORT}/g" "${APACHE_INSTALL_DIR}"/conf/httpd.conf
 
    echo "Apache web server disabled listen on ${WEBSITE_HTTP_PORT} port." >> "${admin_log_file}" 2>&1
+fi
+
+if [[ 'true' == "${ssl_enabled}" ]]
+then
+   echo 'Found Apache SSL enalbled.' >> "${admin_log_file}" 2>&1
+   
+   sed -i "s/^Listen \+${WEBSITE_HTTPS_PORT}/#Listen ${WEBSITE_HTTPS_PORT}/g" "${APACHE_INSTALL_DIR}"/conf.d/ssl.conf
+
+   echo "Apache web server disabled listen on ${WEBSITE_HTTPS_PORT} port." >> "${admin_log_file}" 2>&1
 fi
 
 #

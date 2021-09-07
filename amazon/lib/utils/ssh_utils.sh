@@ -47,12 +47,14 @@ function scp_upload_file()
       return 1
    fi
    
-   local key_pair_file="${1}"
-   local server_ip="${2}"
-   local ssh_port="${3}"
-   local user="${4}"
-   local remote_dir="${5}"
-   local file="${6}"
+   local exit_code=0
+   declare -r key_pair_file="${1}"
+   declare -r server_ip="${2}"
+   declare -r ssh_port="${3}"
+   declare -r user="${4}"
+   declare -r remote_dir="${5}"
+   declare -r file="${6}"
+   local file_name=''
 
    scp -q \
        -o StrictHostKeyChecking=no \
@@ -61,12 +63,19 @@ function scp_upload_file()
        -P "${ssh_port}" \
        "${file}" \
        "${user}@${server_ip}:${remote_dir}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: uploading file.'
+      return "${exit_code}"
+   fi
        
-      local file_name
-      file_name="$(echo "${file}" | awk -F "/" '{print $NF}')"
-      echo "${file_name} uploaded."       
+   file_name="$(echo "${file}" | awk -F "/" '{print $NF}')"
+   
+   echo "${file_name} uploaded."       
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -93,12 +102,14 @@ function scp_upload_files()
       return 1
    fi
 
-   local key_pair_file="${1}"
-   local server_ip="${2}"
-   local ssh_port="${3}"
-   local user="${4}"
-   local remote_dir="${5}"
-   local files=("${@:6:$#-5}")
+   exit_code=0
+   declare -r key_pair_file="${1}"
+   declare -r server_ip="${2}"
+   declare -r ssh_port="${3}"
+   declare -r user="${4}"
+   declare -r remote_dir="${5}"
+   declare -r files=("${@:6:$#-5}")
+   local file=''
 
    for file in "${files[@]}"
    do
@@ -107,10 +118,17 @@ function scp_upload_files()
                       "${ssh_port}" \
                       "${user}" \
                       "${remote_dir}" \
-                      "${file}"
+                      "${file}"         
+      exit_code=$?
+   
+      if [[ 0 -ne "${exit_code}" ]]
+      then
+         echo 'ERROR: uploading files.'
+         return "${exit_code}"
+      fi                 
    done
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -138,13 +156,14 @@ function scp_download_file()
       return 1
    fi
    
-   local key_pair_file="${1}"
-   local server_ip="${2}"
-   local ssh_port="${3}"
-   local user="${4}"
-   local remote_dir="${5}"
-   local local_dir="${6}"
-   local file="${7}"
+   exit_code=0
+   declare -r key_pair_file="${1}"
+   declare -r server_ip="${2}"
+   declare -r ssh_port="${3}"
+   declare -r user="${4}"
+   declare -r remote_dir="${5}"
+   declare -r local_dir="${6}"
+   declare -r file="${7}"
    
    scp -q \
        -o StrictHostKeyChecking=no \
@@ -153,8 +172,16 @@ function scp_download_file()
        -P "${ssh_port}" \
        "${user}@${server_ip}:${remote_dir}/${file}" \
        "${local_dir}"
+       
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: downloading file.'
+      return "${exit_code}"
+   fi       
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -182,13 +209,15 @@ function scp_download_files()
       return 1
    fi
 
-   local key_pair_file="${1}"
-   local server_ip="${2}"
-   local ssh_port="${3}"
-   local user="${4}"
-   local remote_dir="${5}"
-   local local_dir="${6}"
-   local files=("${@:7:$#-6}")
+   exit_code=0
+   declare -r key_pair_file="${1}"
+   declare -r server_ip="${2}"
+   declare -r ssh_port="${3}"
+   declare -r user="${4}"
+   declare -r remote_dir="${5}"
+   declare -r local_dir="${6}"
+   declare -r files=("${@:7:$#-6}")
+   local file=''
 
    for file in "${files[@]}"
    do
@@ -198,7 +227,15 @@ function scp_download_files()
           "${user}" \
           "${remote_dir}" \
           "${local_dir}" \
-          "${file}" 
+          "${file}"
+          
+      exit_code=$?
+   
+      if [[ 0 -ne "${exit_code}" ]]
+      then
+         echo 'ERROR: downloading files.'
+         return "${exit_code}"
+      fi                    
    done
  
    return 0
@@ -227,11 +264,12 @@ function ssh_run_remote_command()
       return 1
    fi
 
-   local cmd="${1}"
-   local key_pair_file="${2}"
-   local server_ip="${3}"
-   local ssh_port="${4}"
-   local user="${5}"
+   local exit_code=0
+   declare -r cmd="${1}"
+   declare -r key_pair_file="${2}"
+   declare -r server_ip="${3}"
+   declare -r ssh_port="${4}"
+   declare -r user="${5}"
       
    if [[ "${cmd}" == *sudo* ]]
    then
@@ -239,9 +277,11 @@ function ssh_run_remote_command()
      return 1
    fi     
 
-   ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 -o BatchMode=yes -i "${key_pair_file}" -p "${ssh_port}" -t "${user}"@"${server_ip}" "${cmd}"
+   ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 \
+          -o BatchMode=yes -i "${key_pair_file}" -p "${ssh_port}" -t "${user}"@"${server_ip}" "${cmd}"
+   exit_code=$?
 
-   return $?   
+   return "${exit_code}"   
 }
 
 #===============================================================================
@@ -288,11 +328,11 @@ function ssh_run_remote_command_as_root()
      return 1
    fi     
    
-   local key_pair_file="${2}"
-   local server_ip="${3}"
-   local ssh_port="${4}"
-   local user="${5}"
-   local exit_code
+   local exit_code=0
+   declare -r key_pair_file="${2}"
+   declare -r server_ip="${3}"
+   declare -r ssh_port="${4}"
+   declare -r user="${5}"
    local password='-'
    
    if [[ "$#" -eq 6 ]]
@@ -303,7 +343,8 @@ function ssh_run_remote_command_as_root()
    if [[ "${password}" == '-' ]]
    then 
       ## sudo without password.
-      ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 -o BatchMode=yes -i "${key_pair_file}" -p "${ssh_port}" -t "${user}"@"${server_ip}" "sudo ${cmd}" 
+      ssh -q -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=60 \
+             -o BatchMode=yes -i "${key_pair_file}" -p "${ssh_port}" -t "${user}"@"${server_ip}" "sudo ${cmd}" 
       
       exit_code=$?   
    else 
@@ -346,11 +387,11 @@ function ssh_run_remote_command_as_root()
 # Globals:
 #  None
 # Arguments:
-# +private_key   -- Local private key.
-# +server_ip     -- Server IP address.
-# +ssh_port      -- Server SSH port.
-# +user   -- Name of the user to log with into the server, must be the 
-#                   one with the corresponding public key.
+# +private_key -- local private key.
+# +server_ip   -- server IP address.
+# +ssh_port    -- server SSH port.
+# +user        -- name of the user to log with into the server, must be the 
+#                 one with the corresponding public key.
 # Returns:      
 #  None  
 #===============================================================================
@@ -362,10 +403,10 @@ function wait_ssh_started()
       return 1
    fi
 
-   local private_key="${1}"
-   local server_ip="${2}"
-   local ssh_port="${3}"
-   local user="${4}"
+   declare -r private_key="${1}"
+   declare -r server_ip="${2}"
+   declare -r ssh_port="${3}"
+   declare -r user="${4}"
    
    echo 'Waiting SSH started ...'
 
@@ -399,7 +440,7 @@ function wait_ssh_started()
 #                   one with the corresponding public key.
 # +ports         -- a list of port to be verified.
 # Returns:      
-#  None  
+#  the SSH port number, in the global __RESULT variable.  
 #===============================================================================
 function get_ssh_port()
 {
@@ -409,9 +450,12 @@ function get_ssh_port()
       return 1
    fi
 
-   local key_pair_file="${1}"
-   local server_ip="${2}"
-   local user="${3}"
+   exit_code=0
+   __RESULT=''
+   declare -r key_pair_file="${1}"
+   declare -r server_ip="${2}"
+   declare -r user="${3}"
+   local port=''
 
    shift
    shift
@@ -438,10 +482,10 @@ function get_ssh_port()
          break
       fi
    done
-
-   echo "${ssh_port}"
    
-   return 0
+   __RESULT="${ssh_port}"
+
+   return "${exit_code}" 
 }
 
 #===============================================================================
@@ -451,12 +495,12 @@ function get_ssh_port()
 # Globals:
 #  None
 # Arguments:
-# +key_file   -- the file in which to store the pair.
-# +email_add  -- email address.
+# +key_file  -- the file in which to store the pair.
+# +email_add -- email address.
 # Returns:      
-#  None  
+#  none  
 #===============================================================================
-function generate_keypair()
+function generate_local_keypair()
 {
    if [[ $# -lt 2 ]]
    then
@@ -464,8 +508,9 @@ function generate_keypair()
       return 1
    fi
 
-   local key_file="${1}"
-   local email_add="${2}"
+   exit_code=0
+   declare -r key_file="${1}"
+   declare -r email_add="${2}"
       
    if [[ -f "${key_file}" ]]
    then
@@ -474,8 +519,10 @@ function generate_keypair()
    fi
 
    ssh-keygen -N '' -q -t rsa -b 4096 -C "${email_add}" -f "${key_file}"
+   
+   exit_code=$?
 
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -484,11 +531,11 @@ function generate_keypair()
 # Globals:
 #  None
 # Arguments:
-# +key_file   -- the file in which the pair stored.
+# +key_file -- the file in which the pair stored.
 # Returns:      
-#  the public-key associated with the key-pair.  
+#  the public-key associated with the key-pair in the global __RESULT variable.  
 #===============================================================================
-function get_public_key()
+function get_local_public_key()
 {
    if [[ $# -lt 1 ]]
    then
@@ -496,14 +543,23 @@ function get_public_key()
       return 1
    fi
 
-   local key_file="${1}"
-   local public_key
+   __RESULT=''
+   exit_code=0
+   declare -r key_file="${1}"
+   local public_key=''
 
    public_key="$(ssh-keygen -y -f "${key_file}")"
-   
-   echo "${public_key}"
+   exit_code=$?
 
-   return 0
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting public key.'
+      return "${exit_code}"
+   fi 
+   
+   __RESULT="${public_key}"
+
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -512,11 +568,11 @@ function get_public_key()
 # Globals:
 #  None
 # Arguments:
-# +key_file     -- the local key-pair file.
+# +key_file -- the local key-pair file.
 # Returns:      
 #  None
 #===============================================================================
-function delete_keypair()
+function delete_local_keypair()
 {
    if [[ $# -lt 1 ]]
    then
@@ -524,15 +580,11 @@ function delete_keypair()
       return 1
    fi
 
-   local key_file="${1}"
+   declare -r key_file="${1}"
 
    # Delete the local private-key.
    rm -f "${key_file:?}"
    rm -f "${key_file:?}.pub"
-
-   # Delete the key-pair on EC2.
-   # TODO when created with Cloud Init, the key is not there, where is it ???
-   # aws ec2 delete-key-pair --key-name "${keypair_nm}"
 
    return 0
 }
@@ -548,7 +600,7 @@ function delete_keypair()
 # Returns:      
 #  the key-pair's path.
 #===============================================================================
-function get_keypair_file_path()
+function get_local_keypair_file_path()
 {
    if [[ $# -lt 2 ]]
    then
@@ -556,8 +608,8 @@ function get_keypair_file_path()
       return 1
    fi
 
-   local keypair_nm="${1}"
-   local keypair_dir="${2}"
+   declare -r keypair_nm="${1}"
+   declare -r keypair_dir="${2}"
    local keypair_file="${keypair_dir}"/"${keypair_nm}".pem
    
    echo "${keypair_file}"

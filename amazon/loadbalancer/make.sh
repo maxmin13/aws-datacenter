@@ -19,7 +19,8 @@ echo 'Load balancer'
 echo '*************'
 echo
 
-dtc_id="$(get_datacenter_id "${DTC_NM}")"
+get_datacenter_id "${DTC_NM}"
+dtc_id="${__RESULT}"
   
 if [[ -z "${dtc_id}" ]]
 then
@@ -29,7 +30,8 @@ else
    echo "* data center ID: ${dtc_id}."
 fi
 
-subnet_ids="$(get_subnet_ids "${dtc_id}")"
+get_subnet_ids "${dtc_id}"
+subnet_ids="${__RESULT}"
 
 if [[ -z "${subnet_ids}" ]]
 then
@@ -57,16 +59,11 @@ else
 fi
 
 # Check HTTP access from the Internet.
-granted_http="$(check_access_from_cidr_is_granted  "${sgp_id}" "${LBAL_INST_HTTP_PORT}" 'tcp' '0.0.0.0/0')"
-
-if [[ -n "${granted_http}" ]]
-then
-   echo 'WARN: HTTP internet access to the load balancer already granted.'
-else
-   allow_access_from_cidr "${sgp_id}" "${LBAL_INST_HTTP_PORT}" 'tcp' '0.0.0.0/0'
+set +e
+allow_access_from_cidr "${sgp_id}" "${LBAL_INST_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
    
-   echo 'Granted HTTP internet access to the load balancer.'
-fi
+echo 'Granted HTTP internet access to the load balancer.'
 
 ## 
 ## Load balancer box

@@ -52,7 +52,8 @@ echo "WebPhp box ${webphp_id}"
 echo '************'
 echo
 
-dtc_id="$(get_datacenter_id "${DTC_NM}")"
+get_datacenter_id "${DTC_NM}"
+dtc_id="${__RESULT}"
   
 if [[ -z "${dtc_id}" ]]
 then
@@ -62,7 +63,8 @@ else
    echo "* data center ID: ${dtc_id}."
 fi
 
-subnet_id="$(get_subnet_id "${DTC_SUBNET_MAIN_NM}")"
+get_subnet_id "${DTC_SUBNET_MAIN_NM}"
+subnet_id="${__RESULT}"
 
 if [[ -z "${subnet_id}" ]]
 then
@@ -175,57 +177,37 @@ else
    echo 'Created Webphp security group.'
 fi
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
-
-if [[ -n "${granted_ssh}" ]]
-then
-   echo 'WARN: SSH access to the Webphp box already granted.'
-else
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+set +e
+allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
    
-   echo 'Granted SSH access to the Webphp box.'
-fi
+echo 'Granted SSH access to the Webphp box.'
 
 ##
 ## Database access 
 ##
 
-granted_db="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}")"
-
-if [[ -n "${granted_db}" ]]
-then
-   echo 'WARN: access to the database already granted.'
-else
-   allow_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}"
+set +e
+allow_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}" > /dev/null 2>&1
+set -e
    
-   echo 'Granted access to the database.'
-fi
+echo 'Granted access to the database.'
 
 ## 
 ## Admin box access
 ## 
 
-granted_rsyslog="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}")"
-
-if [[ -n "${granted_rsyslog}" ]]
-then
-   echo 'WARN: access to Admin Rsyslog already granted.'
-else
-   allow_access_from_security_group "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}"
+set +e
+allow_access_from_security_group "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}" > /dev/null 2>&1
+set -e
    
-   echo 'Granted access to Admin Rsyslog.'
-fi
+echo 'Granted access to Admin Rsyslog.'
 
-granted_mmonit="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}")"
-
-if [[ -n "${granted_mmonit}" ]]
-then
-   echo 'WARN: access to Admin M/Monit collector already granted.'
-else
-   allow_access_from_security_group "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}"
+set +e
+allow_access_from_security_group "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}" > /dev/null 2>&1
+set -e
    
-   echo 'Granted access to Admin M/Monit collector.'
-fi
+echo 'Granted access to Admin M/Monit collector.'
 
 ##
 ## Cloud init
@@ -234,7 +216,7 @@ fi
 ## Removes the default user, creates the webphp-user user and sets the instance's hostname.     
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${WEBPHP_INST_USER_PWD}")" 
-key_pair_file="$(get_keypair_file_path "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
+key_pair_file="$(get_local_keypair_file_path "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
 then
@@ -242,12 +224,13 @@ then
 else
    # Save the private key file in the access directory
    mkdir -p "${WEBPHP_INST_ACCESS_DIR}"
-   generate_keypair "${key_pair_file}" "${WEBPHP_INST_EMAIL}" 
+   generate_local_keypair "${key_pair_file}" "${WEBPHP_INST_EMAIL}" 
    
    echo 'SSH key-pair created.'
 fi
 
-public_key="$(get_public_key "${key_pair_file}")"
+get_local_public_key "${key_pair_file}"
+public_key="${__RESULT}"
 
 awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${WEBPHP_INST_USER_NM}" -v hostname="${webphp_hostname}" '{
     sub(/SEDuser_nameSED/,user)
@@ -555,31 +538,23 @@ else
    
    echo 'Registered Webphp box with the Load Balancer.'
 fi
-       
-lbal_granted="$(check_access_from_security_group_is_granted "${sgp_id}" "${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" 'tcp' "${lbal_sgp_id}")"
 
-if [[ -n "${lbal_granted}" ]]
-then
-   echo 'WARN: load balancer access to the Admin box already granted.'
-else
-   allow_access_from_security_group "${sgp_id}" "${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" 'tcp' "${lbal_sgp_id}"
+set +e       
+allow_access_from_security_group "${sgp_id}" "${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}" 'tcp' "${lbal_sgp_id}" > /dev/null 2>&1
+set -e
    
-   echo 'Granted the load balancer access to the webphp instance (healt-check).'
-fi
+echo 'Granted the load balancer access to the webphp instance (healt-check).'
 
 ## 
 ## SSH Access
 ## 
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
-
-if [[ -n "${granted_ssh}" ]]
-then
-   # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
+# Revoke SSH access from the development machine
+set +e
+revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
    
-   echo 'Revoked SSH access to the Webphp box.' 
-fi
+echo 'Revoked SSH access to the Webphp box.' 
     
 # Removing temp files
 rm -rf "${TMP_DIR:?}"/"${webphp_dir}"  

@@ -12,6 +12,7 @@ ENV='production'
 ## Data on any other EBS volumes persists after instance termination by default.
 AWS_BASE_IMG_ID='ami-058b1b7fe545997ae' 
 AWS_CHECK_IP_URL='http://checkip.amazonaws.com'
+CF_BOSH_DEPLOYMENT_URL='https://github.com/cloudfoundry/bosh-deployment'
 
 ## ********** ##
 ## App domain ##
@@ -30,6 +31,7 @@ DTC_DEPLOY_ZONE_1='eu-west-1a'
 DTC_DEPLOY_ZONE_2='eu-west-1b'
 DTC_SUBNET_MAIN_NM='main-sbn'
 DTC_SUBNET_MAIN_CIDR='10.0.0.0/24'
+DTC_SUBNET_MAIN_INTERNAL_GW='10.0.0.1'
 DTC_SUBNET_BACKUP_NM='backup-sbn'
 DTC_SUBNET_BACKUP_CIDR='10.0.10.0/24'
 DTC_INTERNET_GATEWAY_NM='internet-gate'
@@ -123,5 +125,16 @@ WEBPHP_APACHE_WEBSITE_HTTP_PORT='8070'
 WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT='8080'
 WEBPHP_RSYSLOG_PORT='514'
 
+## ************* ##
+## Cloud Foundry ##
+## ************* ##
 
+BOSH_INST_NM='bosh/0'
+BOSH_SEC_GRP_NM='bosh-sgp'
+BOSH_KEY_PAIR_NM='bosh-keys'
+BOSH_SSH_PORT='22'
+BOSH_AGENT_PORT='6868'
+BOSH_DIRECTOR_NM='bosh-1'
+BOSH_DIRECTOR_PORT='25555'
+BOSH_DIRECTOR_INTERNAL_IP='10.0.0.6'
 

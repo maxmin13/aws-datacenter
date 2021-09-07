@@ -99,11 +99,11 @@ fi
 ## SSH Key-pair
 ## 
 
-key_pair_file="$(get_keypair_file_path "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}")"
+key_pair_file="$(get_local_keypair_file_path "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}")"
    
 if [[ -f "${key_pair_file}" ]]
 then
-   delete_keypair "${key_pair_file}"
+   delete_local_keypair "${key_pair_file}"
    
    echo 'The SSH access key-pair have been deleted.'
    echo

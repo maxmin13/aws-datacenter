@@ -102,16 +102,11 @@ mkdir -p "${TMP_DIR}"/"${lbal_dir}"
 ##
 
 # Check HTTP access from the Internet to the load balancer.
-granted_lbal_http="$(check_access_from_cidr_is_granted  "${lbal_sgp_id}" "${LBAL_INST_HTTP_PORT}" 'tcp' '0.0.0.0/0')"
+set +e
+revoke_access_from_cidr "${lbal_sgp_id}" "${LBAL_INST_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
 
-if [[ -n "${granted_lbal_http}" ]]
-then
-   revoke_access_from_cidr "${lbal_sgp_id}" "${LBAL_INST_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
-   
-   echo 'Revoked HTTP internet access to the load balancer.'
-else
-   echo 'WARN: HTTP internet access to the load balancer already revoked.'
-fi
+echo 'Revoked HTTP internet access to the load balancer.'
 
 ##
 ## HTTP listener.
@@ -240,22 +235,17 @@ else
    #
      
    # SSH Access to Admin instance.
-   granted_admin_ssh="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
-
-   if [[ -n "${granted_admin_ssh}" ]]
-   then
-      echo 'WARN: SSH access to the Admin box already granted.'
-   else
-      allow_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
+   set +e
+   allow_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   set -e
    
-      echo 'Granted SSH access to the Admin box.'
-   fi
+   echo 'Granted SSH access to the Admin box.'
 
    echo 'Uploading the scripts to the Admin box ...'
 
    remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
    cert_dir="${remote_dir}"/certificates
-   key_pair_file="$(get_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+   key_pair_file="$(get_local_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
    wait_ssh_started "${key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
    ssh_run_remote_command "rm -rf ${remote_dir} && mkdir -p ${cert_dir}" \
@@ -351,14 +341,11 @@ then
    ## SSH Access.
    ##
 
-   granted_admin_ssh="$(check_access_from_cidr_is_granted  "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
-
-   if [[ -n "${granted_admin_ssh}" ]]
-   then
-      revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
+   set +e
+   revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   set -e
    
-      echo 'Revoked SSH access to the Admin box.' 
-   fi
+   echo 'Revoked SSH access to the Admin box.'
 fi
     
 # Wait until the certificate is visible in IAM.
@@ -407,16 +394,11 @@ add_https_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}" "${WEBPHP_APACHE_
 }
 
 # Check HTTPS access from the Internet to the load balancer.
-granted_https="$(check_access_from_cidr_is_granted  "${lbal_sgp_id}" "${LBAL_INST_HTTPS_PORT}" 'tcp' '0.0.0.0/0')"
+set +e
+allow_access_from_cidr "${lbal_sgp_id}" "${LBAL_INST_HTTPS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
 
-if [[ -z "${granted_https}" ]]
-then
-   allow_access_from_cidr "${lbal_sgp_id}" "${LBAL_INST_HTTPS_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
-   
-   echo 'Granted HTTPS internet access to the load balancer.'
-else
-   echo 'WARN: HTTPS internet access to the load balancer already granted.'
-fi
+echo 'Granted HTTPS internet access to the load balancer.'
 
 lbal_dns="$(get_loadbalancer_dns_name "${LBAL_INST_NM}")"
 

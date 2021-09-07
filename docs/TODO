@@ -2,48 +2,10 @@
 
 #########################################
 
-install_admin_ssl_template.sh
-
-############### TODO error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
-############### 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-############### 
-############### 
 
-###############################
-
-
-Deploy one certificate on the Load Balancer, and add a Subject Alternative Name (SAN) for each additional website. 
-SANs enable you to protect multiple host names using a single certificate. 
-Check with your certificate provider for more information about the number of SANs they support per certificate and how to add and remove SANs.
-
-##################################
-
-
-before requesting a new cert to lets encrypt check if it  is expired
-otherwise after a few deploy lets encrypt block for too many requests
-
-############################################################
-
-
-
-configure automatic certificate renew
-for Apache and Monit
-production and development
-
-M/Monit certificate needs to be manually copied together with the private key in /opt/mmonit/conf
-
-
-###############################################
-
-when deleting the load balancer, set a trap and catch the error,
-wait 10 more seconds before trying to delete it again.
-
-###############################################
-
-why in Admin box the dir /home/shared-user is still there?
-it should be delete by cloud init
-
+error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
+ 
 ############################################
 
 use Cloud Init to run all the scripts instead of uploading and ssh them.
@@ -51,71 +13,5 @@ maybe install Chef with Cloud Init and run recepies instead of the scripts.
 
 
 
-###########################
 
-add tag or desc to security group in/out rules
-
-############################
-fix SC2001 in httpd_utils.sh
-
-
-##############################
-
-configure apache httpd to use suexec
-
-config files root readeable only, 400
-
-/jail 
-root:apache 
-550 read execute or dir traverse,
-files 440
-
-##################################
-
-certificate validation with curl, see chapter 9 LAP,
-problems with jail
-allow dns from chroot
-
-############################################################
-delete bucket maxmin ??
-
-https://console.aws.amazon.com/s3/home?region=eu-west-1
-
-##########################################################
-
-### TODO: https://www.linode.com/docs/guides/how-to-install-and-configure-fastcgi-and-php-fpm-on-centos-8/
-### CONFIGURE A POOL for the admin website
-
-extend_apache_web_server_with_FCGI_template
-
-########################################
-
-try changing the ports in aws_constans.sh for admin and see if everything works, or if other config files needs parametrization
-
-######################################
-make ssh_run_command that runs multiple commands
-
-
-#######################################################################
-
-this call in a script:
-
-instance_id="$(run_instance "${INSTANCE_NM}" "${sgp_id}" "${subnet_id}")"
-
-swallow the error.
-
-better make two calls:
-
-run_instance "${INSTANCE_NM}" "${sgp_id}" "${subnet_id}"
-instance_id="$(get_instance_id "${INSTANCE_NM}")"
-
-########################################################################
-
-tags should be added at creation for atomicity
-
-##############################################################################:
-
-create an make.sh under account and move there eip address methods
-
-***************************************************
 

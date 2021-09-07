@@ -111,14 +111,11 @@ db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
 
 if [[ -n "${db_sgp_id}" && -n ${sgp_id} ]]
 then
-   granted="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}")"
+   set +e
+   revoke_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}" > /dev/null 2>&1
+   set -e
    
-   if [[ -n "${granted}" ]]
-   then
-   	revoke_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}" > /dev/null
-   	
-   	echo 'Access to database revoked.'
-   fi
+   echo 'Access to database revoked.'
 fi
 
 ## 
@@ -128,24 +125,18 @@ fi
 if [[ -n "${adm_sgp_id}" && -n ${sgp_id} ]]
 then
    # Check if access to Admin rsyslog is granted.
-   rsyslog_granted="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}")"
+   set +e
+   revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}" > /dev/null 2>&1
+   set -e
    
-   if [[ -n "${rsyslog_granted}" ]]
-   then
-   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_RSYSLOG_PORT}" 'tcp' "${sgp_id}" > /dev/null
-   	
-   	echo "Access to Admin Rsyslog revoked."
-   fi
+   echo "Access to Admin Rsyslog revoked."
 
    # Check if the Webphp box is granted access to admin instance M/Monit
-   mmonit_granted="$(check_access_from_security_group_is_granted "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}")"
+   set +e
+   revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}" > /dev/null 2>&1
+   set -e
    
-   if [[ -n "${mmonit_granted}" ]]
-   then
-   	revoke_access_from_security_group "${adm_sgp_id}" "${ADMIN_MMONIT_COLLECTOR_PORT}" 'tcp' "${sgp_id}" > /dev/null
-   	
-   	echo "Access to Admin MMonit revoked."
-   fi   
+   echo "Access to Admin MMonit revoked."  
 fi
 
 ## 
@@ -179,11 +170,11 @@ fi
 ## SSH key-pair
 ## 
 
-key_pair_file="$(get_keypair_file_path "${keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
+key_pair_file="$(get_local_keypair_file_path "${keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
 then
-   delete_keypair "${key_pair_file}"
+   delete_local_keypair "${key_pair_file}"
    
    echo 'The SSH access key-pair have been deleted.'
    echo

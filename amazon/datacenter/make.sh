@@ -16,14 +16,17 @@ echo 'Data center'
 echo '***********'
 echo
 
-dtc_id="$(get_datacenter_id "${DTC_NM}")"
+get_datacenter_id "${DTC_NM}"
+dtc_id="${__RESULT}"
 
 if [[ -n "${dtc_id}" ]]
 then
    echo 'WARN: the data center has already been created.'
 else
    ## Make a new VPC with a master 10.0.0.0/16 subnet
-   dtc_id="$(create_datacenter "${DTC_NM}")"
+   create_datacenter "${DTC_NM}"
+   get_datacenter_id "${DTC_NM}"
+   dtc_id="${__RESULT}"
     
    echo 'Data center created.'
 fi
@@ -77,7 +80,8 @@ echo 'Created route that points all traffic to the internet gateway.'
 ## Main subnet 
 ## 
 
-main_subnet_id="$(get_subnet_id "${DTC_SUBNET_MAIN_NM}")"
+get_subnet_id "${DTC_SUBNET_MAIN_NM}"
+main_subnet_id="${__RESULT}"
 
 if [[ -n "${main_subnet_id}" ]]
 then
@@ -96,7 +100,8 @@ fi
 ## Backup subnet 
 ## 
 
-backup_subnet_id="$(get_subnet_id "${DTC_SUBNET_BACKUP_NM}")"	                
+get_subnet_id "${DTC_SUBNET_BACKUP_NM}"
+backup_subnet_id="${__RESULT}"	                
 	                
 if [[ -n "${backup_subnet_id}" ]]
 then

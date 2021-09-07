@@ -15,3 +15,6 @@ ADMIN_INST_SRC_DIR="${PROJECT_DIR}"/src/admin
 
 WEBPHP_INST_ACCESS_DIR="${PROJECT_DIR}"/access/webphp
 WEBPHP_INST_SRC_DIR="${PROJECT_DIR}"/src/webphp
+
+BOSH_ACCESS_DIR="${PROJECT_DIR}"/access/cloudfoundry
+BOSH_WORK_DIR="${PROJECT_DIR}"/bosh

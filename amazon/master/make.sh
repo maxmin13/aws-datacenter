@@ -42,12 +42,12 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi
-   
-   echo  
-          
+         
+   echo 
+    
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh  
-   
+      
    # Create AWS users and policies
    . "${PROJECT_DIR}"/amazon/user/make.sh             
 
@@ -82,6 +82,9 @@ echo
    
    # Configure SSL in the load balancer in front of Webphp applications.
    . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh      
+ 
+   # Install Cloud Foundry.
+   #. "${PROJECT_DIR}"/amazon/cloudfoundry/make.sh  
  
 } ### >> "${log_file}" 2>&1  
 

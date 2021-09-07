@@ -1175,7 +1175,7 @@ function check_instance_profile_has_role_associated()
     
    # One role per instance profile. 
    role_found="$(aws iam list-instance-profiles \
-       --query "InstanceProfiles[? InstanceProfileName == '${profile_nm}' ].Roles[].RoleName" \
+       --query "InstanceProfiles[? InstanceProfileName=='${profile_nm}' ].Roles[].RoleName" \
        --output text)"
 
    exit_code=$?

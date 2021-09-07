@@ -75,10 +75,10 @@ rm -rf "${TMP_DIR:?}"/"${ssl_dir}"
 mkdir -p "${TMP_DIR}"/"${ssl_dir}"
 
 ## 
-## SSH access
+## Key pair
 ## 
 
-key_pair_file="$(get_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+key_pair_file="$(get_local_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
 
 if [[ -z "${key_pair_file}" ]] 
 then
@@ -86,28 +86,24 @@ then
    
    exit 1
 fi
-    
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')"
 
-if [[ -n "${granted_ssh}" ]]
-then
-   echo 'WARN: SSH access to the Admin box already granted.'
-else
-   allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0'
-   
-   echo 'Granted SSH access to the Admin box.'
-fi
+## 
+## Security group.
+## 
+
+set +e
+allow_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
+
+echo 'Granted SSH access to the Admin box.'
    
 if [[ 'production' == "${ENV}" ]]
-then      
-   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' '0.0.0.0/0')"  
-
-   if [[ -z "${granted_certbot}" ]]
-   then
-      allow_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' '0.0.0.0/0'
+then
+   set +e      
+   allow_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   set -e
    
-      echo 'Granted Certbot access to Admin box'
-   fi  
+   echo 'Granted Certbot access to Admin box'  
 fi
 
 ##
@@ -364,30 +360,24 @@ fi
 ## SSH Access.
 ##
 
-granted_ssh="$(check_access_from_cidr_is_granted  "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0')" 
+# Revoke SSH access from the development machine
 
-if [[ -n "${granted_ssh}" ]]
-then
-   # Revoke SSH access from the development machine
-   revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null
+set +e
+revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+set -e
    
-   echo 'Revoked SSH access to the Admin box.' 
-fi
+echo 'Revoked SSH access to the Admin box.' 
 
 if [[ 'production' == "${ENV}" ]]
-then      
-   granted_certbot="$(check_access_from_cidr_is_granted "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' '0.0.0.0/0')"  
+then  
+   set +e    
+   revoke_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' "0.0.0.0/0" > /dev/null 2>&1
+   set -e
    
-   if [[ -n "${granted_ssh}" ]]
-   then
-      revoke_access_from_cidr "${sgp_id}" "${ADMIN_APACHE_CERTBOT_HTTP_PORT}" 'tcp' "0.0.0.0/0" > /dev/null
-   
-      echo 'Revoked Certbot access to the Admin server.'  
-      echo
-   fi
+   echo 'Revoked Certbot access to the Admin server.'
 fi
     
 # Removing local temp files
 rm -rf "${TMP_DIR:?}"/"${ssl_dir}"  
 
-
+echo

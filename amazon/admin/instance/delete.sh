@@ -6,6 +6,7 @@ set -o nounset
 set +o xtrace
 
 ADMIN_INST_PROFILE_NM="Route53InstanceProfile"
+admin_dir='admin'
 
 echo '*********'
 echo 'Admin box'
@@ -65,7 +66,7 @@ echo
 ## 
 ## Clearing local files.
 ## 
-rm -rf "${TMP_DIR:?}"/admin
+rm -rf "${TMP_DIR:?}"/"${admin_dir}"
 
 ##
 ## Instance profile.
@@ -105,14 +106,11 @@ db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
 
 if [[ -n "${db_sgp_id}" && -n ${sgp_id} ]]
 then
-   granted="$(check_access_from_security_group_is_granted "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}")"
+   set +e
+   revoke_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}" > /dev/null 2>&1
+   set -e
    
-   if [[ -n "${granted}" ]]
-   then
-   	revoke_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_id}" > /dev/null
-   	
-   	echo 'Access to database revoked.'
-   fi
+   echo 'Access to database revoked.'
 fi
 
 ## 
@@ -146,16 +144,16 @@ fi
 ## SSH Access. 
 ## 
 
-key_pair_file="$(get_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+key_pair_file="$(get_local_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
 
 if [[ -f "${key_pair_file}" ]]
 then
-   delete_keypair "${key_pair_file}"
+   delete_local_keypair "${key_pair_file}"
    
    echo 'The SSH access key-pair have been deleted.'
    echo
 fi
 
 ## Clearing.
-rm -rf "${TMP_DIR:?}"/admin
+rm -rf "${TMP_DIR:?}"/"${admin_dir}"
 

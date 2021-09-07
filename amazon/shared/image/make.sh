@@ -20,7 +20,8 @@ echo
 
 shared_dir='shared'
 
-dtc_id="$(get_datacenter_id "${DTC_NM}")"
+get_datacenter_id "${DTC_NM}"
+dtc_id="${__RESULT}"
   
 if [[ -z "${dtc_id}" ]]
 then
