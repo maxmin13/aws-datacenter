@@ -163,8 +163,8 @@ bosh create-env bosh-deployment/bosh.yml \
     -v internal_cidr=${DTC_SUBNET_MAIN_CIDR} \
     -v internal_gw="${DTC_SUBNET_MAIN_INTERNAL_GW}" \
     -v internal_ip="${BOSH_DIRECTOR_INTERNAL_IP}" \
-    -v access_key_id="AKIA6ASSBNWH2YX6W5PT" \
-    -v secret_access_key="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" \
+    -v access_key_id="${ACCESS_KEY}" \
+    -v secret_access_key="${SECRET_KEY}" \
     -v region="${DTC_DEPLOY_REGION}" \
     -v az="${DTC_DEPLOY_ZONE_1}" \
     -v default_key_name="${BOSH_KEY_PAIR_NM}" \
