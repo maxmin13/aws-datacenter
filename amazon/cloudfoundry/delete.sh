@@ -68,7 +68,7 @@ keypair_exists="${__RESULT}"
 
 cd "${BOSH_WORK_DIR}"
 
-## TODO remove hardcoded credentials
+## TODO remove hardcoded credentials 
 
 bosh delete-env bosh-deployment/bosh.yml \
     --state=state.json \

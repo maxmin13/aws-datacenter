@@ -129,7 +129,7 @@ fi
 ## Bosh director.
 ##
 
-# Create directory to keep state.
+# Create directory to keep state. 
 if [[ -d "${BOSH_WORK_DIR}" ]]
 then
    rm -rf "${BOSH_WORK_DIR:?}"
