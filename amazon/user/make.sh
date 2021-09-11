@@ -12,28 +12,25 @@ set +o xtrace
 # The role is entrusted to EC2 instances. 
 ###############################################
 
-AWS_ROUTE53_POLICY_NM='Route53policy'
-AWS_ROUTE53_ROLE_NM='Route53role'
-
 echo '***************'
 echo 'AWS Permissions'
 echo '***************'
 echo
 
+# Create the trust relationship policy document that grants the EC2 instances the
+# permission to assume the role.
+build_assume_role_policy_document_for_ec2_entities 
+trust_policy_document="${__RESULT}"
+
 ##
-## Role
+## Route 53 role.
 ##
 
 check_role_exists "${AWS_ROUTE53_ROLE_NM}"
-role_exists="${__RESULT}"
+r53_role_exists="${__RESULT}"
 
-if [[ 'false' == "${role_exists}" ]]
+if [[ 'false' == "${r53_role_exists}" ]]
 then
-   # Create the trust relationship policy document that grants the EC2 instances the
-   # permission to assume the role.
-   build_assume_role_policy_document_for_ec2_entities 
-   trust_policy_document="${__RESULT}"
-
    create_role "${AWS_ROUTE53_ROLE_NM}" 'Access to Route 53 role' "${trust_policy_document}" > /dev/null
    
    echo 'AWS Route 53 role created.'
@@ -42,7 +39,7 @@ else
 fi
 
 ##
-## Permissions policy.
+## Route 53 permissions policy.
 ##
 
 check_permission_policy_exists "${AWS_ROUTE53_POLICY_NM}" > /dev/null 
@@ -72,6 +69,34 @@ then
    echo 'Route 53 permission policy attached to role.'
 else
    echo 'WARN: Route 53 permission policy already attached to role.'
+fi
+
+##
+## Bosh director role.
+##
+
+check_role_exists "${AWS_BOSH_DIRECTOR_ROLE}"
+director_role_exists="${__RESULT}"
+
+if [[ 'false' == "${director_role_exists}" ]]
+then
+   create_role "${AWS_BOSH_DIRECTOR_ROLE}" 'Bosh director role' "${trust_policy_document}" > /dev/null
+   
+   echo 'AWS Bosh director role created.'
+else
+   echo 'WARN: AWS Bosh director role already created.'
+fi
+
+check_role_has_permission_policy_attached "${AWS_BOSH_DIRECTOR_ROLE}" "${AWS_BOSH_DIRECTOR_POLICY_NM}"
+policy_attached="${__RESULT}"
+
+if [[ 'false' == "${policy_attached}" ]]
+then
+   attach_permission_policy_to_role "${AWS_BOSH_DIRECTOR_ROLE}" "${AWS_BOSH_DIRECTOR_POLICY_NM}"
+   
+   echo 'Bosh director permission policy attached to role.'
+else
+   echo 'WARN: Bosh director permission policy already attached to role.'
 fi
 
 echo

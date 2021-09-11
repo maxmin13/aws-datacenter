@@ -5,7 +5,6 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-ADMIN_INST_PROFILE_NM="Route53InstanceProfile"
 admin_dir='admin'
 
 echo '*********'
@@ -20,11 +19,14 @@ if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Admin box not found.'
 else
-   instance_st="$(get_instance_state "${ADMIN_INST_NM}")"
+   get_instance_state "${ADMIN_INST_NM}"
+   instance_st="${__RESULT}"
+   
    echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
-sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
+get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
+sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -33,7 +35,8 @@ else
    echo "* Admin security group ID: ${sgp_id}."
 fi
 
-eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
+get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
+eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
@@ -42,7 +45,8 @@ else
    echo "* Admin public IP address: ${eip}."
 fi
 
-db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
+get_security_group_id "${DB_INST_SEC_GRP_NM}"
+db_sgp_id="${__RESULT}"
 
 if [[ -z "${db_sgp_id}" ]]
 then
@@ -75,6 +79,8 @@ rm -rf "${TMP_DIR:?}"/"${admin_dir}"
 check_instance_profile_exists "${ADMIN_INST_PROFILE_NM}" > /dev/null
 instance_profile_exists="${__RESULT}"
 
+echo instance_profile_exists: $instance_profile_exists
+
 if [[ 'true' == "${instance_profile_exists}" ]]
 then
    delete_instance_profile "${ADMIN_INST_PROFILE_NM}"
@@ -102,7 +108,8 @@ fi
 ## Database grants. 
 ## 
 
-db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
+get_security_group_id "${DB_INST_SEC_GRP_NM}"
+db_sgp_id="${__RESULT}"
 
 if [[ -n "${db_sgp_id}" && -n ${sgp_id} ]]
 then
@@ -130,7 +137,8 @@ fi
 
 if [[ -n "${eip}" ]]
 then
-   allocation_id="$(get_allocation_id "${eip}")"  
+   get_allocation_id "${eip}"
+   allocation_id="${__RESULT}" 
    
    if [[ -n "${allocation_id}" ]] 
    then

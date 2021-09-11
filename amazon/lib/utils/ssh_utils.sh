@@ -456,6 +456,7 @@ function get_ssh_port()
    declare -r server_ip="${2}"
    declare -r user="${3}"
    local port=''
+   local ssh_port=''
 
    shift
    shift
@@ -556,7 +557,8 @@ function get_local_public_key()
       echo 'ERROR: getting public key.'
       return "${exit_code}"
    fi 
-   
+
+   # shellcheck disable=SC2034   
    __RESULT="${public_key}"
 
    return "${exit_code}"

@@ -34,6 +34,8 @@ function get_loadbalancer_dns_name()
       return 1
    fi
 
+   __RESULT=''
+   local exit_code=0
    local lbal_nm="${1}"
    local lbal_dns_nm
  
@@ -41,9 +43,17 @@ function get_loadbalancer_dns_name()
        --query "LoadBalancerDescriptions[?LoadBalancerName=='${lbal_nm}'].DNSName" \
        --output text)"
  
-   echo "${lbal_dns_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving load balancer DNS name.'
+      return "${exit_code}"
+   fi                        
+            
+   __RESULT="${lbal_dns_nm}"
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -55,7 +65,7 @@ function get_loadbalancer_dns_name()
 # Arguments:
 # +lbal_nm -- the name of the load balancer.
 # Returns:      
-#  the load balancer hosted zone ID, or blanc if the load balancer is not found.  
+#  the load balancer hosted zone ID in the global _RESULT variable.  
 #===============================================================================
 function get_loadbalancer_hosted_zone_id()
 {
@@ -65,6 +75,8 @@ function get_loadbalancer_hosted_zone_id()
       return 1
    fi
 
+   __RESULT=''
+   local exit_code=0
    local lbal_nm="${1}"
    local lbal_dns_nm_nm=''
  
@@ -72,9 +84,17 @@ function get_loadbalancer_hosted_zone_id()
        --query "LoadBalancerDescriptions[?LoadBalancerName=='${lbal_nm}'].CanonicalHostedZoneNameID" \
        --output text)"
  
-   echo "${lbal_dns_nm_nm}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving load balancer hosted zone ID.'
+      return "${exit_code}"
+   fi                        
+            
+   __RESULT="${lbal_dns_nm_nm}"
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -100,6 +120,7 @@ function create_http_loadbalancer()
       return 1
    fi
 
+   local exit_code=0
    local lbal_nm="${1}"
    local lbal_port="${2}"
    local instance_port="${3}"
@@ -113,7 +134,14 @@ function create_http_loadbalancer()
        --region "${DTC_DEPLOY_REGION}" \
        --listener LoadBalancerPort="${lbal_port}",InstancePort="${instance_port}",Protocol=http,InstanceProtocol=http > /dev/null
  
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating load balancer.'
+   fi
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -136,11 +164,19 @@ function delete_loadbalancer()
       return 1
    fi
 
+   local exit_code=0
    local lbal_nm="${1}"
  
    aws elb delete-load-balancer --load-balancer-name "${lbal_nm}" 
 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting load balancer.'
+   fi
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -164,19 +200,24 @@ function add_https_listener()
       return 1
    fi
    
+   local exit_code=0
    local lbal_nm="${1}"
    local lbal_port="${2}"
    local instance_port="${3}"
    local cert_arn="${4}"
    local exit_code=0
    
-   set +e
    aws elb create-load-balancer-listeners \
        --load-balancer-name "${lbal_nm}" \
        --listeners Protocol=HTTPS,LoadBalancerPort="${lbal_port}",InstanceProtocol=HTTP,InstancePort="${instance_port}",SSLCertificateId="${cert_arn}" > /dev/null 2>&1
-   exit_code="$?"
-   set -e
    
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: adding HTTPS listener.'
+   fi
+ 
    return "${exit_code}"
 }
 
@@ -198,6 +239,7 @@ function delete_listener()
       return 1
    fi
 
+   local exit_code=0
    local lbal_nm="${1}"
    local lbal_port="${2}"
 
@@ -205,7 +247,14 @@ function delete_listener()
        --load-balancer-name "${lbal_nm}" \
        --load-balancer-ports "${lbal_port}"
 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting listener.'
+   fi
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -231,13 +280,20 @@ function configure_loadbalancer_health_check()
       return 1
    fi
 
+   local exit_code=0
    local lbal_nm="${1}"
  
-   aws elb configure-health-check \
-       --load-balancer-name "${lbal_nm}" \
+   aws elb configure-health-check --load-balancer-name "${lbal_nm}" \
        --health-check Target=HTTP:"${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 > /dev/null
  
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: configuring load balancer health check.'
+   fi
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -262,6 +318,7 @@ function register_instance_with_loadbalancer()
       return 1
    fi
    
+   local exit_code=0
    local lbal_nm="${1}"
    local instance_id="${2}"
    
@@ -269,7 +326,14 @@ function register_instance_with_loadbalancer()
        --load-balancer-name "${lbal_nm}" \
        --instances "${instance_id}" > /dev/null
    
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: registering instance with load balancer.'
+   fi
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -292,14 +356,22 @@ function deregister_instance_from_loadbalancer()
       return 1
    fi
    
+   local exit_code=0
    local lbal_nm="${1}"
    local instance_id="${2}"
    
    aws elb deregister-instances-from-load-balancer \
        --load-balancer-name "${lbal_nm}" \
        --instances "${instance_id}" > /dev/null
+       
+   exit_code=$?
    
-   return 0
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deregistering instance from load balancer.'
+   fi
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -311,7 +383,7 @@ function deregister_instance_from_loadbalancer()
 # +lbal_nm     -- load balancer name.
 # +instance_id -- the instance ID.
 # Returns:      
-#  true/false value.  
+#  true/false value in the __RESULT global variable.  
 #===============================================================================
 function check_instance_is_registered_with_loadbalancer()
 {
@@ -321,6 +393,8 @@ function check_instance_is_registered_with_loadbalancer()
       return 1
    fi
 
+   __RESULT=''
+   local exit_code=0
    local lbal_nm="${1}"
    local instance_id="${2}"
    local is_registered='false'
@@ -328,15 +402,23 @@ function check_instance_is_registered_with_loadbalancer()
    
    lbal_name="$(aws elb describe-load-balancers \
        --query "LoadBalancerDescriptions[?contains(LoadBalancerName, '${lbal_nm}') && contains(Instances[].InstanceId, '${instance_id}')].{LoadBalancerName: LoadBalancerName}" \
-       --output text)"  
+       --output text)" 
+       
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving load balancer.'
+      return "${exit_code}"
+   fi     
        
    if [[ -n "${lbal_name}" ]]  
    then
       is_registered='true'
    fi                     
             
-   echo "${is_registered}"
-   
-   return 0
+   __RESULT="${is_registered}"
+ 
+   return "${exit_code}"
 }
 

@@ -24,17 +24,28 @@ set +o xtrace
 # Arguments:
 #  None
 # Returns:      
-#  The Account number.  
+#  The Account number in the global __RESULT variable.  
 #===============================================================================
 function get_account_number()
 {
-   local aws_account="$(aws sts get-caller-identity \
+   __RESULT=''
+   local exit_code=0
+   local aws_account=''
+   
+   aws_account="$(aws sts get-caller-identity \
                           --query 'Account' \
-                          --output text)"
+                          --output text)"           
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving account number.'
+      return "${exit_code}"
+   fi
                         
-   echo "${aws_account}"
+   __RESULT="${aws_account}"
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -52,17 +63,22 @@ function get_account_number()
 function get_temporary_access_keys_pair()
 {
    __RESULT=''
+   local exit_code=0
+   local key_pair=''
    
-   local key_pair="$(aws sts get-session-token --duration-seconds 900 \
+   key_pair="$(aws sts get-session-token --duration-seconds 900 \
        --query "Credentials.[AccessKeyId, SecretAccessKey]" --output text)"
+       
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving session token.'
+      return "${exit_code}"
+   fi
                         
    __RESULT="${key_pair}"
  
-   return 0
+   return "${exit_code}"
 }
-
-
-
-
-
 

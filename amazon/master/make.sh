@@ -43,8 +43,8 @@ echo
       echo '****************' 
    fi
          
-   echo 
-    
+   echo    
+ 
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh  
       
@@ -84,7 +84,7 @@ echo
    . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh      
  
    # Install Cloud Foundry.
-   #. "${PROJECT_DIR}"/amazon/cloudfoundry/make.sh  
+   #. "${PROJECT_DIR}"/amazon/bosh/make.sh  
  
 } ### >> "${log_file}" 2>&1  
 

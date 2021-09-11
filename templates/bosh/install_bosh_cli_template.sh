@@ -9,6 +9,14 @@ set -o nounset
 # Install BOSH client.
 ####################################################################
 
+ADMIN_INST_USER_NM='SEDadmin_inst_user_nmSED'
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Change ownership in the script directory to delete it from dev machine.
+trap "chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}" ERR EXIT
+
+cd "${script_dir}" || exit
+
 echo 'Downloading Bosh client ...'
 
 wget https://github.com/cloudfoundry/bosh-cli/releases/download/v6.4.5/bosh-cli-6.4.5-linux-amd64
@@ -16,15 +24,14 @@ wget https://github.com/cloudfoundry/bosh-cli/releases/download/v6.4.5/bosh-cli-
 chmod +x bosh-cli-6.4.5-linux-amd64
 cp bosh-cli-6.4.5-linux-amd64 /usr/local/bin/bosh
 
-bosh -v
+## bosh -v
 
 echo 'Bosh client installed.'
-
-echo 'Installing dependencies ...'
 
 yum install -y gcc gcc-c++ ruby ruby-devel mysql-devel postgresql-devel postgresql-libs sqlite-devel libxslt-devel libxml2-devel patch openssl
 gem install yajl-ruby
 
 echo 'Dependencies installed.'
 
-rm bosh-cli-6.4.5-linux-amd64
+exit 0
+

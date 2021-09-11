@@ -20,13 +20,18 @@ else
    echo "* data center ID: ${dtc_id}"
 fi
 
-internet_gate_id="$(get_internet_gateway_id "${DTC_INTERNET_GATEWAY_NM}")"
+get_internet_gateway_id "${DTC_INTERNET_GATEWAY_NM}"
+internet_gate_id="${__RESULT}"
+internet_gate_attach_status=''
 
 if [[ -z "${internet_gate_id}" ]]
 then
    echo '* WARN: internet gateway not found.'
 else
-   echo "* internet gateway ID: ${internet_gate_id}."
+   get_internet_gateway_attachment_status "${DTC_INTERNET_GATEWAY_NM}" "${dtc_id}"
+   internet_gate_attach_status="${__RESULT}"
+   
+   echo "* internet gateway ID: ${internet_gate_id} (${internet_gate_attach_status})."
 fi
 
 get_subnet_id "${DTC_SUBNET_MAIN_NM}"
@@ -49,13 +54,14 @@ else
    echo "* backup subnet ID: ${backup_subnet_id}."
 fi
 
-route_table_id="$(get_route_table_id "${DTC_ROUTE_TABLE_NM}")"
+get_route_table_id "${DTC_ROUTE_TABLE_NM}"
+rtb_id="${__RESULT}"
 
-if [[ -z "${route_table_id}" ]]
+if [[ -z "${rtb_id}" ]]
 then
    echo '* WARN: route table not found.'
 else
-   echo "* route table ID: ${route_table_id}."
+   echo "* route table ID: ${rtb_id}."
 fi
 
 echo
@@ -66,11 +72,13 @@ echo
 
 if [[ -n "${internet_gate_id}" ]]
 then
-   if [ -n "${dtc_id}" ]; then     
-      gate_status="$(get_internet_gateway_attachment_status "${DTC_INTERNET_GATEWAY_NM}" "${dtc_id}")"
-      if [ -n "${gate_status}" ]; then
+   if [ -n "${dtc_id}" ]
+   then     
+      if [ -n "${internet_gate_attach_status}" ]
+      then
          aws ec2 detach-internet-gateway --internet-gateway-id  "${internet_gate_id}" --vpc-id "${dtc_id}"
-         echo 'Internet Gateway detached from VPC.'
+         
+         echo 'Internet gateway detached from VPC.'
       fi
    fi
     
@@ -105,9 +113,9 @@ fi
 ## Route table
 ## 
 
-if [[ -n "${route_table_id}" ]]
+if [[ -n "${rtb_id}" ]]
 then
-   delete_route_table "${route_table_id}"
+   delete_route_table "${rtb_id}"
    
    echo 'Route table deleted.'
 fi
@@ -125,4 +133,7 @@ then
    
    echo 'Data center deleted.'
 fi                     
+
+echo
+
 

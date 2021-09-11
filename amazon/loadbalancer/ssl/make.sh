@@ -36,7 +36,8 @@ echo 'SSL load balancer'
 echo '*****************'
 echo
 
-lbal_dns="$(get_loadbalancer_dns_name "${LBAL_INST_NM}")"
+get_loadbalancer_dns_name "${LBAL_INST_NM}"
+lbal_dns="${__RESULT}"
 
 if [[ -z "${lbal_dns}" ]]
 then
@@ -46,7 +47,8 @@ else
    echo "* Load balancer DNS name: ${lbal_dns}."
 fi
 
-lbal_sgp_id="$(get_security_group_id "${LBAL_INST_SEC_GRP_NM}")"
+get_security_group_id "${LBAL_INST_SEC_GRP_NM}"
+lbal_sgp_id="${__RESULT}"
 
 if [[ -z "${lbal_sgp_id}" ]]
 then
@@ -66,11 +68,14 @@ then
       echo '* ERROR: Admin box not found.'
       exit 1
    else
-      admin_instance_st="$(get_instance_state "${ADMIN_INST_NM}")"
+      get_instance_state "${ADMIN_INST_NM}"
+      admin_instance_st="${__RESULT}"
+   
       echo "* Admin box ID: ${admin_instance_id} (${admin_instance_st})."
    fi   
    
-   admin_sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
+   get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
+   admin_sgp_id="${__RESULT}"
 
    if [[ -z "${admin_sgp_id}" ]]
    then
@@ -80,7 +85,8 @@ then
       echo "* Admin security group ID: ${admin_sgp_id}."
    fi 
    
-   admin_eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
+   get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
+   admin_eip="${__RESULT}"
 
    if [[ -z "${admin_eip}" ]]
    then
@@ -132,19 +138,19 @@ cert_arn="${__RESULT}"
 
 if [[ -n "${cert_arn}" ]]
 then 
-   echo 'WARN: found certificate in IAM, deleting ...'
+   echo 'WARN: load balancer SSL certificate found in IAM, deleting ...'
   
    # The certificate may still be locked by the deleted HTTPS listener, retry to delete it error.
    # shellcheck disable=SC2015
-   delete_server_certificate "${crt_entity_nm}" > /dev/null 2>&1 && echo 'Server certificate deleted.' ||
+   delete_server_certificate "${crt_entity_nm}" > /dev/null 2>&1 && echo 'Load balancer server certificate deleted from IAM.' ||
    {
       __wait 30
-      delete_server_certificate "${crt_entity_nm}" > /dev/null 2>&1 && echo 'Server certificate deleted.' ||
+      delete_server_certificate "${crt_entity_nm}" > /dev/null 2>&1 && echo 'Load balancer server certificate deleted from IAM.' ||
       {
          __wait 30
-         delete_server_certificate "${crt_entity_nm}" > /dev/null 2>&1 && echo 'Server certificate deleted.' ||
+         delete_server_certificate "${crt_entity_nm}" > /dev/null 2>&1 && echo 'Load balancer server certificate deleted from IAM.' ||
          {
-            echo 'Error: deleting server certificate.'
+            echo 'ERROR: deleting server certificate.'
             exit 1
          }
       }
@@ -171,7 +177,7 @@ test -z "${cert_arn}" ||
       test -z "${cert_arn}" || 
       {
          # Raise an error if the cert is stil visible.
-         echo 'ERROR: certificate not deleted from IAM.'
+         echo 'ERROR: load balancer server certificate still present in IAM.'
          exit 1     
       }        
    }
@@ -221,8 +227,8 @@ then
    chmod +x gen_selfsigned_certificate.sh
    ./gen_selfsigned_certificate.sh 
        
-   echo 'Self-signed SSL certificate created.'
-   echo 'Uploading SSL certificate to IAM ...'
+   echo 'Load balander self-signed SSL certificate created.'
+   echo 'Uploading load balancer SSL certificate to IAM ...'
    
    upload_server_certificate_entity "${crt_entity_nm}" cert.pem key.pem \
        "${TMP_DIR}"/"${lbal_dir}" > /dev/null  
@@ -233,14 +239,28 @@ else
    # install acme.sh client in the Admin instance and request a certificate signed by Let's Encrypt,
    # download the certificate from Admin and upload it to IAM.
    #
-     
+   
+   ## Check the Admin instance profile has the Route 53 role associated.
+   ## The role is needed to perform Let's Encrypt DNS challenge.
+   check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}" > /dev/null
+   has_role_associated="${__RESULT}"
+
+   if [[ 'false' == "${has_role_associated}" ]]
+   then
+      # IAM is a bit slow, it might be necessary to retry the certificate request a few times. 
+      associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}"
+      
+      echo 'Route 53 role associated to the instance profile.'
+   else
+      echo 'WARN: Route 53 role already associated to the instance profile.'
+   fi   
+      
    # SSH Access to Admin instance.
    set +e
    allow_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
    set -e
    
    echo 'Granted SSH access to the Admin box.'
-
    echo 'Uploading the scripts to the Admin box ...'
 
    remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
@@ -275,7 +295,7 @@ else
    ## By AWS default, sudo has not password.
    ## 
 
-   echo 'Requesting SSL certificate ...'
+   echo 'Requesting load balancer SSL certificate ...'
     
    ssh_run_remote_command_as_root "chmod +x ${remote_dir}/request_ca_certificate_with_dns_challenge.sh" \
        "${key_pair_file}" \
@@ -297,7 +317,7 @@ else
    # shellcheck disable=SC2181
    if [ 0 -eq "${exit_code}" ]
    then 
-      echo 'SSL certificate successfully retrieved.'
+      echo 'Load balancer SSL certificate successfully retrieved.'
       
       download_dir="${TMP_DIR}"/"${lbal_dir}"/"$(date +"%d-%m-%Y")"
 
@@ -315,24 +335,40 @@ else
           "${download_dir}" \
           "${crt_file_nm}" "${key_file_nm}" "${full_chain_file_nm}" 
  
-      echo 'Certificates downloaded.'
+      echo 'Load balancer certificates downloaded to local machine.'
       echo "Check the directory: ${download_dir}"   
-      echo 'Uploading SSL certificate to IAM ...'
+      echo 'Uploading load balancer SSL certificate to IAM ...'
          
       upload_server_certificate_entity "${crt_entity_nm}" "${crt_file_nm}" "${key_file_nm}" \
           "${download_dir}" "${full_chain_file_nm}" > /dev/null
+          
+      echo 'Load balancer SSL certificate uploaded to IAM.'
           
       ssh_run_remote_command "rm -rf ${remote_dir:?}" \
           "${key_pair_file}" \
           "${admin_eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${ADMIN_INST_USER_NM}"   
-                   
-      echo 'Cleared remote directory.'
    else
       echo 'ERROR: configuring load balancer''s SSL.' 
       exit 1
    fi       
+fi
+
+check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}" > /dev/null
+has_role_associated="${__RESULT}"
+
+if [[ 'true' == "${has_role_associated}" ]]
+then
+   ####
+   #### Sessions may still be actives, they should be terminated by adding AWSRevokeOlderSessions permission
+   #### to the role.
+   ####
+   remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}"
+     
+   echo 'Route 53 role removed from the instance profile.'
+else
+   echo 'WARN: Route 53 role already removed from the instance profile.'
 fi
 
 if [[ 'production' == "${ENV}" ]]
@@ -353,20 +389,20 @@ get_server_certificate_arn "${crt_entity_nm}" > /dev/null
 cert_arn="${__RESULT}"
 
 # shellcheck disable=SC2015
-test -n "${cert_arn}" && echo 'Certificate uploaded.' || 
+test -n "${cert_arn}" && echo 'Load balancer SSL certificate visible in IAM.' || 
 {  
    __wait 30
    get_server_certificate_arn "${crt_entity_nm}" > /dev/null
    cert_arn="${__RESULT}"
-   test -n "${cert_arn}" &&  echo 'Certificate uploaded.' ||
+   test -n "${cert_arn}" &&  echo 'Load balancer SSL certificate visible in IAM.' ||
    {
       __wait 30
       get_server_certificate_arn "${crt_entity_nm}" > /dev/null
       cert_arn="${__RESULT}"
-      test -n "${cert_arn}" &&  echo 'Certificate uploaded.' || 
+      test -n "${cert_arn}" &&  echo 'Load balancer SSL certificate visible in IAM.' || 
       {
          # Throw an error if after 90 secs the cert is stil not visible.
-         echo 'ERROR: certificate not uploaded to IAM.'
+         echo 'ERROR: certificate not visible in IAM.'
          exit 1     
       }       
    }
@@ -379,15 +415,18 @@ cert_arn="${__RESULT}"
 # Even if the IAM command list-server-certificates has returned the certificate ARN, the certificate 
 # may still not be available and add listener command may fail if called too early. 
 # shellcheck disable=SC2015
-add_https_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${cert_arn}" && echo 'HTTPS listener added.' ||
+add_https_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${cert_arn}" > /dev/null && \
+echo 'Load balancer HTTPS listener added.' ||
 {
    __wait 30
-   add_https_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${cert_arn}" && echo 'HTTPS listener added.' ||
+   add_https_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${cert_arn}" > /dev/null && \
+   echo 'Load balancer HTTPS listener added.' ||
    {
       __wait 30
-      add_https_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${cert_arn}" && echo 'HTTPS listener added.' ||
+      add_https_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${cert_arn}" > /dev/null && \
+      echo 'Load balancer HTTPS listener added.' ||
       {
-         echo 'ERROR: adding HTTPS listener.'
+         echo 'ERROR: adding HTTPS listener to the load balancer.'
          exit 1
       }
    }
@@ -400,7 +439,19 @@ set -e
 
 echo 'Granted HTTPS internet access to the load balancer.'
 
-lbal_dns="$(get_loadbalancer_dns_name "${LBAL_INST_NM}")"
+get_loadbalancer_dns_name "${LBAL_INST_NM}"
+lbal_dns="${__RESULT}" 
+
+## Check the Admin instance profile has the Route 53 role associated.
+check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}" > /dev/null
+has_role_associated="${__RESULT}"
+
+if [[ 'true' == "${has_role_associated}" ]]
+then
+   remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}"
+   
+   echo 'Route 53 role removed from the instance profile.'
+fi 
 
 # Clear local files
 rm -rf "${TMP_DIR:?}"/"${lbal_dir}"

@@ -43,8 +43,11 @@ echo
    
    echo 
    
+      . "${PROJECT_DIR}"/amazon/datacenter/delete.sh 
+      exit
+      
    # Remove Cloud Foundry.
-   #. "${PROJECT_DIR}"/amazon/cloudfoundry/delete.sh  
+   . "${PROJECT_DIR}"/amazon/bosh/delete.sh  
 
    # Make a backup of the database.
    . "${PROJECT_DIR}"/amazon/database/data/backup/make.sh 
@@ -77,6 +80,7 @@ echo
    . "${PROJECT_DIR}"/amazon/account/delete.sh  
    
    # Delete AWS users and policies.
+   ### TODO error deleting role, policy must be detached.
    . "${PROJECT_DIR}"/amazon/user/delete.sh                
 
    # Delete the datacenter.

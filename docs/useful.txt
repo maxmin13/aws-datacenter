@@ -1,5 +1,5 @@
 
-find ./ -type f -exec sed -i 's/upload_server_certificate_entity/upload_server_certificate_entity_entity/g' {} \;
+find ./ -type f -exec sed -i 's/remove_role_from_instance_profile/remove_role_from_instance_profile/g' {} \;
 
 
 scp -i admin-keys.pem -P 38142 admin-user@3.249.178.61:config.cfg .

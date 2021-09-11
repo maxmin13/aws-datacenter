@@ -20,7 +20,8 @@ else
    echo "* database endpoint: "${db_endpoint}" (${db_state})."
 fi
 
-sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
+get_security_group_id "${DB_INST_SEC_GRP_NM}"
+sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then

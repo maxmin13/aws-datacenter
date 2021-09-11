@@ -51,11 +51,14 @@ then
    echo '* ERROR: Webphp box not found.'
    exit 1
 else
-   instance_st="$(get_instance_state "${webphp_nm}")"
+   get_instance_state "${webphp_nm}"
+   instance_st="${__RESULT}"
+   
    echo "* Webphp box ID: ${instance_id} (${instance_st})."
 fi
 
-sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
+get_security_group_id "${webphp_sgp_nm}"
+sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -65,7 +68,8 @@ else
    echo "* Webphp security group ID: ${sgp_id}."
 fi
 
-eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"
+get_public_ip_address_associated_with_instance "${webphp_nm}"
+eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
@@ -75,7 +79,8 @@ else
    echo "* Webphp public IP address: ${eip}."
 fi
 
-loadbalancer_sgp_id="$(get_security_group_id "${LBAL_INST_SEC_GRP_NM}")"
+get_security_group_id "${LBAL_INST_SEC_GRP_NM}"
+loadbalancer_sgp_id="${__RESULT}"
 
 if [[ -z "${loadbalancer_sgp_id}" ]]
 then
@@ -200,8 +205,7 @@ ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_webphp_website.sh
     "${WEBPHP_INST_USER_NM}" \
     "${WEBPHP_INST_USER_PWD}"
 
-set +e     
-           
+set +e               
 ssh_run_remote_command_as_root "${remote_dir}/install_webphp_website.sh" \
     "${key_pair_file}" \
     "${eip}" \

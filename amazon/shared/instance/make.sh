@@ -42,14 +42,18 @@ else
    echo "* main subnet ID: ${subnet_id}."
 fi
 
-image_id="$(get_image_id "${SHARED_IMG_NM}")"
+get_image_id "${SHARED_IMG_NM}"
+image_id="${__RESULT}"
+image_st=''
 
 if [[ -z "${image_id}" ]]
 then
    echo '* WARN: Shared image not found.'
 else
-   image_state="$(get_image_state "${SHARED_IMG_NM}")"
-   echo "* Shared image ID: ${image_id} (${image_state})."
+   get_image_state "${SHARED_IMG_NM}"
+   image_st="${__RESULT}"
+   
+   echo "* Shared image ID: ${image_id} (${image_st})."
 fi
 
 echo
@@ -62,13 +66,16 @@ mkdir "${TMP_DIR}"/"${shared_dir}"
 ## Security group
 ##
 
-sgp_id="$(get_security_group_id "${SHARED_INST_SEC_GRP_NM}")"
+get_security_group_id "${SHARED_INST_SEC_GRP_NM}"
+sgp_id="${__RESULT}"
 
 if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the Shared security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${SHARED_INST_SEC_GRP_NM}" 'Shared security group.')"  
+   create_security_group "${dtc_id}" "${SHARED_INST_SEC_GRP_NM}" 'Shared security group.'
+   get_security_group_id "${SHARED_INST_SEC_GRP_NM}"
+   sgp_id="${__RESULT}"
 
    echo 'Created Shared security group.'
 fi
@@ -123,24 +130,25 @@ echo 'cloud_init.yml ready.'
 
 get_instance_id "${SHARED_INST_NM}"
 instance_id="${__RESULT}"
-instance_state="$(get_instance_state "${SHARED_INST_NM}")"
 
-if [[ -n "${image_id}" && 'available' == "${image_state}" ]]
+if [[ -n "${image_id}" && 'available' == "${image_st}" ]]
 then    
    echo 'Shared image already created, skipping creating Shared box.'
    echo
-   return
+   return 0
    
 elif [[ -n "${instance_id}" ]]
 then
-   if [[ 'running' == "${instance_state}" || 'stopped' == "${instance_state}" ]]
+   get_instance_state "${SHARED_INST_NM}"
+   instance_st="${__RESULT}"
+
+   if [[ 'running' == "${instance_st}" ]]
    then
-      echo "WARN: Shared box already created (${instance_state})."
+      echo "WARN: Shared box already created (${instance_st})."
       echo
-      return
    else
       # An istance lasts in terminated status for about an hour, before that change name.
-      echo "ERROR: Shared box already created (${instance_state})."
+      echo "ERROR: Shared box already created (${instance_st})."
       exit 1
    fi
 else
@@ -160,7 +168,8 @@ else
    echo "Shared box created."
 fi  
        
-eip="$(get_public_ip_address_associated_with_instance "${SHARED_INST_NM}")"
+get_public_ip_address_associated_with_instance "${SHARED_INST_NM}"
+eip="${__RESULT}"
 
 echo "Shared box public address: ${eip}."
 
@@ -249,6 +258,11 @@ echo 'Revoked SSH access to the Shared box port 22.'
 
 wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${SHARED_INST_USER_NM}"
 
+get_ssh_port "${key_pair_file}" "${eip}" "${SHARED_INST_USER_NM}" '22' '38142' 
+ssh_port="${__RESULT}"
+
+echo "The SSH port on the Shared box is ${ssh_port}." 
+
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/check-linux.sh" \
     "${key_pair_file}" \
     "${eip}" \
@@ -287,7 +301,9 @@ set +e
 revoke_access_from_cidr "${sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
-echo 'Revoked SSH access to the Shared box.' 
+echo 'Revoked SSH access to the Shared box.'
 
 # Removing old files
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"
+
+echo

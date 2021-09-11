@@ -13,6 +13,7 @@ ENV='production'
 AWS_BASE_IMG_ID='ami-058b1b7fe545997ae' 
 AWS_CHECK_IP_URL='http://checkip.amazonaws.com'
 CF_BOSH_DEPLOYMENT_URL='https://github.com/cloudfoundry/bosh-deployment'
+CF_JUMPBOX_DEPLOYMENT_URL='https://github.com/cloudfoundry/jumpbox-deployment'
 
 ## ********** ##
 ## App domain ##
@@ -37,6 +38,15 @@ DTC_SUBNET_BACKUP_CIDR='10.0.10.0/24'
 DTC_INTERNET_GATEWAY_NM='internet-gate'
 DTC_ROUTE_TABLE_NM='route-tab'
 
+## ************ ##
+## Permissions  ##
+## ************ ##
+
+AWS_ROUTE53_ROLE_NM='Route53role'
+AWS_ROUTE53_POLICY_NM='Route53policy'
+AWS_BOSH_DIRECTOR_ROLE='BoshDirectorRole'
+AWS_BOSH_DIRECTOR_POLICY_NM='AdministratorAccess'
+
 ## ******** ##
 ## Database ##
 ## ******** ##
@@ -58,7 +68,7 @@ DB_LOG_SLOW_QUERIES_PARAM_GRP_DESC='Log slow queries database parameter group'
 ## Shared image ##
 ## ************ ##
 
-SHARED_INST_NM='shared-box'
+SHARED_INST_NM='shared-box1'
 SHARED_INST_HOSTNAME='shared.maxmin.it'
 SHARED_INST_USER_NM='shared-user'
 SHARED_INST_PRIVATE_IP='10.0.0.8'
@@ -91,6 +101,7 @@ ADMIN_INST_EMAIL='minardi.massimiliano@libero.it'
 ADMIN_INST_KEY_PAIR_NM='admin-keys'
 ADMIN_INST_SEC_GRP_NM='admin-box-sgp'
 ADMIN_INST_DNS_DOMAIN_NM='admin'."${MAXMIN_TLD}"
+ADMIN_INST_PROFILE_NM="AdmInstanceProfile"
 ADMIN_APACHE_CERTBOT_HTTP_PORT='80'
 ADMIN_APACHE_WEBSITE_HTTP_PORT='8060'
 ADMIN_APACHE_WEBSITE_HTTPS_PORT='443'
@@ -129,12 +140,16 @@ WEBPHP_RSYSLOG_PORT='514'
 ## Cloud Foundry ##
 ## ************* ##
 
-BOSH_INST_NM='bosh/0'
+#BOSH_INST_NM='bosh/0'
 BOSH_SEC_GRP_NM='bosh-sgp'
-BOSH_KEY_PAIR_NM='bosh-keys'
+BOSH_KEY_PAIR_NM='bosh-key'
 BOSH_SSH_PORT='22'
-BOSH_AGENT_PORT='6868'
-BOSH_DIRECTOR_NM='bosh-1'
-BOSH_DIRECTOR_PORT='25555'
+BOSH_DIRECTOR_NM='bosh-2'
+##BOSH_DIRECTOR_PORT='25555'
 BOSH_DIRECTOR_INTERNAL_IP='10.0.0.6'
+BOSH_AGENT_PORT='6868'
+JUMPBOX_KEY_PAIR_NM='jumpbox-keys'
+JUMPBOX_INTERNAL_IP='10.0.0.7'
+JUMPBOX_KEY_PAIR_NM='jumpbox.key'
+
 

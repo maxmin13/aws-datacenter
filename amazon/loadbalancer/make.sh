@@ -47,13 +47,16 @@ echo
 ## Security group 
 ## 
 
-sgp_id="$(get_security_group_id "${LBAL_INST_SEC_GRP_NM}")"
+get_security_group_id "${LBAL_INST_SEC_GRP_NM}"
+sgp_id="${__RESULT}"
 
 if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the load balancer security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${LBAL_INST_SEC_GRP_NM}" 'Load balancer security group.')"  
+   create_security_group "${dtc_id}" "${LBAL_INST_SEC_GRP_NM}" 'Load balancer security group.'
+   get_security_group_id "${LBAL_INST_SEC_GRP_NM}"
+   sgp_id="${__RESULT}"
    
    echo 'Created load balancer security group.'
 fi
@@ -69,22 +72,25 @@ echo 'Granted HTTP internet access to the load balancer.'
 ## Load balancer box
 ## 
 
-loadbalancer_dns="$(get_loadbalancer_dns_name "${LBAL_INST_NM}")"
+get_loadbalancer_dns_name "${LBAL_INST_NM}"
+lbal_dns="${__RESULT}"
 
-if [[ -z "${loadbalancer_dns}" ]]
+if [[ -z "${lbal_dns}" ]]
 then
    create_http_loadbalancer \
        "${LBAL_INST_NM}" \
        "${LBAL_INST_HTTP_PORT}" \
        "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" \
        "${sgp_id}" "${subnet_ids}"
+       
    configure_loadbalancer_health_check "${LBAL_INST_NM}"
 else
    echo 'WARN: load balancer already created.' 
 fi
    
-loadbalancer_dns="$(get_loadbalancer_dns_name "${LBAL_INST_NM}")"
+get_loadbalancer_dns_name "${LBAL_INST_NM}"
+lbal_dns="${__RESULT}"
 
 echo
-echo "Load Balancer up and running at: ${loadbalancer_dns}."
+echo "Load Balancer up and running at: ${lbal_dns}."
 echo

@@ -245,7 +245,7 @@ function get_subnet_id()
 # +dtc_id      -- the data center identifier.
 # +rtb_id      -- the route table identifier.
 # Returns:      
-#  the subnet identifier.  
+#  none.  
 #===============================================================================
 function create_subnet()
 {
@@ -255,6 +255,7 @@ function create_subnet()
       return 128
    fi
 
+   local exit_code=0
    declare -r subnet_nm="${1}"
    declare -r subnet_cidr="${2}"
    declare -r subnet_az="${3}"
@@ -269,18 +270,37 @@ function create_subnet()
        --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value='${subnet_nm}'}]" \
        --query 'Subnet.SubnetId' \
        --output text)"
+       
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating subnet.'
+      return "${exit_code}"
+   fi     
  
    aws ec2 wait subnet-available --filters Name=tag-key,Values=Name \
        --filters Name=tag-value,Values="${subnet_nm}"
-  
-  ####################### TODO ASSOCIATE THE SUBNET IN ANOTHER FUNCTION FOR ATOMICITY ############################## 
+       
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: waiting fo subnet.'
+      return "${exit_code}"
+   fi        
   
    ## Associate this subnet with our route table 
-   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" 
+   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" > /dev/null
   
-   echo "${subnet_id}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: associating subnet to the route table.'
+   fi  
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -301,11 +321,19 @@ function delete_subnet()
       return 128
    fi
 
+   local exit_code=0
    declare -r subnet_id="${1}"
  
    aws ec2 delete-subnet --subnet-id "${subnet_id}"
  
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting subnet.'
+   fi  
+ 
+   return "${exit_code}"
 }
 
 #============================================================================
@@ -315,7 +343,7 @@ function delete_subnet()
 # Arguments:
 # +igw_nm -- the internet gateway name.
 # Returns:      
-#  the internet gateway identifier, or blanc if it is not found.  
+#  the internet gateway identifier in the __RESULT global variable.  
 #===============================================================================
 function get_internet_gateway_id()
 {
@@ -323,8 +351,10 @@ function get_internet_gateway_id()
    then
      echo 'ERROR: missing mandatory arguments.'
      return 128
-  fi
+   fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r igw_nm="${1}"
    local igw_id=''
   
@@ -334,9 +364,17 @@ function get_internet_gateway_id()
        --query 'InternetGateways[*].InternetGatewayId' \
        --output text)"
   
-   echo "${igw_id}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting internet gateway ID.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${igw_id}"
+   
+   return "${exit_code}"
 }
 
 #============================================================================
@@ -350,8 +388,7 @@ function get_internet_gateway_id()
 # +igw_nm -- the internet gateway name.
 # +dtc_id -- the data center identifier.
 # Returns:      
-#  the attachment status, or blanc if the data center or the internet gateway  
-#  are not found.  
+#  the attachment status in the __RESULT global variable.  
 #===============================================================================
 function get_internet_gateway_attachment_status()
 {
@@ -361,6 +398,8 @@ function get_internet_gateway_attachment_status()
      return 128
   fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r igw_nm="${1}"
    declare -r dtc_id="${2}"
    local attachment_status=''
@@ -371,9 +410,17 @@ function get_internet_gateway_attachment_status()
        --query "InternetGateways[*].Attachments[?VpcId=='${dtc_id}'].[State]" \
        --output text)"
   
-   echo "${attachment_status}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting internet gateway attachment status.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${attachment_status}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -385,7 +432,7 @@ function get_internet_gateway_attachment_status()
 # +igw_nm -- the internet gateway name.
 # +dtc_id -- the data center ID.
 # Returns:      
-#  the internet gateway identifier.  
+#  none.  
 #===============================================================================
 function create_internet_gateway()
 {
@@ -395,18 +442,22 @@ function create_internet_gateway()
       return 128
    fi
   
+   local exit_code=0
    declare -r igw_nm="${1}"
    declare -r dtc_id="{2}"
-   local igw_id=''
   
-   igw_id="$(aws ec2 create-internet-gateway \
+   aws ec2 create-internet-gateway \
        --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value='${igw_nm}'}]" \
-       --query 'InternetGateway.InternetGatewayId'\
-       --output text)"
+        > /dev/null
   
-   echo "${igw_id}"
-  
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating internet gateway.'
+   fi  
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -427,11 +478,19 @@ function delete_internet_gateway()
       return 128
    fi
   
+   local exit_code=0
    declare -r igw_id="${1}"
  
    aws ec2 delete-internet-gateway --internet-gateway-id "${igw_id}"
+  
+   exit_code=$?
    
-   return 0
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting internet gateway.'
+   fi  
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -443,7 +502,7 @@ function delete_internet_gateway()
 # +igw_id -- the internet gateway identifier.
 # +dtc_id -- the data center ID.
 # Returns:      
-#  None
+#  none.
 #===============================================================================
 function attach_internet_gateway()
 {
@@ -453,12 +512,20 @@ function attach_internet_gateway()
       return 128
    fi
   
+   local exit_code=0
    declare -r igw_id="${1}"
    declare -r dtc_id="${2}"
   
    aws ec2 attach-internet-gateway --vpc-id "${dtc_id}" --internet-gateway-id "${igw_id}"
+   
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: attaching internet gateway to VPC.'
+   fi  
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -469,7 +536,7 @@ function attach_internet_gateway()
 # Arguments:
 # +rtb_nm -- the route table name.
 # Returns:      
-#  the route table identifier, or blanc if it is not found.  
+#  the route table identifier in the __RESULT global variable.  
 #===============================================================================
 function get_route_table_id()
 {
@@ -479,6 +546,8 @@ function get_route_table_id()
       return 128
    fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r rtb_nm="${1}"
    local rtb_id=''
   
@@ -488,9 +557,17 @@ function get_route_table_id()
        --query 'RouteTables[*].RouteTableId' \
        --output text)"
   
-   echo "${rtb_id}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving route table ID.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${rtb_id}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -501,9 +578,8 @@ function get_route_table_id()
 # Arguments:
 # +rtb_nm -- the route table name.
 # +dtc_id -- the data center identifier.
-
 # Returns:      
-#  the route table identifier, or blanc if it is not found.  
+#  none.  
 #===============================================================================
 function create_route_table()
 {
@@ -513,19 +589,23 @@ function create_route_table()
       return 128
    fi
 
+   local exit_code=0
    declare -r rtb_nm="${1}"
    declare -r dtc_id="${2}"
-   local rtb_id=''
   
-   rtb_id="$(aws ec2 create-route-table \
+   aws ec2 create-route-table \
        --vpc-id "${dtc_id}" \
-       --query 'RouteTable.RouteTableId' \
        --tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value='${rtb_nm}'}]" \
-       --output text)"
+        > /dev/null
  
-   echo "${rtb_id}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating route table.'
+   fi  
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -537,7 +617,7 @@ function create_route_table()
 # +rtb_id -- the route table identifier.
 
 # Returns:      
-#  None  
+#  none.  
 #===============================================================================
 function delete_route_table()
 {
@@ -547,16 +627,23 @@ function delete_route_table()
       return 128
    fi
 
+   local exit_code=0
    declare -r rtb_id="${1}"
   
    aws ec2 delete-route-table --route-table-id "${rtb_id}"
  
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting route table.'
+   fi  
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
-# Creates a route in a route Table: the incoming traffic with destination the
-# specified cidr block is routed to the target.
+# Creates a route in a route table.
 #
 # Globals:
 #  None
@@ -566,7 +653,7 @@ function delete_route_table()
 # +destination_cidr -- the CIDR address block used to match the destination
 #                      of the incoming traffic.
 # Returns:      
-#  None
+#  none.
 #===============================================================================
 function set_route()
 {
@@ -576,6 +663,7 @@ function set_route()
       return 128
    fi
 
+   local exit_code=0
    declare -r rtb_id="${1}"
    declare -r target_id="${2}"
    declare -r destination_cidr="${3}"
@@ -584,7 +672,14 @@ function set_route()
        --destination-cidr-block "${destination_cidr}" \
        --gateway-id "${target_id}" 
 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: setting route in route table.'
+   fi  
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -595,7 +690,7 @@ function set_route()
 # Arguments:
 # +sgp_nm -- the security group name.
 # Returns:      
-#  the security group identifier, or blanc if it is not found.  
+#  the security group identifier int global __RESULT variable.  
 #===============================================================================
 function get_security_group_id()
 {
@@ -605,6 +700,7 @@ function get_security_group_id()
       return 128
    fi
 
+   __RESULT=''
    local exit_code=0
    declare -r sgp_nm="${1}"
    local sgp_id=''
@@ -616,9 +712,15 @@ function get_security_group_id()
          --output text)"
          
    exit_code=$?
-  
-   echo "${sgp_id}"
- 
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving security group ID.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${sgp_id}"
+   
    return "${exit_code}"
 }
 
@@ -632,7 +734,7 @@ function get_security_group_id()
 # +sgp_nm         -- the security group name.
 # +sgp_desc       -- the security group description.
 # Returns:      
-#  the security group identifier.  
+#  none.  
 #===============================================================================
 function create_security_group()
 {
@@ -657,9 +759,12 @@ function create_security_group()
         --output text)"
         
    exit_code=$?
-
-   echo "${sgp_id}"
-
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating security group.'
+   fi  
+ 
    return "${exit_code}"
 }
 
@@ -685,8 +790,14 @@ function delete_security_group()
    declare -r sgp_id="${1}"
       
    aws ec2 delete-security-group --group-id "${sgp_id}" 
+   
    exit_code=$?
    
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting security group.'
+   fi  
+ 
    return "${exit_code}"
 }
 
@@ -701,7 +812,7 @@ function delete_security_group()
 # +protocol  -- the IP protocol name (tcp , udp , icmp , icmpv6), default is tcp. 
 # +from_cidr -- the CIDR block representing the origin of the traffic.
 # Returns:      
-#  None
+#  none.
 #===============================================================================
 function allow_access_from_cidr()
 {
@@ -725,6 +836,11 @@ function allow_access_from_cidr()
 
    exit_code=$?
 
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: allowing access from CIDR.'
+   fi  
+ 
    return "${exit_code}"
 }
 
@@ -765,6 +881,11 @@ function allow_access_from_security_group()
 
    exit_code=$?
 
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: allowing access from security group.'
+   fi  
+ 
    return "${exit_code}"
 }
 
@@ -781,7 +902,7 @@ function allow_access_from_security_group()
 # +from_sgp_id -- the security group identifier representing the origin of the
 #                 traffic. 
 # Returns:      
-#  None
+#  none.
 #===============================================================================
 function revoke_access_from_security_group()
 {
@@ -805,6 +926,11 @@ function revoke_access_from_security_group()
 
    exit_code=$?
 
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: revoking access from security group.'
+   fi  
+ 
    return "${exit_code}"
 }
 
@@ -819,7 +945,7 @@ function revoke_access_from_security_group()
 # +protocol  -- the IP protocol name (tcp , udp , icmp , icmpv6), default is tcp. 
 # +from_cidr -- the CIDR block representing the origin of the traffic.
 # Returns:      
-#  None
+#  none.
 #===============================================================================
 function revoke_access_from_cidr()
 {
@@ -843,6 +969,11 @@ function revoke_access_from_cidr()
        
    exit_code=$?
 
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: revoking access from CIDR.'
+   fi  
+ 
    return "${exit_code}"
 }
 
@@ -854,7 +985,7 @@ function revoke_access_from_cidr()
 # Arguments:
 # +instance_nm -- the instance name.
 # Returns:      
-#  the status of the instance, or blanc if the instance is not found.  
+#  the status of the instance in the global __RESULT variable.  
 #===============================================================================
 function get_instance_state()
 {
@@ -864,6 +995,8 @@ function get_instance_state()
       return 128
    fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r instance_nm="${1}"
    local instance_st=''
   
@@ -873,9 +1006,17 @@ function get_instance_state()
        --query 'Reservations[*].Instances[*].State.Name' \
        --output text)"
 
-   echo "${instance_st}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting instance state.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${instance_st}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -886,7 +1027,7 @@ function get_instance_state()
 # Arguments:
 # +instance_nm -- the instance name.
 # Returns:      
-#  the instance public address, or blanc if the instance is not found.  
+#  the instance public address in the __RESULT global variable.
 #===============================================================================
 function get_public_ip_address_associated_with_instance()
 {
@@ -896,6 +1037,8 @@ function get_public_ip_address_associated_with_instance()
       return 128
    fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r instance_nm="${1}"
    local instance_ip=''
   
@@ -905,9 +1048,17 @@ function get_public_ip_address_associated_with_instance()
        --query 'Reservations[*].Instances[*].PublicIpAddress' \
        --output text )"
 
-   echo "${instance_ip}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting public IP address associated with the instance.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${instance_ip}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -918,7 +1069,7 @@ function get_public_ip_address_associated_with_instance()
 # Arguments:
 # +instance_nm -- the instance name.
 # Returns:      
-#  the instance private address, or blanc if the instance is not found.  
+#  the instance private address in the __RESULT global variable.
 #===============================================================================
 function get_private_ip_address_associated_with_instance()
 {
@@ -928,6 +1079,8 @@ function get_private_ip_address_associated_with_instance()
       return 128
    fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r instance_nm="${1}"
    local instance_ip=''
   
@@ -937,9 +1090,17 @@ function get_private_ip_address_associated_with_instance()
        --query 'Reservations[*].Instances[*].PrivateIpAddress' \
        --output text )"
 
-   echo "${instance_ip}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting private IP address associated with the instance.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${instance_ip}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -950,7 +1111,7 @@ function get_private_ip_address_associated_with_instance()
 # Arguments:
 # +instance_nm -- the instance name.
 # Returns:      
-#  the instance identifier, or blanc if the instance is not found.  
+#  the instance identifier in the global __RESULT variable. 
 #===============================================================================
 function get_instance_id()
 {
@@ -961,7 +1122,7 @@ function get_instance_id()
    fi
 
    __RESULT=''
-   exit_code=0
+   local exit_code=0
    declare -r instance_nm="${1}"
    local instance_id=''
 
@@ -1007,13 +1168,13 @@ function run_instance()
       return 128
    fi
    
+   local exit_code=0
    declare -r instance_nm="${1}"
    declare -r sgp_id="${2}"
    declare -r subnet_id="${3}"
    declare -r private_ip="${4}"
    declare -r image_id="${5}"
    declare -r cloud_init_file="${6}"
-   local exit_code=0
    local instance_id=''
      
    instance_id="$(aws ec2 run-instances \
@@ -1039,6 +1200,7 @@ function run_instance()
    fi    
    
    aws ec2 wait instance-status-ok --instance-ids "${instance_id}"
+   
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1067,12 +1229,29 @@ function stop_instance()
       return 128
    fi
 
+   local exit_code=0
    declare -r instance_id="${1}"
 
    aws ec2 stop-instances --instance-ids "${instance_id}" 
+   
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: stopping instance.'
+      return "${exit_code}"
+   fi   
+ 
    aws ec2 wait instance-stopped --instance-ids "${instance_id}" 
+   
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: waiting for instance.'
+   fi 
 
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1098,6 +1277,7 @@ function delete_instance()
       return 128
    fi
 
+   local exit_code=0
    declare -r instance_id="${1}"
    local wait_terminated=''
    
@@ -1106,14 +1286,30 @@ function delete_instance()
       wait_terminated="${2}"
    fi
 
-   aws ec2 terminate-instances --instance-ids "${instance_id}" 
+   aws ec2 terminate-instances --instance-ids "${instance_id}"
    
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: terminating instance.'
+      return "${exit_code}" 
+   fi 
+
    if [[ 'and_wait' == "${wait_terminated}" ]]
    then
       aws ec2 wait instance-terminated --instance-ids "${instance_id}"
+      
+      exit_code=$?
+   
+      if [[ 0 -ne "${exit_code}" ]]
+      then
+         echo 'ERROR: waiting for instance.'
+         return "${exit_code}" 
+      fi 
    fi
    
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1361,17 +1557,13 @@ function __get_association_id()
    association_id="$(aws ec2 describe-iam-instance-profile-associations \
        --query "IamInstanceProfileAssociations[? InstanceId == '${instance_id}' && IamInstanceProfile.Id == '${profile_id}' ].AssociationId" \
        --output text)"
+  
    exit_code=$?
 
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving the association ID.' 
       return "${exit_code}"
-   fi
-   
-   if [[ -z "${association_id}" ]]
-   then
-      echo 'Association ID not found.'
    fi
    
    __RESULT="${association_id}"
@@ -1412,11 +1604,21 @@ function create_image()
         --query 'ImageId' \
         --output text)" 
   
-   exit_code=$?    
-   
-   if [[ 0 -eq "${exit_code}" ]]    
+   exit_code=$?
+
+   if [[ 0 -ne "${exit_code}" ]]
    then
-      aws ec2 wait image-available --image-ids "${img_id}"
+      echo 'ERROR: creating imaged.' 
+      return "${exit_code}"
+   fi   
+   
+   aws ec2 wait image-available --image-ids "${img_id}"
+
+   exit_code=$?
+
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: waiting for image.' 
    fi
    
    return "${exit_code}" 
@@ -1429,7 +1631,7 @@ function create_image()
 # Arguments:
 # +img_nm -- the image name.
 # Returns:      
-#  the Image identifier.
+#  the Image identifier int the global __RESULT variable.
 #===============================================================================
 function get_image_id()
 {
@@ -1439,6 +1641,8 @@ function get_image_id()
       return 128
    fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r img_nm="${1}"
    local img_id=''
 
@@ -1447,9 +1651,17 @@ function get_image_id()
         --query 'Images[*].ImageId' \
         --output text)"
   
-   echo "${img_id}"
- 
-   return 0
+   exit_code=$?
+
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving the imaged ID.' 
+      return "${exit_code}"
+   fi
+   
+   __RESULT="${img_id}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1459,7 +1671,7 @@ function get_image_id()
 # Arguments:
 # +img_nm -- the image name.
 # Returns:      
-#  the Image state.
+#  the Image state in the global __RESULT variable.
 #===============================================================================
 function get_image_state()
 {
@@ -1469,17 +1681,27 @@ function get_image_state()
       return 128
    fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r img_nm="${1}"
-   local img_state=''
+   local img_st=''
 
-   img_state="$(aws ec2 describe-images \
+   img_st="$(aws ec2 describe-images \
         --filters Name=name,Values="${img_nm}" \
         --query 'Images[*].State' \
         --output text)"
   
-   echo "${img_state}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting image state.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${img_st}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1491,7 +1713,7 @@ function get_image_state()
 # Arguments:
 # +img_nm -- the image name.
 # Returns:      
-#  the list of Image Snapshot identifiers, or blanc if no Snapshot is found.  
+#  the list of Image Snapshot identifiers in the global __RESULT variable.
 #===============================================================================
 function get_image_snapshot_ids()
 {
@@ -1501,6 +1723,8 @@ function get_image_snapshot_ids()
       return 128
    fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r img_nm="${1}"
 
    # AWS CLI provides built-in JSON-based output filtering capabilities with the --query option,
@@ -1512,9 +1736,17 @@ function get_image_snapshot_ids()
        --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' \
        --output text)"
   
-   echo "${img_snapshot_ids}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting image snapshot IDs.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${img_snapshot_ids}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1535,11 +1767,19 @@ function delete_image()
       return 128
    fi
 
+   local exit_code=0
    declare -r img_id="${1}"
 
    aws ec2 deregister-image --image-id "${img_id}"
 
-   return 0
+   exit_code=$?
+
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting image.' 
+   fi
+   
+   return "${exit_code}" 
 }
 
 #===============================================================================
@@ -1561,11 +1801,19 @@ function delete_image_snapshot()
       return 128
    fi
 
+   local exit_code=0
    declare -r img_snapshot_id="${1}"
 
    aws ec2 delete-snapshot --snapshot-id "${img_snapshot_id}" 
+   
+   exit_code=$?
 
-   return 0
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting image snapshot.' 
+   fi
+   
+   return "${exit_code}" 
 }
 
 #===============================================================================
@@ -1577,8 +1825,7 @@ function delete_image_snapshot()
 # Arguments:
 # +eip -- the Elastic IP Public address.
 # Returns:      
-#  the allocation identifier, or blanc if the address is not allocate with your
-#  account.  
+#  the allocation identifier in the global __RESULT variable.
 #===============================================================================
 function get_allocation_id()
 {
@@ -1588,6 +1835,8 @@ function get_allocation_id()
       return 128
    fi
 
+   __RESULT=''
+   local exit_code=0
    declare -r eip="${1}"
    local allocation_id=''
           
@@ -1596,9 +1845,17 @@ function get_allocation_id()
        --query 'Addresses[*].AllocationId' \
        --output text)"
 
-   echo "${allocation_id}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting allocation ID.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${allocation_id}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1610,20 +1867,29 @@ function get_allocation_id()
 # Arguments:
 #  None
 # Returns:      
-#  A list of allocation identifiers, or blanc if no address is allocated with 
-#  your account.  
+#  A list of allocation identifiers in the __RESULT global variable.
 #===============================================================================
 function get_all_allocation_ids()
 {
+   __RESULT=''
+   local exit_code=0
    local allocation_ids=''
           
    allocation_ids="$(aws ec2 describe-addresses \
        --query 'Addresses[*].AllocationId' \
        --output text)"
 
-   echo "${allocation_ids}"
- 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: getting allocation IDs.'
+      return "${exit_code}"
+   fi 
+
+   __RESULT="${allocation_ids}"
+   
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1640,7 +1906,7 @@ function get_all_allocation_ids()
 function get_unused_public_ip_address()
 {
    __RESULT=''
-   exit_code=0
+   local exit_code=0
    local eip=''
    local eip_list=''
    
@@ -1720,11 +1986,18 @@ function release_public_ip_address()
       return 128
    fi
 
+   local exit_code=0
    declare -r allocation_id="${1}"
 
-   aws ec2 release-address --allocation-id "${allocation_id}" 
+   aws ec2 release-address --allocation-id "${allocation_id}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]] 
+   then
+      echo 'ERROR: releasing public IP address.'
+   fi
 
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1748,14 +2021,22 @@ function release_all_public_ip_addresses()
       return 128
    fi
    
+   local exit_code=0
    declare -r allocation_ids="${1}"
           
    for id in ${allocation_ids}
    do
       aws ec2 release-address --allocation-id "${id}" 
+      exit_code=$?
+   
+      if [[ 0 -ne "${exit_code}" ]] 
+      then
+         echo 'ERROR: releasing public IP address.'
+         return "${exit_code}"
+      fi      
    done
 
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -1823,11 +2104,9 @@ function generate_keypair()
       return 128
    fi
    
-   __RESULT=''
    local exit_code=0
    declare -r key_nm="${1}"
    declare -r key_file="${2}"
-
    local key=''
    
    aws ec2 create-key-pair --key-name "${key_nm}" --query 'KeyMaterial' \

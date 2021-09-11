@@ -5,14 +5,15 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-if [[ $# -lt 1 ]]
-then
-   echo '* ERROR: missing mandatory arguments..'
+if [ "$#" -lt 1 ]; then
+   echo "USAGE: webphp_id"
+   echo "EXAMPLE: 1"
+   echo "Only provided $# arguments"
    exit 1
-else
-   webphp_id="${1}"
-   export webphp_id="${1}"
 fi
+
+webphp_id="${1}"
+export webphp_id="${1}"
 
 echo '************'
 echo "Webphp box ${webphp_id}" 
@@ -29,11 +30,14 @@ if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Webphp box not found.'
 else
-   instance_st="$(get_instance_state "${webphp_nm}")"
+   get_instance_state "${webphp_nm}"
+   instance_st="${__RESULT}"
+   
    echo "* Webphp box ID: ${instance_id} (${instance_st})."
 fi
 
-sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
+get_security_group_id "${webphp_sgp_nm}"
+sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -42,7 +46,8 @@ else
    echo "* Webphp security group ID: ${sgp_id}."
 fi
 
-eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"
+get_public_ip_address_associated_with_instance "${webphp_nm}"
+eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
@@ -51,7 +56,8 @@ else
    echo "* Webphp public IP address: ${eip}."
 fi
 
-db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
+get_security_group_id "${DB_INST_SEC_GRP_NM}"
+db_sgp_id="${__RESULT}"
 
 if [[ -z "${db_sgp_id}" ]]
 then
@@ -60,7 +66,8 @@ else
    echo "* database security group ID: ${db_sgp_id}."
 fi
 
-adm_sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
+get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
+adm_sgp_id="${__RESULT}"
 
 if [[ -z "${adm_sgp_id}" ]]
 then
@@ -78,7 +85,8 @@ rm -rf "${TMP_DIR:?}"/webphp
 ## Load balancer 
 ## 
 
-is_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_INST_NM}" "${instance_id}")"
+check_instance_is_registered_with_loadbalancer "${LBAL_INST_NM}" "${instance_id}"
+is_registered="${__RESULT}"
 
 if [[ 'true' == "${is_registered}" ]]
 then
@@ -91,7 +99,8 @@ fi
 
 if [[ -n "${instance_id}" ]]
 then
-   instance_st="$(get_instance_state "${webphp_nm}")"
+   get_instance_state "${webphp_nm}"
+   instance_st="${__RESULT}"
 
    if [[ 'terminated' != "${instance_st}" ]]
    then
@@ -107,7 +116,8 @@ fi
 ## Database grants 
 ## 
 
-db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
+get_security_group_id "${DB_INST_SEC_GRP_NM}"
+db_sgp_id="${__RESULT}"
 
 if [[ -n "${db_sgp_id}" && -n ${sgp_id} ]]
 then
@@ -156,7 +166,8 @@ fi
 
 if [[ -n "${eip}" ]]
 then
-   allocation_id="$(get_allocation_id "${eip}")"  
+   get_allocation_id "${eip}"
+   allocation_id="${__RESULT}" 
    
    if [[ -n "${allocation_id}" ]] 
    then

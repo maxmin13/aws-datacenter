@@ -12,7 +12,7 @@ Establish SSH Session:
 ----------------------
 
 # Enable security group access on port 38142
-rm -f ~/.ssh/known_hosts && ssh -i webphp1-keys.pem -p 38142 webphp-user@3.249.33.243
+rm -f ~/.ssh/known_hosts && ssh -i webphp1-keys.pem -p 38142 webphp-user@3.249.171.32
 
 ------
 Monit:

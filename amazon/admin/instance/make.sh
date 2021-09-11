@@ -5,12 +5,16 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
-###############################################
+##########################################################################################
 # Makes and run an Admin box instance, 
 # The instance is built from the Shared 
 # Linux hardened image.
 # SSH on 38142.
 # No root access to the instance.
+# The Admin instance is created with an instance profile attached with no role.
+# The role is attached to the profile when needed, ex: when installing SSL in the load
+# balancer, the Route53role is attached to the profile because the instance has to insert
+# a record in the DNS.
 # 
 # Program installed: 
 # rsyslog receiver for all logs; 
@@ -20,10 +24,8 @@ set +o xtrace
 # javaMail;
 # phpMyAdmin;
 #
-###############################################
+##########################################################################################
 
-ADMIN_INST_PROFILE_NM="Route53InstanceProfile"
-AWS_ROUTE53_ROLE_NM='Route53role'
 APACHE_INSTALL_DIR='/etc/httpd'
 APACHE_DOCROOT_DIR='/var/www/html'
 APACHE_SITES_AVAILABLE_DIR='/etc/httpd/sites-available'
@@ -65,7 +67,8 @@ else
    echo "* main subnet ID: ${subnet_id}."
 fi
 
-db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
+get_security_group_id "${DB_INST_SEC_GRP_NM}"
+db_sgp_id="${__RESULT}"
   
 if [[ -z "${db_sgp_id}" ]]
 then
@@ -85,7 +88,8 @@ else
    echo "* database Endpoint: ${db_endpoint}."
 fi
 
-shared_image_id="$(get_image_id "${SHARED_IMG_NM}")"
+get_image_id "${SHARED_IMG_NM}"
+shared_image_id="${__RESULT}"
 
 if [[ -z "${shared_image_id}" ]]
 then
@@ -116,13 +120,16 @@ mkdir "${TMP_DIR}"/"${admin_dir}"
 ## Security group.
 ## 
 
-sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
+get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
+sgp_id="${__RESULT}"
 
 if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the Admin security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${ADMIN_INST_SEC_GRP_NM}" 'Admin security group.')"  
+   create_security_group "${dtc_id}" "${ADMIN_INST_SEC_GRP_NM}" 'Admin security group.'
+   get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
+   sgp_id="${__RESULT}"
 
    echo 'Created Admin security group.'
 fi
@@ -142,41 +149,6 @@ allow_access_from_security_group "${db_sgp_id}" "${DB_INST_PORT}" 'tcp' "${sgp_i
 set -e
    
 echo 'Granted access to the database.'
-
-#
-# Instance profile.
-#
-
-# Applications that run on EC2 instances must sign their API requests with AWS credentials.
-# For applications, AWS CLI, and Tools for Windows PowerShell commands that run on the instance, 
-# you do not have to explicitly get the temporary security credentials, the AWS SDKs, AWS CLI, and 
-# Tools for Windows PowerShell automatically get the credentials from the EC2 instance metadata 
-# service and use them. 
-
-check_instance_profile_exists "${ADMIN_INST_PROFILE_NM}"
-instance_profile_exists="${__RESULT}"
-
-if [[ 'false' == "${instance_profile_exists}" ]]
-then
-   create_instance_profile "${ADMIN_INST_PROFILE_NM}" > /dev/null
-
-   echo 'Admin instance profile created.'
-else
-   echo 'WARN: Admin instance profile already created.'
-fi
-
-## Check instance profile has the Route 53 role associated.
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}" > /dev/null
-has_role_associated="${__RESULT}"
-
-if [[ 'false' == "${has_role_associated}" ]]
-then
-   associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}"
-   
-   echo 'Route 53 role associated to the instance profile.'
-else
-   echo 'WARN: Route 53 role already associated to the instance profile.'
-fi
 
 ##
 ## Cloud init.
@@ -220,15 +192,16 @@ instance_id="${__RESULT}"
 
 if [[ -n "${instance_id}" ]]
 then
-   instance_state="$(get_instance_state "${ADMIN_INST_NM}")"
+   get_instance_state "${ADMIN_INST_NM}"
+   instance_st="${__RESULT}"
    
-   if [[ 'running' == "${instance_state}" || \
-         'stopped' == "${instance_state}" || \
-         'pending' == "${instance_state}" ]] 
+   if [[ 'running' == "${instance_st}" || \
+         'stopped' == "${instance_st}" || \
+         'pending' == "${instance_st}" ]] 
    then
-      echo "WARN: Admin box already created (${instance_state})."
+      echo "WARN: Admin box already created (${instance_st})."
    else
-      echo "ERROR: Admin box already created (${instance_state})."
+      echo "ERROR: Admin box already created (${instance_st})."
       exit 1
    fi
 else
@@ -248,6 +221,28 @@ else
    echo "Admin box created."
 fi
 
+#
+# Instance profile.
+#
+
+# Applications that run on EC2 instances must sign their API requests with AWS credentials.
+# For applications, AWS CLI, and Tools for Windows PowerShell commands that run on the instance, 
+# you do not have to explicitly get the temporary security credentials, the AWS SDKs, AWS CLI, and 
+# Tools for Windows PowerShell automatically get the credentials from the EC2 instance metadata 
+# service and use them. 
+
+check_instance_profile_exists "${ADMIN_INST_PROFILE_NM}"
+instance_profile_exists="${__RESULT}"
+
+if [[ 'false' == "${instance_profile_exists}" ]]
+then
+   create_instance_profile "${ADMIN_INST_PROFILE_NM}" > /dev/null
+
+   echo 'Admin instance profile created.'
+else
+   echo 'WARN: Admin instance profile already created.'
+fi
+
 check_instance_has_instance_profile_associated "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}"
 is_profile_associated="${__RESULT}"
 
@@ -260,7 +255,8 @@ then
 fi
 
 # Get the public IP address assigned to the instance. 
-eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
+get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
+eip="${__RESULT}"
 
 echo "Admin box public address: ${eip}."
 
@@ -275,12 +271,10 @@ remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
 wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
-    "${key_pair_file}" \
-    "${eip}" \
-    "${SHARED_INST_SSH_PORT}" \
-    "${ADMIN_INST_USER_NM}"  
+    "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"  
 
-sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+    -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_default_http_portSED/${ADMIN_APACHE_DEFAULT_HTTP_PORT}/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \

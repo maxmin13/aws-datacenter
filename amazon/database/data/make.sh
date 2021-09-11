@@ -21,11 +21,14 @@ if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Admin box not found.'
 else
-   instance_st="$(get_instance_state "${ADMIN_INST_NM}")"
+   get_instance_state "${ADMIN_INST_NM}"
+   instance_st="${__RESULT}"
+   
    echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
-sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
+get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
+sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -35,7 +38,8 @@ else
    echo "* Admin security group ID: ${sgp_id}."
 fi
 
-eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
+get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
+eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then
@@ -85,7 +89,7 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${ADMIN_INST_USER_NM}"  
 
 sed "s/SEDdatabase_nameSED/${DB_NM}/g" \
-    "${TEMPLATE_DIR}"/"${database_dir}"/sql/dbs_template.sql > "${TMP_DIR}"/"${database_dir}"/dbs.sql
+    "${TEMPLATE_DIR}"/database/sql/dbs_template.sql > "${TMP_DIR}"/"${database_dir}"/dbs.sql
     
 echo 'dbs.sql ready.'
 
@@ -96,7 +100,7 @@ sed -e "s/SEDdatabase_nameSED/${DB_NM}/g" \
     -e "s/SEDDBPASS_webphprwSED/${DB_WEBPHP_USER_PWD}/g" \
     -e "s/SEDDBUSR_javamailSED/${DB_JAVAMAIL_USER_NM}/g" \
     -e "s/SEDDBPASS_javamailSED/${DB_JAVAMAIL_USER_PWD}/g" \
-       "${TEMPLATE_DIR}"/"${database_dir}"/sql/dbusers_template.sql > "${TMP_DIR}"/"${database_dir}"/dbusers.sql
+       "${TEMPLATE_DIR}"/database/sql/dbusers_template.sql > "${TMP_DIR}"/"${database_dir}"/dbusers.sql
        
 echo 'dbusers.sql ready.'    
     
@@ -104,7 +108,7 @@ sed -e "s/SEDdatabase_hostSED/${db_endpoint}/g" \
     -e "s/SEDdatabase_main_userSED/${DB_MAIN_USER_NM}/g" \
     -e "s/SEDdatabase_main_user_passwordSED/${DB_MAIN_USER_PWD}/g" \
     -e "s/SEDdatabase_nameSED/${DB_NM}/g" \
-       "${TEMPLATE_DIR}"/"${database_dir}"/install_database_template.sh > "${TMP_DIR}"/"${database_dir}"/install_database.sh  
+       "${TEMPLATE_DIR}"/database/install_database_template.sh > "${TMP_DIR}"/"${database_dir}"/install_database.sh  
 
 echo 'install_database.sh ready.' 
 

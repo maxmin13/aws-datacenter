@@ -30,7 +30,8 @@ else
    then
       echo '* WARN: a registration request has already been submitted.'
    else
-      availability="$(check_domain_availability "${MAXMIN_TLD}")"
+      check_domain_availability "${MAXMIN_TLD}"
+      availability="${__RESULT}"
 
       if [[ "${availability}" != 'AVAILABLE' ]]
       then

@@ -40,13 +40,16 @@ echo
 ## Security group
 ##
 
-sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
+get_security_group_id "${DB_INST_SEC_GRP_NM}"
+sgp_id="${__RESULT}"
   
 if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the database security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${DB_INST_SEC_GRP_NM}" 'Database security group.')"
+   create_security_group "${dtc_id}" "${DB_INST_SEC_GRP_NM}" 'Database security group.'
+   get_security_group_id "${DB_INST_SEC_GRP_NM}"
+   sgp_id="${__RESULT}"
 
    echo 'Database security group created.'
 fi

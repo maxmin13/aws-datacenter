@@ -29,14 +29,15 @@ LBAL_DOCROOT_ID='loadbalancer.maxmin.it'
 MONIT_HTTP_VIRTUALHOST_CONFIG_FILE='monit.http.virtualhost.maxmin.it.conf'
 MONIT_DOCROOT_ID='monit.maxmin.it'
 
-if [[ $# -lt 1 ]]
-then
-   echo '* ERROR: missing mandatory arguments.'
+if [ "$#" -lt 1 ]; then
+   echo "USAGE: webphp_id"
+   echo "EXAMPLE: 1"
+   echo "Only provided $# arguments"
    exit 1
-else
-   webphp_id="${1}"
-   export webphp_id="${1}"
 fi
+
+webphp_id="${1}"
+export webphp_id="${1}"
    
 webphp_nm="${WEBPHP_INST_NM/<ID>/"${webphp_id}"}"
 webphp_dir=webphp"${webphp_id}" 
@@ -74,7 +75,8 @@ else
    echo "* main subnet ID: ${subnet_id}."
 fi
 
-shared_image_id="$(get_image_id "${SHARED_IMG_NM}")"
+get_image_id "${SHARED_IMG_NM}"
+shared_image_id="${__RESULT}"
 
 if [[ -z "${shared_image_id}" ]]
 then
@@ -84,7 +86,8 @@ else
    echo "* Shared image ID: ${shared_image_id}."
 fi
 
-db_sgp_id="$(get_security_group_id "${DB_INST_SEC_GRP_NM}")"
+get_security_group_id "${DB_INST_SEC_GRP_NM}"
+db_sgp_id="${__RESULT}"
   
 if [[ -z "${db_sgp_id}" ]]
 then
@@ -112,11 +115,14 @@ then
    echo '* ERROR: Admin box not found.'
    exit 1
 else
-   adm_instance_st="$(get_instance_state "${ADMIN_INST_NM}")"
+   get_instance_state "${ADMIN_INST_NM}"
+   adm_instance_st="${__RESULT}"
+   
    echo "* Admin box ID: ${adm_instance_id} (${adm_instance_st})."
 fi
 
-adm_sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
+get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
+adm_sgp_id="${__RESULT}"
 
 if [[ -z "${adm_sgp_id}" ]]
 then
@@ -126,7 +132,8 @@ else
    echo "* Admin security group ID: ${adm_sgp_id}."
 fi
 
-adm_pip="$(get_private_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
+get_private_ip_address_associated_with_instance "${ADMIN_INST_NM}"
+adm_pip="${__RESULT}"
 
 if [[ -z "${adm_pip}" ]]
 then
@@ -136,7 +143,9 @@ else
    echo "* Admin box private IP address: ${adm_pip}."
 fi
 
-loadbalancer_dns_nm="$(get_loadbalancer_dns_name "${LBAL_INST_NM}")"
+get_loadbalancer_dns_name "${LBAL_INST_NM}"
+loadbalancer_dns_nm="${__RESULT}" 
+
 if [[ -z "${loadbalancer_dns_nm}" ]]
 then
    echo '* ERROR: load balancer not found.'
@@ -145,7 +154,8 @@ else
    echo "* load balancer: ${loadbalancer_dns_nm}."
 fi
 
-lbal_sgp_id="$(get_security_group_id "${LBAL_INST_SEC_GRP_NM}")"
+get_security_group_id "${LBAL_INST_SEC_GRP_NM}"
+lbal_sgp_id="${__RESULT}"
 
 if [[ -z "${lbal_sgp_id}" ]]
 then
@@ -166,13 +176,16 @@ echo
 ## Security group 
 ## 
 
-sgp_id="$(get_security_group_id "${webphp_sgp_nm}")"
+get_security_group_id "${webphp_sgp_nm}"
+sgp_id="${__RESULT}"
 
 if [[ -n "${sgp_id}" ]]
 then
    echo 'WARN: the Webphp security group is already created.'
 else
-   sgp_id="$(create_security_group "${dtc_id}" "${webphp_sgp_nm}" "${webphp_sgp_nm}")"  
+   create_security_group "${dtc_id}" "${webphp_sgp_nm}" "${webphp_sgp_nm}" 
+   get_security_group_id "${webphp_sgp_nm}"
+   sgp_id="${__RESULT}"
    
    echo 'Created Webphp security group.'
 fi
@@ -250,15 +263,16 @@ instance_id="${__RESULT}"
 
 if [[ -n "${instance_id}" ]]
 then
-   instance_state="$(get_instance_state "${webphp_nm}")"
+   get_instance_state "${webphp_nm}"
+   instance_st="${__RESULT}"
    
-   if [[ 'running' == "${instance_state}" || \
-         'stopped' == "${instance_state}" || \
-         'pending' == "${instance_state}" ]]
+   if [[ 'running' == "${instance_st}" || \
+         'stopped' == "${instance_st}" || \
+         'pending' == "${instance_st}" ]]
    then
-      echo "WARN: Webphp box already created (${instance_state})."
+      echo "WARN: Webphp box already created (${instance_st})."
    else
-      echo "ERROR: Webphp box already created (${instance_state})."
+      echo "ERROR: Webphp box already created (${instance_st})."
       
       exit 1
    fi
@@ -280,7 +294,8 @@ else
 fi
 
 # Get the public IP address assigned to the instance. 
-eip="$(get_public_ip_address_associated_with_instance "${webphp_nm}")"
+get_public_ip_address_associated_with_instance "${webphp_nm}"
+eip="${__RESULT}"
 
 echo "Webphp box public address: ${eip}."
 
@@ -321,7 +336,8 @@ scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_
     "${TMP_DIR}"/"${webphp_dir}"/install_webphp.sh   
     
 # Get the account number.
-aws_account="$(get_account_number)"
+get_account_number
+aws_account="${__RESULT}"
 
 # Make the AES key for PHP sessions (encryption/decryption).
 # Its a hex encoded version of $PHP_SESSIONS_PWD
@@ -525,10 +541,11 @@ else
 fi
 
 ## 
-## load balancer 
+## Load balancer 
 ## 
 
-is_registered="$(check_instance_is_registered_with_loadbalancer "${LBAL_INST_NM}" "${instance_id}")"
+check_instance_is_registered_with_loadbalancer "${LBAL_INST_NM}" "${instance_id}"
+is_registered="${__RESULT}"
 
 if [[ 'true' == "${is_registered}" ]]
 then

@@ -22,6 +22,28 @@ set +o xtrace
 # automatically every 60 days.
 ####################################################################################
 
+function __wait()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments'
+      return 1
+   fi
+   
+   local seconds="${1}"
+   local count=0
+   
+   while [[ "${count}" -lt "${seconds}" ]]; do
+      printf '.'
+      sleep 1
+      count=$((count+1))
+   done
+   
+   printf '\n'
+
+   return 0
+}
+
 lbal_log_file='/var/log/lbal_request_ssl_certificate.log'
 ADMIN_INST_USER_NM='SEDadmin_inst_user_nmSED'
 ADMIN_INST_EMAIL='SEDadmin_inst_emailSED'
@@ -40,7 +62,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Change ownership in the script directory to delete it from dev machine.
 trap "chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}" ERR EXIT
 
-# It the domain name is fully qualified, remove the trailing dot.
+# If the domain name is fully qualified, remove the trailing dot.
 sub_domain="$(echo "${DOMAIN_NM}" | cut -d'.' -f 1)"
 domain="$(echo "${DOMAIN_NM}" | cut -d'.' -f 2)"
 suffix="$(echo "${DOMAIN_NM}" | cut -d'.' -f 3)"
@@ -57,13 +79,18 @@ cd "${script_dir}" || exit 1
 # When the entries finished propagating we can install acme.sh and issue a certificate using the acme-dns method.
 # All settings will be saved and the certificate will be renewed automatically.
 
+# Since we are using Let's Encrypt staging environment, delete the previous acme.sh installation to force
+# the dns challenge to be run again.
+# If requesting a real certificate do not delete the previous installation.
+acme_sh_home_dir='/root/.acme.sh'
+rm -rf "${acme_sh_home_dir:?}"
+
 echo 'Installing acme.sh client ...'
 
 {
    curl https://get.acme.sh | sh 
 }  >> "${lbal_log_file}" 2>&1
 
-acme_sh_home_dir='/root/.acme.sh'
 "${acme_sh_home_dir}"/acme.sh -f --set-default-ca --server letsencrypt >> "${lbal_log_file}" 2>&1 
 
 ##
@@ -71,14 +98,48 @@ acme_sh_home_dir='/root/.acme.sh'
 ## 
 
 echo 'Requesting SSL certificate ...'
+ 
+## Remove '--staging' to issue a valid certificate. Use '--debug 2' to debug the call.
+## It may be that IAM is slow to give the permission to call Route 53 (see: ssl/loadbalancer.make.sh), retry after a while.
+"${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
+echo 'Certificate successfully requested.' ||
+{
+   echo 'Let''s wait a bit and try again (second time).' >> "${lbal_log_file}" 2>&1
+   
+   __wait 120
+   
+   echo 'Let''s try now.' >> "${lbal_log_file}" 2>&1
+   
+   "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
+   echo 'Certificate successfully requested.' ||
+   {
+      echo 'Let''s wait a bit and try again (third time).' >> "${lbal_log_file}" 2>&1
+      __wait 120
+   
+      echo 'Let''s try now.' >> "${lbal_log_file}" 2>&1
+   
+      "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
+      echo 'Certificate successfully requested.' ||
+      {
 
-## --debug 2 
-"${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 
 
-echo 'Certificate successfully retrieved.'
+         echo 'Let''s wait a bit and try again (fourth time).' >> "${lbal_log_file}" 2>&1
+         __wait 120
+   
+         echo 'Let''s try now.' >> "${lbal_log_file}" 2>&1
+   
+         "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
+         echo 'Certificate successfully requested.' ||
+         {
+            echo 'ERROR: requesting certificate.'
+            exit 1     
+         }
+      }      
+   }       
+}
 
-cp "${acme_sh_home_dir}"/"${cert_domain}"/www.maxmin.it.cer "${CERT_HOME_DIR}"/"${CRT_FILE_NM}"
-cp "${acme_sh_home_dir}"/"${cert_domain}"/www.maxmin.it.key "${CERT_HOME_DIR}"/"${KEY_FILE_NM}"
+cp "${acme_sh_home_dir}"/"${cert_domain}"/${cert_domain}.cer "${CERT_HOME_DIR}"/"${CRT_FILE_NM}"
+cp "${acme_sh_home_dir}"/"${cert_domain}"/${cert_domain}.key "${CERT_HOME_DIR}"/"${KEY_FILE_NM}"
 cp "${acme_sh_home_dir}"/"${cert_domain}"/fullchain.cer "${CERT_HOME_DIR}"/"${FULL_CHAIN_FILE_NM}"
    
 echo "Certificates copied in ${CERT_HOME_DIR}." >> "${lbal_log_file}" 2>&1 

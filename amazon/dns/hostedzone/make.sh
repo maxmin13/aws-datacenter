@@ -109,8 +109,11 @@ fi
 
 ## Create an alias that points to the load balancer 
 
-target_lbal_dns_nm="$(get_loadbalancer_dns_name "${LBAL_INST_NM}")"
-target_lbal_dns_hosted_zone_id="$(get_loadbalancer_hosted_zone_id "${LBAL_INST_NM}")"
+get_loadbalancer_dns_name "${LBAL_INST_NM}"
+target_lbal_dns_nm="${__RESULT}" 
+
+get_loadbalancer_hosted_zone_id "${LBAL_INST_NM}"
+target_lbal_dns_hosted_zone_id="${__RESULT}" 
 
 create_loadbalancer_record "${lbal_dns_nm}" "${target_lbal_dns_nm}" "${target_lbal_dns_hosted_zone_id}"
 request_id="${__RESULT}"     
@@ -142,7 +145,8 @@ fi
 
 # Create a record that points to the Admin website
 
-target_admin_eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
+get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
+target_admin_eip="${__RESULT}"
 
 create_record 'A' "${admin_dns_nm}" "${target_admin_eip}"       
 request_id="${__RESULT}"

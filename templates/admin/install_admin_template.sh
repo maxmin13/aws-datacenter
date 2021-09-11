@@ -30,7 +30,7 @@ cd "${script_dir}" || exit
 
 ### TODO pass SEDadmin_inst_user_nmSED value
 # Change ownership in the script directory to delete it from dev machine.
-####trap "chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}" ERR EXIT
+trap "chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}" ERR EXIT
 
 amazon-linux-extras install epel -y >> "${admin_log_file}" 2>&1
 

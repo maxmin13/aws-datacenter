@@ -20,12 +20,15 @@ if [[ -z "${instance_id}" ]]
 then
    echo '* WARN: Shared box not found.'
 else
-   instance_st="$(get_instance_state "${SHARED_INST_NM}")"
+   get_instance_state "${SHARED_INST_NM}"
+   instance_st="${__RESULT}"
+   
    echo "* Shared box ID: ${instance_id} (${instance_st})."
 fi
 
 # The temporary security group used to build the image may already be gone
-sgp_id="$(get_security_group_id "${SHARED_INST_SEC_GRP_NM}")"
+get_security_group_id "${SHARED_INST_SEC_GRP_NM}"
+sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -42,7 +45,9 @@ echo
 
 if [[ -n "${instance_id}" ]]
 then
-   instance_st="$(get_instance_state "${SHARED_INST_NM}")"
+   get_instance_state "${SHARED_INST_NM}"
+   instance_st="${__RESULT}"
+   
    if [[ 'terminated' != "${instance_st}" ]]
    then
       echo 'Deleting Shared box ...' 
@@ -54,7 +59,7 @@ then
 fi
 
 ## 
-## security group 
+## Security group 
 ## 
   
 if [[ -n "${sgp_id}" ]]
@@ -62,15 +67,15 @@ then
    echo 'Deleting security group'
 
    # shellcheck disable=SC2015
-   delete_security_group "${sgp_id}" 2> /dev/null && echo 'Security group deleted.' || 
+   delete_security_group "${sgp_id}" > /dev/null 2>&1 && echo 'Security group deleted.' || 
    {
       __wait 60
-      delete_security_group "${sgp_id}" 2> /dev/null && echo 'Security group deleted.' || 
+      delete_security_group "${sgp_id}" > /dev/null 2>&1 && echo 'Security group deleted.' || 
       {
          __wait 60
-         delete_security_group "${sgp_id}" 2> /dev/null && echo 'Security group deleted.' || 
+         delete_security_group "${sgp_id}" > /dev/null 2>&1 echo 'Security group deleted.' || 
          {
-            echo 'Error: deleting security group.'
+            echo 'ERROR: deleting security group.'
             exit 1
          }         
       } 
@@ -81,11 +86,13 @@ fi
 ## Public IP 
 ## 
 
-eip="$(get_public_ip_address_associated_with_instance "${SHARED_INST_NM}")"
+get_public_ip_address_associated_with_instance "${SHARED_INST_NM}"
+eip="${__RESULT}"
 
 if [[ -n "${eip}" ]]
 then
-   allocation_id="$(get_allocation_id "${eip}")"  
+   get_allocation_id "${eip}"
+   allocation_id="${__RESULT}"
    
    if [[ -n "${allocation_id}" ]] 
    then
@@ -110,25 +117,4 @@ then
 fi
 
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

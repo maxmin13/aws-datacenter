@@ -31,21 +31,23 @@ else
    echo "* data center ID: ${dtc_id}."
 fi
 
-image_id="$(get_image_id "${SHARED_IMG_NM}")"
+get_image_id "${SHARED_IMG_NM}"
+image_id="${__RESULT}"
 
 if [[ -n "${image_id}" ]]
 then
-   image_state="$(get_image_state "${SHARED_IMG_NM}")"
+   get_image_state "${SHARED_IMG_NM}"
+   image_st="${__RESULT}"
    
-   if [[ 'available' == "${image_state}" ]]
+   if [[ 'available' == "${image_st}" ]]
    then
-      echo "* WARN: the image is already created (${image_state})"
+      echo "* WARN: the image is already created (${image_st})"
       echo
       return
    else
       # This is the case the image is in 'terminated' state, it takes about an hour to disappear,
       # if you want to create a new image you have to change the name.
-      echo "* ERROR: the image is already created (${image_state})" 
+      echo "* ERROR: the image is already created (${image_st})" 
       exit 1  
    fi
 fi
@@ -56,14 +58,16 @@ fi
 
 get_instance_id "${SHARED_INST_NM}"
 instance_id="${__RESULT}"
-instance_state="$(get_instance_state "${SHARED_INST_NM}")"
 
 if [[ -z "${instance_id}" ]]
 then
    echo '* ERROR: Shared box not found.'
    exit 1
 else
-   echo "* Shared box ID: ${instance_id} (${instance_state})."
+   get_instance_state "${SHARED_INST_NM}"
+   instance_st="${__RESULT}"
+   
+   echo "* Shared box ID: ${instance_id} (${instance_st})."
 fi
 
 echo

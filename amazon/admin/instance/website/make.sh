@@ -32,11 +32,14 @@ then
    echo '* ERROR: Admin box not found.'
    exit 1
 else
-   instance_st="$(get_instance_state "${ADMIN_INST_NM}")"
+   get_instance_state "${ADMIN_INST_NM}"
+   instance_st="${__RESULT}"
+   
    echo "* Admin box ID: ${instance_id} (${instance_st})."
 fi
 
-sgp_id="$(get_security_group_id "${ADMIN_INST_SEC_GRP_NM}")"
+get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
+sgp_id="${__RESULT}"
 
 if [[ -z "${sgp_id}" ]]
 then
@@ -46,7 +49,8 @@ else
    echo "* Admin security group ID: ${sgp_id}."
 fi
 
-eip="$(get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}")"
+get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
+eip="${__RESULT}"
 
 if [[ -z "${eip}" ]]
 then

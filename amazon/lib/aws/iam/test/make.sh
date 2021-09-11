@@ -1264,8 +1264,10 @@ policy_document="${__RESULT}"
 aws iam create-role --role-name "${ROLE_NM}" \
     --assume-role-policy-document "${policy_document}" > /dev/null 2>&1 
 
-# Create an instance profile and attach the role to it.
+# Create an instance profile.
 aws iam create-instance-profile --instance-profile-name "${PROFILE_NM}" > /dev/null 2>&1
+
+# Attach the role to the instance profile.
 aws iam  add-role-to-instance-profile --instance-profile-name "${PROFILE_NM}" \
     --role-name "${ROLE_NM}" 
 
@@ -1302,8 +1304,41 @@ then
 fi
 
 #
-# Success.
+# Instance profile without a role attached.
 #
+
+set +e
+delete_instance_profile "${PROFILE_NM}" > /dev/null 2>&1
+exit_code=$?
+set -e
+
+# No error is expected.
+if [[ 0 -ne "${exit_code}" ]]
+then
+   echo 'ERROR: testing delete_instance_profile.'
+   counter=$((counter +1))
+fi
+
+# Check the instance profile.
+instance_profile_id="$(aws iam list-instance-profiles \
+    --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].InstanceProfileId" --output text)"
+
+if [[ -n "${instance_profile_id}" ]]
+then
+   echo 'ERROR: testing delete_instance_profile, the instance profile has not been canceled.'
+   counter=$((counter +1))
+fi 
+
+#
+# Instance profile with a role attached.
+#
+
+# Create an instance profile.
+aws iam create-instance-profile --instance-profile-name "${PROFILE_NM}" > /dev/null 2>&1
+
+# Attach the role to the instance profile.
+aws iam  add-role-to-instance-profile --instance-profile-name "${PROFILE_NM}" \
+    --role-name "${ROLE_NM}" 
 
 set +e
 delete_instance_profile "${PROFILE_NM}" > /dev/null 2>&1
@@ -1447,7 +1482,7 @@ fi
 echo 'check_role_exists tests completed.'      
 
 ############################################
-## TEST: __remove_role_from_instance_profile
+## TEST: remove_role_from_instance_profile
 ############################################
 
 __helper_clear_resources > /dev/null 2>&1
@@ -1469,14 +1504,14 @@ aws iam  add-role-to-instance-profile --instance-profile-name "${PROFILE_NM}" --
 #
 
 set +e
-__remove_role_from_instance_profile > /dev/null 2>&1
+remove_role_from_instance_profile > /dev/null 2>&1
 exit_code=$?
 set -e
 
 # An error is expected.
 if [[ 128 -ne "${exit_code}" ]]
 then
-   echo 'ERROR: testing __remove_role_from_instance_profile with missing arguments.'
+   echo 'ERROR: testing remove_role_from_instance_profile with missing arguments.'
    counter=$((counter +1))
 fi
 
@@ -1485,14 +1520,14 @@ fi
 #
 
 set +e
-__remove_role_from_instance_profile 'XXX-instance-profile' "${ROLE_NM}" > /dev/null 2>&1
+remove_role_from_instance_profile 'XXX-instance-profile' "${ROLE_NM}" > /dev/null 2>&1
 exit_code=$?
 set -e
 
 # An error is expected.
 if [[ 0 -eq "${exit_code}" ]]
 then
-   echo 'ERROR: testing __remove_role_from_instance_profile with not existing instance profile.'
+   echo 'ERROR: testing remove_role_from_instance_profile with not existing instance profile.'
    counter=$((counter +1))
 fi  
 
@@ -1501,14 +1536,14 @@ fi
 #
 
 set +e
-__remove_role_from_instance_profile "${PROFILE_NM}" 'XXX-assume-role' > /dev/null 2>&1
+remove_role_from_instance_profile "${PROFILE_NM}" 'XXX-assume-role' > /dev/null 2>&1
 exit_code=$?
 set -e
 
 # An error is expected.
 if [[ 0 -eq "${exit_code}" ]]
 then
-   echo 'ERROR: testing __remove_role_from_instance_profile with not existing role.'
+   echo 'ERROR: testing remove_role_from_instance_profile with not existing role.'
    counter=$((counter +1))
 fi   
 
@@ -1517,14 +1552,14 @@ fi
 #
 
 set +e
-__remove_role_from_instance_profile "${PROFILE_NM}" "${ROLE_NM}" > /dev/null 2>&1
+remove_role_from_instance_profile "${PROFILE_NM}" "${ROLE_NM}" > /dev/null 2>&1
 exit_code=$?
 set -e
 
 # No error is expected.
 if [[ 0 -ne "${exit_code}" ]]
 then
-   echo 'ERROR: testing __remove_role_from_instance_profile.'
+   echo 'ERROR: testing remove_role_from_instance_profile.'
    counter=$((counter +1))
 fi 
 
@@ -1534,7 +1569,7 @@ role_id="$(aws iam list-roles \
        
 if [[ -z "${role_id}" ]]
 then
-   echo 'ERROR: testing __remove_role_from_instance_profile, the role has been deleted.'
+   echo 'ERROR: testing remove_role_from_instance_profile, the role has been deleted.'
    counter=$((counter +1))
 fi       
 
@@ -1544,7 +1579,7 @@ role_nm="$(aws iam list-instance-profiles \
 
 if [[ "${ROLE_NM}" == "${role_nm}" ]]
 then
-   echo 'ERROR: testing __remove_role_from_instance_profile.'
+   echo 'ERROR: testing remove_role_from_instance_profile.'
    counter=$((counter +1))
 fi
 
@@ -1554,7 +1589,7 @@ instance_profile_id="$(aws iam list-instance-profiles \
 
 if [[ -z "${instance_profile_id}" ]]
 then
-   echo 'ERROR: testing __remove_role_from_instance_profile, the instance profile has been canceled.'
+   echo 'ERROR: testing remove_role_from_instance_profile, the instance profile has been canceled.'
    counter=$((counter +1))
 fi
    
@@ -1563,18 +1598,18 @@ fi
 #
 
 set +e
-__remove_role_from_instance_profile "${PROFILE_NM}" "${ROLE_NM}" > /dev/null 2>&1
+remove_role_from_instance_profile "${PROFILE_NM}" "${ROLE_NM}" > /dev/null 2>&1
 exit_code=$?
 set -e
 
 # An error is expected.
 if [[ 0 -eq "${exit_code}" ]]
 then
-   echo 'ERROR: testing __remove_role_from_instance_profile twice.'
+   echo 'ERROR: testing remove_role_from_instance_profile twice.'
    counter=$((counter +1))
 fi 
 
-echo '__remove_role_from_instance_profile tests completed.'
+echo 'remove_role_from_instance_profile tests completed.'
 
 ###########################################
 ## TEST: delete_role

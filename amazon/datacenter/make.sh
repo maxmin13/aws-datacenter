@@ -36,19 +36,23 @@ fi
 ## 
 
 ## Create an internet gateway (to allow access out to the Internet)
-internet_gate_id="$(get_internet_gateway_id "${DTC_INTERNET_GATEWAY_NM}")"
+get_internet_gateway_id "${DTC_INTERNET_GATEWAY_NM}"
+internet_gate_id="${__RESULT}"
 
 if [[ -n "${internet_gate_id}" ]]
 then
    echo 'WARN: the internet gateway has already been created.'
 else
-   internet_gate_id="$(create_internet_gateway "${DTC_INTERNET_GATEWAY_NM}" "${dtc_id}")"
+   create_internet_gateway "${DTC_INTERNET_GATEWAY_NM}" "${dtc_id}"
+   get_internet_gateway_id "${DTC_INTERNET_GATEWAY_NM}"
+   internet_gate_id="${__RESULT}"
 	              
    echo 'Internet gateway created.' 
 fi
   
 ## Check if the internet gateway is already attached to the VPC.
-attach_status="$(get_internet_gateway_attachment_status "${DTC_INTERNET_GATEWAY_NM}" "${dtc_id}")"
+get_internet_gateway_attachment_status "${DTC_INTERNET_GATEWAY_NM}" "${dtc_id}"
+attach_status="${__RESULT}"
 
 if [[ 'available' != "${attach_status}" ]]
 then
@@ -61,13 +65,16 @@ fi
 ## Route table
 ## 
 
-rtb_id="$(get_route_table_id "${DTC_ROUTE_TABLE_NM}")"
+get_route_table_id "${DTC_ROUTE_TABLE_NM}"
+rtb_id="${__RESULT}"
 							
 if [[ -n "${rtb_id}" ]]
 then
    echo 'WARN: the route table has already been created.'
 else
-   rtb_id="$(create_route_table "${DTC_ROUTE_TABLE_NM}" "${dtc_id}")"	
+   create_route_table "${DTC_ROUTE_TABLE_NM}" "${dtc_id}"
+   get_route_table_id "${DTC_ROUTE_TABLE_NM}"
+   rtb_id="${__RESULT}"
                    
    echo 'Created route table.'
 fi
@@ -87,11 +94,11 @@ if [[ -n "${main_subnet_id}" ]]
 then
    echo 'WARN: the main subnet has already been created.'
 else
-   main_subnet_id="$(create_subnet "${DTC_SUBNET_MAIN_NM}" \
-       "${DTC_SUBNET_MAIN_CIDR}" \
-       "${DTC_DEPLOY_ZONE_1}" \
-       "${dtc_id}" \
-       "${rtb_id}")"
+   create_subnet "${DTC_SUBNET_MAIN_NM}" \
+       "${DTC_SUBNET_MAIN_CIDR}" "${DTC_DEPLOY_ZONE_1}" "${dtc_id}" "${rtb_id}"
+       
+   get_subnet_id "${DTC_SUBNET_MAIN_NM}"
+   main_subnet_id="${__RESULT}"
    
    echo "The main subnet has been created in the ${DTC_DEPLOY_ZONE_1} availability zone and associated to the route table."    
 fi
@@ -107,11 +114,11 @@ if [[ -n "${backup_subnet_id}" ]]
 then
    echo 'WARN: the backup subnet has already been created.'
 else
-   backup_subnet_id="$(create_subnet "${DTC_SUBNET_BACKUP_NM}" \
-       "${DTC_SUBNET_BACKUP_CIDR}" \
-       "${DTC_DEPLOY_ZONE_2}" \
-       "${dtc_id}" \
-       "${rtb_id}")"
+   create_subnet "${DTC_SUBNET_BACKUP_NM}" \
+       "${DTC_SUBNET_BACKUP_CIDR}" "${DTC_DEPLOY_ZONE_2}" "${dtc_id}" "${rtb_id}"
+       
+   get_subnet_id "${DTC_SUBNET_BACKUP_NM}"
+   backup_subnet_id="${__RESULT}"    
 
    echo "The backup subnet has been created in the ${DTC_DEPLOY_ZONE_2} availability zone and associated to the route table."
 fi

@@ -768,7 +768,7 @@ function delete_role()
    # Detach the role from the instance profiles.
    for profile_nm in ${instance_profiles}
    do
-      __remove_role_from_instance_profile "${profile_nm}" "${role_nm}" 
+      remove_role_from_instance_profile "${profile_nm}" "${role_nm}" 
       exit_code=$?
       
       if [[ 0 -ne "${exit_code}" ]]
@@ -1003,8 +1003,12 @@ function delete_instance_profile()
       return "${exit_code}"
    fi
 
-   # Detach the role from the instance profile.
-   __remove_role_from_instance_profile "${profile_nm}" "${role_nm}" 
+   if [[ -n "${role_nm}" ]]
+   then
+      # Detach the role from the instance profile.
+      remove_role_from_instance_profile "${profile_nm}" "${role_nm}" 
+   fi
+   
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1242,7 +1246,7 @@ function associate_role_to_instance_profile()
 # Returns:      
 #  none.  
 #===============================================================================
-function __remove_role_from_instance_profile()
+function remove_role_from_instance_profile()
 {
    if [[ $# -lt 2 ]]
    then

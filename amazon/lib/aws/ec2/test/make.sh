@@ -146,15 +146,16 @@ instance_id="$(aws ec2 describe-instances \
    
 if [[ -n "${instance_id}" ]]
 then
-   instance_state="$(get_instance_state "${INSTANCE_NM}")"
+   get_instance_state "${INSTANCE_NM}"
+   instance_st="${__RESULT}"
    
-   if [[ 'running' == "${instance_state}" || \
-         'stopped' == "${instance_state}" || \
-         'pending' == "${instance_state}" ]] 
+   if [[ 'running' == "${instance_st}" || \
+         'stopped' == "${instance_st}" || \
+         'pending' == "${instance_st}" ]] 
    then
-      echo "WARN: EC2 test instance already created (${instance_state})."
+      echo "WARN: EC2 test instance already created (${instance_st})."
    else
-      echo "ERROR: EC2 test instance already created (${instance_state})."
+      echo "ERROR: EC2 test instance already created (${instance_st})."
       exit 1
    fi
 else

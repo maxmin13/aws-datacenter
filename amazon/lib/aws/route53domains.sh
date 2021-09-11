@@ -38,7 +38,8 @@ set +o xtrace
 # +hosted_zone_nm    -- The hosted zone name, this is the name you have 
 #                       registered with your DNS registrar.
 # Returns:      
-#  Identifier for tracking the progress of the request.
+#  Identifier for tracking the progress of the request in the global __RESULT
+#  variable.
 #===============================================================================
 function check_domain_availability()
 {
@@ -48,6 +49,8 @@ function check_domain_availability()
       return 1
    fi
 
+   __RESULT=''
+   local exit_code=0
    local hosted_zone_nm="${1}"
    local availability
    
@@ -55,10 +58,18 @@ function check_domain_availability()
                          --region 'us-east-1' \
                          --domain-name "${hosted_zone_nm}" \
                          --output text)"          
-  
-   echo "${availability}"
+     
+   exit_code=$?
    
-   return 0
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving domain availability.'
+      return "${exit_code}"
+   fi
+                        
+   __RESULT="${availability}"
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -71,7 +82,7 @@ function check_domain_availability()
 # +hosted_zone_nm    -- The hosted zone name, this is the name you have 
 #                       registered with your DNS registrar.
 # Returns:      
-#  Identifier for tracking the progress of the request.
+#  true/false in the global __RESULT variable.
 #===============================================================================
 function check_domain_is_registered_with_the_account()
 {
@@ -81,18 +92,34 @@ function check_domain_is_registered_with_the_account()
       return 1
    fi
 
+   __RESULT=''
+   local exit_code=0
    local hosted_zone_nm="${1}"
-   local registered
+   local domain=''
+   local registered='false'
    
-   registered="$(aws route53domains get-domain-detail \
+   domain="$(aws route53domains get-domain-detail \
                           --region 'us-east-1' \
                           --domain-name "${hosted_zone_nm}" \
                           --query 'DomainName' \
                           --output text)"
+     
+   exit_code=$?
    
-   echo "${registered}"
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving domain detail.'
+      return "${exit_code}"
+   fi
    
-   return 0
+   if [[ -n "${domain}" ]]
+   then
+      registered='true'
+   fi
+                        
+   __RESULT="${registered}"
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
