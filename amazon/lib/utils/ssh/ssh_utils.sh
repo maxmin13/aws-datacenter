@@ -29,13 +29,13 @@ set +o xtrace
 # Globals:
 #  None
 # Arguments:
-# +key_pair_file -- Local private key.
-# +server_ip     -- Server IP address.
-# +ssh_port      -- Server SSH port.
-# +user          -- Name of the user to log with into the server, must be the 
+# +key_pair_file -- local private key.
+# +server_ip     -- server IP address.
+# +ssh_port      -- server SSH port.
+# +user          -- name of the user to log with into the server, must be the 
 #                   one with the corresponding public key.
-# +remote_dir    -- The remote directory where to upload the file.
-# +file          -- The file to upload.
+# +remote_dir    -- the remote directory where to upload the file.
+# +file          -- the file to upload.
 # Returns:      
 #  None  
 #===============================================================================
@@ -44,7 +44,7 @@ function scp_upload_file()
    if [[ $# -lt 6 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      return 1
+      return 128
    fi
    
    local exit_code=0
@@ -84,13 +84,13 @@ function scp_upload_file()
 # Globals:
 #  None
 # Arguments:
-# +key_pair_file -- Local private key.
-# +server_ip     -- Server IP address.
-# +ssh_port      -- Server SSH port.
-# +user          -- Name of the user to log with into the server, must be the 
+# +key_pair_file -- local private key.
+# +server_ip     -- server IP address.
+# +ssh_port      -- server SSH port.
+# +user          -- name of the user to log with into the server, must be the 
 #                   one with the corresponding public key.
-# +remote_dir    -- The remote directory where to upload the file.
-# +files         -- A list of files to upload.
+# +remote_dir    -- the remote directory where to upload the file.
+# +files         -- a list of files to upload.
 # Returns:      
 #  None  
 #===============================================================================
@@ -99,10 +99,10 @@ function scp_upload_files()
    if [[ $# -lt 6 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      return 1
+      return 128
    fi
 
-   exit_code=0
+   local exit_code=0
    declare -r key_pair_file="${1}"
    declare -r server_ip="${2}"
    declare -r ssh_port="${3}"
@@ -137,14 +137,14 @@ function scp_upload_files()
 # Globals:
 #  None
 # Arguments:
-# +key_pair_file -- Local private key.
-# +server_ip     -- Server IP address.
-# +ssh_port      -- Server SSH port.
-# +user          -- Name of the user to log with into the server, must be the 
+# +key_pair_file -- local private key.
+# +server_ip     -- server IP address.
+# +ssh_port      -- server SSH port.
+# +user          -- name of the user to log with into the server, must be the 
 #                   one with the corresponding public key.
-# +remote_dir    -- The remote directory where the file is.
-# +local_dir     -- The local directory where to download the file.
-# +file          -- The file to download.
+# +remote_dir    -- the remote directory where the file is.
+# +local_dir     -- the local directory where to download the file.
+# +file          -- the file to download.
 # Returns:      
 #  None  
 #===============================================================================
@@ -153,10 +153,10 @@ function scp_download_file()
    if [[ $# -lt 7 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      return 1
+      return 128
    fi
    
-   exit_code=0
+   local exit_code=0
    declare -r key_pair_file="${1}"
    declare -r server_ip="${2}"
    declare -r ssh_port="${3}"
@@ -190,14 +190,14 @@ function scp_download_file()
 # Globals:
 #  None
 # Arguments:
-# +key_pair_file -- Local private key.
-# +server_ip     -- Server IP address.
-# +ssh_port      -- Server SSH port.
-# +user          -- Name of the user to log with into the server, must be the 
+# +key_pair_file -- local private key.
+# +server_ip     -- server IP address.
+# +ssh_port      -- server SSH port.
+# +user          -- name of the user to log with into the server, must be the 
 #                   one with the corresponding public key.
-# +remote_dir    -- The remote directory where the file is.
-# +local_dir     -- The local directory where to download the file.
-# +files          -- The files to download.
+# +remote_dir    -- the remote directory where the file is.
+# +local_dir     -- the local directory where to download the file.
+# +files         -- the files to download.
 # Returns:      
 #  None  
 #===============================================================================
@@ -206,10 +206,10 @@ function scp_download_files()
    if [[ $# -lt 7 ]]
    then
       echo 'ERROR: missing mandatory arguments'
-      return 1
+      return 128
    fi
 
-   exit_code=0
+   local exit_code=0
    declare -r key_pair_file="${1}"
    declare -r server_ip="${2}"
    declare -r ssh_port="${3}"
@@ -248,11 +248,11 @@ function scp_download_files()
 # Globals:
 #  None
 # Arguments:
-# +cmd           -- The command to execute on the server.
-# +key_pair_file   -- Local private key.
-# +server_ip     -- Server IP address.
-# +ssh_port      -- Server SSH port.
-# +user          -- Name of the remote user that holds the access public-key. 
+# +cmd           -- the command to execute on the server.
+# +key_pair_file -- local private key.
+# +server_ip     -- server IP address.
+# +ssh_port      -- server SSH port.
+# +user          -- name of the remote user that holds the access public-key. 
 # Returns:      
 #  None  
 #===============================================================================
@@ -261,7 +261,7 @@ function ssh_run_remote_command()
    if [[ $# -lt 5 ]]
    then
       echo 'Error' 'Missing mandatory arguments'
-      return 1
+      return 128
    fi
 
    local exit_code=0
@@ -317,7 +317,7 @@ function ssh_run_remote_command_as_root()
    if [[ $# -lt 5 ]]
    then
       echo 'Error' 'Missing mandatory arguments'
-      return 1
+      return 128
    fi
 
    local cmd="${1}"
@@ -400,7 +400,7 @@ function wait_ssh_started()
    if [[ $# -lt 4 ]]
    then
       echo 'Error' 'Missing mandatory arguments'
-      return 1
+      return 128
    fi
 
    declare -r private_key="${1}"
@@ -434,9 +434,9 @@ function wait_ssh_started()
 # Globals:
 #  None
 # Arguments:
-# +key_pair_file -- Local private key.
-# +server_ip     -- Server IP address.
-# +user          -- Name of the user to log with into the server, must be the 
+# +key_pair_file -- local private key.
+# +server_ip     -- server IP address.
+# +user          -- name of the user to log with into the server, must be the 
 #                   one with the corresponding public key.
 # +ports         -- a list of port to be verified.
 # Returns:      
@@ -447,10 +447,10 @@ function get_ssh_port()
    if [[ $# -lt 4 ]]
    then
       echo 'Error' 'Missing mandatory arguments'
-      return 1
+      return 128
    fi
 
-   exit_code=0
+   local exit_code=0
    __RESULT=''
    declare -r key_pair_file="${1}"
    declare -r server_ip="${2}"
@@ -490,73 +490,226 @@ function get_ssh_port()
 }
 
 #===============================================================================
-# Creates a RSA key-pair and saves the private-key in the key_file file. The key
-# is not protected by a passphrase.
+# Creates a RSA key-pair, saves the private-key to the 'pkey_nm' file and the
+# public key to the file 'pkey_nm.pub'. 
+# The key is not protected by a passphrase.
 #
 # Globals:
 #  None
 # Arguments:
-# +key_file  -- the file in which to store the pair.
-# +email_add -- email address.
+# +pkey_nm     -- the name of the file to wich is saved the private key.
+# +keypair_dir -- the directory where the keys are saved. 
+# +email_add   -- email address.
 # Returns:      
-#  none  
+#  none.  
 #===============================================================================
-function generate_local_keypair()
+function create_keypair()
 {
-   if [[ $# -lt 2 ]]
+   if [[ $# -lt 3 ]]
    then
       echo 'Error' 'Missing mandatory arguments'
-      return 1
+      return 128
    fi
 
-   exit_code=0
-   declare -r key_file="${1}"
-   declare -r email_add="${2}"
-      
-   if [[ -f "${key_file}" ]]
+   local exit_code=0
+   declare -r pkey_nm="${1}"
+   declare -r keypair_dir="${2}"
+   declare -r email_add="${3}"
+   local pkey_file="${keypair_dir}"/"${pkey_nm}"
+
+   if [[ ! -d "${keypair_dir}" ]]
    then
-      echo 'ERROR: key-pair already exists.'
+      echo 'ERROR: directory does not exist.'
       return 1
    fi
-
-   ssh-keygen -N '' -q -t rsa -b 4096 -C "${email_add}" -f "${key_file}"
+               
+   if [[ -f "${pkey_file}" ]]
+   then
+      echo 'ERROR: private key already exists.'
+      return 1
+   fi
+   
+   ssh-keygen -N '' -q -t rsa -b 4096 -C "${email_add}" -f "${pkey_file}"
    
    exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating the key pair.'
+      return "${exit_code}"
+   fi
+   
+   chmod 400 "${pkey_file}"
+   
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: securing the private key file.'
+   fi
 
    return "${exit_code}"
 }
 
 #===============================================================================
-# Returns the public key associated with a key-pair.
+# Deletes the key pair files.
 #
 # Globals:
 #  None
 # Arguments:
-# +key_file -- the file in which the pair stored.
+# +pkey_nm     -- the name of the file to wich is saved the private key. 
+# +keypair_dir -- the directory where the keys are saved.
+
 # Returns:      
-#  the public-key associated with the key-pair in the global __RESULT variable.  
+#  None
 #===============================================================================
-function get_local_public_key()
+function delete_keypair()
 {
-   if [[ $# -lt 1 ]]
+   if [[ $# -lt 2 ]]
    then
-      echo 'Error' 'Missing mandatory arguments'
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   local exit_code=0
+   declare -r pkey_nm="${1}"
+   declare -r keypair_dir="${2}"
+   local pkey_file="${keypair_dir}"/"${pkey_nm}"
+   
+   if [[ ! -d "${keypair_dir}" ]]
+   then
+      echo 'ERROR: directory does not exist.'
       return 1
+   fi
+   
+   if [[ -f "${pkey_file}" ]]
+   then
+      # Delete the private key
+      rm -f "${pkey_file:?}"
+      exit_code=$?
+   
+      if [[ 0 -ne "${exit_code}" ]]
+      then
+         echo 'ERROR: deleting private key file.'
+         return "${exit_code}"
+      fi   
+   else
+      echo 'WARN: private key not found.'
+   fi   
+
+   if [[ -f "${pkey_file}.pub" ]]
+   then
+      rm -f "${pkey_file:?}.pub"
+      exit_code=$?
+   
+      if [[ 0 -ne "${exit_code}" ]]
+      then
+         echo 'ERROR: deleting public key file.' 
+         return "${exit_code}" 
+      fi
+   else
+      echo 'WARN: public key not found.' 
+   fi  
+  
+   return "${exit_code}"
+}
+
+#===============================================================================
+# Returns the private key value.
+#
+# Globals:
+#  None
+# Arguments:
+# +pkey_nm     -- the name of the file to wich is saved the private key. 
+# +keypair_dir -- the directory where the keys are saved.
+# Returns:      
+#  the private key value in the global __RESULT variable.
+#===============================================================================
+function get_private_key()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
    fi
 
    __RESULT=''
-   exit_code=0
-   declare -r key_file="${1}"
-   local public_key=''
-
-   public_key="$(ssh-keygen -y -f "${key_file}")"
-   exit_code=$?
-
-   if [[ 0 -ne "${exit_code}" ]]
+   local exit_code=0
+   declare -r pkey_nm="${1}"
+   declare -r keypair_dir="${2}"
+   local pkey_file="${keypair_dir}"/"${pkey_nm}"
+   local private_key=''
+   
+   if [[ ! -d "${keypair_dir}" ]]
    then
-      echo 'ERROR: getting public key.'
-      return "${exit_code}"
-   fi 
+      echo 'ERROR: directory does not exist.'
+      return 1
+   fi
+   
+   if [[ -f "${pkey_file}" ]]
+   then
+      private_key="$(cat "${pkey_file}")"
+      exit_code=$?
+   
+      if [[ 0 -ne "${exit_code}" ]]
+      then
+         echo 'ERROR: retrieving private key.'
+         return "${exit_code}"
+      fi   
+   else
+      echo 'WARN: private key not found.'
+   fi     
+   
+   __RESULT="${private_key}"
+  
+   return 0
+}
+
+#===============================================================================
+# Returns the public key value.
+#
+# Globals:
+#  None
+# Arguments:
+# +pkey_nm     -- the name of the file to wich is saved the private key. 
+# +keypair_dir -- the directory where the keys are saved.
+# Returns:      
+#  the public key value in the global __RESULT variable. 
+#===============================================================================
+function get_public_key()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT=''
+   local exit_code=0
+   declare -r pkey_nm="${1}"
+   declare -r keypair_dir="${2}"
+   local pkey_file="${keypair_dir}"/"${pkey_nm}"
+   local public_key=''
+   
+   if [[ ! -d "${keypair_dir}" ]]
+   then
+      echo 'ERROR: directory does not exist.'
+      return 1
+   fi
+   
+   if [[ -f "${pkey_file}" ]]
+   then
+      public_key="$(ssh-keygen -y -f "${pkey_file}")"
+      exit_code=$?
+   
+      if [[ 0 -ne "${exit_code}" ]]
+      then
+         echo 'ERROR: retrieving public key.'
+         return "${exit_code}"
+      fi   
+   else
+      echo 'WARN: private key not found.'
+   fi  
 
    # shellcheck disable=SC2034   
    __RESULT="${public_key}"
@@ -565,57 +718,45 @@ function get_local_public_key()
 }
 
 #===============================================================================
-# Deletes the local key-pair file.
+# Checks if a private key exists.
 #
 # Globals:
 #  None
 # Arguments:
-# +key_file -- the local key-pair file.
+# +pkey_nm     -- the name of the file to wich is saved the private key. 
+# +keypair_dir -- the directory where the keys are saved.
 # Returns:      
-#  None
+#  true/false in the global __RESULT variable.  
 #===============================================================================
-function delete_local_keypair()
-{
-   if [[ $# -lt 1 ]]
-   then
-      echo 'ERROR: missing mandatory arguments.'
-      return 1
-   fi
-
-   declare -r key_file="${1}"
-
-   # Delete the local private-key.
-   rm -f "${key_file:?}"
-   rm -f "${key_file:?}.pub"
-
-   return 0
-}
-
-#===============================================================================
-# Returns the path to a key-pair file is saved.
-#
-# Globals:
-#  None
-# Arguments:
-# +keypair_nm     -- the key-pair name.
-# +keypair_dir    -- the local directory where the key-pair is stored.
-# Returns:      
-#  the key-pair's path.
-#===============================================================================
-function get_local_keypair_file_path()
+function check_keypair_exists()
 {
    if [[ $# -lt 2 ]]
    then
-      echo 'ERROR: missing mandatory arguments.'
-      return 1
+      echo 'Error' 'Missing mandatory arguments'
+      return 128
    fi
 
-   declare -r keypair_nm="${1}"
+   __RESULT=''
+   local exit_code=0
+   declare -r pkey_nm="${1}"
    declare -r keypair_dir="${2}"
-   local keypair_file="${keypair_dir}"/"${keypair_nm}".pem
+   local pkey_file="${keypair_dir}"/"${pkey_nm}"
+   local keypair_exists='false'
+
+   if [[ ! -d "${keypair_dir}" ]]
+   then
+      echo 'WARN: directory does not exist.'
+      keypair_exists='false'
+      __RESULT="${keypair_exists}"
+   fi
+               
+   if [[ -f "${pkey_file}" ]]
+   then
+      keypair_exists='true'
+   fi
    
-   echo "${keypair_file}"
-  
-   return 0
+   __RESULT="${keypair_exists}"
+
+   return "${exit_code}"
 }
 

@@ -228,22 +228,24 @@ echo 'Granted access to Admin M/Monit collector.'
 
 ## Removes the default user, creates the webphp-user user and sets the instance's hostname.     
 
-hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${WEBPHP_INST_USER_PWD}")" 
-key_pair_file="$(get_local_keypair_file_path "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
+check_keypair_exists "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}"
+key_exists="${__RESULT}"
 
-if [[ -f "${key_pair_file}" ]]
+if [[ 'false' == "${key_exists}" ]]
 then
-   echo 'WARN: SSH key-pair already created.'
-else
    # Save the private key file in the access directory
    mkdir -p "${WEBPHP_INST_ACCESS_DIR}"
-   generate_local_keypair "${key_pair_file}" "${WEBPHP_INST_EMAIL}" 
+   create_keypair "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}" "${WEBPHP_INST_EMAIL}" 
    
    echo 'SSH key-pair created.'
+else
+   echo 'WARN: SSH key-pair already created.'
 fi
 
-get_local_public_key "${key_pair_file}"
+get_public_key "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}"
 public_key="${__RESULT}"
+
+hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${WEBPHP_INST_USER_PWD}")" 
 
 awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${WEBPHP_INST_USER_NM}" -v hostname="${webphp_hostname}" '{
     sub(/SEDuser_nameSED/,user)
@@ -306,6 +308,7 @@ echo "Webphp box public address: ${eip}."
 echo 'Uploading scripts to the Webphp box ...'
 
 remote_dir=/home/"${WEBPHP_INST_USER_NM}"/script
+key_pair_file="${WEBPHP_INST_ACCESS_DIR}"/"${webphp_keypair_nm}" 
 
 wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}"
 

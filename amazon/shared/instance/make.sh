@@ -98,23 +98,25 @@ echo "Granted SSH access on port ${SHARED_INST_SSH_PORT}."
 
 ## Removes the default user, creates the admin-user user and sets the instance's hostname.     
 
-hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${SHARED_INST_USER_PWD}")" 
-key_pair_file="$(get_local_keypair_file_path "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}")"
+check_keypair_exists "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}"
+key_exists="${__RESULT}"
 
-if [[ -f "${key_pair_file}" ]]
+if [[ 'false' == "${key_exists}" ]]
 then
-   echo 'WARN: SSH key-pair already created.'
-else
    # Save the private key file in the access directory
    mkdir -p "${SHARED_INST_ACCESS_DIR}"
-   generate_local_keypair "${key_pair_file}" "${ADMIN_INST_EMAIL}" 
+   create_keypair "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}" "${ADMIN_INST_EMAIL}"
       
    echo 'SSH key-pair created.'
+else
+   echo 'WARN: SSH key-pair already created.'
 fi
 
-get_local_public_key "${key_pair_file}"
+get_public_key "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}" 
 public_key="${__RESULT}"
- 
+
+hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${SHARED_INST_USER_PWD}")" 
+
 awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${SHARED_INST_USER_NM}" -v hostname="${SHARED_INST_HOSTNAME}" '{
     sub(/SEDuser_nameSED/,user)
     sub(/SEDhashed_passwordSED/,pwd)
@@ -174,6 +176,8 @@ eip="${__RESULT}"
 echo "Shared box public address: ${eip}."
 
 # Verify it the SSH port is still 22 or it has changed.
+
+key_pair_file="${SHARED_INST_ACCESS_DIR}"/"${SHARED_INST_KEY_PAIR_NM}"
 
 get_ssh_port "${key_pair_file}" "${eip}" "${SHARED_INST_USER_NM}" '22' '38142' 
 ssh_port="${__RESULT}"

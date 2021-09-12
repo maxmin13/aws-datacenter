@@ -424,7 +424,8 @@ function get_internet_gateway_attachment_status()
 }
 
 #===============================================================================
-# Creates an internet gateway in detached status.
+# Creates internet gateway used for subnets to reach internet.
+# The internet gateway as to be attached to the VPC.
 #
 # Globals:
 #  None
@@ -2045,11 +2046,11 @@ function release_all_public_ip_addresses()
 # Globals:
 #  None
 # Arguments:
-#  +key_nm   -- a unique EC2 name for the key pair.
+#  +key_nm -- a unique EC2 name for the key pair.
 # Returns:      
 #  true/false in the global __RESULT variable. 
 #===============================================================================
-function check_keypair_exists()
+function check_aws_keypair_exists()
 {
    if [[ $# -lt 1 ]]
    then
@@ -2083,8 +2084,9 @@ function check_keypair_exists()
 }
 
 #===============================================================================
-# Creates a 2048-bit RSA key pair with the specified name. Amazon EC2 stores 
-# the public key and displays the private key for you to save to a file.  
+# Creates a 2048-bit RSA key pair with the specified name. 
+# Amazon EC2 stores the public key and displays the private key for you to save 
+# to a file.  
 # The private key is returned as an unencrypted PEM encoded PKCS#1 private key. 
 # If a key with the specified name already exists, Amazon EC2 returns an error.
 #
@@ -2096,7 +2098,7 @@ function check_keypair_exists()
 # Returns:      
 #  none. 
 #===============================================================================
-function generate_keypair()
+function generate_aws_keypair()
 {
    if [[ $# -lt 2 ]]
    then
@@ -2127,7 +2129,7 @@ function generate_keypair()
 }
 
 #===============================================================================
-# Deletes the key-pair in AWS EC2 and the local key file.
+# Deletes the public key in AWS EC2 and the local private key file.
 #
 # Globals:
 #  None
@@ -2137,7 +2139,7 @@ function generate_keypair()
 # Returns:      
 #  None
 #===============================================================================
-function delete_keypair()
+function delete_aws_keypair()
 {
    if [[ $# -lt 2 ]]
    then

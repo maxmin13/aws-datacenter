@@ -82,7 +82,7 @@ mkdir -p "${TMP_DIR}"/"${ssl_dir}"
 ## Key pair
 ## 
 
-key_pair_file="$(get_local_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
 
 if [[ -z "${key_pair_file}" ]] 
 then

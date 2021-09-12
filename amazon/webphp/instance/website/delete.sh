@@ -118,7 +118,7 @@ then
    echo 'Uploading scripts to the Webphp box ...'
 
    remote_dir=/home/"${WEBPHP_INST_USER_NM}"/script
-   key_pair_file="$(get_local_keypair_file_path "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
+   key_pair_file="${WEBPHP_INST_ACCESS_DIR}"/"${webphp_keypair_nm}" 
    wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}"
 
    ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \

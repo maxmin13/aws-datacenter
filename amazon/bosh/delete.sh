@@ -67,14 +67,32 @@ mkdir "${TMP_DIR}"/"${bosh_dir}"
 
 
 
+##
+## Instance profile.
+##
 
+check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}" > /dev/null
+has_role_associated="${__RESULT}"
+
+if [[ 'true' == "${has_role_associated}" ]]
+then
+   ####
+   #### Sessions may still be actives, they should be terminated by adding AWSRevokeOlderSessions permission
+   #### to the role.
+   ####
+   remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}"
+  
+   echo 'Bosh director role removed from the instance profile.'
+else
+   echo 'WARN: Bosh director role already removed from the instance profile.'
+fi
 
 
 ## 
 ## Security group.
 ## 
 
-get_security_group_id "${BOSH_SEC_GRP_NM}"
+get_security_group_id "${BOSH_INST_SEC_GRP_NM}"
 bosh_sgp_id="${__RESULT}"
 
 if [[ -n "${bosh_sgp_id}" ]]
@@ -86,27 +104,18 @@ then
 fi
 
 ## 
-## SSH Key pair. 
+## Bosh SSH Key pair. 
 ## 
 
-check_keypair_exists "${BOSH_KEY_PAIR_NM}"
+check_keypair_exists "${BOSH_INST_KEY_PAIR_NM}" "${BOSH_ACCESS_DIR}"
 keypair_exists="${__RESULT}"
-key_pair_file="$(get_local_keypair_file_path "${BOSH_KEY_PAIR_NM}" "${BOSH_ACCESS_DIR}")"
+key_pair_file="${BOSH_ACCESS_DIR}"/"${BOSH_INST_KEY_PAIR_NM}" 
 
 if [[ 'true' == "${keypair_exists}" ]]
 then  
-   delete_keypair "${BOSH_KEY_PAIR_NM}" "${key_pair_file}"
+   delete_keypair "${BOSH_INST_KEY_PAIR_NM}" "${key_pair_file}"
    
    echo 'SSH keypair deleted.'
-fi
-
-jumpbox_key_pair_file="$(get_local_keypair_file_path "${JUMPBOX_KEY_PAIR_NM}" "${JUMPBOX_ACCESS_DIR}")"
-
-if [[ 'true' == "${jumpbox_key_pair_file}" ]]
-then  
-   delete_keypair "${JUMPBOX_KEY_PAIR_NM}" "${jumpbox_key_pair_file}"
-   
-   echo 'SSH jumpbox keypair deleted.'
 fi
 
 ## 
@@ -130,9 +139,5 @@ then
    rm -rf "${BOSH_WORKDIR_DIR:?}"
 fi
 
-# Delete jumpbox work directory.
-if [[ -d "${JUMPBOX_WORKDIR_DIR}" ]]
-then
-   rm -rf "${JUMPBOX_WORKDIR_DIR:?}"
-fi
+
 

@@ -109,7 +109,7 @@ else
    echo 'Uploading database scripts to the Admin box ...'
    
    remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
-   key_pair_file="$(get_local_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+   key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
    wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
   
    ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir ${remote_dir}" \

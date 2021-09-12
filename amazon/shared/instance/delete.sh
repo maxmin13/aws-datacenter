@@ -106,14 +106,14 @@ fi
 ## SSH Key-pair
 ## 
 
-key_pair_file="$(get_local_keypair_file_path "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}")"
-   
-if [[ -f "${key_pair_file}" ]]
+check_keypair_exists "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}"
+key_exists="${__RESULT}"
+
+if [[ 'true' == "${key_exists}" ]]
 then
-   delete_local_keypair "${key_pair_file}"
+   delete_keypair "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}" 
    
-   echo 'The SSH access key-pair have been deleted.'
-   echo
+   echo 'SSH key-pair created.'
 fi
 
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"

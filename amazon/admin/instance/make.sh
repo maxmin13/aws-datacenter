@@ -154,24 +154,26 @@ echo 'Granted access to the database.'
 ## Cloud init.
 ##   
 
-## Removes the default user, creates the admin-user user and sets the instance's hostname.     
+## Remove the default user, creates the admin-user user and sets the instance's hostname.     
 
-hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${ADMIN_INST_USER_PWD}")" 
-key_pair_file="$(get_local_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+check_keypair_exists "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}"
+key_exists="${__RESULT}"
 
-if [[ -f "${key_pair_file}" ]]
+if [[ 'false' == "${key_exists}" ]]
 then
-   echo 'WARN: SSH key-pair already created.'
-else
    # Save the private key file in the access directory
    mkdir -p "${ADMIN_INST_ACCESS_DIR}"
-   generate_local_keypair "${key_pair_file}" "${ADMIN_INST_EMAIL}" 
+   create_keypair "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}" "${ADMIN_INST_EMAIL}"
       
    echo 'SSH key-pair created.'
+else
+   echo 'WARN: SSH key-pair already created.'
 fi
 
-get_local_public_key "${key_pair_file}"
+get_public_key "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}" 
 public_key="${__RESULT}"
+
+hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${ADMIN_INST_USER_PWD}")"
 
 awk -v key="${public_key}" -v pwd="${hashed_pwd}" -v user="${ADMIN_INST_USER_NM}" -v hostname="${ADMIN_INST_HOSTNAME}" '{
     sub(/SEDuser_nameSED/,user)
@@ -267,6 +269,7 @@ echo "Admin box public address: ${eip}."
 echo 'Uploading the scripts to the Admin box ...'
 
 remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
+key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
 
 wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 

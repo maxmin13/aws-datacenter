@@ -104,7 +104,7 @@ rm -rf "${TMP_DIR:?}"/"${lbal_dir}"
 mkdir -p "${TMP_DIR}"/"${lbal_dir}"
 
 ##
-## Security group.
+## Internet access.
 ##
 
 # Check HTTP access from the Internet to the load balancer.
@@ -237,7 +237,11 @@ else
    #
    # Production: 
    # install acme.sh client in the Admin instance and request a certificate signed by Let's Encrypt,
-   # download the certificate from Admin and upload it to IAM.
+   # download the certificate from Admin.
+   #
+   
+   #
+   # Instance profile.
    #
    
    ## Check the Admin instance profile has the Route 53 role associated.
@@ -254,8 +258,11 @@ else
    else
       echo 'WARN: Route 53 role already associated to the instance profile.'
    fi   
-      
-   # SSH Access to Admin instance.
+   
+   #   
+   # SSH Access.
+   #
+   
    set +e
    allow_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
    set -e
@@ -265,7 +272,7 @@ else
 
    remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
    cert_dir="${remote_dir}"/certificates
-   key_pair_file="$(get_local_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+   key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
    wait_ssh_started "${key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
    ssh_run_remote_command "rm -rf ${remote_dir} && mkdir -p ${cert_dir}" \
@@ -335,8 +342,8 @@ else
           "${download_dir}" \
           "${crt_file_nm}" "${key_file_nm}" "${full_chain_file_nm}" 
  
-      echo 'Load balancer certificates downloaded to local machine.'
-      echo "Check the directory: ${download_dir}"   
+      echo 'Load balancer certificates downloaded to local machine,'
+      echo "check the directory: ${download_dir}"   
       echo 'Uploading load balancer SSL certificate to IAM ...'
          
       upload_server_certificate_entity "${crt_entity_nm}" "${crt_file_nm}" "${key_file_nm}" \
@@ -352,27 +359,28 @@ else
    else
       echo 'ERROR: configuring load balancer''s SSL.' 
       exit 1
-   fi       
-fi
+   fi 
+    
+   #
+   # Instance profile.
+   #
 
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}" > /dev/null
-has_role_associated="${__RESULT}"
+   check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}" > /dev/null
+   has_role_associated="${__RESULT}"
 
-if [[ 'true' == "${has_role_associated}" ]]
-then
-   ####
-   #### Sessions may still be actives, they should be terminated by adding AWSRevokeOlderSessions permission
-   #### to the role.
-   ####
-   remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}"
+   if [[ 'true' == "${has_role_associated}" ]]
+   then
+      ####
+      #### Sessions may still be actives, they should be terminated by adding AWSRevokeOlderSessions permission
+      #### to the role.
+      ####
+      remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}"
      
-   echo 'Route 53 role removed from the instance profile.'
-else
-   echo 'WARN: Route 53 role already removed from the instance profile.'
-fi
+      echo 'Route 53 role removed from the instance profile.'
+   else
+      echo 'WARN: Route 53 role already removed from the instance profile.'
+   fi
 
-if [[ 'production' == "${ENV}" ]]
-then
    ## 
    ## SSH Access.
    ##
@@ -381,9 +389,9 @@ then
    revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
    set -e
    
-   echo 'Revoked SSH access to the Admin box.'
+   echo 'Revoked SSH access to the Admin box.'          
 fi
-    
+  
 # Wait until the certificate is visible in IAM.
 get_server_certificate_arn "${crt_entity_nm}" > /dev/null
 cert_arn="${__RESULT}"
@@ -441,17 +449,6 @@ echo 'Granted HTTPS internet access to the load balancer.'
 
 get_loadbalancer_dns_name "${LBAL_INST_NM}"
 lbal_dns="${__RESULT}" 
-
-## Check the Admin instance profile has the Route 53 role associated.
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}" > /dev/null
-has_role_associated="${__RESULT}"
-
-if [[ 'true' == "${has_role_associated}" ]]
-then
-   remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_ROUTE53_ROLE_NM}"
-   
-   echo 'Route 53 role removed from the instance profile.'
-fi 
 
 # Clear local files
 rm -rf "${TMP_DIR:?}"/"${lbal_dir}"

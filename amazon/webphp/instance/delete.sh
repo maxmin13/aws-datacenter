@@ -21,7 +21,7 @@ echo '************'
 echo
 
 webphp_nm="${WEBPHP_INST_NM/<ID>/"${webphp_id}"}"
-keypair_nm="${WEBPHP_INST_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
+webphp_keypair_nm="${WEBPHP_INST_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
 webphp_sgp_nm="${WEBPHP_INST_SEC_GRP_NM/<ID>/"${webphp_id}"}"
 get_instance_id "${webphp_nm}"
 instance_id="${__RESULT}"
@@ -181,14 +181,14 @@ fi
 ## SSH key-pair
 ## 
 
-key_pair_file="$(get_local_keypair_file_path "${keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}")"
+check_keypair_exists "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}"
+key_exists="${__RESULT}"
 
-if [[ -f "${key_pair_file}" ]]
+if [[ 'true' == "${key_exists}" ]]
 then
-   delete_local_keypair "${key_pair_file}"
+   delete_keypair "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}" 
    
-   echo 'The SSH access key-pair have been deleted.'
-   echo
+   echo 'SSH key-pair created.'
 fi
 
 ## Clearing

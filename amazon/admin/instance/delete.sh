@@ -152,11 +152,12 @@ fi
 ## SSH Access. 
 ## 
 
-key_pair_file="$(get_local_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
+check_keypair_exists "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}"
+key_exists="${__RESULT}"
 
-if [[ -f "${key_pair_file}" ]]
+if [[ 'true' == "${key_exists}" ]]
 then
-   delete_local_keypair "${key_pair_file}"
+   delete_keypair "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}"
    
    echo 'The SSH access key-pair have been deleted.'
    echo

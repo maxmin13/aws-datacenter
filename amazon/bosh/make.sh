@@ -29,17 +29,15 @@ else
    echo "* data center ID: ${dtc_id}."
 fi
 
-get_instance_id "${ADMIN_INST_NM}"
-admin_instance_id="${__RESULT}"
+get_subnet_id "${DTC_SUBNET_MAIN_NM}"
+admin_subnet_id="${__RESULT}"
 
-if [[ -z "${admin_instance_id}" ]]
+if [[ -z "${subnet_id}" ]]
 then
-   echo '* WARN: Admin box not found.'
+   echo '* ERROR: main subnet not found.'
+   exit 1
 else
-   get_instance_state "${ADMIN_INST_NM}"
-   instance_st="${__RESULT}"
-   
-   echo "* Admin box ID: ${admin_instance_id} (${instance_st})."
+   echo "* main subnet ID: ${admin_subnet_id}."
 fi
 
 get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
@@ -51,6 +49,19 @@ then
    exit 1
 else
    echo "* Admin security group ID: ${admin_sgp_id}."
+fi
+
+get_instance_id "${ADMIN_INST_NM}"
+admin_instance_id="${__RESULT}"
+
+if [[ -z "${admin_instance_id}" ]]
+then
+   echo '* WARN: Admin box not found.'
+else
+   get_instance_state "${ADMIN_INST_NM}"
+   admin_instance_st="${__RESULT}"
+   
+   echo "* Admin box ID: ${admin_instance_id} (${admin_instance_st})."
 fi
 
 get_public_ip_address_associated_with_instance "${ADMIN_INST_NM}"
@@ -70,27 +81,50 @@ echo
 rm -rf "${TMP_DIR:?}"/"${bosh_dir}"
 mkdir "${TMP_DIR}"/"${bosh_dir}"
 
-##
-## Instance profile.
-##
+## 
+## Admin security group.
+## 
 
+set +e
+allow_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   
+echo 'Granted SSH access to Admin instance.'
+
+allow_access_from_security_group "${admin_sgp_id}" "0-65535" 'tcp' "${admin_sgp_id}" > /dev/null 2>&1
+
+echo 'Granted internal TCP traffic to Admin box'
+
+allow_access_from_security_group "${admin_sgp_id}" "0-65535" 'udp' "${admin_sgp_id}" > /dev/null 2>&1
+
+echo 'Granted internal UDP traffic to Admin box'
+
+allow_access_from_security_group "${admin_sgp_id}" "-1" 'icmp' "${admin_sgp_id}" > /dev/null 2>&1
+
+echo 'Granted internal ICMP traffic to Admin box'
+
+set -e
+
+##
+## Admin instance profile.
+##
+   
 ## Check the Admin instance profile has the Bosh director role associated.
-## The role is needed to install Bosh director VM.
+## The role is needed to install Bosh director VM from the Admin instance.
 check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}" > /dev/null
 has_role_associated="${__RESULT}"
 
 if [[ 'false' == "${has_role_associated}" ]]
 then
-   # IAM is a bit slow, it might be necessary to wait a bit. 
+   # IAM is a bit slow, it might be necessary to retry the certificate request a few times. 
    associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}"
-  
+      
    echo 'Bosh director role associated to the instance profile.'
 else
    echo 'WARN: Bosh director role already associated to the instance profile.'
-fi
+fi 
 
 ## 
-## Security group.
+## Bosh security group.
 ## 
 
 get_security_group_id "${BOSH_SEC_GRP_NM}"
@@ -109,35 +143,45 @@ else
 fi
 
 set +e
-#allow_access_from_cidr "${sgp_id}" "${BOSH_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_security_group "${bosh_sgp_id}" "${BOSH_INST_SSH_PORT}" 'tcp' "${admin_sgp_id}" > /dev/null 2>&1
    
-#echo 'Granted SSH access to Bosh CLI.'
+echo 'Granted SSH access to Bosh instance from Admin instance.'
 
-#allow_access_from_cidr "${sgp_id}" "${BOSH_AGENT_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+allow_access_from_security_group "${bosh_sgp_id}" "${BOSH_AGENT_PORT}" 'tcp' "${admin_sgp_id}" > /dev/null 2>&1
    
-#echo 'Granted access to Bosh agent for bootstrapping.'
+echo 'Granted access to Bosh agent from Admin instance.'
+
+allow_access_from_security_group "${bosh_sgp_id}" "${BOSH_DIRECTOR_PORT}" 'tcp' "${admin_sgp_id}" > /dev/null 2>&1
+   
+echo 'Granted access to Bosh director from Admin instance.'
+
+allow_access_from_security_group "${bosh_sgp_id}" "-1" 'icmp' "${admin_sgp_id}" > /dev/null 2>&1
+   
+echo 'Granted access to ICMP from Admin instance.'
+
+allow_access_from_security_group "${bosh_sgp_id}" "0-65535" 'tcp' "${bosh_sgp_id}" > /dev/null 2>&1
+   
+echo 'Granted internal TCP traffic in Bosh instance.'
+
+allow_access_from_security_group "${bosh_sgp_id}" "0-65535" 'udp' "${bosh_sgp_id}" > /dev/null 2>&1
+   
+echo 'Granted internal UDP traffic in Bosh instance.'
+
+allow_access_from_security_group "${bosh_sgp_id}" "-1" 'icmp' "${bosh_sgp_id}" > /dev/null 2>&1
+   
+echo 'Granted internal ICMP traffic in Bosh instance.'
 
 set -e
-
-## 
-## SSH Access 
-## 
-
-set +e
-allow_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
-   
-echo 'Granted SSH access to the Admin box.'
 
 echo 'Uploading Bosh scripts to the Admin box ...'
 
 remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
 
-key_pair_file="$(get_local_keypair_file_path "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}")"
-wait_ssh_started "${key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
+admin_key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}"  
+wait_ssh_started "${admin_key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
-    "${key_pair_file}" \
+    "${admin_key_pair_file}" \
     "${admin_eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}"  
@@ -153,32 +197,53 @@ sed "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
 echo 'install_bosh_cli.sh ready.'
 
 sed "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+    "s/SEDbosh_director_nmSED/${BOSH_DIRECTOR_NM}/g" \
+    "s/SEDbosh_director_cidrSED/${DTC_SUBNET_MAIN_CIDR}/g" \
+    "s/SEDbosh_director_regionSED/${DTC_DEPLOY_REGION}/g" \
+    "s/SEDbosh_director_azSED/${DTC_DEPLOY_ZONE_1}/g" \
+    "s/SEDbosh_director_subnet_idSED/${admin_subnet_id}/g" \
+    "s/SEDbosh_director_sec_group_nmSED/${BOSH_SEC_GRP_NM}/g" \
+    "s/SEDbosh_director_internal_ipSED/${BOSH_DIRECTOR_INTERNAL_IP}/g" \
+    "s/SEDbosh_gateway_ipSED/${BOSH_GATEWAY_IP}/g" \
+
+    
+    ADMIN_INST_KEY_PAIR_NM
+    
     "${TEMPLATE_DIR}"/"${bosh_dir}"/install_bosh_director_template.sh > "${TMP_DIR}"/"${bosh_dir}"/install_bosh_director.sh
     
 echo 'install_bosh_director.sh ready.'
 
-echo "Uploading Bosh scripts ..."  
-  
-scp_upload_files "${key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+# Create an hash of the director password and put it in a vars.yml file, the file is used by bosh 
+# create-env command to get the value of 'vm_passwd' in set_director_passwd.yml file.
+echo -n "vm_passwd: " > "${TMP_DIR}"/"${bosh_dir}"/vars.yml
+mkpasswd -m sha-512 "${BOSH_DIRECTOR_PASSWORD}" >> "${TMP_DIR}"/"${bosh_dir}"/vars.yml
+
+echo 'vars.yml ready.'
+
+echo "Uploading Bosh scripts ..."
+
+scp_upload_files "${admin_key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${bosh_dir}"/install_bosh_components.sh \
     "${TMP_DIR}"/"${bosh_dir}"/install_bosh_cli.sh \
-    "${TMP_DIR}"/"${bosh_dir}"/install_bosh_director.sh
+    "${TMP_DIR}"/"${bosh_dir}"/install_bosh_director.sh \
+    "${TEMPLATE_DIR}"/"${bosh_dir}"/set_director_passwd.yml \
+    "${TMP_DIR}"/"${bosh_dir}"/vars.yml \
+    "${admin_key_pair_file}" 
        
 echo 'Scripts uploaded.'
 echo "Installing Bosh components ..."
  
 # Run the install database script uploaded in the Admin server. 
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_bosh_components.sh" \
-    "${key_pair_file}" \
+    "${admin_key_pair_file}" \
     "${admin_eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
     "${ADMIN_INST_USER_PWD}" 
     
-set +e   
-          
+set +e          
 ssh_run_remote_command_as_root "${remote_dir}/install_bosh_components.sh" \
-    "${key_pair_file}" \
+    "${admin_key_pair_file}" \
     "${admin_eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
@@ -193,13 +258,33 @@ then
    echo 'Bosh components successfully installed.'
    
    ssh_run_remote_command "rm -rf ${remote_dir}" \
-       "${key_pair_file}" \
+       "${admin_key_pair_file}" \
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"     
 else
    echo 'ERROR: installing Bosh components.'
    exit 1
+fi
+
+##
+## Instance profile.
+##
+
+check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}" > /dev/null
+has_role_associated="${__RESULT}"
+
+if [[ 'true' == "${has_role_associated}" ]]
+then
+   ####
+   #### Sessions may still be actives, they should be terminated by adding AWSRevokeOlderSessions permission
+   #### to the role.
+   ####
+   remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}"
+  
+   echo 'Bosh director role removed from the instance profile.'
+else
+   echo 'WARN: Bosh director role already removed from the instance profile.'
 fi
       
 ## 
@@ -208,7 +293,7 @@ fi
 
 # Revoke SSH access from the development machine
 set +e
-###revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+################## TODO revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
 echo 'Revoked SSH access to the Admin box.' 
