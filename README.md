@@ -18,7 +18,6 @@ Development env:
 
 - Fedora 33 
 - AWS cli 2.1.39 
-- Bosh cli 6.4.5
 - Python/3.8.8 
 - Linux/5.13.10-100.fc33.x86_64 
 
@@ -34,16 +33,6 @@ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip
 unzip awscliv2.zip
 sudo ./aws/install
 aws --version
-
-## Install Bosh CLI:
-
-wget https://github.com/cloudfoundry/bosh-cli/releases/download/v6.4.5/bosh-cli-6.4.5-linux-amd64
-
-chmod +x bosh-cli-6.4.5-linux-amd64
-cp bosh-cli-6.4.5-linux-amd64 /usr/local/bin/bosh
-
-yum install -y gcc gcc-c++ ruby ruby-devel mysql-devel postgresql-devel postgresql-libs sqlite-devel libxslt-devel libxml2-devel patch openssl
-gem install yajl-ruby
 
 ```
 
