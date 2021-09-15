@@ -21,11 +21,9 @@ webphp_log_file='/var/log/website_install.log'
 # Website sources.
 #
 
-cd "${script_dir}" || exit
+trap 'chown -R ${WEBPHP_INST_USER_NM}:${WEBPHP_INST_USER_NM} ${script_dir}' ERR EXIT
 
-###### TODO pass SEDwebphp_inst_user_nmSED value
-# Change ownership in the script directory to delete it from dev machine.
-######trap "chown -R ${WEBPHP_INST_USER_NM}:${WEBPHP_INST_USER_NM} ${script_dir}" ERR EXIT
+cd "${script_dir}" || exit
 
 mkdir webphp
 unzip "${WEBSITE_ARCHIVE}" -d webphp >> "${webphp_log_file}" 2>&1

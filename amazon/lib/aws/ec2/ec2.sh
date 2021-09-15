@@ -2050,7 +2050,7 @@ function release_all_public_ip_addresses()
 # Returns:      
 #  true/false in the global __RESULT variable. 
 #===============================================================================
-function check_aws_keypair_exists()
+function check_aws_public_key_exists()
 {
    if [[ $# -lt 1 ]]
    then
@@ -2093,8 +2093,8 @@ function check_aws_keypair_exists()
 # Globals:
 #  None
 # Arguments:
-#  +key_nm   -- a unique EC2 name for the key pair.
-#  +key_file -- the local private key file.
+#  +key_nm      -- a unique EC2 name for the key pair.
+#  +keypair_dir -- the local directory where the private key is saved.
 # Returns:      
 #  none. 
 #===============================================================================
@@ -2108,11 +2108,11 @@ function generate_aws_keypair()
    
    local exit_code=0
    declare -r key_nm="${1}"
-   declare -r key_file="${2}"
-   local key=''
+   declare -r keypair_dir="${2}"
+   local key="${keypair_dir}"/"${key_nm}"
    
    aws ec2 create-key-pair --key-name "${key_nm}" --query 'KeyMaterial' \
-      --output text > "${key_file}"
+      --output text > "${key}"
       
    exit_code=$?
    
@@ -2122,7 +2122,7 @@ function generate_aws_keypair()
       return "${exit_code}"
    fi
    
-   chmod 600 "${key_file}"
+   chmod 600 "${key}"
    exit_code=$?
    
    return "${exit_code}"
@@ -2149,7 +2149,8 @@ function delete_aws_keypair()
 
    local exit_code=0
    declare -r key_nm="${1}"
-   declare -r key_file="${2}"
+   declare -r keypair_dir="${2}"
+   local key="${keypair_dir}"/"${key_nm}"
    
    # Delete the key on AWS EC2.
    aws ec2 delete-key-pair --key-name "${key_nm}"
@@ -2163,14 +2164,51 @@ function delete_aws_keypair()
    fi
 
    # Delete the local private-key.
-   rm -f "${key_file:?}"
-   rm -f "${key_file:?}.pub"
+   rm -f "${key:?}"
+   rm -f "${key:?}.*"
    
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: deleting the local key pair file.'
+   fi
+
+   return "${exit_code}"
+}
+
+#===============================================================================
+# Imports  the  public  key  from an RSA key pair that you created with a 
+# third-party tool.
+#
+# Globals:
+#  None
+# Arguments:
+#  +key_nm       -- a unique EC2 name for the key pair.
+#  +key_material -- the public key material.
+# Returns:      
+#  None
+#===============================================================================
+function import_public_key_to_ec2()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 1
+   fi
+
+   local exit_code=0
+   declare -r key_nm="${1}"
+   declare -r key_material="${2}"
+   
+   aws ec2 import-key-pair --key-name "${key_nm}" \
+       --public-key-material "${key_material}"
+   
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: importing public key to EC2.'
    fi
 
    return "${exit_code}"

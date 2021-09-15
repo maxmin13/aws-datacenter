@@ -5,6 +5,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+echo
 echo '*************'
 echo 'Load balancer'
 echo '*************'
@@ -114,6 +115,4 @@ then
    delete_server_certificate "${CRT_NM}"
 fi
   
-echo
 
- 

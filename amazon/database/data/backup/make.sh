@@ -13,6 +13,7 @@ set +o xtrace
 
 database_dir='database'
 
+echo
 echo '***************'
 echo 'Database backup'
 echo '***************'
@@ -106,11 +107,11 @@ then
       mkdir -p "${download_dir}"
    fi
 
-   key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
-   wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
+   private_key_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
+   wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
    ssh_run_remote_command "rm -rf ${remote_dir} && rm -rf ${dump_dir} && mkdir ${remote_dir} && mkdir ${dump_dir}" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"  
@@ -127,14 +128,14 @@ then
 
    echo 'dump_database.sh ready.'
                    
-   scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+   scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${database_dir}"/dump_database.sh             
 
    echo 'Dumping database ...'
 
    # Run the install database script uploaded in the Admin server. 
    ssh_run_remote_command_as_root "chmod +x ${remote_dir}/dump_database.sh" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}" \
@@ -143,7 +144,7 @@ then
    set +e   
           
    ssh_run_remote_command_as_root "${remote_dir}/dump_database.sh" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}" \
@@ -158,7 +159,7 @@ then
       echo 'Database successfully dumped.'
 
       # Download the dump file.                   
-      scp_download_file "${key_pair_file}" \
+      scp_download_file "${private_key_file}" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${ADMIN_INST_USER_NM}" \
@@ -170,7 +171,7 @@ then
       echo "Check the directory: ${download_dir}"   
    
       ssh_run_remote_command "rm -rf ${remote_dir} && rm -rf ${dump_dir:?}" \
-          "${key_pair_file}" \
+          "${private_key_file}" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${ADMIN_INST_USER_NM}"          
@@ -197,5 +198,4 @@ then
    echo "Database successfully dumped." 
 fi
 
-echo
 

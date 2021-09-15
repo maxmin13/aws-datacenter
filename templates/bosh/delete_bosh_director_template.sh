@@ -9,7 +9,6 @@ set -o nounset
 # Install BOSH directory VM.
 ####################################################################
 
-ADMIN_INST_USER_NM='SEDadmin_inst_user_nmSED'
 DTC_GATEWAY_IP='SEDdtc_gateway_ipSED'
 BOSH_DIRECTOR_NM='SEDbosh_director_nmSED'
 BOSH_CIDR='SEDbosh_cidrSED'
@@ -21,15 +20,11 @@ BOSH_INTERNAL_IP='SEDbosh_internal_ipSED'
 BOSH_PRIVATE_KEY='SEDprivate_keySED'
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Change ownership in the script directory to delete it from dev machine.
-trap 'chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}' ERR EXIT
-
 cd "${script_dir}" || exit
 
-yum install -y git
-git clone https://github.com/cloudfoundry/bosh-deployment
+echo 'Removing Bosh director ...'
 
-bosh create-env bosh-deployment/bosh.yml \
+bosh delete-env bosh-deployment/bosh.yml \
     --state=state.json \
     --vars-store=creds.yml \
     -o bosh-deployment/aws/cpi.yml \
@@ -46,8 +41,8 @@ bosh create-env bosh-deployment/bosh.yml \
     -v default_security_groups=["${BOSH_SEC_GROUP_NM}"] \
     --var-file private_key="${BOSH_PRIVATE_KEY}" \
     --vars-file vars.yml 
-    
-yum remove -y git    
 
+echo 'Bosh director removed.'    
+    
 exit 0
 

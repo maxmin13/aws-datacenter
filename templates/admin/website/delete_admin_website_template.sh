@@ -15,8 +15,6 @@ WEBSITE_HTTPS_PORT='SEDwebsite_https_portSED'
 WEBSITE_DOCROOT_ID='SEDwebsite_docroot_idSED'
 admin_log_file='/var/log/admin_website_delete.log'
 
-
-
 # Check if Apache and SSL is installed.
 apache_installed='false'
 ssl_enabled='false'

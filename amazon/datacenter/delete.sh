@@ -5,6 +5,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+echo
 echo '***********'
 echo 'Data center'
 echo '***********'
@@ -133,7 +134,5 @@ then
    
    echo 'Data center deleted.'
 fi                     
-
-echo
 
 

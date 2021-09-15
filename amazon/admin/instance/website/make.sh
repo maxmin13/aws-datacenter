@@ -19,6 +19,7 @@ WEBSITE_DOCROOT_ID='admin.maxmin.it'
 WEBSITE_ARCHIVE='admin.zip'
 admin_dir='admin'
 
+echo
 echo '*************'
 echo 'Admin website'
 echo '*************'
@@ -84,16 +85,17 @@ echo 'Uploading the scripts to the Admin box ...'
 
 remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
 
-key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
-wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
+private_key_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
+wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}"   
 
-sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+    -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
@@ -107,7 +109,7 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
 
 echo 'install_admin_website.sh ready.'
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_file "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/install_admin_website.sh 
 
 ## Website source files
@@ -124,7 +126,7 @@ sed -i -e "s/SEDis_devSED/0/g" \
 zip -r "${WEBSITE_ARCHIVE}" ./*.php ./*.css > /dev/null 2>&1
 echo "${WEBSITE_ARCHIVE} ready."
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_file "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_ARCHIVE}"  
 
 # Website HTTP virtualhost file.
@@ -159,14 +161,14 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTPS_VIRTUALHOS
                       
 echo "${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE} ready." 
                              
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     "${TMP_DIR}"/"${admin_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}"
 
 echo "Installing Admin website ..."
 
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin_website.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
@@ -175,7 +177,7 @@ ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin_website.sh"
 set +e     
            
 ssh_run_remote_command_as_root "${remote_dir}/install_admin_website.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
@@ -189,7 +191,7 @@ then
    echo 'Admin website installed.'  
      
    ssh_run_remote_command "rm -rf ${remote_dir:?}" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"   
@@ -216,4 +218,4 @@ rm -rf "${TMP_DIR:?}"/"${admin_dir}"
 
 echo
 echo "Admin website up and running at: ${eip}." 
-echo
+

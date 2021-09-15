@@ -7,6 +7,7 @@ set +o xtrace
 
 ## database schema, tables, data are created with the deploy database script.
 
+echo
 echo '************'
 echo 'Database box'
 echo '************'
@@ -105,4 +106,4 @@ db_endpoint="$(get_database_endpoint "${DB_NM}")"
 
 echo
 echo "Database box up and running at: ${db_endpoint}."
-echo
+

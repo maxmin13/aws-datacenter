@@ -35,6 +35,7 @@ webphp_sgp_nm="${WEBPHP_INST_SEC_GRP_NM/<ID>/${webphp_id}}"
 website_docroot_id="${WEBSITE_DOCROOT_ID/<ID>/${webphp_id}}"
 webphp_dir=webphp"${webphp_id}"
 
+echo
 echo '****************'
 echo "Webphp website ${webphp_id}" 
 echo '****************'
@@ -118,11 +119,11 @@ then
    echo 'Uploading scripts to the Webphp box ...'
 
    remote_dir=/home/"${WEBPHP_INST_USER_NM}"/script
-   key_pair_file="${WEBPHP_INST_ACCESS_DIR}"/"${webphp_keypair_nm}" 
-   wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}"
+   private_key_file="${WEBPHP_INST_ACCESS_DIR}"/"${webphp_keypair_nm}" 
+   wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}"
 
    ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${WEBPHP_INST_USER_NM}"  
@@ -137,14 +138,14 @@ then
  
    echo 'delete_webphp_website.sh ready.'
       
-   scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
+   scp_upload_file "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${webphp_dir}"/delete_webphp_website.sh
           
    echo 'Deleting Webphp website ...'
 
    # Delete the Admin website
    ssh_run_remote_command_as_root "chmod +x ${remote_dir}/delete_webphp_website.sh" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${WEBPHP_INST_USER_NM}" \
@@ -153,7 +154,7 @@ then
    set +e     
            
    ssh_run_remote_command_as_root "${remote_dir}/delete_webphp_website.sh" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${WEBPHP_INST_USER_NM}" \
@@ -169,7 +170,7 @@ then
 
       # Clear remote directory    
       ssh_run_remote_command "rm -rf ${remote_dir:?}" \
-          "${key_pair_file}" \
+          "${private_key_file}" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${WEBPHP_INST_USER_NM}" \
@@ -196,6 +197,5 @@ then
 
    echo
    echo "Webphp website removed."
-   echo
 fi
 

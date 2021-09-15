@@ -5,6 +5,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+echo
 echo '************'
 echo 'Shared image'
 echo '************'
@@ -88,7 +89,6 @@ then
       delete_image_snapshot "${id}"
       
       echo 'Snapshot deleted.'
-      echo
    done
 fi
 

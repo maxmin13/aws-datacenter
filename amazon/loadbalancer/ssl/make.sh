@@ -31,6 +31,7 @@ fi
 
 lbal_dir='loadbalancer'
 
+echo
 echo '*****************'
 echo 'SSL load balancer'
 echo '*****************'
@@ -272,16 +273,17 @@ else
 
    remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
    cert_dir="${remote_dir}"/certificates
-   key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
-   wait_ssh_started "${key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
+   private_key_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
+   wait_ssh_started "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
    ssh_run_remote_command "rm -rf ${remote_dir} && mkdir -p ${cert_dir}" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"
        
    sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+       -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
        -e "s/SEDadmin_inst_emailSED/${ADMIN_INST_EMAIL}/g" \
        -e "s/SEDcert_home_dirSED/$(escape ${cert_dir})/g" \
        -e "s/SEDdomain_nmSED/${LBAL_INST_DNS_DOMAIN_NM}/g" \
@@ -292,7 +294,7 @@ else
           
    echo 'request_ca_certificate_with_dns_challenge.sh ready.'              
 
-   scp_upload_files "${key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+   scp_upload_files "${private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${lbal_dir}"/request_ca_certificate_with_dns_challenge.sh 
        
    echo 'Scripts uploaded.'
@@ -305,7 +307,7 @@ else
    echo 'Requesting load balancer SSL certificate ...'
     
    ssh_run_remote_command_as_root "chmod +x ${remote_dir}/request_ca_certificate_with_dns_challenge.sh" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}" \
@@ -313,7 +315,7 @@ else
 
    set +e             
    ssh_run_remote_command_as_root "${remote_dir}/request_ca_certificate_with_dns_challenge.sh" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}" \
@@ -334,7 +336,7 @@ else
       fi
      
       # Download the certificates.                   
-      scp_download_files "${key_pair_file}" \
+      scp_download_files "${private_key_file}" \
           "${admin_eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${ADMIN_INST_USER_NM}" \
@@ -352,7 +354,7 @@ else
       echo 'Load balancer SSL certificate uploaded to IAM.'
           
       ssh_run_remote_command "rm -rf ${remote_dir:?}" \
-          "${key_pair_file}" \
+          "${private_key_file}" \
           "${admin_eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${ADMIN_INST_USER_NM}"   
@@ -455,7 +457,5 @@ rm -rf "${TMP_DIR:?}"/"${lbal_dir}"
 
 echo
 echo "Load Balancer up and running at: ${lbal_dns}."
-echo
-
 
 

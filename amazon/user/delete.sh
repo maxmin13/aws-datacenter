@@ -5,6 +5,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+echo
 echo '***************'
 echo 'AWS Permissions'
 echo '***************'
@@ -71,7 +72,6 @@ then
    delete_permission_policy "${AWS_ROUTE53_POLICY_NM}"
    
    echo 'Route53 permission policy deleted.'
-   echo
 fi
  
 ##
@@ -83,7 +83,6 @@ then
    delete_role "${AWS_BOSH_DIRECTOR_ROLE}" > /dev/null
    
    echo 'Bosh director role deleted.'
-   echo
 fi     
 
          

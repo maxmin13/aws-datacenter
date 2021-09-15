@@ -48,6 +48,7 @@ webphp_keypair_nm="${WEBPHP_INST_KEY_PAIR_NM/<ID>/"${webphp_id}"}"
 loadbalancer_request_domain="${webphp_hostname}"
 monit_request_domain="${webphp_hostname}"
 
+echo
 echo '************'
 echo "WebPhp box ${webphp_id}" 
 echo '************'
@@ -223,27 +224,33 @@ set -e
 echo 'Granted access to Admin M/Monit collector.'
 
 ##
-## Cloud init
-##   
+## SSH keys.
+##
 
-## Removes the default user, creates the webphp-user user and sets the instance's hostname.     
-
-check_keypair_exists "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}"
+check_aws_public_key_exists "${webphp_keypair_nm}" 
 key_exists="${__RESULT}"
 
 if [[ 'false' == "${key_exists}" ]]
 then
-   # Save the private key file in the access directory
+   # Create a private key in the local 'access' directory.
    mkdir -p "${WEBPHP_INST_ACCESS_DIR}"
-   create_keypair "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}" "${WEBPHP_INST_EMAIL}" 
+   generate_aws_keypair "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}" 
    
-   echo 'SSH key-pair created.'
+   echo 'SSH private key created.'
 else
    echo 'WARN: SSH key-pair already created.'
 fi
 
 get_public_key "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}"
 public_key="${__RESULT}"
+   
+echo 'SSH public key extracted.'
+
+##
+## Cloud init
+##   
+
+## Removes the default user, creates the webphp-user user and sets the instance's hostname.     
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${WEBPHP_INST_USER_PWD}")" 
 
@@ -308,19 +315,20 @@ echo "Webphp box public address: ${eip}."
 echo 'Uploading scripts to the Webphp box ...'
 
 remote_dir=/home/"${WEBPHP_INST_USER_NM}"/script
-key_pair_file="${WEBPHP_INST_ACCESS_DIR}"/"${webphp_keypair_nm}" 
+private_key_file="${WEBPHP_INST_ACCESS_DIR}"/"${webphp_keypair_nm}" 
 
-wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}"
+wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${WEBPHP_INST_USER_NM}"  
 
 # Prepare the scripts to run on the server.
 
-sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
+sed -e "s/SEDwebphp_inst_user_nmSED/${WEBPHP_INST_USER_NM}/g" \
+    -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_default_http_portSED/${WEBPHP_APACHE_DEFAULT_HTTP_PORT}/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
@@ -335,7 +343,7 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     
 echo 'install_webphp.sh ready.' 
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
+scp_upload_file "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/install_webphp.sh   
     
 # Get the account number.
@@ -397,7 +405,7 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
 
 echo 'extend_apache_web_server_with_security_module_template.sh ready.'
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/httpd.conf \
     "${TMP_DIR}"/"${webphp_dir}"/install_apache_web_server.sh \
     "${TMP_DIR}"/"${webphp_dir}"/extend_apache_web_server_with_FCGI.sh  \
@@ -417,7 +425,7 @@ sed -e "s/SEDallow_url_fopenSED/On/g" \
 
 echo 'php.ini ready.'
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TEMPLATE_DIR}"/common/php/install_php.sh \
     "${TMP_DIR}"/"${webphp_dir}"/php.ini 
   
@@ -449,7 +457,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_HTTP_VIRTUALHOST_
    
 echo "${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE} ready."
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/monitrc \
     "${TMP_DIR}"/"${webphp_dir}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}"    
        
@@ -469,7 +477,7 @@ add_loadbalancer_rule_to_virtualhost "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_HTTP_V
 
 echo "${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE} ready." 
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
+scp_upload_file "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/"${LBAL_HTTP_VIRTUALHOST_CONFIG_FILE}" 
                 
 # Rsyslog configuration file.    
@@ -479,14 +487,14 @@ sed -e "s/SEDserver_admin_rsyslog_portSED/${ADMIN_RSYSLOG_PORT}/g" \
 
 echo 'rsyslog.conf ready.'
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
+scp_upload_file "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/rsyslog.conf
     
 sed -e "s/SEDssh_portSED/${SHARED_INST_SSH_PORT}/g" \
     -e "s/SEDallowed_userSED/${WEBPHP_INST_USER_NM}/g" \
        "${TEMPLATE_DIR}"/common/ssh/sshd_config_template > "${TMP_DIR}"/"${webphp_dir}"/sshd_config  
            
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
+scp_upload_file "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${WEBPHP_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${webphp_dir}"/sshd_config           
 
 echo 'sshd_config ready.'
@@ -499,7 +507,7 @@ echo 'Installing the Webphp modules ...'
 ## 
 
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_webphp.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${WEBPHP_INST_USER_NM}" \
@@ -508,7 +516,7 @@ ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_webphp.sh" \
 set +e     
            
 ssh_run_remote_command_as_root "${remote_dir}/install_webphp.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${WEBPHP_INST_USER_NM}" \
@@ -523,7 +531,7 @@ then
    echo 'Wephp box successfully configured.'
    
    ssh_run_remote_command "rm -rf ${remote_dir}" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${WEBPHP_INST_USER_NM}" \
@@ -531,7 +539,7 @@ then
    
    set +e
    ssh_run_remote_command_as_root "reboot" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${WEBPHP_INST_USER_NM}" \
@@ -581,4 +589,4 @@ rm -rf "${TMP_DIR:?}"/"${webphp_dir}"
 
 echo
 echo "Webphp box up and running at: ${eip}." 
-echo
+

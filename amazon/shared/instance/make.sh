@@ -13,6 +13,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+echo
 echo '**********'
 echo 'Shared box'
 echo '**********'
@@ -93,27 +94,33 @@ set -e
 echo "Granted SSH access on port ${SHARED_INST_SSH_PORT}."
 
 ##
-## Cloud init
-##   
+## SSH keys.
+##
 
-## Removes the default user, creates the admin-user user and sets the instance's hostname.     
-
-check_keypair_exists "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}"
+check_aws_public_key_exists "${SHARED_INST_KEY_PAIR_NM}" 
 key_exists="${__RESULT}"
 
 if [[ 'false' == "${key_exists}" ]]
 then
-   # Save the private key file in the access directory
+   # Create a private key in the local 'access' directory.
    mkdir -p "${SHARED_INST_ACCESS_DIR}"
-   create_keypair "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}" "${ADMIN_INST_EMAIL}"
-      
-   echo 'SSH key-pair created.'
+   generate_aws_keypair "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}" 
+   
+   echo 'SSH private key created.'
 else
    echo 'WARN: SSH key-pair already created.'
 fi
 
-get_public_key "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}" 
+get_public_key "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}"
 public_key="${__RESULT}"
+   
+echo 'SSH public key extracted.'
+
+##
+## Cloud init
+##   
+
+## Removes the default user, creates the admin-user user and sets the instance's hostname.     
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${SHARED_INST_USER_PWD}")" 
 
@@ -177,9 +184,9 @@ echo "Shared box public address: ${eip}."
 
 # Verify it the SSH port is still 22 or it has changed.
 
-key_pair_file="${SHARED_INST_ACCESS_DIR}"/"${SHARED_INST_KEY_PAIR_NM}"
+private_key_file="${SHARED_INST_ACCESS_DIR}"/"${SHARED_INST_KEY_PAIR_NM}"
 
-get_ssh_port "${key_pair_file}" "${eip}" "${SHARED_INST_USER_NM}" '22' '38142' 
+get_ssh_port "${private_key_file}" "${eip}" "${SHARED_INST_USER_NM}" '22' '38142' 
 ssh_port="${__RESULT}"
 
 echo "The SSH port on the Shared box is ${ssh_port}."
@@ -194,7 +201,7 @@ echo 'Uploading the scripts to the Shared box ...'
 remote_dir=/home/"${SHARED_INST_USER_NM}"/script
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${SHARED_INST_USER_NM}"                     
@@ -207,7 +214,7 @@ sed -e "s/SEDssh_portSED/${SHARED_INST_SSH_PORT}/g" \
        
 echo 'sshd_config ready.'         
 
-scp_upload_files "${key_pair_file}" "${eip}" "${ssh_port}" "${SHARED_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${ssh_port}" "${SHARED_INST_USER_NM}" "${remote_dir}" \
     "${TEMPLATE_DIR}"/common/linux/secure-linux.sh \
     "${TEMPLATE_DIR}"/common/linux/check-linux.sh \
     "${TEMPLATE_DIR}"/common/linux/yumupdate.sh \
@@ -216,7 +223,7 @@ scp_upload_files "${key_pair_file}" "${eip}" "${ssh_port}" "${SHARED_INST_USER_N
 echo 'Securing the Shared box ...'
 
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/secure-linux.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${SHARED_INST_USER_NM}" \
@@ -226,7 +233,7 @@ set +e
 
 # Harden the kernel, change SSH port to 38142, set ec2-user password and sudo with password.
 ssh_run_remote_command_as_root "${remote_dir}/secure-linux.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${ssh_port}" \
     "${SHARED_INST_USER_NM}" \
@@ -242,7 +249,7 @@ then
 
    set +e
    ssh_run_remote_command_as_root "reboot" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${ssh_port}" \
        "${SHARED_INST_USER_NM}" \
@@ -260,15 +267,15 @@ set -e
 
 echo 'Revoked SSH access to the Shared box port 22.'
 
-wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${SHARED_INST_USER_NM}"
+wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${SHARED_INST_USER_NM}"
 
-get_ssh_port "${key_pair_file}" "${eip}" "${SHARED_INST_USER_NM}" '22' '38142' 
+get_ssh_port "${private_key_file}" "${eip}" "${SHARED_INST_USER_NM}" '22' '38142' 
 ssh_port="${__RESULT}"
 
 echo "The SSH port on the Shared box is ${ssh_port}." 
 
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/check-linux.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${SHARED_INST_USER_NM}" \
@@ -277,7 +284,7 @@ ssh_run_remote_command_as_root "chmod +x ${remote_dir}/check-linux.sh" \
 echo 'Running security checks in the Shared box ...'
 
 ssh_run_remote_command_as_root "${remote_dir}/check-linux.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${SHARED_INST_USER_NM}" \
@@ -285,7 +292,7 @@ ssh_run_remote_command_as_root "${remote_dir}/check-linux.sh" \
    
 # Clear remote directory.
 ssh_run_remote_command "rm -rf ${remote_dir:?}" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${SHARED_INST_USER_NM}"    
@@ -310,4 +317,3 @@ echo 'Revoked SSH access to the Shared box.'
 # Removing old files
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"
 
-echo

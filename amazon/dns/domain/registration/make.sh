@@ -11,6 +11,7 @@ set +o xtrace
 # and submit a registration request. 
 ###############################################
 
+echo
 echo '*******************'
 echo 'DNS domain register'
 echo '*******************'
@@ -46,4 +47,4 @@ else
    fi
 fi
 
-echo
+

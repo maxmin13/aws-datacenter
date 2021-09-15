@@ -10,6 +10,7 @@ set +o xtrace
 
 database_dir='database'
 
+echo
 echo '****************'
 echo 'Database objects'
 echo '****************'
@@ -109,16 +110,16 @@ else
    echo 'Uploading database scripts to the Admin box ...'
    
    remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
-   key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
-   wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
+   private_key_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
+   wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
   
    ssh_run_remote_command "rm -rf ${remote_dir:?} && mkdir ${remote_dir}" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"
                    
-   scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+   scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/database/delete_dbs.sql \
        "${TMP_DIR}"/database/delete_dbusers.sql \
        "${TMP_DIR}"/database/delete_database.sh
@@ -126,7 +127,7 @@ else
    echo "Deleting database objects ..."
    
    ssh_run_remote_command_as_root "chmod +x ${remote_dir}/delete_database.sh" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}" \
@@ -135,7 +136,7 @@ else
    set +e   
           
    ssh_run_remote_command_as_root "${remote_dir}/delete_database.sh" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}" \
@@ -150,7 +151,7 @@ else
       echo 'Database objects successfully deleted.'
    
    ssh_run_remote_command "rm -rf ${remote_dir}" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"     
@@ -177,5 +178,4 @@ else
 
 fi
 
-echo
 

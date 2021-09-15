@@ -14,6 +14,7 @@ set +o xtrace
 ## The load balancer is usable as soon as any one of your registered instances is in the InService state.
 ##
 
+echo
 echo '*************'
 echo 'Load balancer'
 echo '*************'
@@ -93,4 +94,4 @@ lbal_dns="${__RESULT}"
 
 echo
 echo "Load Balancer up and running at: ${lbal_dns}."
-echo
+

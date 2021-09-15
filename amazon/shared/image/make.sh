@@ -13,6 +13,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+echo
 echo '************'
 echo 'Shared image'
 echo '************'
@@ -89,4 +90,4 @@ rm -rf "${TMP_DIR:?}"/"${shared_dir}"
 
 echo
 echo 'Shared image created.'
-echo
+

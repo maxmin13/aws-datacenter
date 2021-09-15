@@ -13,6 +13,7 @@ set +o xtrace
 
 bosh_dir='bosh'
 
+echo
 echo '***************'
 echo 'Bosh components'
 echo '***************'
@@ -32,7 +33,7 @@ fi
 get_subnet_id "${DTC_SUBNET_MAIN_NM}"
 admin_subnet_id="${__RESULT}"
 
-if [[ -z "${subnet_id}" ]]
+if [[ -z "${admin_subnet_id}" ]]
 then
    echo '* ERROR: main subnet not found.'
    exit 1
@@ -86,6 +87,8 @@ mkdir "${TMP_DIR}"/"${bosh_dir}"
 ## 
 
 set +e
+
+# Access to Admin from local machine.
 allow_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
    
 echo 'Granted SSH access to Admin instance.'
@@ -127,14 +130,14 @@ fi
 ## Bosh security group.
 ## 
 
-get_security_group_id "${BOSH_SEC_GRP_NM}"
+get_security_group_id "${BOSH_INST_SEC_GRP_NM}"
 bosh_sgp_id="${__RESULT}"
 
 if [[ -z "${bosh_sgp_id}" ]]
 then
    # Create Bosh security group.
-   create_security_group "${dtc_id}" "${BOSH_SEC_GRP_NM}" 'BOSH deployed VMs.'
-   get_security_group_id "${BOSH_SEC_GRP_NM}"
+   create_security_group "${dtc_id}" "${BOSH_INST_SEC_GRP_NM}" 'BOSH deployed VMs.'
+   get_security_group_id "${BOSH_INST_SEC_GRP_NM}"
    bosh_sgp_id="${__RESULT}"
    
    echo 'Created Bosh security group.'.
@@ -176,12 +179,12 @@ set -e
 echo 'Uploading Bosh scripts to the Admin box ...'
 
 remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
+admin_private_key_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}"  
 
-admin_key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}"  
-wait_ssh_started "${admin_key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
+wait_ssh_started "${admin_private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
-    "${admin_key_pair_file}" \
+    "${admin_private_key_file}" \
     "${admin_eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}"  
@@ -196,46 +199,52 @@ sed "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
     
 echo 'install_bosh_cli.sh ready.'
 
-sed "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
-    "s/SEDbosh_director_nmSED/${BOSH_DIRECTOR_NM}/g" \
-    "s/SEDbosh_director_cidrSED/${DTC_SUBNET_MAIN_CIDR}/g" \
-    "s/SEDbosh_director_regionSED/${DTC_DEPLOY_REGION}/g" \
-    "s/SEDbosh_director_azSED/${DTC_DEPLOY_ZONE_1}/g" \
-    "s/SEDbosh_director_subnet_idSED/${admin_subnet_id}/g" \
-    "s/SEDbosh_director_sec_group_nmSED/${BOSH_SEC_GRP_NM}/g" \
-    "s/SEDbosh_director_internal_ipSED/${BOSH_DIRECTOR_INTERNAL_IP}/g" \
-    "s/SEDbosh_gateway_ipSED/${BOSH_GATEWAY_IP}/g" \
-
-    
-    ADMIN_INST_KEY_PAIR_NM
-    
-    "${TEMPLATE_DIR}"/"${bosh_dir}"/install_bosh_director_template.sh > "${TMP_DIR}"/"${bosh_dir}"/install_bosh_director.sh
+sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+    -e "s/SEDbosh_director_nmSED/${BOSH_DIRECTOR_NM}/g" \
+    -e "s/SEDbosh_cidrSED/$(escape ${DTC_SUBNET_MAIN_CIDR})/g" \
+    -e "s/SEDbosh_regionSED/${DTC_DEPLOY_REGION}/g" \
+    -e "s/SEDbosh_azSED/${DTC_DEPLOY_ZONE_1}/g" \
+    -e "s/SEDbosh_subnet_idSED/${admin_subnet_id}/g" \
+    -e "s/SEDbosh_sec_group_nmSED/${BOSH_INST_SEC_GRP_NM}/g" \
+    -e "s/SEDbosh_internal_ipSED/${BOSH_INST_PRIVATE_IP}/g" \
+    -e "s/SEDdtc_gateway_ipSED/${DTC_GATEWAY_IP}/g" \
+    -e "s/SEDprivate_keySED/${ADMIN_INST_KEY_PAIR_NM}/g" \
+       "${TEMPLATE_DIR}"/"${bosh_dir}"/install_bosh_director_template.sh > "${TMP_DIR}"/"${bosh_dir}"/install_bosh_director.sh
     
 echo 'install_bosh_director.sh ready.'
 
-# Create an hash of the director password and put it in a vars.yml file, the file is used by bosh 
+# Create an hash of the director password and put it in a vars.yml file, this file is used by bosh 
 # create-env command to get the value of 'vm_passwd' in set_director_passwd.yml file.
 echo -n "vm_passwd: " > "${TMP_DIR}"/"${bosh_dir}"/vars.yml
-mkpasswd -m sha-512 "${BOSH_DIRECTOR_PASSWORD}" >> "${TMP_DIR}"/"${bosh_dir}"/vars.yml
+
+{
+   mkpasswd -m sha-512 "${BOSH_DIRECTOR_PASSWORD}" 
+   echo -n 
+
+   # Configure AWS CPI to use director IAM profile, see: set_director_instance_profile.yml
+   echo  -n "iam_instance_profile: " 
+   echo "${ADMIN_INST_PROFILE_NM}"
+} >> "${TMP_DIR}"/"${bosh_dir}"/vars.yml
 
 echo 'vars.yml ready.'
 
 echo "Uploading Bosh scripts ..."
 
-scp_upload_files "${admin_key_pair_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${admin_private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${bosh_dir}"/install_bosh_components.sh \
     "${TMP_DIR}"/"${bosh_dir}"/install_bosh_cli.sh \
     "${TMP_DIR}"/"${bosh_dir}"/install_bosh_director.sh \
     "${TEMPLATE_DIR}"/"${bosh_dir}"/set_director_passwd.yml \
+    "${TEMPLATE_DIR}"/"${bosh_dir}"/set_director_instance_profile.yml \
     "${TMP_DIR}"/"${bosh_dir}"/vars.yml \
-    "${admin_key_pair_file}" 
+    "${admin_private_key_file}" 
        
 echo 'Scripts uploaded.'
 echo "Installing Bosh components ..."
  
 # Run the install database script uploaded in the Admin server. 
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_bosh_components.sh" \
-    "${admin_key_pair_file}" \
+    "${admin_private_key_file}" \
     "${admin_eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
@@ -243,7 +252,7 @@ ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_bosh_components.s
     
 set +e          
 ssh_run_remote_command_as_root "${remote_dir}/install_bosh_components.sh" \
-    "${admin_key_pair_file}" \
+    "${admin_private_key_file}" \
     "${admin_eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
@@ -258,7 +267,7 @@ then
    echo 'Bosh components successfully installed.'
    
    ssh_run_remote_command "rm -rf ${remote_dir}" \
-       "${admin_key_pair_file}" \
+       "${admin_private_key_file}" \
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"     
@@ -268,7 +277,7 @@ else
 fi
 
 ##
-## Instance profile.
+## Admin instance profile.
 ##
 
 check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}" > /dev/null
@@ -288,7 +297,7 @@ else
 fi
       
 ## 
-## SSH Access.
+## Admin SSH Access.
 ## 
 
 # Revoke SSH access from the development machine
@@ -303,5 +312,5 @@ rm -rf "${TMP_DIR:?}"/"${bosh_dir}"
  
 echo
 echo "Bosh components installed." 
-echo
+
 

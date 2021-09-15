@@ -11,6 +11,7 @@ set +o xtrace
 # points to the load balancer 
 ###############################################
 
+echo
 echo '***************'
 echo 'DNS hosted zone'
 echo '***************'
@@ -111,5 +112,4 @@ else
    echo "Hosted zone ${MAXMIN_TLD} not deleted."
 fi
 
-echo
 

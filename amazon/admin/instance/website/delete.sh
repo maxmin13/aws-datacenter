@@ -17,6 +17,7 @@ WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE='admin.https.virtualhost.maxmin.it.conf'
 WEBSITE_DOCROOT_ID='admin.maxmin.it'
 admin_dir='admin'
 
+echo
 echo '*************'
 echo 'Admin website'
 echo '*************'
@@ -81,11 +82,11 @@ then
    echo 'Uploading the scripts to the Admin box ...'
 
    remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
-   key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
-   wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
+   private_key_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
+   wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
    ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"  
@@ -102,14 +103,14 @@ then
           
    echo 'delete_admin_website.sh ready' 
                                     
-   scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+   scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
       "${TMP_DIR}"/admin/delete_admin_website.sh 
     
    echo 'Deleting Admin website ...'
 
    # Delete the Admin website
    ssh_run_remote_command_as_root "chmod +x ${remote_dir}/delete_admin_website.sh" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}" \
@@ -118,7 +119,7 @@ then
    set +e     
            
    ssh_run_remote_command_as_root "${remote_dir}/delete_admin_website.sh" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}" \
@@ -133,7 +134,7 @@ then
       echo 'Admin website sucessfully removed.'
       
       ssh_run_remote_command "rm -rf ${remote_dir:?}" \
-          "${key_pair_file}" \
+          "${private_key_file}" \
           "${eip}" \
           "${SHARED_INST_SSH_PORT}" \
           "${ADMIN_INST_USER_NM}"   
@@ -160,6 +161,5 @@ then
 
    echo
    echo "Admin website removed."
-   echo
 fi
 

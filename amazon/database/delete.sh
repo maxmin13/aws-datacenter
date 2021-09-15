@@ -5,6 +5,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+echo
 echo '************'
 echo 'Database box'
 echo '************'
@@ -116,6 +117,5 @@ then
    delete_log_slow_queries_db_parameter_group "${DB_LOG_SLOW_QUERIES_PARAM_GRP_NM}"
    
    echo 'Log slow queries database parameter group deleted.'
-   echo
 fi
 

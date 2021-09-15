@@ -11,6 +11,7 @@ set +o xtrace
 ## Load Balancers and EC2 instances. 
 ##
 
+echo
 echo '***********'
 echo 'Data center'
 echo '***********'
@@ -125,4 +126,4 @@ fi
 
 echo
 echo 'Data center up and running.'
-echo
+

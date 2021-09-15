@@ -40,6 +40,7 @@ MONIT_HTTP_VIRTUALHOST_CONFIG_FILE='monit.http.virtualhost.maxmin.it.conf'
 MMONIT_INSTALL_DIR='/opt/mmonit'
 admin_dir='admin'
 
+echo
 echo '*********'
 echo 'Admin box'
 echo '*********'
@@ -151,27 +152,33 @@ set -e
 echo 'Granted access to the database.'
 
 ##
-## Cloud init.
-##   
+## SSH keys.
+##
 
-## Remove the default user, creates the admin-user user and sets the instance's hostname.     
-
-check_keypair_exists "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}"
+check_aws_public_key_exists "${ADMIN_INST_KEY_PAIR_NM}" 
 key_exists="${__RESULT}"
 
 if [[ 'false' == "${key_exists}" ]]
 then
-   # Save the private key file in the access directory
+   # Create a private key in the local 'access' directory.
    mkdir -p "${ADMIN_INST_ACCESS_DIR}"
-   create_keypair "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}" "${ADMIN_INST_EMAIL}"
-      
-   echo 'SSH key-pair created.'
+   generate_aws_keypair "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}" 
+   
+   echo 'SSH private key created.'
 else
    echo 'WARN: SSH key-pair already created.'
 fi
 
-get_public_key "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}" 
+get_public_key "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}"
 public_key="${__RESULT}"
+   
+echo 'SSH public key extracted.'
+
+##
+## Cloud init.
+##   
+
+## Remove the default user, creates the admin-user user and sets the instance's hostname.     
 
 hashed_pwd="$(mkpasswd --method=SHA-512 --rounds=4096 "${ADMIN_INST_USER_PWD}")"
 
@@ -269,12 +276,12 @@ echo "Admin box public address: ${eip}."
 echo 'Uploading the scripts to the Admin box ...'
 
 remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
-key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
+private_key_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
 
-wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
+wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
-    "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"  
+    "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"  
 
 sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
@@ -298,7 +305,7 @@ sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
 
 echo 'install_admin.sh ready.'
 
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_file "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/admin/install_admin.sh
 
 sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
@@ -333,7 +340,7 @@ sed -e "s/SEDapache_default_http_portSED/${ADMIN_APACHE_DEFAULT_HTTP_PORT}/g" \
 
 echo 'httpd.conf ready.'
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/install_apache_web_server.sh \
     "${TMP_DIR}"/"${admin_dir}"/extend_apache_web_server_with_FCGI.sh \
     "${TMP_DIR}"/"${admin_dir}"/httpd.conf \
@@ -349,7 +356,7 @@ sed -e "s/SEDallow_url_fopenSED/Off/g" \
 
 echo 'php.ini ready.'
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TEMPLATE_DIR}"/common/php/install_php.sh \
     "${TMP_DIR}"/"${admin_dir}"/php.ini
 
@@ -370,7 +377,7 @@ sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
        
 echo 'server.xml ready.' 
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${JAR_DIR}"/"${MMONIT_ARCHIVE}" \
     "${TMP_DIR}"/"${admin_dir}"/mmonit.service \
     "${TMP_DIR}"/"${admin_dir}"/server.xml 
@@ -402,7 +409,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${MONIT_HTTP_VIRTUALHOST_C
      
 echo "${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE} ready."
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/monitrc \
     "${TMP_DIR}"/"${admin_dir}"/"${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}" 
        
@@ -428,7 +435,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${PHPMYADMIN_HTTP_VIRTUALH
 
 echo "${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE} ready."    
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/"${PHPMYADMIN_HTTP_VIRTUALHOST_CONFIG_FILE}" \
     "${TMP_DIR}"/"${admin_dir}"/config.inc.php      
      
@@ -448,7 +455,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${admin_dir}"/"${LOGANALYZER_HTTP_VIRTUAL
      
 echo "${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE} ready."  
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
      "${JAR_DIR}"/"${LOGANALYZER_ARCHIVE}" \
      "${TMP_DIR}"/"${admin_dir}"/"${LOGANALYZER_HTTP_VIRTUALHOST_CONFIG_FILE}" \
      "${TEMPLATE_DIR}"/admin/loganalyzer/config.php 
@@ -459,7 +466,7 @@ sed -e "s/SEDadmin_rsyslog_portSED/${ADMIN_RSYSLOG_PORT}/g" \
     
 echo 'rsyslog.conf ready.'
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/rsyslog.conf  \
     "${TEMPLATE_DIR}"/common/launch_javaMail.sh \
     "${TEMPLATE_DIR}"/admin/log/logrotatehttp
@@ -468,7 +475,7 @@ sed -e "s/SEDssh_portSED/${SHARED_INST_SSH_PORT}/g" \
     -e "s/SEDallowed_userSED/${ADMIN_INST_USER_NM}/g" \
        "${TEMPLATE_DIR}"/common/ssh/sshd_config_template > "${TMP_DIR}"/"${admin_dir}"/sshd_config  
            
-scp_upload_file "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_file "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${admin_dir}"/sshd_config           
 
 echo 'sshd_config ready.'        
@@ -483,7 +490,7 @@ echo 'Scripts uploaded.'
 echo 'Installing the Admin modules ...'
 
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
@@ -491,7 +498,7 @@ ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin.sh" \
 
 set +e      
 ssh_run_remote_command_as_root "${remote_dir}/install_admin.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
@@ -505,14 +512,14 @@ then
    echo 'Admin box successfully configured.'
    
    ssh_run_remote_command "rm -rf ${remote_dir}" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"     
    
    set +e
    ssh_run_remote_command_as_root "reboot" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}" \
@@ -540,4 +547,4 @@ rm -rf "${TMP_DIR:?}"/"${admin_dir}"
 
 echo
 echo "Admin box up and running at: ${eip}." 
-echo
+

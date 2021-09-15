@@ -1,4 +1,26 @@
 
+##
+## SSH key pair.
+##
+
+check_aws_public_key_exists "${ADMIN_INST_KEY_PAIR_NM}" 
+key_exists="${__RESULT}"
+
+if [[ 'false' == "${key_exists}" ]]
+then
+   # Create a private key in the local 'access' directory.
+   private_key_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}"
+   mkdir -p "${ADMIN_INST_ACCESS_DIR}"
+   generate_aws_keypair "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}" 
+   
+   echo 'SSH private key created.'
+else
+   echo 'WARN: SSH key-pair already created.'
+fi
+
+get_public_key "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}"
+public_key="${__RESULT}"
+
 
 #########################################
 

@@ -15,6 +15,7 @@ fi
 webphp_id="${1}"
 export webphp_id="${1}"
 
+echo
 echo '************'
 echo "Webphp box ${webphp_id}" 
 echo '************'
@@ -177,18 +178,18 @@ then
    echo "Address released from the account." 
 fi
 
-## 
-## SSH key-pair
-## 
+##
+## SSH keys.
+##
 
-check_keypair_exists "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}"
+check_aws_public_key_exists "${webphp_keypair_nm}" 
 key_exists="${__RESULT}"
 
 if [[ 'true' == "${key_exists}" ]]
 then
-   delete_keypair "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}" 
+   delete_aws_keypair "${webphp_keypair_nm}" "${WEBPHP_INST_ACCESS_DIR}"
    
-   echo 'SSH key-pair created.'
+   echo 'The SSH access key-pair have been deleted.'
 fi
 
 ## Clearing

@@ -19,13 +19,10 @@ MONIT_HTTP_VIRTUALHOST_CONFIG_FILE='SEDmonit_http_virtualhost_configSED'
 MONIT_HTTP_PORT='SEDmonit_http_portSED'
 MONIT_DOCROOT_ID='SEDmonit_docroot_idSED'
 WEBPHP_INST_USER_NM='SEDwebphp_inst_user_nmSED'
-
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 webphp_log_file='/var/log/webphp_box_install.log'
 
-###### TODO pass SEDwebphp_inst_user_nmSED value
-# Change ownership in the script directory to delete it from dev machine.
-######trap "chown -R ${WEBPHP_INST_USER_NM}:${WEBPHP_INST_USER_NM} ${script_dir}" ERR EXIT
+trap 'chown -R ${WEBPHP_INST_USER_NM}:${WEBPHP_INST_USER_NM} ${script_dir}' ERR EXIT
 
 amazon-linux-extras install epel -y >> "${webphp_log_file}" 2>&1
 

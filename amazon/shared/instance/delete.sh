@@ -5,6 +5,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+echo
 echo '**********'
 echo 'Shared box'
 echo '**********'
@@ -102,18 +103,18 @@ then
    echo 'Address released from the account.' 
 fi
 
-## 
-## SSH Key-pair
-## 
+##
+## SSH keys.
+##
 
-check_keypair_exists "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}"
+check_aws_public_key_exists "${SHARED_INST_KEY_PAIR_NM}" 
 key_exists="${__RESULT}"
 
 if [[ 'true' == "${key_exists}" ]]
 then
-   delete_keypair "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}" 
+   delete_aws_keypair "${SHARED_INST_KEY_PAIR_NM}" "${SHARED_INST_ACCESS_DIR}"
    
-   echo 'SSH key-pair created.'
+   echo 'The SSH access key-pair have been deleted.'
 fi
 
 rm -rf "${TMP_DIR:?}"/"${shared_dir}"

@@ -32,6 +32,7 @@ MMONIT_INSTALL_DIR='/opt/mmonit'
 WEBSITE_DOCROOT_ID='admin.maxmin.it'
 ssl_dir='ssl/certbot'
 
+echo
 echo '*************'
 echo 'SSL Admin box'
 echo '*************'
@@ -82,9 +83,9 @@ mkdir -p "${TMP_DIR}"/"${ssl_dir}"
 ## Key pair
 ## 
 
-key_pair_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
+private_key_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}" 
 
-if [[ -z "${key_pair_file}" ]] 
+if [[ -z "${private_key_file}" ]] 
 then
    echo 'ERROR: not found Admin SSH access key.'
    
@@ -118,10 +119,10 @@ echo 'Uploading the scripts to the Admin box ...'
 
 remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
 
-wait_ssh_started "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
+wait_ssh_started "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
 
 ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}"  
@@ -133,7 +134,7 @@ sed -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
              
 echo 'extend_apache_web_server_with_SSL_module_template.sh ready.'   
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${ssl_dir}"/extend_apache_web_server_with_SSL_module_template.sh \
     "${TEMPLATE_DIR}"/common/httpd/00-ssl.conf      
    
@@ -185,7 +186,7 @@ add_alias_to_virtualhost "${TMP_DIR}"/"${ssl_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_
                       
 echo "${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE} ready."  
 
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${LOGANALYZER_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${PHPMYADMIN_HTTPS_VIRTUALHOST_CONFIG_FILE}" \
      "${TMP_DIR}"/"${ssl_dir}"/"${WEBSITE_HTTPS_VIRTUALHOST_CONFIG_FILE}"
@@ -212,7 +213,7 @@ then
 
    echo 'gen_selfsigned_certificate.sh ready.'
          
-   scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+   scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
        "${TEMPLATE_DIR}"/common/ssl/selfsigned/gen_selfsigned_certificate.sh \
        "${TMP_DIR}"/"${ssl_dir}"/request_selfsigned_certificate.sh \
        "${TMP_DIR}"/"${ssl_dir}"/gen_certificate.sh \
@@ -252,12 +253,13 @@ else
 
    echo "${CERTBOT_VIRTUALHOST_CONFIG_FILE} ready."  
    
-   scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+   scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
        "${TMP_DIR}"/"${ssl_dir}"/request_ca_certificate_with_http_challenge.sh \
        "${TMP_DIR}"/"${ssl_dir}"/"${CERTBOT_VIRTUALHOST_CONFIG_FILE}" 
 fi  
 
 sed -e "s/SEDenvironmentSED/${ENV}/g" \
+    -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_install_dirSED/$(escape ${APACHE_INSTALL_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
@@ -309,7 +311,7 @@ sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
        
 echo 'server.xml ready.'
    
-scp_upload_files "${key_pair_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
     "${TMP_DIR}"/"${ssl_dir}"/install_admin_ssl.sh \
     "${TMP_DIR}"/"${ssl_dir}"/ssl.conf \
     "${TMP_DIR}"/"${ssl_dir}"/server.xml  
@@ -324,7 +326,7 @@ echo 'Scripts uploaded.'
 echo 'Installing SSL in the Admin box ...'
     
 ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin_ssl.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
@@ -333,7 +335,7 @@ ssh_run_remote_command_as_root "chmod +x ${remote_dir}/install_admin_ssl.sh" \
 set +e   
           
 ssh_run_remote_command_as_root "${remote_dir}/install_admin_ssl.sh" \
-    "${key_pair_file}" \
+    "${private_key_file}" \
     "${eip}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}" \
@@ -348,7 +350,7 @@ then
    echo 'SSL successfully configured in the Admin box.' 
      
    ssh_run_remote_command "rm -rf ${remote_dir:?}" \
-       "${key_pair_file}" \
+       "${private_key_file}" \
        "${eip}" \
        "${SHARED_INST_SSH_PORT}" \
        "${ADMIN_INST_USER_NM}"   
@@ -384,4 +386,3 @@ fi
 # Removing local temp files
 rm -rf "${TMP_DIR:?}"/"${ssl_dir}"  
 
-echo

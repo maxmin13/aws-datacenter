@@ -7,6 +7,7 @@ set +o xtrace
 
 admin_dir='admin'
 
+echo
 echo '*********'
 echo 'Admin box'
 echo '*********'
@@ -148,19 +149,18 @@ then
    echo "Address released from the account." 
 fi
 
-## 
-## SSH Access. 
-## 
+##
+## SSH keys.
+##
 
-check_keypair_exists "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}"
+check_aws_public_key_exists "${ADMIN_INST_KEY_PAIR_NM}" 
 key_exists="${__RESULT}"
 
 if [[ 'true' == "${key_exists}" ]]
 then
-   delete_keypair "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}"
+   delete_aws_keypair "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}"
    
    echo 'The SSH access key-pair have been deleted.'
-   echo
 fi
 
 ## Clearing.

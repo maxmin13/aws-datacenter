@@ -16,6 +16,7 @@ set +o xtrace
 # to the load balancer DNS name.
 ################################################
 
+echo
 echo '***************'
 echo 'DNS hosted zone'
 echo '***************'
@@ -158,4 +159,4 @@ echo "Admin record ${admin_dns_nm} created (${status})."
 
 echo
 echo 'Hosted Zone created.'
-echo
+

@@ -60,7 +60,7 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ############### 
 
 # Change ownership in the script directory to delete it from dev machine.
-trap "chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}" ERR EXIT
+trap 'chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}' ERR EXIT
 
 # If the domain name is fully qualified, remove the trailing dot.
 sub_domain="$(echo "${DOMAIN_NM}" | cut -d'.' -f 1)"
@@ -105,34 +105,36 @@ echo 'Requesting SSL certificate ...'
 echo 'Certificate successfully requested.' ||
 {
    echo 'Let''s wait a bit and try again (second time).' >> "${lbal_log_file}" 2>&1
-   
-   __wait 120
-   
+   __wait 180  
    echo 'Let''s try now.' >> "${lbal_log_file}" 2>&1
    
    "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
    echo 'Certificate successfully requested.' ||
    {
-      echo 'Let''s wait a bit and try again (third time).' >> "${lbal_log_file}" 2>&1
-      __wait 120
-   
+      echo 'Let''s wait a bit and try again (third time).' >> "${lbal_log_file}" 2>&1      
+      __wait 180  
       echo 'Let''s try now.' >> "${lbal_log_file}" 2>&1
    
       "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
       echo 'Certificate successfully requested.' ||
       {
-
-
-         echo 'Let''s wait a bit and try again (fourth time).' >> "${lbal_log_file}" 2>&1
-         __wait 120
-   
+         echo 'Let''s wait a bit and try again (fourth time).' >> "${lbal_log_file}" 2>&1        
+         __wait 180  
          echo 'Let''s try now.' >> "${lbal_log_file}" 2>&1
    
          "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
          echo 'Certificate successfully requested.' ||
          {
-            echo 'ERROR: requesting certificate.'
-            exit 1     
+            echo 'Let''s wait a bit and try again (fourth time).' >> "${lbal_log_file}" 2>&1           
+            __wait 180  
+            echo 'Let''s try now.' >> "${lbal_log_file}" 2>&1
+   
+            "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
+            echo 'Certificate successfully requested.' ||
+            {
+               echo 'ERROR: requesting certificate.'
+               exit 1     
+            }   
          }
       }      
    }       

@@ -12,6 +12,7 @@ set +o xtrace
 # The role is entrusted to EC2 instances. 
 ###############################################
 
+echo
 echo '***************'
 echo 'AWS Permissions'
 echo '***************'
@@ -101,4 +102,4 @@ fi
 
 echo
 echo 'AWS permissions configured.'
-echo
+
