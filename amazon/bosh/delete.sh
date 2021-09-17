@@ -5,6 +5,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
 
+BOSH_DIRECTOR_INSTALL_DIR='/opt/bosh'
 bosh_dir='bosh'
 
 echo
@@ -89,7 +90,7 @@ ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
     "${SHARED_INST_SSH_PORT}" \
     "${ADMIN_INST_USER_NM}"
 
-sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+sed -e "s/SEDbosh_director_install_dirSED/$(escape ${BOSH_DIRECTOR_INSTALL_DIR})/g" \
     -e "s/SEDbosh_director_nmSED/${BOSH_DIRECTOR_NM}/g" \
     -e "s/SEDbosh_cidrSED/$(escape ${DTC_SUBNET_MAIN_CIDR})/g" \
     -e "s/SEDbosh_regionSED/${DTC_DEPLOY_REGION}/g" \
@@ -97,8 +98,8 @@ sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
     -e "s/SEDbosh_subnet_idSED/${admin_subnet_id}/g" \
     -e "s/SEDbosh_sec_group_nmSED/${BOSH_INST_SEC_GRP_NM}/g" \
     -e "s/SEDbosh_internal_ipSED/${BOSH_INST_PRIVATE_IP}/g" \
-    -e "s/SEDdtc_gateway_ipSED/${DTC_GATEWAY_IP}/g" \
-    -e "s/SEDprivate_keySED/${ADMIN_INST_KEY_PAIR_NM}/g" \
+    -e "s/SEDbosh_key_pair_nmSED/${ADMIN_INST_KEY_PAIR_NM}/g" \
+    -e "s/SEDbosh_gateway_ipSED/${DTC_GATEWAY_IP}/g" \
        "${TEMPLATE_DIR}"/"${bosh_dir}"/delete_bosh_director_template.sh > "${TMP_DIR}"/"${bosh_dir}"/delete_bosh_director.sh
     
 echo 'delete_bosh_director.sh ready.'
@@ -209,7 +210,7 @@ fi
 
 # Revoke SSH access from the development machine
 set +e
-revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+################################################## TODO revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
 echo 'Revoked SSH access to the Admin box.' 

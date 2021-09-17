@@ -43,8 +43,8 @@ echo
    
    echo 
       
-   # Remove Cloud Foundry.
-   #. "${PROJECT_DIR}"/amazon/bosh/delete.sh  
+   # Remove Cloud Foundry components.
+   . "${PROJECT_DIR}"/amazon/bosh/delete.sh  
 
    # Make a backup of the database.
    . "${PROJECT_DIR}"/amazon/database/data/backup/make.sh 

@@ -257,10 +257,20 @@ is_profile_associated="${__RESULT}"
 
 if [[ 'false' == "${is_profile_associated}" ]]
 then
-   # Associate a profile with a role that allow access to Route 53.
-   associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null
-   
-   echo 'Instance profile associated to the instance.'
+   # Associate the instance profile with the Admin instance. The instance profile doesn't have a role
+   # associated, the roles is added when needed, ex: when requesting an SSL certificate for the load
+   # balancer or when installing the Bosh director. 
+   associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null && \
+   echo 'Instance profile associated to the instance.' ||
+   {
+      __wait 30
+      associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null && \
+      echo 'Instance profile associated to the instance.' ||
+      {
+         echo 'ERROR: associating the instance profile to the instance.'
+         exit 1
+      }
+   }
 fi
 
 # Get the public IP address assigned to the instance. 

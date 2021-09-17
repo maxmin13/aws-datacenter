@@ -80,8 +80,6 @@ rm -rf "${TMP_DIR:?}"/"${admin_dir}"
 check_instance_profile_exists "${ADMIN_INST_PROFILE_NM}" > /dev/null
 instance_profile_exists="${__RESULT}"
 
-echo instance_profile_exists: $instance_profile_exists
-
 if [[ 'true' == "${instance_profile_exists}" ]]
 then
    delete_instance_profile "${ADMIN_INST_PROFILE_NM}"

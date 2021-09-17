@@ -42,7 +42,7 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi  
-         
+    
    echo    
  
    # Create the datacenter.
@@ -83,7 +83,7 @@ echo
    # Configure SSL in the load balancer in front of Webphp applications.
    . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh      
  
-   # Install Cloud Foundry.
+   # Install Cloud Foundry components.
    #. "${PROJECT_DIR}"/amazon/bosh/make.sh  
  
 } ### >> "${log_file}" 2>&1  

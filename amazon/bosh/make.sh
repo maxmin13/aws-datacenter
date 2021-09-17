@@ -11,6 +11,7 @@ set +o xtrace
 # Bosh director
 ##############################################################
 
+BOSH_DIRECTOR_INSTALL_DIR='/opt/bosh'
 bosh_dir='bosh'
 
 echo
@@ -199,7 +200,8 @@ sed "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
     
 echo 'install_bosh_cli.sh ready.'
 
-sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+sed -e "s/SEDbosh_director_install_dirSED/$(escape ${BOSH_DIRECTOR_INSTALL_DIR})/g" \
+    -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
     -e "s/SEDbosh_director_nmSED/${BOSH_DIRECTOR_NM}/g" \
     -e "s/SEDbosh_cidrSED/$(escape ${DTC_SUBNET_MAIN_CIDR})/g" \
     -e "s/SEDbosh_regionSED/${DTC_DEPLOY_REGION}/g" \
@@ -207,8 +209,8 @@ sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
     -e "s/SEDbosh_subnet_idSED/${admin_subnet_id}/g" \
     -e "s/SEDbosh_sec_group_nmSED/${BOSH_INST_SEC_GRP_NM}/g" \
     -e "s/SEDbosh_internal_ipSED/${BOSH_INST_PRIVATE_IP}/g" \
-    -e "s/SEDdtc_gateway_ipSED/${DTC_GATEWAY_IP}/g" \
-    -e "s/SEDprivate_keySED/${ADMIN_INST_KEY_PAIR_NM}/g" \
+    -e "s/SEDbosh_key_pair_nmSED/${ADMIN_INST_KEY_PAIR_NM}/g" \
+    -e "s/SEDbosh_gateway_ipSED/${DTC_GATEWAY_IP}/g" \
        "${TEMPLATE_DIR}"/"${bosh_dir}"/install_bosh_director_template.sh > "${TMP_DIR}"/"${bosh_dir}"/install_bosh_director.sh
     
 echo 'install_bosh_director.sh ready.'
@@ -221,7 +223,7 @@ echo -n "vm_passwd: " > "${TMP_DIR}"/"${bosh_dir}"/vars.yml
    mkpasswd -m sha-512 "${BOSH_DIRECTOR_PASSWORD}" 
    echo -n 
 
-   # Configure AWS CPI to use director IAM profile, see: set_director_instance_profile.yml
+   # Configure AWS CPI to use director IAM profile, see: aws/iam-instance-profile.yml
    echo  -n "iam_instance_profile: " 
    echo "${ADMIN_INST_PROFILE_NM}"
 } >> "${TMP_DIR}"/"${bosh_dir}"/vars.yml
@@ -235,7 +237,6 @@ scp_upload_files "${admin_private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_P
     "${TMP_DIR}"/"${bosh_dir}"/install_bosh_cli.sh \
     "${TMP_DIR}"/"${bosh_dir}"/install_bosh_director.sh \
     "${TEMPLATE_DIR}"/"${bosh_dir}"/set_director_passwd.yml \
-    "${TEMPLATE_DIR}"/"${bosh_dir}"/set_director_instance_profile.yml \
     "${TMP_DIR}"/"${bosh_dir}"/vars.yml \
     "${admin_private_key_file}" 
        
