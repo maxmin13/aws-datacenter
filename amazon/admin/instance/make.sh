@@ -260,11 +260,11 @@ then
    # Associate the instance profile with the Admin instance. The instance profile doesn't have a role
    # associated, the roles is added when needed, ex: when requesting an SSL certificate for the load
    # balancer or when installing the Bosh director. 
-   associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null && \
+   associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null 2>&1 && \
    echo 'Instance profile associated to the instance.' ||
    {
       __wait 30
-      associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null && \
+      associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null 2>&1 && \
       echo 'Instance profile associated to the instance.' ||
       {
          echo 'ERROR: associating the instance profile to the instance.'

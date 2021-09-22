@@ -99,7 +99,7 @@ echo 'Installing acme.sh client ...'
 
 echo 'Requesting SSL certificate ...'
  
-## Remove '--staging' to issue a valid certificate. Use '--debug 2' to debug the call.
+## TODO: Remove '--staging' to issue a valid certificate. Use '--debug 2' to debug the call.
 ## It may be that IAM is slow to give the permission to call Route 53 (see: ssl/loadbalancer.make.sh), retry after a while.
 "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
 echo 'Certificate successfully requested.' ||

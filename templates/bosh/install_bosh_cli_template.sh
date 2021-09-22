@@ -28,7 +28,8 @@ echo 'Bosh client installed.'
 
 bosh -v
 
-yum install -y gcc gcc-c++ ruby ruby-devel mysql-devel postgresql-devel postgresql-libs sqlite-devel libxslt-devel libxml2-devel patch openssl
+yum install -y gcc gcc-c++ ruby ruby-devel mysql-devel postgresql-devel postgresql-libs \
+    sqlite-devel libxslt-devel libxml2-devel patch openssl
 gem install yajl-ruby
 
 echo 'Dependencies installed.'

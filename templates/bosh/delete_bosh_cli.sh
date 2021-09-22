@@ -19,7 +19,8 @@ rm -f /usr/bin/bosh
 
 echo 'Bosh client removed.'
 
-yum remove -y gcc gcc-c++ ruby ruby-devel mysql-devel postgresql-devel postgresql-libs sqlite-devel libxslt-devel libxml2-devel patch openssl
+yum remove -y gcc gcc-c++ ruby ruby-devel mysql-devel postgresql-devel postgresql-libs \
+    sqlite-devel libxslt-devel libxml2-devel patch openssl
 
 echo 'Dependencies removed.'
 

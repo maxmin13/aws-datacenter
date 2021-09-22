@@ -215,16 +215,18 @@ sed -e "s/SEDbosh_director_install_dirSED/$(escape ${BOSH_DIRECTOR_INSTALL_DIR})
     
 echo 'install_bosh_director.sh ready.'
 
-# Create an hash of the director password and put it in a vars.yml file, this file is used by bosh 
-# create-env command to get the value of 'vm_passwd' in set_director_passwd.yml file.
-echo -n "vm_passwd: " > "${TMP_DIR}"/"${bosh_dir}"/vars.yml
+# vars.yml file is used by bosh to interpolate opts files with the variable values. 
 
+# Create an hash of the director password 
+echo -n "vm_passwd: " > "${TMP_DIR}"/"${bosh_dir}"/vars.yml
 {
    mkpasswd -m sha-512 "${BOSH_DIRECTOR_PASSWORD}" 
    echo -n 
 
-   # Configure AWS CPI to use director IAM profile, see: aws/iam-instance-profile.yml
-   echo  -n "iam_instance_profile: " 
+   # Configure AWS CPI to use director IAM profile, 
+   # see: bosh-deployment/aws/iam-instance-profile.yml for the BOSH vm,
+   # see: bosh-deployment/aws/cli-iam-instance-profile.yml for the Admin vm. 
+   echo -n 'iam_instance_profile: ' 
    echo "${ADMIN_INST_PROFILE_NM}"
 } >> "${TMP_DIR}"/"${bosh_dir}"/vars.yml
 
@@ -236,9 +238,9 @@ scp_upload_files "${admin_private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_P
     "${TMP_DIR}"/"${bosh_dir}"/install_bosh_components.sh \
     "${TMP_DIR}"/"${bosh_dir}"/install_bosh_cli.sh \
     "${TMP_DIR}"/"${bosh_dir}"/install_bosh_director.sh \
-    "${TEMPLATE_DIR}"/"${bosh_dir}"/set_director_passwd.yml \
+    "${TEMPLATE_DIR}"/bosh/set_director_passwd.yml \
     "${TMP_DIR}"/"${bosh_dir}"/vars.yml \
-    "${admin_private_key_file}" 
+    "${admin_private_key_file}"
        
 echo 'Scripts uploaded.'
 echo "Installing Bosh components ..."
@@ -275,26 +277,6 @@ then
 else
    echo 'ERROR: installing Bosh components.'
    exit 1
-fi
-
-##
-## Admin instance profile.
-##
-
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}" > /dev/null
-has_role_associated="${__RESULT}"
-
-if [[ 'true' == "${has_role_associated}" ]]
-then
-   ####
-   #### Sessions may still be actives, they should be terminated by adding AWSRevokeOlderSessions permission
-   #### to the role.
-   ####
-   remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}"
-  
-   echo 'Bosh director role removed from the instance profile.'
-else
-   echo 'WARN: Bosh director role already removed from the instance profile.'
 fi
       
 ## 

@@ -42,6 +42,11 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi  
+   
+   . "${PROJECT_DIR}"/amazon/bosh/make.sh
+   exit
+   exit
+   
     
    echo    
  
@@ -84,7 +89,7 @@ echo
    . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh      
  
    # Install Cloud Foundry components.
-   #. "${PROJECT_DIR}"/amazon/bosh/make.sh  
+   . "${PROJECT_DIR}"/amazon/bosh/make.sh  
  
 } ### >> "${log_file}" 2>&1  
 
