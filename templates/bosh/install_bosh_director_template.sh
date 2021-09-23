@@ -9,25 +9,9 @@ set -o nounset
 # BOSH (bosh outer shell) is a release-engineering tool chain that 
 # provides an easy mechanism to version, package, and deploy 
 # cloud based software: BOSH outer shell runs Clound Foundry so that
-# Cloud Foundry can run you apps.
+# Cloud Foundry can run your apps.
 # BOSH supports deploying to multiple IaaS providers.
 # BOSH focuses on defining your infrastructure as a piece of code.
-# A single BOSH environment consists of the Director VM and any 
-# deployments it orchestrates.
-#
-# stemcell: hardened and versioned base OS image wrapped with
-#           minimal IaaS-specific packaging. It contains A BOSH 
-#           agent for communication back to the Director. All
-#           machines created by BOSH are created from stemcells.
-#
-# releases: A BOSH release is your software, including all 
-#           configuration and dependencies required to build and  
-#           run your software in a reproducible way.
-#
-# deployments: a collection of one or more machines (VMs). Machines
-#           are built from stemcells and then layered and 
-#           configured with specified components from one or more 
-#           BOSH releases.
 #
 # The script deploys a VM with BOSH director installed and running.
 # To debug any error during the director's installation:
@@ -38,6 +22,12 @@ set -o nounset
 #  
 #   cd /opt/bosh
 #   ssh jumpbox@10.0.0.6 -i jumpbox.key
+#
+# To use CLI:
+#
+#   bosh int ./creds.yml --path /admin_password
+#   bosh login -e bosh_0 --client admin --client-secret <ADMIN-PWD>
+#   bosh -h
 # 
 ####################################################################
 
