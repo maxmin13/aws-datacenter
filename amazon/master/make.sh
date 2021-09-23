@@ -44,11 +44,6 @@ echo
    fi  
     
    echo    
-   
-
-   . "${PROJECT_DIR}"/amazon/bosh/make.sh  
-   exit
-   exit
  
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh  
