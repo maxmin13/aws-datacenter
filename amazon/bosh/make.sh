@@ -203,7 +203,7 @@ echo 'install_bosh_cli.sh ready.'
 sed -e "s/SEDbosh_director_install_dirSED/$(escape ${BOSH_DIRECTOR_INSTALL_DIR})/g" \
     -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
     -e "s/SEDbosh_director_nmSED/${BOSH_DIRECTOR_NM}/g" \
-    -e "s/SEDbosh_cidrSED/$(escape ${DTC_SUBNET_MAIN_CIDR})/g" \
+    -e "s/SEDbosh_cidrSED/$(escape "${DTC_SUBNET_MAIN_CIDR}")/g" \
     -e "s/SEDbosh_regionSED/${DTC_DEPLOY_REGION}/g" \
     -e "s/SEDbosh_azSED/${DTC_DEPLOY_ZONE_1}/g" \
     -e "s/SEDbosh_subnet_idSED/${admin_subnet_id}/g" \

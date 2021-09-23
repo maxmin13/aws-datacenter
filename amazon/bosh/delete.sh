@@ -77,77 +77,87 @@ echo
 rm -rf "${TMP_DIR:?}"/"${bosh_dir}"
 mkdir "${TMP_DIR}"/"${bosh_dir}"
 
-echo 'Uploading Bosh scripts to the Admin box ...'
-
-remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
-admin_private_key_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}"  
-
-wait_ssh_started "${admin_private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
-
-ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
-    "${admin_private_key_file}" \
-    "${admin_eip}" \
-    "${SHARED_INST_SSH_PORT}" \
-    "${ADMIN_INST_USER_NM}"
-
-sed -e "s/SEDbosh_director_install_dirSED/$(escape ${BOSH_DIRECTOR_INSTALL_DIR})/g" \
-    -e "s/SEDbosh_director_nmSED/${BOSH_DIRECTOR_NM}/g" \
-    -e "s/SEDbosh_cidrSED/$(escape ${DTC_SUBNET_MAIN_CIDR})/g" \
-    -e "s/SEDbosh_regionSED/${DTC_DEPLOY_REGION}/g" \
-    -e "s/SEDbosh_azSED/${DTC_DEPLOY_ZONE_1}/g" \
-    -e "s/SEDbosh_subnet_idSED/${admin_subnet_id}/g" \
-    -e "s/SEDbosh_sec_group_nmSED/${BOSH_INST_SEC_GRP_NM}/g" \
-    -e "s/SEDbosh_internal_ipSED/${BOSH_INST_PRIVATE_IP}/g" \
-    -e "s/SEDbosh_key_pair_nmSED/${ADMIN_INST_KEY_PAIR_NM}/g" \
-    -e "s/SEDbosh_gateway_ipSED/${DTC_GATEWAY_IP}/g" \
-       "${TEMPLATE_DIR}"/"${bosh_dir}"/delete_bosh_director_template.sh > "${TMP_DIR}"/"${bosh_dir}"/delete_bosh_director.sh
-    
-echo 'delete_bosh_director.sh ready.'
-
-echo "Uploading Bosh scripts ..."
-
-scp_upload_files "${admin_private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
-    "${TEMPLATE_DIR}"/"${bosh_dir}"/delete_bosh_components.sh \
-    "${TEMPLATE_DIR}"/"${bosh_dir}"/delete_bosh_cli.sh \
-    "${TMP_DIR}"/"${bosh_dir}"/delete_bosh_director.sh 
-       
-echo 'Scripts uploaded.'
-echo "Removing Bosh components ..."
-
-# Run the install database script uploaded in the Admin server. 
-ssh_run_remote_command_as_root "chmod +x ${remote_dir}/delete_bosh_components.sh" \
-    "${admin_private_key_file}" \
-    "${admin_eip}" \
-    "${SHARED_INST_SSH_PORT}" \
-    "${ADMIN_INST_USER_NM}" \
-    "${ADMIN_INST_USER_PWD}" 
-    
-set +e          
-ssh_run_remote_command_as_root "${remote_dir}/delete_bosh_components.sh" \
-    "${admin_private_key_file}" \
-    "${admin_eip}" \
-    "${SHARED_INST_SSH_PORT}" \
-    "${ADMIN_INST_USER_NM}" \
-    "${ADMIN_INST_USER_PWD}"   
-                     
-exit_code=$?
-set -e
-
-# shellcheck disable=SC2181
-if [ 0 -eq "${exit_code}" ]
+if [[ -z "${admin_instance_id}" ]]
 then
-   echo 'Bosh components successfully removed.'
-   
-   ssh_run_remote_command "rm -rf ${remote_dir}" \
+
+   echo 'Admin box not found, skipping deleting BOSH components.'
+
+elif [[ 'running' != "${admin_instance_st}" ]]
+then
+   echo 'Admin box not running, skipping deleting BOSH components.'
+else
+
+   echo 'Uploading Bosh scripts to the Admin box ...'
+
+   remote_dir=/home/"${ADMIN_INST_USER_NM}"/script
+   admin_private_key_file="${ADMIN_INST_ACCESS_DIR}"/"${ADMIN_INST_KEY_PAIR_NM}"  
+
+   wait_ssh_started "${admin_private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}"
+
+   ssh_run_remote_command "rm -rf ${remote_dir} && mkdir ${remote_dir}" \
        "${admin_private_key_file}" \
        "${admin_eip}" \
        "${SHARED_INST_SSH_PORT}" \
-       "${ADMIN_INST_USER_NM}"     
-else
-   echo 'ERROR: removing Bosh components.'
-   exit 1
-fi
+       "${ADMIN_INST_USER_NM}"
 
+   sed -e "s/SEDbosh_director_install_dirSED/$(escape ${BOSH_DIRECTOR_INSTALL_DIR})/g" \
+       -e "s/SEDbosh_director_nmSED/${BOSH_DIRECTOR_NM}/g" \
+       -e "s/SEDbosh_cidrSED/$(escape "${DTC_SUBNET_MAIN_CIDR}")/g" \
+       -e "s/SEDbosh_regionSED/${DTC_DEPLOY_REGION}/g" \
+       -e "s/SEDbosh_azSED/${DTC_DEPLOY_ZONE_1}/g" \
+       -e "s/SEDbosh_subnet_idSED/${admin_subnet_id}/g" \
+       -e "s/SEDbosh_sec_group_nmSED/${BOSH_INST_SEC_GRP_NM}/g" \
+       -e "s/SEDbosh_internal_ipSED/${BOSH_INST_PRIVATE_IP}/g" \
+       -e "s/SEDbosh_key_pair_nmSED/${ADMIN_INST_KEY_PAIR_NM}/g" \
+       -e "s/SEDbosh_gateway_ipSED/${DTC_GATEWAY_IP}/g" \
+          "${TEMPLATE_DIR}"/"${bosh_dir}"/delete_bosh_director_template.sh > "${TMP_DIR}"/"${bosh_dir}"/delete_bosh_director.sh
+    
+   echo 'delete_bosh_director.sh ready.'
+
+   echo "Uploading Bosh scripts ..."
+
+   scp_upload_files "${admin_private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
+       "${TEMPLATE_DIR}"/"${bosh_dir}"/delete_bosh_components.sh \
+       "${TEMPLATE_DIR}"/"${bosh_dir}"/delete_bosh_cli.sh \
+       "${TMP_DIR}"/"${bosh_dir}"/delete_bosh_director.sh 
+       
+   echo 'Scripts uploaded.'
+   echo "Removing Bosh components ..."
+
+   # Run the install database script uploaded in the Admin server. 
+   ssh_run_remote_command_as_root "chmod +x ${remote_dir}/delete_bosh_components.sh" \
+       "${admin_private_key_file}" \
+       "${admin_eip}" \
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}" \
+       "${ADMIN_INST_USER_PWD}" 
+    
+   set +e          
+   ssh_run_remote_command_as_root "${remote_dir}/delete_bosh_components.sh" \
+       "${admin_private_key_file}" \
+       "${admin_eip}" \
+       "${SHARED_INST_SSH_PORT}" \
+       "${ADMIN_INST_USER_NM}" \
+       "${ADMIN_INST_USER_PWD}"   
+                     
+   exit_code=$?
+   set -e
+
+   # shellcheck disable=SC2181
+   if [ 0 -eq "${exit_code}" ]
+   then
+      echo 'Bosh components successfully removed.'
+   
+      ssh_run_remote_command "rm -rf ${remote_dir}" \
+          "${admin_private_key_file}" \
+          "${admin_eip}" \
+          "${SHARED_INST_SSH_PORT}" \
+          "${ADMIN_INST_USER_NM}"     
+   else
+      echo 'ERROR: removing Bosh components.'
+      exit 1
+   fi
+fi
 
 ## 
 ## Admin security group.
@@ -210,7 +220,7 @@ fi
 
 # Revoke SSH access from the development machine
 set +e
-################################################## TODO revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
 echo 'Revoked SSH access to the Admin box.' 

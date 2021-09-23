@@ -22,6 +22,7 @@ mkdir "${TMP_DIR}"/"${database_dir}"
 
 get_instance_id "${ADMIN_INST_NM}"
 instance_id="${__RESULT}"
+instance_st=''
 
 if [[ -z "${instance_id}" ]]
 then
@@ -76,7 +77,6 @@ then
 
 elif [[ 'running' != "${instance_st}" ]]
 then
-
    echo 'Admin box not running, skipping deleting database data.'
 else
 

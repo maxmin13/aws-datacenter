@@ -44,8 +44,7 @@ echo
    echo 
       
    # Remove Cloud Foundry components.
-   ## TODO add check admin box exists
-   #. "${PROJECT_DIR}"/amazon/bosh/delete.sh  
+   . "${PROJECT_DIR}"/amazon/bosh/delete.sh  
 
    # Make a backup of the database.
    . "${PROJECT_DIR}"/amazon/database/data/backup/make.sh 
@@ -78,7 +77,6 @@ echo
    . "${PROJECT_DIR}"/amazon/account/delete.sh  
    
    # Delete AWS users and policies.
-   ### TODO error deleting role, policy must be detached.
    . "${PROJECT_DIR}"/amazon/user/delete.sh                
 
    # Delete the datacenter.
