@@ -285,7 +285,7 @@ fi
 
 # Revoke SSH access from the development machine
 set +e
-################## TODO revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
 set -e
    
 echo 'Revoked SSH access to the Admin box.' 
