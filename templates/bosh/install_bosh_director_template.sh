@@ -139,8 +139,14 @@ create_director && echo 'BOSH director created.' ||
    echo 'Let''s try now.' 
    create_director && echo 'BOSH director created.' ||
    {
-      echo 'ERROR: creating BOSH director.'
-      exit 1    
+      echo 'Let''s wait a bit for IAM to be ready and try again (third time).'
+      __wait 180  
+      echo 'Let''s try now.' 
+      create_director && echo 'BOSH director created.' ||
+      {
+         echo 'ERROR: creating BOSH director.'
+         exit 1    
+      }   
    }
 }
 
@@ -151,12 +157,15 @@ chmod 400 state.json creds.yml "${JUMPBOX_KEY_NM}" "${BOSH_DIRECTOR_SSL_CERTIFIC
 
 bosh_client='admin'
 bosh_client_pwd="$(bosh int ./creds.yml --path /admin_password)"
-bosh login -e "${BOSH_DIRECTOR_NM}" --client "${bosh_client}" --client-secret "${bosh_client_pwd}"
-echo 'admin user logged in.' 
-
 bosh_cert="$(cat ${BOSH_DIRECTOR_SSL_CERTIFICATE_NM})"
+
 bosh alias-env "${BOSH_DIRECTOR_NM}" -e "${BOSH_INTERNAL_IP}" --ca-cert "${bosh_cert}"
+
 echo 'BOSH alias created.' 
+
+bosh login -e "${BOSH_DIRECTOR_NM}" --client "${bosh_client}" --client-secret "${bosh_client_pwd}"
+
+echo 'admin user logged in.' 
 
 # Set basic cloud config.
 bosh update-cloud-config bosh-deployment/aws/cloud-config.yml \
