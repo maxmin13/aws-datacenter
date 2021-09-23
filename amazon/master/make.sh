@@ -42,11 +42,6 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi  
-   
-   . "${PROJECT_DIR}"/amazon/bosh/make.sh
-   exit
-   exit
-   
     
    echo    
  
