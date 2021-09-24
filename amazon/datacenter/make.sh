@@ -96,12 +96,12 @@ then
    echo 'WARN: the main subnet has already been created.'
 else
    create_subnet "${DTC_SUBNET_MAIN_NM}" \
-       "${DTC_SUBNET_MAIN_CIDR}" "${DTC_DEPLOY_ZONE_1}" "${dtc_id}" "${rtb_id}"
+       "${DTC_SUBNET_MAIN_CIDR}" "${DTC_AZ_1}" "${dtc_id}" "${rtb_id}"
        
    get_subnet_id "${DTC_SUBNET_MAIN_NM}"
    main_subnet_id="${__RESULT}"
    
-   echo "The main subnet has been created in the ${DTC_DEPLOY_ZONE_1} availability zone and associated to the route table."    
+   echo "The main subnet has been created in the ${DTC_AZ_1} availability zone and associated to the route table."    
 fi
 
 ## 
@@ -116,12 +116,12 @@ then
    echo 'WARN: the backup subnet has already been created.'
 else
    create_subnet "${DTC_SUBNET_BACKUP_NM}" \
-       "${DTC_SUBNET_BACKUP_CIDR}" "${DTC_DEPLOY_ZONE_2}" "${dtc_id}" "${rtb_id}"
+       "${DTC_SUBNET_BACKUP_CIDR}" "${DTC_AZ_2}" "${dtc_id}" "${rtb_id}"
        
    get_subnet_id "${DTC_SUBNET_BACKUP_NM}"
    backup_subnet_id="${__RESULT}"    
 
-   echo "The backup subnet has been created in the ${DTC_DEPLOY_ZONE_2} availability zone and associated to the route table."
+   echo "The backup subnet has been created in the ${DTC_AZ_2} availability zone and associated to the route table."
 fi
 
 echo

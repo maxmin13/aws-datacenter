@@ -131,7 +131,7 @@ function create_http_loadbalancer()
        --load-balancer-name "${lbal_nm}" \
        --security-groups "${sgp_id}" \
        --subnets "${subnet_id}" \
-       --region "${DTC_DEPLOY_REGION}" \
+       --region "${DTC_REGION}" \
        --listener LoadBalancerPort="${lbal_port}",InstancePort="${instance_port}",Protocol=http,InstanceProtocol=http > /dev/null
  
    exit_code=$?

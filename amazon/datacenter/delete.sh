@@ -32,7 +32,12 @@ else
    get_internet_gateway_attachment_status "${DTC_INTERNET_GATEWAY_NM}" "${dtc_id}"
    internet_gate_attach_status="${__RESULT}"
    
-   echo "* internet gateway ID: ${internet_gate_id} (${internet_gate_attach_status})."
+   if [[ -n "${internet_gate_attach_status}" ]]
+   then
+      echo "* internet gateway ID: ${internet_gate_id} (${internet_gate_attach_status})."
+   else
+      echo "* internet gateway ID: ${internet_gate_id}."
+   fi
 fi
 
 get_subnet_id "${DTC_SUBNET_MAIN_NM}"

@@ -5,7 +5,7 @@ set -o pipefail
 set -o nounset
 set +o xtrace
  
-export PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../../datacenter && pwd)"
+export PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd ../../../../datacenter && pwd)"
 
 source "${PROJECT_DIR}"/amazon/lib/const/app_consts.sh
 source "${PROJECT_DIR}"/amazon/lib/const/project_dirs.sh
@@ -42,42 +42,10 @@ echo
    fi 
    
    echo 
-
-   # Make a backup of the database.
-   . "${PROJECT_DIR}"/amazon/database/data/backup/make.sh 
-
-   # Delete the application DNS hosted zone
-   . "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh  
-          
-   # Delete the websites.
-   . "${PROJECT_DIR}"/amazon/admin/instance/website/delete.sh      
-   . "${PROJECT_DIR}"/amazon/webphp/instance/website/delete.sh 1
-
-   # Delete the database objects.
-   . "${PROJECT_DIR}"/amazon/database/data/delete.sh
       
-   # Delete the server instances.
-   . "${PROJECT_DIR}"/amazon/shared/instance/delete.sh             
-   . "${PROJECT_DIR}"/amazon/webphp/instance/delete.sh 1   
-   . "${PROJECT_DIR}"/amazon/admin/instance/delete.sh 
-   
-   # Delete load balancer
-   . "${PROJECT_DIR}"/amazon/loadbalancer/delete.sh     
-   
-   # Delete the database.
-   . "${PROJECT_DIR}"/amazon/database/delete.sh              
+   # Remove Cloud Foundry components.
+   . "${PROJECT_DIR}"/amazon/bosh/delete.sh  
 
-   # Delete the Shared instance.
-   . "${PROJECT_DIR}"/amazon/shared/image/delete.sh            
-
-   # Release the public IP addresses assigned to the account.
-   . "${PROJECT_DIR}"/amazon/account/delete.sh  
-   
-   # Delete AWS users and policies.
-   . "${PROJECT_DIR}"/amazon/user/delete.sh                
-
-   # Delete the datacenter.
-   . "${PROJECT_DIR}"/amazon/datacenter/delete.sh    
 
 } ### >> "${log_file}" 2>&1        
 

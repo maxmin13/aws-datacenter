@@ -374,7 +374,7 @@ sed -e "s/SEDapache_default_http_portSED/${WEBPHP_APACHE_DEFAULT_HTTP_PORT}/g" \
     -e "s/SEDdbuser_webphprwSED/${DB_WEBPHP_USER_NM}/g" \
     -e "s/SEDdbpass_webphprwSED/${DB_WEBPHP_USER_PWD}/g" \
     -e "s/SEDaws_accountSED/${aws_account}/g" \
-    -e "s/SEDaws_deployregionSED/${DTC_DEPLOY_REGION}/g" \
+    -e "s/SEDaws_deployregionSED/${DTC_REGION}/g" \
     -e "s/SEDaeskeySED/${aes4}/g" \
     -e "s/SEDrecaptcha_privatekeySED/${RECAPTCHA_PRIVATE_KEY}/g" \
     -e "s/SEDrecaptcha_publickeySED/${RECAPTCHA_PUBLIC_KEY}/g" \

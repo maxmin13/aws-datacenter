@@ -25,17 +25,17 @@ MAXMIN_TLD='maxmin.it.'
 ## *********** ##
 
 DTC_NM='maxmin-dtc'
-DTC_CDIR='10.0.0.0/16'
-DTC_DEPLOY_REGION='eu-west-1'
-DTC_DEPLOY_ZONE_1='eu-west-1a'
-DTC_DEPLOY_ZONE_2='eu-west-1b'
+DTC_CDIR='10.0.0.0/16' # the first four adresses are reserved by AWS.
+DTC_INTERNET_GATEWAY_NM='internet-gate'
+DTC_GATEWAY_IP='10.0.0.1' # fist address of the VPC CIDR.
+DTC_REGION='eu-west-1'
+DTC_AZ_1='eu-west-1a'
 DTC_SUBNET_MAIN_NM='main-sbn'
 DTC_SUBNET_MAIN_CIDR='10.0.0.0/24'
+DTC_AZ_2='eu-west-1b'
 DTC_SUBNET_BACKUP_NM='backup-sbn'
 DTC_SUBNET_BACKUP_CIDR='10.0.10.0/24'
-DTC_INTERNET_GATEWAY_NM='internet-gate'
 DTC_ROUTE_TABLE_NM='route-tab'
-DTC_GATEWAY_IP='10.0.0.1'
 
 ## ************ ##
 ## Permissions  ##
@@ -70,7 +70,7 @@ DB_LOG_SLOW_QUERIES_PARAM_GRP_DESC='Log slow queries database parameter group'
 SHARED_INST_NM='shared-box'
 SHARED_INST_HOSTNAME='shared.maxmin.it'
 SHARED_INST_USER_NM='shared-user'
-SHARED_INST_PRIVATE_IP='10.0.0.8'
+SHARED_INST_PRIVATE_IP='10.0.0.5'
 SHARED_INST_SSH_PORT='38142'
 SHARED_INST_KEY_PAIR_NM='shared-key'
 SHARED_INST_SEC_GRP_NM='shared-box-sgp'
@@ -93,7 +93,7 @@ LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 ## ********* ##
 
 ADMIN_INST_NM='admin-box'
-ADMIN_INST_PRIVATE_IP='10.0.0.10'
+ADMIN_INST_PRIVATE_IP='10.0.0.6'
 ADMIN_INST_HOSTNAME='admin.maxmin.it'
 ADMIN_INST_USER_NM='admin-user'
 ADMIN_INST_EMAIL='minardi.massimiliano@libero.it'
@@ -123,7 +123,7 @@ ADMIN_RSYSLOG_PORT='514'
 ## ********** ##
 
 WEBPHP_INST_NM='webphp<ID>-box'
-WEBPHP_INST_PRIVATE_IP='10.0.0.2<ID>'
+WEBPHP_INST_PRIVATE_IP='10.0.0.1<ID>'
 WEBPHP_INST_HOSTNAME='webphp<ID>.maxmin.it'
 WEBPHP_INST_USER_NM='webphp-user'
 WEBPHP_INST_SEC_GRP_NM='webphp<ID>-box-sgp'
@@ -139,12 +139,13 @@ WEBPHP_RSYSLOG_PORT='514'
 ## Cloud Foundry ##
 ## ************* ##
 
-BOSH_INST_SEC_GRP_NM='bosh-sgp'
-BOSH_INST_PRIVATE_IP='10.0.0.6'
-BOSH_INST_SSH_PORT='22'
 BOSH_DIRECTOR_NM='bosh_0'
+BOSH_DIRECTOR_SEC_GRP_NM='bosh-sgp'
+BOSH_DIRECTOR_PRIVATE_IP='10.0.0.10'
+BOSH_DIRECTOR_RESERVED_IPS='10.0.0.0-10.0.0.9'
+BOSH_DIRECTOR_SSH_PORT='22'
 BOSH_DIRECTOR_PORT='25555'
-BOSH_AGENT_PORT='6868'
+BOSH_ADMIN_AGENT_PORT='6868'
 
 
 

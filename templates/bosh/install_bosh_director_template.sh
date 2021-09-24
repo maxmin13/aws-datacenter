@@ -26,25 +26,32 @@ set -o nounset
 # To use CLI:
 #
 #   bosh int ./creds.yml --path /admin_password
+#   bosh envs
 #   bosh login -e bosh_0 --client admin --client-secret <ADMIN-PWD>
 #   bosh -h
 # 
 ####################################################################
 
 ADMIN_INST_USER_NM='SEDadmin_inst_user_nmSED'
-BOSH_DIRECTOR_INSTALL_DIR='SEDbosh_director_install_dirSED'
-BOSH_DIRECTOR_SSL_CERTIFICATE_NM='cacert.pem'
-BOSH_GATEWAY_IP='SEDbosh_gateway_ipSED'
-BOSH_DIRECTOR_NM='SEDbosh_director_nmSED'
-BOSH_CIDR='SEDbosh_cidrSED'
-BOSH_REGION='SEDbosh_regionSED'
-BOSH_AZ='SEDbosh_azSED'
-BOSH_SUBNET_ID='SEDbosh_subnet_idSED'
-BOSH_SEC_GROUP_NM='SEDbosh_sec_group_nmSED'
-BOSH_INTERNAL_IP='SEDbosh_internal_ipSED'
-BOSH_KEY_PAIR_NM='SEDbosh_key_pair_nmSED'
-BOSH_LOG_LEVEL='debug'
+DIRECTOR_INSTALL_DIR='SEDdirector_install_dirSED'
+DIRECTOR_SSL_CERTIFICATE_NM='cacert.pem'
+DIRECTOR_NM='SEDdirector_nmSED'
+DIRECTOR_SEC_GRP_NM='SEDdirector_sec_grp_nmSED'
+DIRECTOR_INTERNAL_IP='SEDdirector_internal_ipSED'
+DIRECTOR_KEY_PAIR_NM='SEDdirector_key_pair_nmSED'
 JUMPBOX_KEY_NM='jumpbox.key'
+
+## Datacenter network configuration.
+REGION='SEDregionSED'
+GATEWAY_IP='SEDgateway_ipSED'
+AZ1='SEDaz1SED'
+MAIN_SUBNET_ID='SEDmain_subnet_idSED'
+MAIN_SUBNET_CIDR='SEDmain_subnet_cidrSED'
+MAIN_SUBNET_RESERVED_IPS='SEDmain_subnet_reserved_ipsSED'
+AZ2='SEDaz2SED'
+BACKUP_SUBNET_ID='SEDbackup_subnet_idSED'
+BACKUP_SUBNET_CIDR='SEDbackup_subnet_cidrSED'
+
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 function create_director()
@@ -59,16 +66,16 @@ function create_director()
        -o bosh-deployment/aws/cli-iam-instance-profile.yml \
        -o bosh-deployment/jumpbox-user.yml \
        -o set_director_passwd.yml \
-       -v director_name="${BOSH_DIRECTOR_NM}" \
-       -v subnet_id="${BOSH_SUBNET_ID}" \
-       -v internal_cidr="${BOSH_CIDR}" \
-       -v internal_gw="${BOSH_GATEWAY_IP}" \
-       -v internal_ip="${BOSH_INTERNAL_IP}" \
-       -v region="${BOSH_REGION}" \
-       -v az="${BOSH_AZ}" \
-       -v default_key_name="${BOSH_KEY_PAIR_NM}" \
-       -v default_security_groups=["${BOSH_SEC_GROUP_NM}"] \
-       --var-file private_key="${BOSH_KEY_PAIR_NM}" \
+       -v region="${REGION}" \
+       -v az="${AZ1}" \
+       -v subnet_id="${MAIN_SUBNET_ID}" \
+       -v internal_cidr="${MAIN_SUBNET_CIDR}" \
+       -v internal_gw="${GATEWAY_IP}" \
+       -v internal_ip="${DIRECTOR_INTERNAL_IP}" \
+       -v director_name="${DIRECTOR_NM}" \
+       -v default_key_name="${DIRECTOR_KEY_PAIR_NM}" \
+       -v default_security_groups=["${DIRECTOR_SEC_GRP_NM}"] \
+       --var-file private_key="${DIRECTOR_KEY_PAIR_NM}" \
        --vars-file vars.yml
        
     exit_code=$?
@@ -109,79 +116,89 @@ trap 'chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}' ERR EX
 
 cd "${script_dir}" || exit
 
-mkdir -p "${BOSH_DIRECTOR_INSTALL_DIR}"
-cp set_director_passwd.yml vars.yml "${BOSH_KEY_PAIR_NM}" "${BOSH_DIRECTOR_INSTALL_DIR}"
+mkdir -p "${DIRECTOR_INSTALL_DIR}"
+cp set_director_passwd.yml vars.yml cloud.yml "${DIRECTOR_KEY_PAIR_NM}" "${DIRECTOR_INSTALL_DIR}"
 
-cd "${BOSH_DIRECTOR_INSTALL_DIR}" || exit
+cd "${DIRECTOR_INSTALL_DIR}" || exit
 
-chmod 400 set_director_passwd.yml vars.yml "${BOSH_KEY_PAIR_NM}"
+chmod 400 set_director_passwd.yml vars.yml cloud.yml "${DIRECTOR_KEY_PAIR_NM}"
 
-yum install -y git
-git clone https://github.com/cloudfoundry/bosh-deployment
-yum remove -y git
+if [[ ! -d 'bosh-deployment' ]]
+then
+  yum install -y git
+  git clone https://github.com/cloudfoundry/bosh-deployment
+  yum remove -y git
+fi
 
 echo 'Creating BOSH director ...'
 
+# shellcheck disable=SC2015
 create_director && echo 'BOSH director created.' ||
 {
    echo 'Let''s wait a bit for IAM to be ready and try again (second time).'
-   __wait 180  
+   __wait 240  
    echo 'Let''s try now.' 
    create_director && echo 'BOSH director created.' ||
    {
       echo 'Let''s wait a bit for IAM to be ready and try again (third time).'
-      __wait 180  
+      __wait 240  
       echo 'Let''s try now.' 
       create_director && echo 'BOSH director created.' ||
       {
-         echo 'ERROR: creating BOSH director.'
-         exit 1    
+         echo 'Let''s wait a bit for IAM to be ready and try again (fourth time).'
+         __wait 240  
+         echo 'Let''s try now.' 
+         create_director && echo 'BOSH director created.' ||
+         {
+            echo 'ERROR: creating BOSH director.'
+            exit 1    
+         }
       }   
    }
 }
 
 bosh int creds.yml --path /jumpbox_ssh/private_key > "${JUMPBOX_KEY_NM}"
-bosh int creds.yml --path /director_ssl/ca > "${BOSH_DIRECTOR_SSL_CERTIFICATE_NM}"
+bosh int creds.yml --path /director_ssl/ca > "${DIRECTOR_SSL_CERTIFICATE_NM}"
     
-chmod 400 state.json creds.yml "${JUMPBOX_KEY_NM}" "${BOSH_DIRECTOR_SSL_CERTIFICATE_NM}"
+chmod 400 state.json creds.yml "${JUMPBOX_KEY_NM}" "${DIRECTOR_SSL_CERTIFICATE_NM}"
 
 bosh_client='admin'
 bosh_client_pwd="$(bosh int ./creds.yml --path /admin_password)"
-bosh_cert="$(cat ${BOSH_DIRECTOR_SSL_CERTIFICATE_NM})"
+bosh_cert="$(cat ${DIRECTOR_SSL_CERTIFICATE_NM})"
 
-bosh alias-env "${BOSH_DIRECTOR_NM}" -e "${BOSH_INTERNAL_IP}" --ca-cert "${bosh_cert}"
+bosh alias-env "${DIRECTOR_NM}" -e "${DIRECTOR_INTERNAL_IP}" --ca-cert "${bosh_cert}"
 
 echo 'BOSH alias created.' 
 
-bosh login -e "${BOSH_DIRECTOR_NM}" --client "${bosh_client}" --client-secret "${bosh_client_pwd}"
+bosh login -e "${DIRECTOR_NM}" --client "${bosh_client}" --client-secret "${bosh_client_pwd}"
 
-echo 'admin user logged in.' 
+echo 'admin user logged into the Director.'
 
-# Set basic cloud config.
-bosh update-cloud-config bosh-deployment/aws/cloud-config.yml \
-    -e "${BOSH_DIRECTOR_NM}" \
-    -v az="${BOSH_AZ}" \
-    -v internal_cidr="${BOSH_CIDR}" \
-    -v internal_gw="${BOSH_GATEWAY_IP}" \
-    -v subnet_id="${BOSH_SUBNET_ID}" \
+# Update cloud config.
+bosh update-cloud-config cloud.yml \
+    -e "${DIRECTOR_NM}" \
+    -v internal_gw="${GATEWAY_IP}" \
+    -v az1="${AZ1}" \
+    -v main_subnet_id="${MAIN_SUBNET_ID}" \
+    -v main_subnet_cidr="${MAIN_SUBNET_CIDR}" \
+    -v main_subnet_reserved_ips="${MAIN_SUBNET_RESERVED_IPS}" \
+    -v az2="${AZ2}" \
+    -v backup_subnet_cidr="${BACKUP_SUBNET_CIDR}" \
+    -v backup_subnet_id="${BACKUP_SUBNET_ID}" \
     --non-interactive
     
-echo 'BOSH basic cloud configuration set.'    
+echo 'BOSH nework cloud configuration updated.'    
+
+bosh -e "${DIRECTOR_NM}" cloud-config
     
-# Show deployments (should be empty).
-bosh -e "${BOSH_DIRECTOR_NM}" deployments
+bosh logout -e "${DIRECTOR_NM}"
 
-# Show vms (should be empty)
-bosh -e "${BOSH_DIRECTOR_NM}" vms
-
-bosh logout -e "${BOSH_DIRECTOR_NM}"
-
-echo 'admin user logged out.'
+echo 'admin user logged out from the Director.'
 echo 'BOSH director successfully installed.'
 
 echo
-echo "cd ${BOSH_DIRECTOR_INSTALL_DIR}"
-echo "rm -f /root/.ssh/known_hosts && ssh jumpbox@${BOSH_INTERNAL_IP} -i ${JUMPBOX_KEY_NM}"
+echo "cd ${DIRECTOR_INSTALL_DIR}"
+echo "rm -f /root/.ssh/known_hosts && ssh jumpbox@${DIRECTOR_INTERNAL_IP} -i ${JUMPBOX_KEY_NM}"
     
 exit 0
 

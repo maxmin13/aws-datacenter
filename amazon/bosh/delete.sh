@@ -30,8 +30,7 @@ admin_subnet_id="${__RESULT}"
 
 if [[ -z "${admin_subnet_id}" ]]
 then
-   echo '* ERROR: main subnet not found.'
-   exit 1
+   echo '* WARN: main subnet not found.'
 else
    echo "* main subnet ID: ${admin_subnet_id}."
 fi
@@ -41,8 +40,7 @@ admin_sgp_id="${__RESULT}"
 
 if [[ -z "${admin_sgp_id}" ]]
 then
-   echo '* ERROR: Admin security group not found.'
-   exit 1
+   echo '* WARN: Admin security group not found.'
 else
    echo "* Admin security group ID: ${admin_sgp_id}."
 fi
@@ -65,8 +63,7 @@ admin_eip="${__RESULT}"
 
 if [[ -z "${admin_eip}" ]]
 then
-   echo '* ERROR: Admin public IP address not found.'
-   exit 1
+   echo '* WARN: Admin public IP address not found.'
 else
    echo "* Admin public IP address: ${admin_eip}."
 fi
@@ -103,11 +100,11 @@ else
    sed -e "s/SEDbosh_director_install_dirSED/$(escape ${BOSH_DIRECTOR_INSTALL_DIR})/g" \
        -e "s/SEDbosh_director_nmSED/${BOSH_DIRECTOR_NM}/g" \
        -e "s/SEDbosh_cidrSED/$(escape "${DTC_SUBNET_MAIN_CIDR}")/g" \
-       -e "s/SEDbosh_regionSED/${DTC_DEPLOY_REGION}/g" \
-       -e "s/SEDbosh_azSED/${DTC_DEPLOY_ZONE_1}/g" \
+       -e "s/SEDbosh_regionSED/${DTC_REGION}/g" \
+       -e "s/SEDbosh_azSED/${DTC_AZ_1}/g" \
        -e "s/SEDbosh_subnet_idSED/${admin_subnet_id}/g" \
-       -e "s/SEDbosh_sec_group_nmSED/${BOSH_INST_SEC_GRP_NM}/g" \
-       -e "s/SEDbosh_internal_ipSED/${BOSH_INST_PRIVATE_IP}/g" \
+       -e "s/SEDbosh_sec_group_nmSED/${BOSH_DIRECTOR_SEC_GRP_NM}/g" \
+       -e "s/SEDbosh_internal_ipSED/${BOSH_DIRECTOR_PRIVATE_IP}/g" \
        -e "s/SEDbosh_key_pair_nmSED/${ADMIN_INST_KEY_PAIR_NM}/g" \
        -e "s/SEDbosh_gateway_ipSED/${DTC_GATEWAY_IP}/g" \
           "${TEMPLATE_DIR}"/"${bosh_dir}"/delete_bosh_director_template.sh > "${TMP_DIR}"/"${bosh_dir}"/delete_bosh_director.sh
@@ -163,27 +160,32 @@ fi
 ## Admin security group.
 ## 
 
+if [[ -n "${admin_sgp_id}" ]]
+then
+
 set +e
   
-revoke_access_from_security_group "${admin_sgp_id}" "0-65535" 'tcp' "${admin_sgp_id}" > /dev/null 2>&1
+   revoke_access_from_security_group "${admin_sgp_id}" "0-65535" 'tcp' "${admin_sgp_id}" > /dev/null 2>&1
 
-echo 'Revoked internal TCP traffic to Admin box'
+   echo 'Revoked internal TCP traffic to Admin box'
 
-revoke_access_from_security_group "${admin_sgp_id}" "0-65535" 'udp' "${admin_sgp_id}" > /dev/null 2>&1
+   revoke_access_from_security_group "${admin_sgp_id}" "0-65535" 'udp' "${admin_sgp_id}" > /dev/null 2>&1
 
-echo 'Revoked internal UDP traffic to Admin box'
+   echo 'Revoked internal UDP traffic to Admin box'
 
-revoke_access_from_security_group "${admin_sgp_id}" "-1" 'icmp' "${admin_sgp_id}" > /dev/null 2>&1
+   revoke_access_from_security_group "${admin_sgp_id}" "-1" 'icmp' "${admin_sgp_id}" > /dev/null 2>&1
 
-echo 'Revoked internal ICMP traffic to Admin box'
+   echo 'Revoked internal ICMP traffic to Admin box'
 
 set -e
+
+fi
 
 ## 
 ## Bosh security group.
 ## 
 
-get_security_group_id "${BOSH_INST_SEC_GRP_NM}"
+get_security_group_id "${BOSH_DIRECTOR_SEC_GRP_NM}"
 bosh_sgp_id="${__RESULT}"
 
 if [[ -n "${bosh_sgp_id}" ]]
@@ -198,36 +200,42 @@ fi
 ## Admin instance profile.
 ##
 
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}" > /dev/null
-has_role_associated="${__RESULT}"
+check_instance_profile_exists "${ADMIN_INST_PROFILE_NM}"
+instance_profile_exists="${__RESULT}"
 
-if [[ 'true' == "${has_role_associated}" ]]
+if [[ 'true' == "${instance_profile_exists}" ]]
 then
-   ####
-   #### Sessions may still be actives, they should be terminated by adding AWSRevokeOlderSessions permission
-   #### to the role.
-   ####
-   remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}"
+   check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}" > /dev/null
+   has_role_associated="${__RESULT}"
+
+   if [[ 'true' == "${has_role_associated}" ]]
+   then
+      ####
+      #### Sessions may still be actives, they should be terminated by adding AWSRevokeOlderSessions permission
+      #### to the role.
+      ####
+      remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}"
   
-   echo 'Bosh director role removed from the instance profile.'
-else
-   echo 'WARN: Bosh director role already removed from the instance profile.'
+      echo 'Bosh director role removed from the instance profile.'
+   else
+      echo 'WARN: Bosh director role already removed from the instance profile.'
+   fi
 fi
       
 ## 
 ## Admin SSH Access.
 ## 
 
-# Revoke SSH access from the development machine
-set +e
-revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
-set -e
+if [[ -n "${admin_sgp_id}" ]]
+then
+   # Revoke SSH access from the development machine
+   set +e
+   revoke_access_from_cidr "${admin_sgp_id}" "${SHARED_INST_SSH_PORT}" 'tcp' '0.0.0.0/0' > /dev/null 2>&1
+   set -e
    
-echo 'Revoked SSH access to the Admin box.' 
+   echo 'Revoked SSH access to the Admin box.' 
+fi
 
 ## Clearing.
 rm -rf "${TMP_DIR:?}"/"${bosh_dir}"
-
-
-
 

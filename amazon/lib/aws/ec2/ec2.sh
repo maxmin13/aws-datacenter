@@ -425,7 +425,7 @@ function get_internet_gateway_attachment_status()
 
 #===============================================================================
 # Creates internet gateway used for subnets to reach internet.
-# The internet gateway as to be attached to the VPC.
+# The internet gateway has to be attached to the VPC.
 #
 # Globals:
 #  None
@@ -1182,7 +1182,7 @@ function run_instance()
        --image-id "${image_id}" \
        --security-group-ids "${sgp_id}" \
        --instance-type 't2.micro' \
-       --placement "AvailabilityZone=${DTC_DEPLOY_ZONE_1},Tenancy=default" \
+       --placement "AvailabilityZone=${DTC_AZ_1},Tenancy=default" \
        --subnet-id "${subnet_id}" \
        --private-ip-address "${private_ip}" \
        --associate-public-ip-address \

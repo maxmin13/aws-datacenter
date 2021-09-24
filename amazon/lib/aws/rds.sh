@@ -335,8 +335,8 @@ function create_database()
        --master-user-password "${DB_MAIN_USER_PWD}" \
        --backup-retention-period "${DB_BACKUP_RET_PERIOD}" \
        --no-publicly-accessible \
-       --region "${DTC_DEPLOY_REGION}" \
-       --availability-zone "${DTC_DEPLOY_ZONE_1}"  \
+       --region "${DTC_REGION}" \
+       --availability-zone "${DTC_AZ_1}"  \
        --vpc-security-group-ids "${sgp_id}" \
        --db-subnet-group-name "${DB_INST_SUBNET_GRP_NM}" \
        --db-parameter-group-name "${db_pgp_nm}" >> /dev/null

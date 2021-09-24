@@ -32,14 +32,25 @@ else
 fi
 
 get_subnet_id "${DTC_SUBNET_MAIN_NM}"
-admin_subnet_id="${__RESULT}"
+main_subnet_id="${__RESULT}"
 
-if [[ -z "${admin_subnet_id}" ]]
+if [[ -z "${main_subnet_id}" ]]
 then
    echo '* ERROR: main subnet not found.'
    exit 1
 else
-   echo "* main subnet ID: ${admin_subnet_id}."
+   echo "* main subnet ID: ${main_subnet_id}."
+fi
+
+get_subnet_id "${DTC_SUBNET_BACKUP_NM}"
+backup_subnet_id="${__RESULT}"
+
+if [[ -z "${backup_subnet_id}" ]]
+then
+   echo '* ERROR: backup subnet not found.'
+   exit 1
+else
+   echo "* backup subnet ID: ${backup_subnet_id}."
 fi
 
 get_security_group_id "${ADMIN_INST_SEC_GRP_NM}"
@@ -83,6 +94,25 @@ echo
 rm -rf "${TMP_DIR:?}"/"${bosh_dir}"
 mkdir "${TMP_DIR}"/"${bosh_dir}"
 
+##
+## Admin instance profile.
+##
+   
+## Check the Admin instance profile has the Bosh director role associated.
+## The role is needed to install Bosh director VM from the Admin instance.
+check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}" > /dev/null
+has_role_associated="${__RESULT}"
+
+if [[ 'false' == "${has_role_associated}" ]]
+then
+   # IAM is a bit slow, it might be necessary to retry the certificate request a few times. 
+   associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}"
+      
+   echo 'Bosh director role associated to the instance profile.'
+else
+   echo 'WARN: Bosh director role already associated to the instance profile.'
+fi 
+
 ## 
 ## Admin security group.
 ## 
@@ -108,37 +138,18 @@ echo 'Granted internal ICMP traffic to Admin box'
 
 set -e
 
-##
-## Admin instance profile.
-##
-   
-## Check the Admin instance profile has the Bosh director role associated.
-## The role is needed to install Bosh director VM from the Admin instance.
-check_instance_profile_has_role_associated "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}" > /dev/null
-has_role_associated="${__RESULT}"
-
-if [[ 'false' == "${has_role_associated}" ]]
-then
-   # IAM is a bit slow, it might be necessary to retry the certificate request a few times. 
-   associate_role_to_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE}"
-      
-   echo 'Bosh director role associated to the instance profile.'
-else
-   echo 'WARN: Bosh director role already associated to the instance profile.'
-fi 
-
 ## 
 ## Bosh security group.
 ## 
 
-get_security_group_id "${BOSH_INST_SEC_GRP_NM}"
+get_security_group_id "${BOSH_DIRECTOR_SEC_GRP_NM}"
 bosh_sgp_id="${__RESULT}"
 
 if [[ -z "${bosh_sgp_id}" ]]
 then
    # Create Bosh security group.
-   create_security_group "${dtc_id}" "${BOSH_INST_SEC_GRP_NM}" 'BOSH deployed VMs.'
-   get_security_group_id "${BOSH_INST_SEC_GRP_NM}"
+   create_security_group "${dtc_id}" "${BOSH_DIRECTOR_SEC_GRP_NM}" 'BOSH deployed VMs.'
+   get_security_group_id "${BOSH_DIRECTOR_SEC_GRP_NM}"
    bosh_sgp_id="${__RESULT}"
    
    echo 'Created Bosh security group.'.
@@ -147,11 +158,11 @@ else
 fi
 
 set +e
-allow_access_from_security_group "${bosh_sgp_id}" "${BOSH_INST_SSH_PORT}" 'tcp' "${admin_sgp_id}" > /dev/null 2>&1
+allow_access_from_security_group "${bosh_sgp_id}" "${BOSH_DIRECTOR_SSH_PORT}" 'tcp' "${admin_sgp_id}" > /dev/null 2>&1
    
 echo 'Granted SSH access to Bosh instance from Admin instance.'
 
-allow_access_from_security_group "${bosh_sgp_id}" "${BOSH_AGENT_PORT}" 'tcp' "${admin_sgp_id}" > /dev/null 2>&1
+allow_access_from_security_group "${bosh_sgp_id}" "${BOSH_ADMIN_AGENT_PORT}" 'tcp' "${admin_sgp_id}" > /dev/null 2>&1
    
 echo 'Granted access to Bosh agent from Admin instance.'
 
@@ -200,17 +211,21 @@ sed "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
     
 echo 'install_bosh_cli.sh ready.'
 
-sed -e "s/SEDbosh_director_install_dirSED/$(escape ${BOSH_DIRECTOR_INSTALL_DIR})/g" \
-    -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
-    -e "s/SEDbosh_director_nmSED/${BOSH_DIRECTOR_NM}/g" \
-    -e "s/SEDbosh_cidrSED/$(escape "${DTC_SUBNET_MAIN_CIDR}")/g" \
-    -e "s/SEDbosh_regionSED/${DTC_DEPLOY_REGION}/g" \
-    -e "s/SEDbosh_azSED/${DTC_DEPLOY_ZONE_1}/g" \
-    -e "s/SEDbosh_subnet_idSED/${admin_subnet_id}/g" \
-    -e "s/SEDbosh_sec_group_nmSED/${BOSH_INST_SEC_GRP_NM}/g" \
-    -e "s/SEDbosh_internal_ipSED/${BOSH_INST_PRIVATE_IP}/g" \
-    -e "s/SEDbosh_key_pair_nmSED/${ADMIN_INST_KEY_PAIR_NM}/g" \
-    -e "s/SEDbosh_gateway_ipSED/${DTC_GATEWAY_IP}/g" \
+sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
+    -e "s/SEDdirector_install_dirSED/$(escape ${BOSH_DIRECTOR_INSTALL_DIR})/g" \
+    -e "s/SEDdirector_nmSED/${BOSH_DIRECTOR_NM}/g" \
+    -e "s/SEDdirector_sec_grp_nmSED/${BOSH_DIRECTOR_SEC_GRP_NM}/g" \
+    -e "s/SEDdirector_internal_ipSED/${BOSH_DIRECTOR_PRIVATE_IP}/g" \
+    -e "s/SEDdirector_key_pair_nmSED/${ADMIN_INST_KEY_PAIR_NM}/g" \
+    -e "s/SEDregionSED/${DTC_REGION}/g" \
+    -e "s/SEDgateway_ipSED/${DTC_GATEWAY_IP}/g" \
+    -e "s/SEDaz1SED/${DTC_AZ_1}/g" \
+    -e "s/SEDmain_subnet_idSED/${main_subnet_id}/g" \
+    -e "s/SEDmain_subnet_cidrSED/$(escape "${DTC_SUBNET_MAIN_CIDR}")/g" \
+    -e "s/SEDmain_subnet_reserved_ipsSED/${BOSH_DIRECTOR_RESERVED_IPS}/g" \
+    -e "s/SEDaz2SED/${DTC_AZ_2}/g" \
+    -e "s/SEDbackup_subnet_idSED/${backup_subnet_id}/g" \
+    -e "s/SEDbackup_subnet_cidrSED/$(escape "${DTC_SUBNET_BACKUP_CIDR}")/g" \
        "${TEMPLATE_DIR}"/"${bosh_dir}"/install_bosh_director_template.sh > "${TMP_DIR}"/"${bosh_dir}"/install_bosh_director.sh
     
 echo 'install_bosh_director.sh ready.'
@@ -240,6 +255,7 @@ scp_upload_files "${admin_private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_P
     "${TMP_DIR}"/"${bosh_dir}"/install_bosh_director.sh \
     "${TEMPLATE_DIR}"/bosh/set_director_passwd.yml \
     "${TMP_DIR}"/"${bosh_dir}"/vars.yml \
+    "${TEMPLATE_DIR}"/bosh/cloud.yml \
     "${admin_private_key_file}"
        
 echo 'Scripts uploaded.'

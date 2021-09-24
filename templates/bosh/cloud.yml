@@ -1,0 +1,20 @@
+---
+azs:
+- name: z1
+  cloud_properties: ((az1))
+- name: z2
+  cloud_properties: ((az2))  
+
+networks:
+- name: default
+  type: manual
+  subnets:
+  - range: ((main_subnet_cidr))
+    gateway: ((internal_gw))
+    az: z1
+    reserved: [((main_subnet_reserved_ips))]
+    cloud_properties: ((main_subnet_id))
+  - range: ((backup_subnet_cidr))
+    gateway: ((internal_gw))
+    az: z2
+    cloud_properties: ((backup_subnet_id))
