@@ -37,7 +37,7 @@ aws --version
 
 ```
 
-## Configure the AWS CLI:
+## Configure AWS CLI:
 configure aws client with the keys of a IAM user with admin rights.
 ```
 aws configure
