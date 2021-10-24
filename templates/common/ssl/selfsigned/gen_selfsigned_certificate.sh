@@ -20,8 +20,6 @@ echo 'Generating self-signed certificate ...'
 
 set +e
 amazon-linux-extras install epel -y > /dev/null 2>&1
-set -e 
-set +e
 yum install -y expect > /dev/null 2>&1
 set -e
 
@@ -43,8 +41,6 @@ echo "Self-signed ${cert_file} certificate created."
 
 set +e 
 yum remove -y expect > /dev/null 2>&1
-set -e 
-set +e
 amazon-linux-extras disable epel -y > /dev/null 2>&1
 set -e 
 

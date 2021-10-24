@@ -145,10 +145,10 @@ then
    # shellcheck disable=SC2015
    delete_server_certificate "${crt_entity_nm}" > /dev/null 2>&1 && echo 'Load balancer server certificate deleted from IAM.' ||
    {
-      __wait 30
+      wait 30
       delete_server_certificate "${crt_entity_nm}" > /dev/null 2>&1 && echo 'Load balancer server certificate deleted from IAM.' ||
       {
-         __wait 30
+         wait 30
          delete_server_certificate "${crt_entity_nm}" > /dev/null 2>&1 && echo 'Load balancer server certificate deleted from IAM.' ||
          {
             echo 'ERROR: deleting server certificate.'
@@ -165,13 +165,13 @@ cert_arn="${__RESULT}"
 # shellcheck disable=SC2015
 test -z "${cert_arn}" || 
 {  
-   __wait 30
+   wait 30
    get_server_certificate_arn "${crt_entity_nm}" > /dev/null
    cert_arn="${__RESULT}"
    
    test -z "${cert_arn}" ||
    {
-      __wait 30
+      wait 30
       get_server_certificate_arn "${crt_entity_nm}" > /dev/null
       cert_arn="${__RESULT}"
       
@@ -228,7 +228,7 @@ then
    chmod +x gen_selfsigned_certificate.sh
    ./gen_selfsigned_certificate.sh 
        
-   echo 'Load balander self-signed SSL certificate created.'
+   echo 'Load balancer self-signed SSL certificate created.'
    echo 'Uploading load balancer SSL certificate to IAM ...'
    
    upload_server_certificate_entity "${crt_entity_nm}" cert.pem key.pem \
@@ -290,6 +290,7 @@ else
        -e "s/SEDcrt_file_nmSED/${crt_file_nm}/g" \
        -e "s/SEDkey_file_nmSED/${key_file_nm}/g" \
        -e "s/SEDfull_chain_file_nmSED/${full_chain_file_nm}/g" \
+       -e "s/SEDacme_protocol_client_urlSED/$(escape ${ACME_PROTOCOL_CLIENT_URL})/g" \
           "${TEMPLATE_DIR}"/common/ssl/ca/request_ca_certificate_with_dns_challenge_template.sh > request_ca_certificate_with_dns_challenge.sh
           
    echo 'request_ca_certificate_with_dns_challenge.sh ready.'              
@@ -401,12 +402,12 @@ cert_arn="${__RESULT}"
 # shellcheck disable=SC2015
 test -n "${cert_arn}" && echo 'Load balancer SSL certificate visible in IAM.' || 
 {  
-   __wait 30
+   wait 30
    get_server_certificate_arn "${crt_entity_nm}" > /dev/null
    cert_arn="${__RESULT}"
    test -n "${cert_arn}" &&  echo 'Load balancer SSL certificate visible in IAM.' ||
    {
-      __wait 30
+      wait 30
       get_server_certificate_arn "${crt_entity_nm}" > /dev/null
       cert_arn="${__RESULT}"
       test -n "${cert_arn}" &&  echo 'Load balancer SSL certificate visible in IAM.' || 
@@ -428,11 +429,11 @@ cert_arn="${__RESULT}"
 add_https_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${cert_arn}" > /dev/null && \
 echo 'Load balancer HTTPS listener added.' ||
 {
-   __wait 30
+   wait 30
    add_https_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${cert_arn}" > /dev/null && \
    echo 'Load balancer HTTPS listener added.' ||
    {
-      __wait 30
+      wait 30
       add_https_listener "${LBAL_INST_NM}" "${LBAL_INST_HTTPS_PORT}" "${WEBPHP_APACHE_WEBSITE_HTTP_PORT}" "${cert_arn}" > /dev/null && \
       echo 'Load balancer HTTPS listener added.' ||
       {

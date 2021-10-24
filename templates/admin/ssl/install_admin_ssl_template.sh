@@ -110,10 +110,8 @@ then
    # cert.pem
    
    chmod +x request_selfsigned_certificate.sh
-   set +e 
    ./request_selfsigned_certificate.sh >> "${admin_log_file}" 2>&1
-   exit_code=$?
-   set -e  
+   exit_code=$? 
    
    cert_dir=/etc/self-signed/live/"${ADMIN_DOCROOT_ID}"
    cert_file=cert.pem
@@ -129,11 +127,9 @@ else
    # fullchain.pem
    # privkey.pem
    
-   chmod +x request_ca_certificate_with_http_challenge.sh
-   set +e 
+   chmod +x request_ca_certificate_with_http_challenge.sh 
    ./request_ca_certificate_with_http_challenge.sh >> "${admin_log_file}" 2>&1
    exit_code=$?
-   set -e 
    
    cert_dir=/etc/letsencrypt/live/"${ADMIN_DOCROOT_ID}"
    cert_file=cert.pem

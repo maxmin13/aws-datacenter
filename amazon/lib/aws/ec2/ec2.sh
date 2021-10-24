@@ -727,6 +727,11 @@ function get_security_group_id()
 
 #===============================================================================
 # Creates a security group.
+# A security group acts as a virtual firewall for your instance to control 
+# inbound and outbound traffic.
+# Security groups act at the instance level, not the subnet level. Therefore, 
+# each instance in a subnet in your VPC can be assigned to a different set of 
+# security groups.
 #
 # Globals:
 #  None
@@ -2178,7 +2183,7 @@ function delete_aws_keypair()
 }
 
 #===============================================================================
-# Imports  the  public  key  from an RSA key pair that you created with a 
+# Imports the public key in EC2 from an RSA key pair that you created with a 
 # third-party tool.
 #
 # Globals:
@@ -2189,7 +2194,7 @@ function delete_aws_keypair()
 # Returns:      
 #  None
 #===============================================================================
-function import_public_key_to_ec2()
+function upload_public_key_to_ec2()
 {
    if [[ $# -lt 2 ]]
    then

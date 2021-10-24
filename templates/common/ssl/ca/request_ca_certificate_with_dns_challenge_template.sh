@@ -6,6 +6,11 @@ set -o nounset
 set +o xtrace
 
 ####################################################################################
+# The Automatic Certificate Management Environment (ACME) protocol is a 
+# communications protocol for automating interactions between certificate 
+# authorities and their users' web servers, allowing the automated deployment of 
+# public key infrastructure.
+# acme.sh is able to get the credentials from the instance profile.
 # Runs acme.sh script to obtain a certificate for the www.maxmin.it domain:
 #
 # 1) the script requests Let's Encrypt a certificate for the load balancer domain, 
@@ -16,13 +21,13 @@ set +o xtrace
 # 3) Let's Encrypt CA verifies the record in the DNS and issues the certificate,
 # 4) acme.sh deletes the record from Route53. 
 # 5) The certificates are copied in the script/certificates directory and downloaded
-#    by the calling script'
+#    by the calling make.sh script'
 #
-# No, you don't need to renew the certs manually. All the certs will be renewed 
-# automatically every 60 days.
+# No need to renew the certs manually. All the certs will be renewed automatically 
+# every 60 days.
 ####################################################################################
 
-function __wait()
+function wait()
 {
    if [[ $# -lt 1 ]]
    then
@@ -52,6 +57,7 @@ DOMAIN_NM='SEDdomain_nmSED'
 CRT_FILE_NM='SEDcrt_file_nmSED'
 KEY_FILE_NM='SEDkey_file_nmSED'
 FULL_CHAIN_FILE_NM='SEDfull_chain_file_nmSED'
+ACME_PROTOCOL_CLIENT_URL='SEDacme_protocol_client_urlSED'
 
 ############### TODO error retrieving current directory: getcwd: cannot access parent directories: No such file or directory
 ############### 
@@ -88,7 +94,7 @@ rm -rf "${acme_sh_home_dir:?}"
 echo 'Installing acme.sh client ...'
 
 {
-   curl https://get.acme.sh | sh 
+   curl "${ACME_PROTOCOL_CLIENT_URL}" | sh 
 }  >> "${lbal_log_file}" 2>&1
 
 "${acme_sh_home_dir}"/acme.sh -f --set-default-ca --server letsencrypt >> "${lbal_log_file}" 2>&1 
@@ -105,28 +111,28 @@ echo 'Requesting SSL certificate ...'
 echo 'Certificate successfully requested.' ||
 {
    echo 'Let''s wait a bit and try again (second time).' >> "${lbal_log_file}" 2>&1
-   __wait 180  
+   wait 180  
    echo 'Let''s try now.' >> "${lbal_log_file}" 2>&1
    
    "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
    echo 'Certificate successfully requested.' ||
    {
       echo 'Let''s wait a bit and try again (third time).' >> "${lbal_log_file}" 2>&1      
-      __wait 180  
+      wait 180  
       echo 'Let''s try now.' >> "${lbal_log_file}" 2>&1
    
       "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
       echo 'Certificate successfully requested.' ||
       {
          echo 'Let''s wait a bit and try again (fourth time).' >> "${lbal_log_file}" 2>&1        
-         __wait 180  
+         wait 180  
          echo 'Let''s try now.' >> "${lbal_log_file}" 2>&1
    
          "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \
          echo 'Certificate successfully requested.' ||
          {
             echo 'Let''s wait a bit and try again (fourth time).' >> "${lbal_log_file}" 2>&1           
-            __wait 180  
+            wait 180  
             echo 'Let''s try now.' >> "${lbal_log_file}" 2>&1
    
             "${acme_sh_home_dir}"/acme.sh -f --staging --issue --dns dns_aws -d "${cert_domain}" >> "${lbal_log_file}" 2>&1 && \

@@ -62,11 +62,18 @@ function get_account_number()
 #===============================================================================
 function get_temporary_access_keys_pair()
 {
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+   
    __RESULT=''
    local exit_code=0
+   declare -r duration="${1}"
    local key_pair=''
    
-   key_pair="$(aws sts get-session-token --duration-seconds 900 \
+   key_pair="$(aws sts get-session-token --duration-seconds "${duration}" \
        --query "Credentials.[AccessKeyId, SecretAccessKey]" --output text)"
        
    exit_code=$?

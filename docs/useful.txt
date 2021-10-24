@@ -1,11 +1,20 @@
 
-find ./ -type f -exec sed -i 's/DTC_AZ_2/DTC_AZ_2/g' {} \;
-
+find ./ -type f -exec sed -i 's/BOSH_DIRECTOR_DOWNLOAD_URL/BOSH_DIRECTOR_DOWNLOAD_URL/g' {} \;
 
 scp -i admin-keys.pem -P 38142 admin-user@3.249.178.61:config.cfg .
 
+find templates -type f -exec chmod 644 {} +
 
+###################################################
+bbl cleanup-leftovers \
+       --filter "bbl" \
+       --iaas aws \
+       --aws-region 'eu-west-1' \
+       --aws-access-key-id "xxxx" \
+       --aws-secret-access-key "xxxx" \
+       --no-confirm \
+       --debug
 
+also remove state and /tmp/bosh* /tmp/bbl* files
 
-
-
+######################################################

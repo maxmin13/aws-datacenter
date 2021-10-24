@@ -41,9 +41,9 @@ echo
       echo '****************'
       echo 'Env: development'
       echo '****************' 
-   fi  
-    
-   echo    
+   fi 
+      
+   echo       
   
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh  
@@ -69,7 +69,7 @@ echo
 
    # Deploy Admin and Webphp websites.
    . "${PROJECT_DIR}"/amazon/admin/instance/website/make.sh      
-   . "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 1 
+   . "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 1
    
    # Register 'maxmin.it' domain with the AWS DNS registrar.
    . "${PROJECT_DIR}"/amazon/dns/domain/registration/make.sh 

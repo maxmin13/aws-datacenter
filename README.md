@@ -16,10 +16,11 @@ certification authority.
 
 Development env: 
 
-- Fedora 33 
+- Fedora 33
+- Linux/5.13.10-100.fc33.x86_64
+- Bash 5.0.17 
 - AWS cli 2.1.39 
 - Python/3.8.8 
-- Linux/5.13.10-100.fc33.x86_64 
 
 ## Required programs:
 ```

@@ -56,10 +56,11 @@ else
 fi
 
 ## 
-## Subnet group
+## Subnet group.
 ## 
 
-db_subnet_group_status="$(get_db_subnet_group_status "${DB_INST_SUBNET_GRP_NM}")"
+get_db_subnet_group_status "${DB_INST_SUBNET_GRP_NM}"
+db_subnet_group_status="${__RESULT}"
 
 if [[ -n "${db_subnet_group_status}" ]]
 then
@@ -74,9 +75,10 @@ fi
 ## Parameter group
 ##
 
-pg_exists="$(check_log_slow_queries_db_parameter_group_exists "${DB_LOG_SLOW_QUERIES_PARAM_GRP_NM}")"
+check_db_parameter_group_exists "${DB_LOG_SLOW_QUERIES_PARAM_GRP_NM}"
+pg_exists="${__RESULT}"
 
-if [[ -z "${pg_exists}" ]]
+if [[ 'false' == "${pg_exists}" ]]
 then
    create_log_slow_queries_db_parameter_group "${DB_LOG_SLOW_QUERIES_PARAM_GRP_NM}" "${DB_LOG_SLOW_QUERIES_PARAM_GRP_DESC}"
    
@@ -89,7 +91,8 @@ fi
 ## Database box
 ## 
 
-db_state="$(get_database_state "${DB_NM}")"
+get_database_state "${DB_NM}"
+db_state="${__RESULT}"
 
 if [[ -n "${db_state}" ]]
 then
@@ -102,7 +105,8 @@ else
    echo 'Database created.'
 fi
 
-db_endpoint="$(get_database_endpoint "${DB_NM}")"
+get_database_endpoint "${DB_NM}"
+db_endpoint="${__RESULT}"
 
 echo
 echo "Database box up and running at: ${db_endpoint}."

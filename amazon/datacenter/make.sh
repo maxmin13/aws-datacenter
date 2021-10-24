@@ -24,7 +24,7 @@ if [[ -n "${dtc_id}" ]]
 then
    echo 'WARN: the data center has already been created.'
 else
-   ## Make a new VPC with a master 10.0.0.0/16 subnet
+   ## Make a new VPC with a master 10.0.10.0/16 subnet
    create_datacenter "${DTC_NM}"
    get_datacenter_id "${DTC_NM}"
    dtc_id="${__RESULT}"

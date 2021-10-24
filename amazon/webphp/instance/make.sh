@@ -98,7 +98,8 @@ else
    echo "* database security group ID: ${db_sgp_id}."
 fi
 
-db_endpoint="$(get_database_endpoint "${DB_NM}")"
+get_database_endpoint "${DB_NM}"
+db_endpoint="${__RESULT}"
 
 if [[ -z "${db_endpoint}" ]]
 then

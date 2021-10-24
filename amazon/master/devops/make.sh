@@ -28,8 +28,6 @@ source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
 
 ##### log_file="${LOG_DIR}"/make-$(date +"%d-%m-%Y-%H.%M"."%S")
 
-echo
-
 {
    if [[ 'production' == "${ENV}" ]]
    then
@@ -46,10 +44,10 @@ echo
    echo    
  
    # Install Cloud Foundry components.
-   . "${PROJECT_DIR}"/amazon/bosh/make.sh  
+   . "${PROJECT_DIR}"/amazon/devops/make.sh  
  
 } ### >> "${log_file}" 2>&1  
 
 echo
-echo 'Data Center up and running'
+echo 'Devops components up and running'
 echo

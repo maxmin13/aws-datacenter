@@ -77,7 +77,7 @@ function get_loadbalancer_hosted_zone_id()
 
    __RESULT=''
    local exit_code=0
-   local lbal_nm="${1}"
+   declare -r lbal_nm="${1}"
    local lbal_dns_nm_nm=''
  
    lbal_dns_nm_nm="$(aws elb describe-load-balancers \
@@ -121,11 +121,11 @@ function create_http_loadbalancer()
    fi
 
    local exit_code=0
-   local lbal_nm="${1}"
-   local lbal_port="${2}"
-   local instance_port="${3}"
-   local sgp_id="${4}"
-   local subnet_id="${5}"
+   declare -r lbal_nm="${1}"
+   declare -r lbal_port="${2}"
+   declare -r instance_port="${3}"
+   declare -r sgp_id="${4}"
+   declare -r subnet_id="${5}"
  
    aws elb create-load-balancer \
        --load-balancer-name "${lbal_nm}" \
@@ -165,7 +165,7 @@ function delete_loadbalancer()
    fi
 
    local exit_code=0
-   local lbal_nm="${1}"
+   declare -r lbal_nm="${1}"
  
    aws elb delete-load-balancer --load-balancer-name "${lbal_nm}" 
 
@@ -201,11 +201,10 @@ function add_https_listener()
    fi
    
    local exit_code=0
-   local lbal_nm="${1}"
-   local lbal_port="${2}"
-   local instance_port="${3}"
-   local cert_arn="${4}"
-   local exit_code=0
+   declare -r lbal_nm="${1}"
+   declare -r lbal_port="${2}"
+   declare -r instance_port="${3}"
+   declare -r cert_arn="${4}"
    
    aws elb create-load-balancer-listeners \
        --load-balancer-name "${lbal_nm}" \
@@ -240,8 +239,8 @@ function delete_listener()
    fi
 
    local exit_code=0
-   local lbal_nm="${1}"
-   local lbal_port="${2}"
+   declare -r lbal_nm="${1}"
+   declare -r lbal_port="${2}"
 
    aws elb delete-load-balancer-listeners \
        --load-balancer-name "${lbal_nm}" \
@@ -281,7 +280,7 @@ function configure_loadbalancer_health_check()
    fi
 
    local exit_code=0
-   local lbal_nm="${1}"
+   declare -r lbal_nm="${1}"
  
    aws elb configure-health-check --load-balancer-name "${lbal_nm}" \
        --health-check Target=HTTP:"${WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT}"/elb.htm,Interval=10,Timeout=5,UnhealthyThreshold=2,HealthyThreshold=2 > /dev/null
@@ -319,8 +318,8 @@ function register_instance_with_loadbalancer()
    fi
    
    local exit_code=0
-   local lbal_nm="${1}"
-   local instance_id="${2}"
+   declare -r lbal_nm="${1}"
+   declare -r instance_id="${2}"
    
    aws elb register-instances-with-load-balancer \
        --load-balancer-name "${lbal_nm}" \
@@ -357,8 +356,8 @@ function deregister_instance_from_loadbalancer()
    fi
    
    local exit_code=0
-   local lbal_nm="${1}"
-   local instance_id="${2}"
+   declare -r lbal_nm="${1}"
+   declare -r instance_id="${2}"
    
    aws elb deregister-instances-from-load-balancer \
        --load-balancer-name "${lbal_nm}" \
@@ -395,8 +394,8 @@ function check_instance_is_registered_with_loadbalancer()
 
    __RESULT=''
    local exit_code=0
-   local lbal_nm="${1}"
-   local instance_id="${2}"
+   declare -r lbal_nm="${1}"
+   declare -r instance_id="${2}"
    local is_registered='false'
    local lbal_name=''
    

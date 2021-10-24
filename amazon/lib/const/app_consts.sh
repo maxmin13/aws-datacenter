@@ -12,7 +12,6 @@ ENV='production'
 ## Data on any other EBS volumes persists after instance termination by default.
 AWS_BASE_IMG_ID='ami-058b1b7fe545997ae' 
 AWS_CHECK_IP_URL='http://checkip.amazonaws.com'
-CF_BOSH_DEPLOYMENT_URL='https://github.com/cloudfoundry/bosh-deployment'
 
 ## ********** ##
 ## App domain ##
@@ -27,14 +26,17 @@ MAXMIN_TLD='maxmin.it.'
 DTC_NM='maxmin-dtc'
 DTC_CDIR='10.0.0.0/16' # the first four adresses are reserved by AWS.
 DTC_INTERNET_GATEWAY_NM='internet-gate'
-DTC_GATEWAY_IP='10.0.0.1' # fist address of the VPC CIDR.
 DTC_REGION='eu-west-1'
 DTC_AZ_1='eu-west-1a'
 DTC_SUBNET_MAIN_NM='main-sbn'
-DTC_SUBNET_MAIN_CIDR='10.0.0.0/24'
+DTC_SUBNET_MAIN_CIDR='10.0.10.0/24'
+DTC_SUBNET_MAIN_INTERNAL_GATEWAY_IP='10.0.10.1'
+DTC_SUBNET_MAIN_RESERVED_IPS='10.0.10.1-10.0.10.29'
 DTC_AZ_2='eu-west-1b'
 DTC_SUBNET_BACKUP_NM='backup-sbn'
-DTC_SUBNET_BACKUP_CIDR='10.0.10.0/24'
+DTC_SUBNET_BACKUP_CIDR='10.0.20.0/24'
+DTC_SUBNET_BACKUP_INTERNAL_GATEWAY_IP='10.0.20.1'
+DTC_SUBNET_BACKUP_RESERVED_IPS='10.0.20.1-10.0.20.29'
 DTC_ROUTE_TABLE_NM='route-tab'
 
 ## ************ ##
@@ -43,7 +45,7 @@ DTC_ROUTE_TABLE_NM='route-tab'
 
 AWS_ROUTE53_ROLE_NM='Route53role'
 AWS_ROUTE53_POLICY_NM='Route53policy'
-AWS_BOSH_DIRECTOR_ROLE='BoshDirectorRole'
+AWS_BOSH_DIRECTOR_ROLE_NM='BoshDirectorRole'
 AWS_BOSH_DIRECTOR_POLICY_NM='AdministratorAccess'
 
 ## ******** ##
@@ -70,7 +72,7 @@ DB_LOG_SLOW_QUERIES_PARAM_GRP_DESC='Log slow queries database parameter group'
 SHARED_INST_NM='shared-box'
 SHARED_INST_HOSTNAME='shared.maxmin.it'
 SHARED_INST_USER_NM='shared-user'
-SHARED_INST_PRIVATE_IP='10.0.0.5'
+SHARED_INST_PRIVATE_IP='10.0.10.5'
 SHARED_INST_SSH_PORT='38142'
 SHARED_INST_KEY_PAIR_NM='shared-key'
 SHARED_INST_SEC_GRP_NM='shared-box-sgp'
@@ -93,7 +95,7 @@ LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 ## ********* ##
 
 ADMIN_INST_NM='admin-box'
-ADMIN_INST_PRIVATE_IP='10.0.0.6'
+ADMIN_INST_PRIVATE_IP='10.0.10.6'
 ADMIN_INST_HOSTNAME='admin.maxmin.it'
 ADMIN_INST_USER_NM='admin-user'
 ADMIN_INST_EMAIL='minardi.massimiliano@libero.it'
@@ -123,7 +125,7 @@ ADMIN_RSYSLOG_PORT='514'
 ## ********** ##
 
 WEBPHP_INST_NM='webphp<ID>-box'
-WEBPHP_INST_PRIVATE_IP='10.0.0.1<ID>'
+WEBPHP_INST_PRIVATE_IP='10.0.10.1<ID>'
 WEBPHP_INST_HOSTNAME='webphp<ID>.maxmin.it'
 WEBPHP_INST_USER_NM='webphp-user'
 WEBPHP_INST_SEC_GRP_NM='webphp<ID>-box-sgp'
@@ -139,14 +141,14 @@ WEBPHP_RSYSLOG_PORT='514'
 ## Cloud Foundry ##
 ## ************* ##
 
-BOSH_DIRECTOR_NM='bosh_0'
-BOSH_DIRECTOR_SEC_GRP_NM='bosh-sgp'
-BOSH_DIRECTOR_PRIVATE_IP='10.0.0.20'
-BOSH_DIRECTOR_RESERVED_IPS='10.0.0.0-10.0.0.19'
-BOSH_DIRECTOR_SSH_PORT='22'
+# Valued used in the custom CF install, no BBL.
+BOSH_DIRECTOR_INST_NM='bosh/0'
+BOSH_DIRECTOR_ALIAS='bosh_0'
+BOSH_DIRECTOR_PRIVATE_IP='10.0.10.30'
 BOSH_DIRECTOR_PORT='25555'
-BOSH_ADMIN_AGENT_PORT='6868'
-
+BOSH_SSH_PORT='22'
+BOSH_AGENT_PORT='6868'
+BOSH_SEC_GRP_NM='bosh-sgp'
 
 
 

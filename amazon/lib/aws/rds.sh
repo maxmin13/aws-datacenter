@@ -29,14 +29,14 @@ DB_VOLUME_SIZE='10' # in GB
 DB_BACKUP_RET_PERIOD='0'
 
 #===============================================================================
-# Returns the the DB subnet Group status by name.
+# Returns the the database subnet Group status by name.
 #
 # Globals:
 #  None
 # Arguments:
-# +dbsubnetg_nm     -- DB subnet Group name.
+# +dbsubnetg_nm -- database subnet Group name.
 # Returns:      
-#  The DB subnet Group status, or blanc if the DB subnet Group is not found.  
+#  The database subnet Group status in the global __RESULT variable.  
 #===============================================================================
 function get_db_subnet_group_status()
 {
@@ -46,31 +46,41 @@ function get_db_subnet_group_status()
       return 1
    fi
 
-   local dbsubnetg_nm="${1}"
-   local dbsubnetg_sts
+   __RESULT=''
+   local exit_code=0
+   declare -r dbsubnetg_nm="${1}"
+   local dbsubnetg_sts=''
   
    dbsubnetg_sts="$(aws rds describe-db-subnet-groups \
       --filters Name=tag-key,Values='Name' \
       --filters Name=tag-value,Values="${dbsubnetg_nm}" \
       --query 'DBSubnetGroups[*].SubnetGroupStatus' \
       --output text)"
+      
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving subnet group status.'
+      return "${exit_code}"
+   fi     
   
-  echo "${dbsubnetg_sts}"
+   __RESULT="${dbsubnetg_sts}"
  
-  return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
-# Creates a DB subnet Group.
+# Creates a database subnet Group.
 #
 # Globals:
 #  None
 # Arguments:
-# +dbsubnetg_nm     -- DB subnet Group name.
-# +dbsubnetg_desc   -- DB subnet Group description.
-# +subnet_ids       -- List of subnet identifiers in the group.
-#                      The list must be in JSON format, ex: 
-#                      ["subnet-0d2ef22b8fea993c2","subnet-0e5eb1bfb7da6c56c"]
+# +dbsubnetg_nm   -- database subnet Group name.
+# +dbsubnetg_desc -- database subnet Group description.
+# +subnet_ids     -- list of subnet identifiers in the group.
+#                    The list must be in JSON format, ex: 
+#                    ["subnet-0d2ef22b8fea993c2","subnet-0e5eb1bfb7da6c56c"]
 # Returns:      
 #  None
 #===============================================================================
@@ -82,9 +92,10 @@ function create_db_subnet_group()
       return 1
    fi
 
-   local dbsubnetg_nm="${1}"
-   local dbsubnetg_desc="${2}"
-   local subnet_ids="${3}"
+   local exit_code=0
+   declare -r dbsubnetg_nm="${1}"
+   declare -r dbsubnetg_desc="${2}"
+   declare -r subnet_ids="${3}"
 
    aws rds create-db-subnet-group \
        --db-subnet-group-name "${dbsubnetg_nm}" \
@@ -92,16 +103,23 @@ function create_db_subnet_group()
        --tags "Key='Name',Value=${dbsubnetg_nm}" \
        --subnet-ids "${subnet_ids}" >> /dev/null
  
-  return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating dababase subnet group.'
+   fi     
+       
+   return "${exit_code}"
 }
 
 #===============================================================================
-# Deletes a DB subnet Group.
+# Deletes a database subnet group.
 #
 # Globals:
 #  None
 # Arguments:
-# +dbsubnetg_nm     -- DB subnet Group name.
+# +dbsubnetg_nm -- database subnet group name.
 # Returns:      
 #  None
 #===============================================================================
@@ -113,21 +131,29 @@ function delete_db_subnet_group()
       return 1
    fi
 
-   local dbsubnetg_nm="${1}"
+   local exit_code=0
+   declare -r dbsubnetg_nm="${1}"
 
    aws rds delete-db-subnet-group --db-subnet-group-name "${dbsubnetg_nm}"
  
-  return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting dababase subnet group.'
+   fi     
+       
+   return "${exit_code}"
 }
 
 #===============================================================================
-# You manage your DB engine configuration by associating your DB instances with 
+# You manage your database engine configuration by associating your database instances with 
 # parameter groups. Amazon RDS defines parameter groups with default settings 
-# that apply to newly created DB instances.
+# that apply to newly created database instances.
 # If you want to use your own parameter group, you create a new parameter group 
 # and modify the parameters that you want to.
-# If you update parameters within a DB parameter group, the changes apply to all 
-# DB instances that are associated with that parameter group.
+# If you update parameters within a database parameter group, the changes apply to all 
+# database instances that are associated with that parameter group.
 #
 # Globals:
 #  None
@@ -145,34 +171,60 @@ function create_log_slow_queries_db_parameter_group()
       return 1
    fi
    
-   local db_pgp_nm="${1}"
-   local db_pgp_desc="${2}"
+   local exit_code=0
+   declare -r db_pgp_nm="${1}"
+   declare -r db_pgp_desc="${2}"
    
    {
       aws rds create-db-parameter-group \
           --db-parameter-group-name "${db_pgp_nm}" \
           --description "${db_pgp_desc}"  \
           --db-parameter-group-family "${DB_FAMILY}"
+          
+      exit_code=$?
+   
+      if [[ 0 -ne "${exit_code}" ]]
+      then
+         echo 'ERROR: creating parameter group.'
+         return "${exit_code}"
+      fi      
 
       aws rds modify-db-parameter-group \
           --db-parameter-group-name "${db_pgp_nm}" \
           --parameters 'ParameterName=slow_query_log,ParameterValue=1,ApplyMethod=immediate' 
+          
+      exit_code=$?
+   
+      if [[ 0 -ne "${exit_code}" ]]
+      then
+         echo 'ERROR: modifying parameter group.'
+         return "${exit_code}"
+      fi    
   
       aws rds modify-db-parameter-group \
           --db-parameter-group-name "${db_pgp_nm}" \
           --parameters 'ParameterName=long_query_time,ParameterValue=1,ApplyMethod=immediate'
+          
+      exit_code=$?
+   
+      if [[ 0 -ne "${exit_code}" ]]
+      then
+         echo 'ERROR: modifying parameter group.'
+         return "${exit_code}"
+      fi    
+          
    } >>/dev/null
 
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
-# Deletes the slow query DB Parameter Group.
+# Deletes the slow query database parameter group.
 #
 # Globals:
 #  None
 # Arguments:
-# +db_pgp_nm   -- the name of the database parameter group.
+# +db_pgp_nm -- the name of the database parameter group.
 # Returns:      
 #  None  
 #===============================================================================
@@ -184,25 +236,33 @@ function delete_log_slow_queries_db_parameter_group()
       return 1
    fi
    
-   local db_pgp_nm="${1}"
+   local exit_code=0
+   declare -r db_pgp_nm="${1}"
    
    aws rds delete-db-parameter-group \
        --db-parameter-group-name "${db_pgp_nm}"
+       
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting parameter group.'
+   fi        
 
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
-# Checks if the slow query DB Parameter Group exists. 
+# Checks if the slow query database parameter group exists. 
 #
 # Globals:
 #  None
 # Arguments:
-# +db_pgp_nm   -- the name of the database parameter group.
+# +db_pgp_nm -- the name of the database parameter group.
 # Returns:      
-#  The description of the parameter, or blanc if it doesn't exist.
+#  true/false in the global __RESULT variable.
 #===============================================================================
-function check_log_slow_queries_db_parameter_group_exists()
+function check_db_parameter_group_exists()
 {
    if [[ $# -lt 1 ]]
    then
@@ -210,16 +270,32 @@ function check_log_slow_queries_db_parameter_group_exists()
       return 1
    fi
    
-   local db_pgp_nm="${1}"
-   local description
+   __RESULT=''
+   local exit_code=0
+   declare -r db_pgp_nm="${1}"
+   local description=''
+   local exists='false'
   
    description="$(aws rds describe-db-parameter-groups \
        --query "DBParameterGroups[?DBParameterGroupName=='${db_pgp_nm}'].Description" \
        --output text)" 
   
-   echo "${description}"
-
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving database parameter group description.'
+      return "${exit_code}"
+   fi
+   
+   if [[ -n "${description}" ]]  
+   then
+      exists='true'
+   fi                     
+            
+   __RESULT="${exists}"
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -228,9 +304,9 @@ function check_log_slow_queries_db_parameter_group_exists()
 # Globals:
 #  None
 # Arguments:
-# +db_nm     -- DB name.
+# +database_nm -- database name.
 # Returns:      
-#  The DB status, or blanc if the DB is not found.  
+#  The database status in the global __RESULT variable. 
 #===============================================================================
 function get_database_state()
 {
@@ -240,19 +316,26 @@ function get_database_state()
       return 1
    fi
 
-   local db_nm="${1}"
-
-   # AWS CLI provides built-in JSON-based output filtering capabilities with the --query option,
-   # a JMESPATH expression is used as a filter. 
-   local db_status
+   __RESULT=''
+   local exit_code=0
+   declare -r database_nm="${1}"
+   local db_status=''
 
    db_status="$(aws rds describe-db-instances \
-       --query "DBInstances[?DBName=='${db_nm}'].[DBInstanceStatus]" \
+       --query "DBInstances[?DBName=='${database_nm}'].[DBInstanceStatus]" \
        --output text)"
+       
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving database state.'
+      return "${exit_code}"
+   fi    
   
-   echo "${db_status}"
+   __RESULT="${db_status}"
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -261,9 +344,9 @@ function get_database_state()
 # Globals:
 #  None
 # Arguments:
-# +db_nm     -- DB name.
+# +database_nm -- database name.
 # Returns:      
-#  The DB endpoint, or blanc if the DB is not found.  
+#  The database endpoint address in the global __RESULT variable.  
 #===============================================================================
 function get_database_endpoint()
 {
@@ -273,19 +356,25 @@ function get_database_endpoint()
       return 1
    fi
 
-   local db_nm="${1}"
-
-   # AWS CLI provides built-in JSON-based output filtering capabilities with the --query option,
-   # a JMESPATH expression is used as a filter. 
-   local db_endp
+   __RESULT=''
+   local exit_code=0
+   declare -r database_nm="${1}"
+   local db_endpoint=''
   
-   db_endp="$(aws rds describe-db-instances \
-       --query "DBInstances[?DBName=='${db_nm}'].[Endpoint.Address]" \
+   db_endpoint="$(aws rds describe-db-instances \
+       --query "DBInstances[?DBName=='${database_nm}'].[Endpoint.Address]" \
        --output text)"
   
-   echo "${db_endp}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving database endpoint.'
+   fi    
+  
+   __RESULT="${db_endpoint}"
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -294,9 +383,9 @@ function get_database_endpoint()
 # Globals:
 #  None
 # Arguments:
-# +db_nm             -- DB name.
-# +sg_id             -- security group identifier.
-# +db_pgp_nm         -- the name of a DB parameter group.
+# +database_nm -- database name.
+# +sg_id       -- security group identifier.
+# +db_pgp_nm   -- the name of a database parameter group.
 # Returns:      
 #  None  
 #===============================================================================
@@ -308,16 +397,28 @@ function create_database()
       return 1
    fi
 
-   local db_nm="${1}"
-   local sgp_id="${2}"
-   local db_pgp_nm="${3}"
+   __RESULT=''
+   local exit_code=0
+   declare -r database_nm="${1}"
+   declare -r sgp_id="${2}"
+   declare -r db_pgp_nm="${3}"
+   local exists='false'
 
-   exists="$(check_log_slow_queries_db_parameter_group_exists "${db_pgp_nm}")"
+   check_db_parameter_group_exists "${db_pgp_nm}"
    
-   if [[ -z "${exists}" ]]
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
    then
-      echo 'ERROR: slow query parameter group not found.'
-      
+      echo 'ERROR: checking database parameter group exists.'
+      return "${exit_code}"
+   fi    
+   
+   exists="${__RESULT}"
+   
+   if [[ 'false' == "${exists}" ]]
+   then
+      echo 'ERROR: slow query parameter group not found.'     
       return 1
    fi
 
@@ -326,7 +427,7 @@ function create_database()
        --db-instance-identifier "${DB_INST_NM}" \
        --db-instance-class "${DB_INSTANCE_TYPE}" \
        --allocated-storage "${DB_VOLUME_SIZE}" \
-       --db-name "${db_nm}" \
+       --db-name "${database_nm}" \
        --engine "${DB_ENGINE}" \
        --engine-version "${MYSQL_VERSION}" \
        --port "${DB_INST_PORT}" \
@@ -340,19 +441,34 @@ function create_database()
        --vpc-security-group-ids "${sgp_id}" \
        --db-subnet-group-name "${DB_INST_SUBNET_GRP_NM}" \
        --db-parameter-group-name "${db_pgp_nm}" >> /dev/null
+       
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: creating database.'
+      return "${exit_code}"
+   fi    
 
    aws rds wait db-instance-available --db-instance-identifier "${DB_INST_NM}"
+   
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: waiting for database.'
+   fi  
  
-   return 0
+   return "${exit_code}"
 }
 
 #===============================================================================
-# Deletes a database Instance whithout creating a backup copy.
+# Deletes a database instance without creating a backup copy.
 #
 # Globals:
 #  None
 # Arguments:
-# +db_nm     -- DB name.
+# +database_nm -- database name.
 # Returns:      
 #  None  
 #===============================================================================
@@ -364,16 +480,32 @@ function delete_database()
       return 1
    fi
 
-   local db_nm="${1}"
+   local exit_code=0
+   declare -r database_nm="${1}"
 
    # terminate rds (with no final snapshot)
    aws rds delete-db-instance \
-       --db-instance-identifier "${db_nm}" \
+       --db-instance-identifier "${database_nm}" \
        --skip-final-snapshot >> /dev/null 
+       
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting database.'
+      return "${exit_code}"
+   fi      
 
-   aws rds wait db-instance-deleted --db-instance-identifier "${db_nm}"
+   aws rds wait db-instance-deleted --db-instance-identifier "${database_nm}"
  
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: waiting for database.'
+   fi  
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -383,9 +515,9 @@ function delete_database()
 # Globals:
 #  None
 # Arguments:
-# +db_nm     -- DB name.
+# +database_nm -- database name.
 # Returns:      
-#  The list of database Snapshot identifiers, or blanc if no Snapshot is found.  
+#  The list of database Snapshot identifiers in the global __RESULT variable.  
 #===============================================================================
 function get_database_snapshot_ids()
 {
@@ -395,19 +527,26 @@ function get_database_snapshot_ids()
       return 1
    fi
 
-   local db_nm="${1}"
-
-   # AWS CLI provides built-in JSON-based output filtering capabilities with the --query option,
-   # a JMESPATH expression is used as a filter. 
-   local db_snapshot_ids
+   __RESULT=''
+   local exit_code=0
+   declare -r database_nm="${1}"
+   local db_snapshot_ids=''
 
    db_snapshot_ids="$(aws rds describe-db-snapshots \
-       --query "DBSnapshots[?DBInstanceIdentifier=='${db_nm}'].DBSnapshotIdentifier" \
+       --query "DBSnapshots[?DBInstanceIdentifier=='${database_nm}'].DBSnapshotIdentifier" \
        --output text)"
   
-   echo "${db_snapshot_ids}"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: retrieving database snapshot ids.'
+      return "${exit_code}"
+   fi  
  
-   return 0
+   __RESULT="${db_snapshot_ids}"
+ 
+   return "${exit_code}"
 }
 
 #===============================================================================
@@ -416,7 +555,7 @@ function get_database_snapshot_ids()
 # Globals:
 #  None
 # Arguments:
-# +db_snapshot_id   -- The database Snapshot identifier.
+# +db_snapshot_id -- database snapshot identifier.
 # Returns:      
 #  None  
 #===============================================================================
@@ -428,10 +567,18 @@ function delete_database_snapshot()
       return 1
    fi
 
-   local db_snapshot_id="${1}"
+   local exit_code=0
+   declare -r db_snapshot_id="${1}"
 
    aws rds delete-db-snapshot \
        --db-snapshot-identifier "${db_snapshot_id}" >> /dev/null
 
-   return 0
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: deleting database snapshot.'
+   fi
+   
+   return "${exit_code}"
 }

@@ -79,7 +79,8 @@ else
    echo "* database security group ID: ${db_sgp_id}."
 fi
 
-db_endpoint="$(get_database_endpoint "${DB_NM}")"
+get_database_endpoint "${DB_NM}"
+db_endpoint="${__RESULT}"
 
 if [[ -z "${db_endpoint}" ]]
 then
@@ -160,7 +161,7 @@ key_exists="${__RESULT}"
 
 if [[ 'false' == "${key_exists}" ]]
 then
-   # Create a private key in the local 'access' directory.
+   # Create a private key in the local 'access' directory, the public key is stored by EC2.
    mkdir -p "${ADMIN_INST_ACCESS_DIR}"
    generate_aws_keypair "${ADMIN_INST_KEY_PAIR_NM}" "${ADMIN_INST_ACCESS_DIR}" 
    
@@ -239,6 +240,7 @@ fi
 # you do not have to explicitly get the temporary security credentials, the AWS SDKs, AWS CLI, and 
 # Tools for Windows PowerShell automatically get the credentials from the EC2 instance metadata 
 # service and use them. 
+# see: aws sts get-caller-identity
 
 check_instance_profile_exists "${ADMIN_INST_PROFILE_NM}"
 instance_profile_exists="${__RESULT}"
@@ -263,7 +265,7 @@ then
    associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null 2>&1 && \
    echo 'Instance profile associated to the instance.' ||
    {
-      __wait 30
+      wait 30
       associate_instance_profile_to_instance "${ADMIN_INST_NM}" "${ADMIN_INST_PROFILE_NM}" > /dev/null 2>&1 && \
       echo 'Instance profile associated to the instance.' ||
       {
@@ -299,8 +301,8 @@ sed -e "s/SEDadmin_inst_user_nmSED/${ADMIN_INST_USER_NM}/g" \
     -e "s/SEDapache_docroot_dirSED/$(escape ${APACHE_DOCROOT_DIR})/g" \
     -e "s/SEDapache_sites_available_dirSED/$(escape ${APACHE_SITES_AVAILABLE_DIR})/g" \
     -e "s/SEDapache_sites_enabled_dirSED/$(escape ${APACHE_SITES_ENABLED_DIR})/g" \
-    -e "s/SEDmmonit_archiveSED/${MMONIT_ARCHIVE}/g" \
     -e "s/SEDmmonit_install_dirSED/$(escape ${MMONIT_INSTALL_DIR})/g" \
+    -e "s/SEDmmonit_download_urlSED/$(escape ${MMONIT_DOWNLOAD_URL})/g" \
     -e "s/SEDmonit_http_portSED/${ADMIN_APACHE_MONIT_HTTP_PORT}/g" \
     -e "s/SEDmonit_docroot_idSED/${MONIT_DOCROOT_ID}/g" \
     -e "s/SEDmonit_http_virtualhost_fileSED/${MONIT_HTTP_VIRTUALHOST_CONFIG_FILE}/g" \
@@ -388,7 +390,6 @@ sed -e "s/SEDserver_admin_public_ipSED/${eip}/g" \
 echo 'server.xml ready.' 
 
 scp_upload_files "${private_key_file}" "${eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
-    "${JAR_DIR}"/"${MMONIT_ARCHIVE}" \
     "${TMP_DIR}"/"${admin_dir}"/mmonit.service \
     "${TMP_DIR}"/"${admin_dir}"/server.xml 
  

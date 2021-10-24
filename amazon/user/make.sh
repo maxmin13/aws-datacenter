@@ -6,11 +6,14 @@ set -o nounset
 set +o xtrace
 
 
-###############################################
-# Create an IAM role that has permissions to 
-# create and delete DNS records in Route 53.
-# The role is entrusted to EC2 instances. 
-###############################################
+#################################################################################
+# Create an IAM role that has permissions to create and delete DNS records in 
+# Route 53. The role is entrusted to EC2 instances. 
+# When you use a role, you don't have to distribute long-term credentials 
+# (such as a user name and password or access keys) to an EC2 instance. 
+# Instead, the role supplies temporary permissions that applications can use when 
+# they make calls to other AWS resources.
+#################################################################################
 
 echo
 echo '***************'
@@ -76,24 +79,24 @@ fi
 ## Bosh director role.
 ##
 
-check_role_exists "${AWS_BOSH_DIRECTOR_ROLE}"
+check_role_exists "${AWS_BOSH_DIRECTOR_ROLE_NM}"
 director_role_exists="${__RESULT}"
 
 if [[ 'false' == "${director_role_exists}" ]]
 then
-   create_role "${AWS_BOSH_DIRECTOR_ROLE}" 'Bosh director role' "${trust_policy_document}" > /dev/null
+   create_role "${AWS_BOSH_DIRECTOR_ROLE_NM}" 'Bosh director role' "${trust_policy_document}" > /dev/null
    
    echo 'AWS Bosh director role created.'
 else
    echo 'WARN: AWS Bosh director role already created.'
 fi
 
-check_role_has_permission_policy_attached "${AWS_BOSH_DIRECTOR_ROLE}" "${AWS_BOSH_DIRECTOR_POLICY_NM}"
+check_role_has_permission_policy_attached "${AWS_BOSH_DIRECTOR_ROLE_NM}" "${AWS_BOSH_DIRECTOR_POLICY_NM}"
 policy_attached="${__RESULT}"
 
 if [[ 'false' == "${policy_attached}" ]]
 then
-   attach_permission_policy_to_role "${AWS_BOSH_DIRECTOR_ROLE}" "${AWS_BOSH_DIRECTOR_POLICY_NM}"
+   attach_permission_policy_to_role "${AWS_BOSH_DIRECTOR_ROLE_NM}" "${AWS_BOSH_DIRECTOR_POLICY_NM}"
    
    echo 'Bosh director permission policy attached to role.'
 else

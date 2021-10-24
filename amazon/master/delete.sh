@@ -58,7 +58,7 @@ echo
       
    # Delete the server instances.
    . "${PROJECT_DIR}"/amazon/shared/instance/delete.sh             
-   . "${PROJECT_DIR}"/amazon/webphp/instance/delete.sh 1   
+   . "${PROJECT_DIR}"/amazon/webphp/instance/delete.sh 1
    . "${PROJECT_DIR}"/amazon/admin/instance/delete.sh 
    
    # Delete load balancer

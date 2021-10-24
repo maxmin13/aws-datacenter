@@ -8,14 +8,11 @@ set +o xtrace
 ###################################################################
 #
 # The script generates an RSA key without password and a 
-# self-signed certificate.
+# self-signed certificate in the 
+# /etc/self-signed/live/admin.maxmin.it/ directory.
+#
 # key.pem
 # cert.pem
-#
-# /etc/self-signed/live/admin.maxmin.it/
-#
-# cert.pem
-# key.pem
 #
 ###################################################################
 

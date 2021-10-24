@@ -50,7 +50,7 @@ function escape()
 # Returns:      
 #  None.  
 #===============================================================================
-function __wait()
+function wait()
 {
    if [[ $# -lt 1 ]]
    then

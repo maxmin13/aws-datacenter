@@ -87,13 +87,13 @@ then
    # shellcheck disable=SC2015
    delete_security_group "${sgp_id}" > /dev/null 2>&1 && echo 'Security group deleted.' || 
    {
-      __wait 70
+      wait 70
       delete_security_group "${sgp_id}" > /dev/null 2>&1 && echo 'Security group deleted.' || 
       {
-         __wait 40
+         wait 40
          delete_security_group "${sgp_id}" > /dev/null 2>&1 && echo 'Security group deleted.' || 
          {
-            __wait 20
+            wait 20
             delete_security_group "${sgp_id}" > /dev/null 2>&1 && echo 'Security group deleted.' || 
             {
                echo 'ERROR: deleting security group.'

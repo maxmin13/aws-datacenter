@@ -11,13 +11,16 @@ echo 'Database box'
 echo '************'
 echo
 
-db_endpoint="$(get_database_endpoint "${DB_NM}")"
+get_database_endpoint "${DB_NM}"
+db_endpoint="${__RESULT}"
 
 if [[ -z "${db_endpoint}" ]]
 then
    echo '* WARN: database box not found.'
 else
-   db_state="$(get_database_state "${DB_NM}")"
+   get_database_state "${DB_NM}"
+   db_state="${__RESULT}"
+   
    echo "* database endpoint: "${db_endpoint}" (${db_state})."
 fi
 
@@ -31,7 +34,8 @@ else
    echo "* database security group ID: ${sgp_id}."
 fi
 
-db_subnet_group_status="$(get_db_subnet_group_status "${DB_INST_SUBNET_GRP_NM}")"
+get_db_subnet_group_status "${DB_INST_SUBNET_GRP_NM}"
+db_subnet_group_status="${__RESULT}"
 
 if [[ -z "${db_subnet_group_status}" ]]
 then
@@ -40,7 +44,8 @@ else
    echo "* database subnet group status: ${db_subnet_group_status}."
 fi
 
-db_snapshot_ids="$(get_database_snapshot_ids "${DB_NM}")"
+get_database_snapshot_ids "${DB_NM}"
+db_snapshot_ids="${__RESULT}"
 
 if [[ -z "${db_snapshot_ids}" ]]
 then
@@ -56,7 +61,8 @@ echo
 ##
 if [[ -n "${db_endpoint}" ]]
 then
-   db_state="$(get_database_state "${DB_NM}")"
+   get_database_state "${DB_NM}"
+   db_state="${__RESULT}"
    
    if [[ 'deleting' != "${db_state}" ]]
    then
@@ -110,9 +116,10 @@ fi
 ## Parameter group
 ##
 
-pg_exists="$(check_log_slow_queries_db_parameter_group_exists "${DB_LOG_SLOW_QUERIES_PARAM_GRP_NM}")"
-
-if [[ -n "${pg_exists}" ]]
+check_db_parameter_group_exists "${DB_LOG_SLOW_QUERIES_PARAM_GRP_NM}"
+pg_exists="${__RESULT}"
+   
+if [[ 'true' == "${pg_exists}" ]]
 then
    delete_log_slow_queries_db_parameter_group "${DB_LOG_SLOW_QUERIES_PARAM_GRP_NM}"
    

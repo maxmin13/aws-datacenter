@@ -395,7 +395,7 @@ exit_code=0
 associate_instance_profile_to_instance "${INSTANCE_NM}" "${PROFILE_NM}" > /dev/null 2>&1 || 
    {
       # Wait for IAM and try again.
-      __wait 25
+      wait 25
       set +e
       associate_instance_profile_to_instance "${INSTANCE_NM}" "${PROFILE_NM}" > /dev/null 2>&1 
       exit_code=$?
@@ -419,7 +419,7 @@ association_id="$(aws ec2 describe-iam-instance-profile-associations \
        --output text)" ||
     {
         # Wait for IAM and try again.
-        __wait 25
+        wait 25
         association_id="$(aws ec2 describe-iam-instance-profile-associations \
            --query "IamInstanceProfileAssociations[? InstanceId == '${instance_id}' && IamInstanceProfile.Id == '${profile_id}'].AssociationId"  \
            --output text)"

@@ -24,9 +24,7 @@ source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53/route53.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
 
-log_file="${LOG_DIR}"/delete-$(date +"%d-%m-%Y-%H.%M"."%S")
-
-echo 
+log_file="${LOG_DIR}"/delete-$(date +"%d-%m-%Y-%H.%M"."%S") 
 
 {
    if [[ 'production' == "${ENV}" ]]
@@ -44,11 +42,11 @@ echo
    echo 
       
    # Remove Cloud Foundry components.
-   . "${PROJECT_DIR}"/amazon/bosh/delete.sh  
+   . "${PROJECT_DIR}"/amazon/devops/delete.sh  
 
 
 } ### >> "${log_file}" 2>&1        
 
 echo
-echo 'Data center deleted'
+echo 'Devops component deleted.'
 echo
