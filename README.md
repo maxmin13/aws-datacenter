@@ -37,8 +37,12 @@ aws --version
 
 ```
 
-## Configure the AWS CLI with the details of your account:
+## Configure the AWS CLI:
+configure aws client with the keys of an administrative IAM user.
+```
 aws configure
+```
+
 
 ## To create the datacenter:
 ```
