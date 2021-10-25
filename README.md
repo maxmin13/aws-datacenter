@@ -39,8 +39,7 @@ aws --version
 
 ## Configure SSH:
 
-edit: /etc/ssh/ssh_config
-add the lines:
+edit: /etc/ssh/ssh_config, add the lines:
 
 ```
 Host *
