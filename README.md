@@ -37,6 +37,16 @@ aws --version
 
 ```
 
+## Configure SSH:
+
+edit: /etc/ssh/ssh_config
+add the lines:
+
+```
+Host *
+ServerAliveInterval 100
+```
+
 ## Configure AWS CLI:
 configure aws client with the keys of a IAM user with admin rights.
 ```

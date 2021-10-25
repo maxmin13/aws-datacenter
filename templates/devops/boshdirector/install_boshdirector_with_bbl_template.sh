@@ -56,12 +56,11 @@ cp create-director-override.sh enable_debug.yml disable_debug.yml director_vars.
 chmod 700 "${BBL_INSTALL_DIR}"/create-director-override.sh "${BBL_INSTALL_DIR}"/enable_debug.yml \
     "${BBL_INSTALL_DIR}"/disable_debug.yml "${BBL_INSTALL_DIR}"/director_vars.yml
 
-echo 'Running BOSH bootloader plan ...'
-
 remove_last_character_if_present "${CF_LBAL_DOMAIN}" '.'
 lbal_domain_nm="${__RESULT}"
 
 echo "Cloud Foundry load balancer name: ${lbal_domain_nm}"
+echo 'Running BOSH bootloader plan ...'
 
 bbl_plan_director "${BBL_INSTALL_DIR}" "${ACCESS_KEY_ID}" "${SECRET_ACCESS_KEY}" "${REGION}" \
     "${lbal_cert_file}" "${lbal_key}" "${lbal_domain_nm}" 

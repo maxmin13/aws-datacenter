@@ -199,7 +199,6 @@ echo 'gen_certificate.sh ready.'
 } > "${TMP_DIR}"/"${devops_dir}"/cf_vars.yml
 
 echo 'cf_vars.yml ready.'
-
 echo "Uploading devops scripts ..."
 
 scp_upload_files "${admin_private_key_file}" "${admin_eip}" "${SHARED_INST_SSH_PORT}" "${ADMIN_INST_USER_NM}" "${remote_dir}" \
@@ -276,9 +275,9 @@ then
    remove_role_from_instance_profile "${ADMIN_INST_PROFILE_NM}" "${AWS_BOSH_DIRECTOR_ROLE_NM}"
      
    echo 'BOSH director role removed from the instance profile.'
-   else
-      echo 'WARN: BOSH director role already removed from the instance profile.'
-   fi
+else
+   echo 'WARN: BOSH director role already removed from the instance profile.'
+fi
       
 ## 
 ## Admin SSH Access.

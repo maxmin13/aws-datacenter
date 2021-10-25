@@ -94,7 +94,7 @@ LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 ## Admin box ##
 ## ********* ##
 
-ADMIN_INST_NM='admin-box'
+ADMIN_INST_NM='admin-box2'
 ADMIN_INST_PRIVATE_IP='10.0.10.6'
 ADMIN_INST_HOSTNAME='admin.maxmin.it'
 ADMIN_INST_USER_NM='admin-user'
@@ -136,19 +136,4 @@ WEBPHP_APACHE_MONIT_HTTP_PORT='8060'
 WEBPHP_APACHE_WEBSITE_HTTP_PORT='8070'
 WEBPHP_APACHE_LBAL_HEALTCHECK_HTTP_PORT='8080'
 WEBPHP_RSYSLOG_PORT='514'
-
-## ************* ##
-## Cloud Foundry ##
-## ************* ##
-
-# Valued used in the custom CF install, no BBL.
-BOSH_DIRECTOR_INST_NM='bosh/0'
-BOSH_DIRECTOR_ALIAS='bosh_0'
-BOSH_DIRECTOR_PRIVATE_IP='10.0.10.30'
-BOSH_DIRECTOR_PORT='25555'
-BOSH_SSH_PORT='22'
-BOSH_AGENT_PORT='6868'
-BOSH_SEC_GRP_NM='bosh-sgp'
-
-
 
