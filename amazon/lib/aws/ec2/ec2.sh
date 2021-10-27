@@ -77,13 +77,10 @@ function create_datacenter()
   
    local exit_code=0
    declare -r dtc_nm="${1}"
-   local dtc_id=''
   
-   dtc_id="$(aws ec2 create-vpc \
+   aws ec2 create-vpc \
        --cidr-block "${DTC_CDIR}" \
-       --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value='${dtc_nm}'}]" \
-       --query 'Vpc.VpcId' \
-       --output text)"
+       --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value='${dtc_nm}'}]" > /dev/null
        
    exit_code=$?    
   
@@ -431,13 +428,12 @@ function get_internet_gateway_attachment_status()
 #  None
 # Arguments:
 # +igw_nm -- the internet gateway name.
-# +dtc_id -- the data center ID.
 # Returns:      
 #  none.  
 #===============================================================================
 function create_internet_gateway()
 {
-   if [[ $# -lt 2 ]]
+   if [[ $# -lt 1 ]]
    then
       echo 'ERROR: missing mandatory arguments.'
       return 128
@@ -445,7 +441,6 @@ function create_internet_gateway()
   
    local exit_code=0
    declare -r igw_nm="${1}"
-   declare -r dtc_id="{2}"
   
    aws ec2 create-internet-gateway \
        --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value='${igw_nm}'}]" \

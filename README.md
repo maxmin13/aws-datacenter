@@ -55,13 +55,13 @@ aws configure
 
 ## To create the datacenter:
 ```
-cd datacenter
+cd aws-datacenter
 amazon/master/make.sh
 ```
 
 ## To delete the datacenter:
 ```
-cd datacenter
+cd aws-datacenter
 amazon/master/delete.sh
 ```
 
