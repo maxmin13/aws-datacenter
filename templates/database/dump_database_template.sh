@@ -20,7 +20,12 @@ echo '* user: SEDdatabase_main_userSED' >> "${dump_log_file}" 2>&1
 
 cd "${script_dir}" || exit 1
 
-mysqldump --host=SEDdatabase_hostSED --user=SEDdatabase_main_userSED --password=SEDdatabase_main_user_passwordSED SEDdatabase_nameSED > SEDdump_dirSED/SEDdump_fileSED
+mysqldump --host=SEDdatabase_hostSED --user=SEDdatabase_main_userSED --password=SEDdatabase_main_user_passwordSED SEDdatabase_nameSED > SEDdump_dirSED/SEDdump_fileSED >> "${dump_log_file}" 2>&1
 
-echo 'Database dumped' >> "${dump_log_file}" 2>&1
-echo 'Database dumped in SEDdump_dirSED directory.'
+exit_code=$?
+
+if [[ 0 -eq "${exit_code}" ]]
+then
+   echo 'Database dumped' >> "${dump_log_file}" 2>&1
+   echo 'Database dumped in SEDdump_dirSED directory.'
+fi

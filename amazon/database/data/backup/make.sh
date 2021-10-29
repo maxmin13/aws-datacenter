@@ -177,8 +177,7 @@ then
           "${SHARED_INST_SSH_PORT}" \
           "${ADMIN_INST_USER_NM}"          
    else
-      echo 'ERROR: dumping database objects.'
-      exit 1
+      echo 'WARN: error dumping database objects.'
    fi
       
    ## 
@@ -194,9 +193,6 @@ then
     
    # Removing temp files
    rm -rf "${TMP_DIR:?}"/"${database_dir}" 
- 
-   echo
-   echo "Database successfully dumped." 
 fi
 
 

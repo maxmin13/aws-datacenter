@@ -61,14 +61,16 @@ echo
    . "${PROJECT_DIR}"/amazon/loadbalancer/make.sh             
 
    # Create the Admin and Webphp instances.      
-   . "${PROJECT_DIR}"/amazon/admin/instance/make.sh               
+   . "${PROJECT_DIR}"/amazon/admin/instance/make.sh   
+   . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1               
    . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 2   
    
    # Deploy database objects.
    . "${PROJECT_DIR}"/amazon/database/data/make.sh       
 
    # Deploy Admin and Webphp websites.
-   . "${PROJECT_DIR}"/amazon/admin/instance/website/make.sh      
+   . "${PROJECT_DIR}"/amazon/admin/instance/website/make.sh  
+   . "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 1    
    . "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 2
    
    # Register 'maxmin.it' domain with the AWS DNS registrar.

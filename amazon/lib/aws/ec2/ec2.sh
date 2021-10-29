@@ -749,15 +749,13 @@ function create_security_group()
    declare -r dtc_id="${1}" 
    declare -r sgp_nm="${2}"
    declare -r sgp_desc="${3}"  
-   local sgp_id=''
-   
-   sgp_id="$(aws ec2 create-security-group \
+      
+   aws ec2 create-security-group \
         --group-name "${sgp_nm}" \
         --description "${sgp_desc}" \
         --vpc-id "${dtc_id}" \
         --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value='${sgp_nm}'}]" \
-        --query 'GroupId' \
-        --output text)"
+        > /dev/null
         
    exit_code=$?
    
