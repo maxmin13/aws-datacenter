@@ -161,6 +161,8 @@ function __helper_clear_resources()
    return 0   
 }
 
+trap "__helper_clear_resources" EXIT
+
 ##
 ##
 ##
@@ -169,8 +171,6 @@ echo
 ##
 ##
 ##
-
-trap "__helper_clear_resources" EXIT
 
 #######################################################
 ## TEST: build_route53_permission_policy_document
@@ -424,7 +424,8 @@ fi
 
 # Detach the policy from the role.
 policy_arn="$(aws iam list-attached-role-policies --role-name  "${ROLE_NM}" \
-          --query "AttachedPolicies[? PolicyName=='${POLICY_NM}' ].PolicyArn" --output text)"
+   --query "AttachedPolicies[? PolicyName=='${POLICY_NM}' ].PolicyArn" --output text)"
+
 aws iam detach-role-policy --role-name "${ROLE_NM}" --policy-arn "${policy_arn}" > /dev/null
 
 set +e
@@ -700,12 +701,13 @@ __helper_create_role_policy_document
 policy_document="${__RESULT}"
 
 aws iam create-role --role-name "${ROLE_NM}" \
-    --assume-role-policy-document "${policy_document}" > /dev/null 2>&1 
+   --assume-role-policy-document "${policy_document}" > /dev/null 2>&1 
 
 # Create an instance profile and attach the role to it.
 aws iam create-instance-profile --instance-profile-name "${PROFILE_NM}" > /dev/null 2>&1
+
 aws iam add-role-to-instance-profile --instance-profile-name "${PROFILE_NM}" \
-       --role-name "${ROLE_NM}" > /dev/null 2>&1
+   --role-name "${ROLE_NM}" > /dev/null 2>&1
     
 #
 # Missing argument.
@@ -823,7 +825,7 @@ __helper_create_role_policy_document
 policy_document="${__RESULT}"
 
 aws iam create-role --role-name "${ROLE_NM}" \
-    --assume-role-policy-document "${policy_document}" > /dev/null 2>&1 
+   --assume-role-policy-document "${policy_document}" > /dev/null 2>&1 
 
 # Create an instance profile.
 aws iam create-instance-profile --instance-profile-name "${PROFILE_NM}" > /dev/null 2>&1
@@ -894,8 +896,8 @@ fi
 
 # Check the association.
 role_nm="$(aws iam list-instance-profiles \
-    --query "InstanceProfiles[? InstanceProfileName == '${PROFILE_NM}' ].Roles[].RoleName" \
-    --output text)"
+   --query "InstanceProfiles[? InstanceProfileName == '${PROFILE_NM}' ].Roles[].RoleName" \
+   --output text)"
 
 if [[ "${ROLE_NM}" != "${role_nm}" ]]
 then
@@ -1081,12 +1083,12 @@ else
        # Check the policy isn't attached to the role.
        policy_arn=''
        policy_arn="$(aws iam list-attached-role-policies --role-name  "${ROLE_NM}" \
-          --query "AttachedPolicies[? PolicyName=='${POLICY_NM}' ].PolicyArn" --output text)"
+         --query "AttachedPolicies[? PolicyName=='${POLICY_NM}' ].PolicyArn" --output text)"
        
        if test -n "${policy_arn}"
        then
-          echo 'ERROR: testing __detach_permission_policy_from_role, policy still attached to the role.'
-          counter=$((counter +1))
+         echo 'ERROR: testing __detach_permission_policy_from_role, policy still attached to the role.'
+         counter=$((counter +1))
        fi 
    fi         
 fi
@@ -1224,7 +1226,7 @@ fi
 
 # Check the instance profile.
 instance_profile_id="$(aws iam list-instance-profiles \
-    --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].InstanceProfileId" --output text)"
+   --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].InstanceProfileId" --output text)"
 
 if [[ -z "${instance_profile_id}" ]]
 then
@@ -1269,7 +1271,7 @@ aws iam create-instance-profile --instance-profile-name "${PROFILE_NM}" > /dev/n
 
 # Attach the role to the instance profile.
 aws iam  add-role-to-instance-profile --instance-profile-name "${PROFILE_NM}" \
-    --role-name "${ROLE_NM}" 
+   --role-name "${ROLE_NM}" 
 
 #
 # Missing argument.
@@ -1321,7 +1323,7 @@ fi
 
 # Check the instance profile.
 instance_profile_id="$(aws iam list-instance-profiles \
-    --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].InstanceProfileId" --output text)"
+   --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].InstanceProfileId" --output text)"
 
 if [[ -n "${instance_profile_id}" ]]
 then
@@ -1338,7 +1340,7 @@ aws iam create-instance-profile --instance-profile-name "${PROFILE_NM}" > /dev/n
 
 # Attach the role to the instance profile.
 aws iam  add-role-to-instance-profile --instance-profile-name "${PROFILE_NM}" \
-    --role-name "${ROLE_NM}" 
+   --role-name "${ROLE_NM}" 
 
 set +e
 delete_instance_profile "${PROFILE_NM}" > /dev/null 2>&1
@@ -1364,7 +1366,7 @@ fi
 
 # Check the role isn't attached to the profile.
 role_nm="$(aws iam list-instance-profiles \
-    --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].Roles[].RoleName" --output text)"
+   --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].Roles[].RoleName" --output text)"
 
 if [[ "${ROLE_NM}" == "${role_nm}" ]]
 then
@@ -1374,7 +1376,7 @@ fi
 
 # Check the instance profile.
 instance_profile_id="$(aws iam list-instance-profiles \
-    --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].InstanceProfileId" --output text)"
+   --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].InstanceProfileId" --output text)"
 
 if [[ -n "${instance_profile_id}" ]]
 then
@@ -1412,7 +1414,7 @@ __helper_create_role_policy_document
 policy_document="${__RESULT}"
 
 aws iam create-role --role-name "${ROLE_NM}" \
-    --assume-role-policy-document "${policy_document}" > /dev/null 2>&1 
+   --assume-role-policy-document "${policy_document}" > /dev/null 2>&1 
     
 #
 # Missing argument.
@@ -1634,7 +1636,7 @@ aws iam attach-role-policy --role-name "${ROLE_NM}" --policy-arn "${policy_arn}"
 # Create an instance profile and attach the role to it.
 aws iam create-instance-profile --instance-profile-name "${PROFILE_NM}" > /dev/null 2>&1
 aws iam  add-role-to-instance-profile --instance-profile-name "${PROFILE_NM}" \
-    --role-name "${ROLE_NM}" 
+   --role-name "${ROLE_NM}" 
 
 #
 # Missing argument.
@@ -1706,7 +1708,7 @@ fi
 
 # Check the policy hasn't been deleted.
 policy_arn="$(aws iam list-policies --query "Policies[? PolicyName=='${POLICY_NM}' ].Arn" \
-    --output text)"
+   --output text)"
    
 if [[ -z "${policy_arn}" ]]
 then
@@ -1932,7 +1934,7 @@ then
 else
    # Check the policy.
    policy_name="$(aws iam list-policies --query "Policies[? PolicyName=='${POLICY_NM}' ].PolicyName" \
-       --output text)"   
+      --output text)"   
    
    if [[ -z "${policy_name}" ]]
    then
@@ -1949,7 +1951,7 @@ fi
 
 set +e
 create_permission_policy "${POLICY_NM}" 'Route 53 create and delete records policy.' \
-    "${policy_document}" > /dev/null 2>&1 
+   "${policy_document}" > /dev/null 2>&1 
 exit_code=$?
 set -e
 

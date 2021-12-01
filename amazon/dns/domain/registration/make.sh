@@ -17,7 +17,8 @@ echo 'DNS domain register'
 echo '*******************'
 echo
 
-registered="$(check_domain_is_registered_with_the_account "${MAXMIN_TLD}")"
+check_domain_is_registered_with_the_account "${MAXMIN_TLD}"
+registered="${__RESULT}"
 
 if [[ -n "${registered}" ]]
 then
@@ -25,9 +26,10 @@ then
 else
    echo "* WARN: the ${MAXMIN_TLD} domain is not registered with the account."
    
-   status="$(get_request_status 'REGISTER_DOMAIN')" 
+   get_request_status 'REGISTER_DOMAIN'
+   request_status="${_RESULT}"
 
-   if [[ 'IN_PROGRESS' == "${status}" ]]
+   if [[ 'IN_PROGRESS' == "${request_status}" ]]
    then
       echo '* WARN: a registration request has already been submitted.'
    else
@@ -41,8 +43,10 @@ else
          echo "The ${MAXMIN_TLD} domain is available, registering."
          
          register_domain "${TEMPLATE_DIR}"/dns/register-domain.json
+         operation_id="${__RESULT}"
          
-         echo 'Request sent to the AWS registrar.' 
+         echo 'Request sent to the AWS registrar,'
+         echo "operation ID: ${operation_id}" 
       fi     
    fi
 fi

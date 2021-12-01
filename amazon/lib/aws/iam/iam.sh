@@ -338,11 +338,10 @@ function create_permission_policy()
    declare -r policy_document="${3}"
        
    aws iam create-policy \
-       --policy-name "${policy_nm}" \
-       --description "${policy_desc}" \
-       --policy-document "${policy_document}" \
+      --policy-name "${policy_nm}" \
+      --description "${policy_desc}" \
+      --policy-document "${policy_document}" \
        
-    
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -371,17 +370,18 @@ function build_route53_permission_policy_document()
 
    policy_document=$(cat <<-'EOF' 
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "route53:*",
-                "route53domains:*",
-                "sts:AssumeRole"
-            ],
-            "Resource": "*"
-        }
+   "Version": "2012-10-17",
+   "Statement": [
+      {
+         "Effect": "Allow",
+         "Action": 
+         [
+            "route53:*",
+            "route53domains:*",
+            "sts:AssumeRole"
+         ],
+         "Resource": "*"
+      }
     ]
 }      
 	EOF
@@ -1098,8 +1098,9 @@ function get_instance_profile_id()
    local profile_id=''
    
    profile_id="$(aws iam list-instance-profiles \
-       --query "InstanceProfiles[?InstanceProfileName=='${profile_nm}'].InstanceProfileId" \
-       --output text)"
+      --query "InstanceProfiles[?InstanceProfileName=='${profile_nm}'].InstanceProfileId" \
+      --output text)"
+
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1179,8 +1180,8 @@ function check_instance_profile_has_role_associated()
     
    # One role per instance profile. 
    role_found="$(aws iam list-instance-profiles \
-       --query "InstanceProfiles[? InstanceProfileName=='${profile_nm}' ].Roles[].RoleName" \
-       --output text)"
+      --query "InstanceProfiles[? InstanceProfileName=='${profile_nm}' ].Roles[].RoleName" \
+      --output text)"
 
    exit_code=$?
    
@@ -1223,7 +1224,7 @@ function associate_role_to_instance_profile()
    declare -r role_nm="${2}"
    
    aws iam add-role-to-instance-profile --instance-profile-name "${profile_nm}" \
-       --role-name "${role_nm}" 
+      --role-name "${role_nm}" 
    
    exit_code=$?
    
@@ -1260,7 +1261,7 @@ function remove_role_from_instance_profile()
    declare -r role_nm="${2}"
    
    aws iam remove-role-from-instance-profile --instance-profile-name "${profile_nm}" \
-       --role-name "${role_nm}" 
+      --role-name "${role_nm}" 
 
    exit_code=$?
    

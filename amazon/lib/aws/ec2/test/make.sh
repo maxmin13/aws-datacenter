@@ -6,9 +6,11 @@ set +o nounset
 set +o xtrace
    
 counter=0; __RESULT='';
-ROLE_NM='EC2-test-assume-role'
-PROFILE_NM='EC2-test-instance-profile'
-INSTANCE_NM='EC2-test-instance1'
+ROLE_NM='Test-role'
+PROFILE_NM='Test-instance-profile'
+INSTANCE_NM='Test-instance'
+SUBNET_NM='Test-subnet'
+VPC_NM='Test-vpc'
 
 ##
 ## Functions used to handle test data.
@@ -33,30 +35,7 @@ function __helper_create_role_policy_document()
    __RESULT="${policy_document}"
    
    return 0
-}
-
-function __helper_clear_instance()
-{ 
-   # Clear the global __RESULT variable.
-   __RESULT=''
-
-   #
-   # EC2 instance.
-   #
-   
-   instance_id="$(aws ec2 describe-instances \
-       --filters Name=tag-key,Values=Name \
-       --filters Name=tag-value,Values="${INSTANCE_NM}" \
-       --query 'Reservations[*].Instances[*].InstanceId' \
-       --output text)"
-       
-   if [[ -n "${instance_id}" ]] 
-   then
-      aws ec2 terminate-instances --instance-ids "${instance_id}" > /dev/null 2>&1
-      
-      echo 'Test instance deleted.'
-   fi 
-}   
+} 
 
 function __helper_clear_resources()
 {
@@ -68,19 +47,21 @@ function __helper_clear_resources()
    #
    # Role.
    #
+
+   set -e
    
    role_id="$(aws iam list-roles \
-       --query "Roles[? RoleName=='${ROLE_NM}'].Arn" --output text)" 
+      --query "Roles[? RoleName=='${ROLE_NM}'].Arn" --output text)" 
        
    if [[ -n "${role_id}" ]]
    then  
       instance_profiles="$(aws iam list-instance-profiles-for-role --role-name "${ROLE_NM}" \
-          --query "InstanceProfiles[].InstanceProfileName" --output text)"
+         --query "InstanceProfiles[].InstanceProfileName" --output text)"
    
       for profile_nm in ${instance_profiles}
       do
          aws iam remove-role-from-instance-profile --instance-profile-name "${profile_nm}" \
-             --role-name "${ROLE_NM}"
+            --role-name "${ROLE_NM}"
              
          echo 'Test role removed from instance profile.'      
       done       
@@ -88,6 +69,8 @@ function __helper_clear_resources()
       aws iam delete-role --role-name "${ROLE_NM}" > /dev/null
    
       echo 'Test role deleted.'
+   else
+      echo 'WARN: test role already deleted.'
    fi
       
    #
@@ -95,10 +78,10 @@ function __helper_clear_resources()
    # 
    
    instance_id="$(aws ec2 describe-instances \
-       --filters Name=tag-key,Values=Name \
-       --filters Name=tag-value,Values="${INSTANCE_NM}" \
-       --query 'Reservations[*].Instances[*].InstanceId' \
-       --output text)"
+      --filters Name=tag-key,Values=Name \
+      --filters Name=tag-value,Values="${INSTANCE_NM}" \
+      --query 'Reservations[*].Instances[*].InstanceId' \
+      --output text)"
     
    if [[ -n "${instance_id}" ]]
    then
@@ -109,82 +92,228 @@ function __helper_clear_resources()
        
       if [[ -n "${association_id}" ]]
       then
-         aws ec2 disassociate-iam-instance-profile --association-id "${association_id}"
+         aws ec2 disassociate-iam-instance-profile --association-id "${association_id}" > /dev/null
         
          echo 'Test instance profile association deleted.'
+      else
+         echo 'WARN: instance profile already disassociated from the instance.'
       fi   
    fi
    
    profile_id="$(aws iam list-instance-profiles \
-       --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].InstanceProfileId" --output text)"
+      --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].InstanceProfileId" --output text)"
      
    if [[ -n "${profile_id}" ]]
    then      
-      aws iam delete-instance-profile --instance-profile-name "${PROFILE_NM}"
+      aws iam delete-instance-profile --instance-profile-name "${PROFILE_NM}" > /dev/null
       
       echo 'Test instance profile deleted'
-   fi   
+   fi
+
+   #
+   # EC2 instance.
+   #
+       
+   if [[ -n "${instance_id}" ]] 
+   then
+      aws ec2 terminate-instances --instance-ids "${instance_id}" > /dev/null 2>&1
+      
+      echo 'Test instance deleted.'
+   fi
+
+   ##
+   ## Subnet.
+   ##
+
+   echo 'Waiting for the instance to terminate ...'
+
+   aws ec2 wait instance-terminated --instance-ids "${instance_id}" 
+
+   subnet_id="$(aws ec2 describe-subnets \
+      --filters Name=tag-key,Values='Name' \
+      --filters Name=tag-value,Values="${SUBNET_NM}" \
+      --query 'Subnets[*].SubnetId' \
+      --output text)"
+
+   if [[ -n "${subnet_id}" ]]
+   then  
+      aws ec2 delete-subnet --subnet-id "${subnet_id}" > /dev/null
+   
+      echo 'Test subnet deleted.'
+   else
+      echo 'WARN: test subnet already deleted.'
+   fi
+
+   ##
+   ## VPC.
+   ##
+
+   vpc_id="$(aws ec2 describe-vpcs \
+      --filters Name=tag-key,Values='Name' \
+      --filters Name=tag-value,Values="${VPC_NM}" \
+      --query 'Vpcs[*].VpcId' \
+      --output text)" 
+
+   if [[ -n "${vpc_id}" ]]    
+   then
+      aws ec2 delete-vpc --vpc-id "${vpc_id}"
+
+      echo 'Test VPC deleted.'
+   else 
+      echo 'WARN: test VPC already deleted.'
+   fi 
+
+   set +e
    
    return 0   
 }
 
-trap "__helper_clear_instance; __helper_clear_resources" EXIT
+function __helper_create_resources() 
+{
+   echo 'Creating resources for tests ...'
 
-__helper_clear_resources > /dev/null 2>&1
+   set -e
 
-##
-## Create and EC2 instance and an instance profile.
-##
+   ##
+   ## VPC.
+   ##
 
-echo 'Starting EC2 test instance ...'
+   vpc_id="$(aws ec2 describe-vpcs \
+      --filters Name=tag-key,Values='Name' \
+      --filters Name=tag-value,Values="${VPC_NM}" \
+      --query 'Vpcs[*].VpcId' \
+      --output text)" 
 
-instance_id="$(aws ec2 describe-instances \
-    --filters Name=tag-key,Values=Name \
-    --filters Name=tag-value,Values="${INSTANCE_NM}" \
-    --query 'Reservations[*].Instances[*].InstanceId' \
-    --output text)"   
-   
-if [[ -n "${instance_id}" ]]
-then
-   get_instance_state "${INSTANCE_NM}"
-   instance_st="${__RESULT}"
-   
-   if [[ 'running' == "${instance_st}" || \
-         'stopped' == "${instance_st}" || \
-         'pending' == "${instance_st}" ]] 
+   if [[ -z "${vpc_id}" ]]    
    then
-      echo "WARN: EC2 test instance already created (${instance_st})."
+      vpc_id="$(aws ec2 create-vpc \
+         --cidr-block '10.0.0.0/16' \
+         --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value='${VPC_NM}'}]" \
+         --query 'Vpc.VpcId' \
+         --output text)"
+
+      echo 'Test VPC created.'
    else
-      echo "ERROR: EC2 test instance already created (${instance_st})."
-      exit 1
+      echo 'WARN: test VPC already created.'
    fi
-else
-   echo "Creating EC2 test instance ..."
 
-   instance_id="$(aws ec2 run-instances \
-       --image-id "${AWS_BASE_IMG_ID}" \
-       --block-device-mapping 'DeviceName=/dev/xvda,Ebs={DeleteOnTermination=true,VolumeSize=10}' \
-       --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value='${INSTANCE_NM}'}]" \
-       --output text \
-       --query 'Instances[*].InstanceId')"
+   ##
+   ## Subnet.
+   ##
 
-   echo "EC2 test instance created."
-fi
+   subnet_id="$(aws ec2 describe-subnets \
+      --filters Name=tag-key,Values='Name' \
+      --filters Name=tag-value,Values="${SUBNET_NM}" \
+      --query 'Subnets[*].SubnetId' \
+      --output text)"
 
-# Create a role.
-__helper_create_role_policy_document
-policy_document="${__RESULT}"
-aws iam create-role --role-name "${ROLE_NM}" \
-    --assume-role-policy-document "${policy_document}" > /dev/null 2>&1 
+   if [[ -z "${subnet_id}" ]]
+   then  
+      subnet_id="$(aws ec2 create-subnet \
+         --vpc-id "${vpc_id}" \
+         --cidr-block '10.0.0.0/24' \
+         --query 'Subnet.SubnetId' \
+         --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value='${SUBNET_NM}'}]" \
+         --output text)"
+   
+      echo 'Test subnet created.'
+   else
+      echo 'WARN: test subnet already created.'
+   fi
 
-# Create an instance profile and attach the role to it.
-profile_id="$(aws iam create-instance-profile --instance-profile-name "${PROFILE_NM}" \
-    --query "InstanceProfile.InstanceProfileId" --output text)"
-aws iam add-role-to-instance-profile --instance-profile-name "${PROFILE_NM}" \
-    --role-name "${ROLE_NM}" > /dev/null 2>&1
-    
-echo 'Test instance profile created.'    
-       
+   ##
+   ## EC2 instance.
+   ##
+
+   instance_id="$(aws ec2 describe-instances \
+      --filters Name=tag-key,Values=Name \
+      --filters Name=tag-value,Values="${INSTANCE_NM}" \
+      --query 'Reservations[*].Instances[*].InstanceId' \
+      --output text)"   
+   
+   if [[ -n "${instance_id}" ]]
+   then
+      instance_st="$(aws ec2 describe-instances \
+         --filters Name=tag-key,Values='Name' \
+         --filters Name=tag-value,Values="${INSTANCE_NM}" \
+         --query 'Reservations[*].Instances[*].State.Name' --output text)"
+   
+      if [[ 'running' == "${instance_st}" || 'pending' == "${instance_st}" ]] 
+      then
+         echo "WARN: EC2 test instance already created (${instance_st})."
+      else
+         echo "ERROR: EC2 test instance already created (${instance_st})."
+         exit 1
+      fi
+   else
+      instance_id="$(aws ec2 run-instances \
+         --image-id "${AWS_BASE_IMG_ID}" \
+         --subnet-id "${subnet_id}" \
+         --block-device-mapping 'DeviceName=/dev/xvda,Ebs={DeleteOnTermination=true,VolumeSize=10}' \
+         --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value='${INSTANCE_NM}'}]" \
+         --query 'Instances[*].InstanceId' \
+         --output text)"
+
+      echo "Test instance created."
+   fi
+   
+   #
+   # Role.
+   #
+
+   role_id="$(aws iam list-roles \
+      --query "Roles[? RoleName=='${ROLE_NM}'].Arn" --output text)" 
+
+   if [[ -z "${role_id}" ]]
+   then
+      __helper_create_role_policy_document
+      policy_document="${__RESULT}"
+
+      aws iam create-role --role-name "${ROLE_NM}" \
+         --assume-role-policy-document "${policy_document}" > /dev/null 2>&1
+   else
+      echo 'WARN: role already created.'
+   fi
+
+   #
+   # Instance profile.
+   #
+
+   profile_id="$(aws iam list-instance-profiles \
+      --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].InstanceProfileId" --output text)"
+
+   if [[ -z "${profile_id}" ]]
+   then
+      profile_id="$(aws iam create-instance-profile --instance-profile-name "${PROFILE_NM}" \
+         --query "InstanceProfile.InstanceProfileId" --output text)"
+
+      echo 'Test instance profile created.'  
+   else
+      echo 'WARN: instance profile already created.'
+   fi
+
+   # Check if the role is associated to the instance profile.
+   role_nm="$(aws iam list-instance-profiles \
+      --query "InstanceProfiles[? InstanceProfileName=='${PROFILE_NM}' ].Roles[].RoleName" \
+      --output text)"
+
+   if [[ -z "${role_nm}" ]]
+   then
+      aws iam add-role-to-instance-profile --instance-profile-name "${PROFILE_NM}" \
+         --role-name "${ROLE_NM}" > /dev/null 2>&1 
+
+      echo 'Test role associated to the instance profile.'
+   else
+      echo 'WARN: Test role already associated to the instance profile.'
+   fi
+   
+   set +e
+
+   return 0
+}
+
+trap __helper_clear_resources > /dev/null EXIT
+     
 ##
 ##
 ##
@@ -193,6 +322,10 @@ echo
 ##
 ##
 ##
+
+__helper_create_resources
+
+echo
 
 ###########################################
 ## TEST: get_instance_id
@@ -561,6 +694,9 @@ then
 fi
 
 echo 'disassociate_instance_profile_from_instance tests with profile associated completed.'
+echo
+
+__helper_clear_resources
 
 ##############################################
 # Count the errors.
@@ -574,11 +710,6 @@ then
 else
    echo 'ec2.sh script test successfully completed.'
 fi
-
-echo
-
-__helper_clear_instance 
-__helper_clear_resources
 
 echo
 

@@ -22,7 +22,7 @@ source "${PROJECT_DIR}"/amazon/lib/aws/elb.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/iam/iam.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53/route53.sh
-source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
+source "${PROJECT_DIR}"/amazon/lib/aws/route53domains/route53domains.sh
 
 log_file="${LOG_DIR}"/delete-$(date +"%d-%m-%Y-%H.%M"."%S") 
 

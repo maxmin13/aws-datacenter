@@ -22,7 +22,7 @@ source "${PROJECT_DIR}"/amazon/lib/aws/elb.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/iam/iam.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/sts.sh
 source "${PROJECT_DIR}"/amazon/lib/aws/route53/route53.sh
-source "${PROJECT_DIR}"/amazon/lib/aws/route53domains.sh
+source "${PROJECT_DIR}"/amazon/lib/aws/route53domains/route53domains.sh
 
 ###log_file="${LOG_DIR}"/test-$(date +"%d-%m-%Y-%H.%M"."%S")
  
@@ -40,6 +40,9 @@ echo
       echo 'Env: development'
       echo '****************' 
    fi
+
+   . "${PROJECT_DIR}"/amazon/lib/aws/route53domains/test/make.sh
+   exit
    
    echo
    
@@ -52,8 +55,11 @@ echo
    # IAM tests.
    . "${PROJECT_DIR}"/amazon/lib/aws/iam/test/make.sh 
 
+   # Route 53 domain registration tests.
+   . "${PROJECT_DIR}"/amazon/lib/aws/route53domains/test/make.sh
+
    # Route 53 tests.
-   . "${PROJECT_DIR}"/amazon/lib/aws/route53/test/make.sh  
+   . "${PROJECT_DIR}"/amazon/lib/aws/route53/test/make.sh    
       
 } ### >> "${log_file}" 2>&1  
 

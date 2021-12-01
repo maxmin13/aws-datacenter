@@ -62,11 +62,11 @@ function create_hosted_zone()
    local hosted_zone_id=''
 
    hosted_zone_id="$(aws route53 create-hosted-zone \
-       --name "${hosted_zone_nm}" \
-       --caller-reference "${caller_reference}" \
-       --hosted-zone-config Comment="${comment}" \
-       --query 'HostedZone.Id' \
-       --output text)"
+      --name "${hosted_zone_nm}" \
+      --caller-reference "${caller_reference}" \
+      --hosted-zone-config Comment="${comment}" \
+      --query 'HostedZone.Id' \
+      --output text)"
    
    exit_code=$?
    

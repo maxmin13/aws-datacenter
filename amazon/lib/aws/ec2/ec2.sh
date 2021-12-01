@@ -80,7 +80,7 @@ function create_datacenter()
   
    aws ec2 create-vpc \
        --cidr-block "${DTC_CDIR}" \
-       --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value='${dtc_nm}'}]" > /dev/null
+       --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value='${dtc_nm}'}]"
        
    exit_code=$?    
   
@@ -211,10 +211,10 @@ function get_subnet_id()
    local subnet_id=''
   
    subnet_id="$(aws ec2 describe-subnets \
-       --filters Name=tag-key,Values='Name' \
-       --filters Name=tag-value,Values="${subnet_nm}" \
-       --query 'Subnets[*].SubnetId' \
-       --output text)"
+      --filters Name=tag-key,Values='Name' \
+      --filters Name=tag-value,Values="${subnet_nm}" \
+      --query 'Subnets[*].SubnetId' \
+      --output text)"
   
    exit_code=$?
    
@@ -261,12 +261,12 @@ function create_subnet()
    local subnet_id=''
  
    subnet_id="$(aws ec2 create-subnet \
-       --vpc-id "${dtc_id}" \
-       --cidr-block "${subnet_cidr}" \
-       --availability-zone "${subnet_az}" \
-       --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value='${subnet_nm}'}]" \
-       --query 'Subnet.SubnetId' \
-       --output text)"
+      --vpc-id "${dtc_id}" \
+      --cidr-block "${subnet_cidr}" \
+      --availability-zone "${subnet_az}" \
+      --tag-specifications "ResourceType=subnet,Tags=[{Key=Name,Value='${subnet_nm}'}]" \
+      --query 'Subnet.SubnetId' \
+      --output text)"
        
    exit_code=$?
    
@@ -288,7 +288,7 @@ function create_subnet()
    fi        
   
    ## Associate this subnet with our route table 
-   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" > /dev/null
+   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" 
   
    exit_code=$?
    
@@ -443,8 +443,7 @@ function create_internet_gateway()
    declare -r igw_nm="${1}"
   
    aws ec2 create-internet-gateway \
-       --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value='${igw_nm}'}]" \
-        > /dev/null
+       --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value='${igw_nm}'}]" 
   
    exit_code=$?
    
@@ -591,8 +590,7 @@ function create_route_table()
   
    aws ec2 create-route-table \
        --vpc-id "${dtc_id}" \
-       --tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value='${rtb_nm}'}]" \
-        > /dev/null
+       --tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value='${rtb_nm}'}]" 
  
    exit_code=$?
    
@@ -754,8 +752,7 @@ function create_security_group()
         --group-name "${sgp_nm}" \
         --description "${sgp_desc}" \
         --vpc-id "${dtc_id}" \
-        --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value='${sgp_nm}'}]" \
-        > /dev/null
+        --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value='${sgp_nm}'}]" 
         
    exit_code=$?
    
@@ -1423,7 +1420,7 @@ function associate_instance_profile_to_instance()
    fi
    
    aws ec2 associate-iam-instance-profile --iam-instance-profile Name="${profile_nm}" \
-       --instance-id "${instance_id}"    
+      --instance-id "${instance_id}"    
    
    exit_code=$?
    
