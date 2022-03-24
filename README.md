@@ -121,3 +121,4 @@ Enable access to the Loganalyzer website's 9443 port in the security group.
 https://admin.maxmin.it:9443/loganalyzer/index.php
 
 
+(ref: Aws scripted by Christian Cerri)
