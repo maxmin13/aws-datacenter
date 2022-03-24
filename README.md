@@ -46,8 +46,8 @@ ServerAliveInterval 100
 
 ```
 
-## Configure AWS CLI:
-configure aws client with the keys of a IAM user with admin rights.
+## Configure local AWS CLI:
+Configure aws client with the keys of a IAM user with admin rights.
 ```
 aws configure
 
