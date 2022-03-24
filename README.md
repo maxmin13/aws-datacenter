@@ -55,7 +55,7 @@ aws configure
 ```
 
 ## Register a domain with AWS Route 53 registrar:
-Register the domain in app_consts.sh maxmin.it. with the current account, creates a Route 53 hosted zone
+Register the domain in app_consts.sh maxmin.it. with the current account and create a Route 53 hosted zone
 that has the same name as the domain.
 ```
 amazon/dns/domain/registration/make.sh 
