@@ -1,8 +1,7 @@
 # aws-datacenter
 
-Amazon Web Services datacenter.
+Amazon Web Services datacenter built with AWS cli command line utility.
 
-Bash scripts that use AWS cli command line utility to deploy a datacenter on Amazon Web Services cloud.
 Datacenter composition:
 
 - a private Admin web site. 
@@ -11,6 +10,9 @@ Datacenter composition:
 - a relational database
 
 The HTTPS certificates for the Load Balancer and the Admin web site are validated by Let's Encrypt CA.
+
+A domain registration request is submitted to AWS for the domain maxmin13.it the first time the application
+scripts are run. The cost of the domain registration is automatically billed to the current AWS account.
 
 Workspace: 
 
@@ -51,17 +53,33 @@ aws configure
 
 ```
 
-## To create the datacenter:
+## Register a domain with AWS Route53 registrar:
+To register the domain in app_consts.sh MAXMIN_TLD='maxmin.it.' with the current account run the script:
+```
+amazon/dns/domain/registration/make.sh 
+```
+The registration of a domain take a few days.
+
+
+## Create the application DNS hosted zone.
+To create a new hosted zone for the domain in app_consts.sh MAXMIN_TLD='maxmin.it.' run the script:
+```
+amazon/dns/hostedzone/make.sh
+```
+The creation of a hosted zone take a few days.
+
+## Create the AWS datacenter (VPC):
+After domain and hosted zone have become operative, to create the AWS datacenter run the script: 
 ```
 cd aws-datacenter
-amazon/master/make.sh
+amazon/run/make.sh
 
 ```
 
 ## To delete the datacenter:
 ```
 cd aws-datacenter
-amazon/master/delete.sh
+amazon/run/delete.sh
 
 ```
 

@@ -34,7 +34,7 @@ function get_server_certificate_arn()
 
    __RESULT=''
    local exit_code=0
-   declare -r crt_nm="${1}"
+   local -r crt_nm="${1}"
 
    cert_arn="$(aws iam list-server-certificates \
        --query "ServerCertificateMetadataList[?ServerCertificateName=='${crt_nm}'].Arn" \
@@ -90,10 +90,10 @@ function upload_server_certificate_entity()
    
    __RESULT=''
    local exit_code=0
-   declare -r crt_nm="${1}"
-   declare -r crt_file="${2}"
-   declare -r key_file="${3}"
-   declare -r cert_dir="${4}"
+   local -r crt_nm="${1}"
+   local -r crt_file="${2}"
+   local -r key_file="${3}"
+   local -r cert_dir="${4}"
    local chain_file=''
    
    if [[ $# -gt 4 ]]; then
@@ -145,7 +145,7 @@ function delete_server_certificate()
 
    __RESULT=''
    local exit_code=0
-   declare -r crt_nm="${1}"
+   local -r crt_nm="${1}"
 
    aws iam delete-server-certificate --server-certificate-name "${crt_nm}" 
    
@@ -179,7 +179,7 @@ function get_permission_policy_arn()
 
    __RESULT=''
    local exit_code=0
-   declare -r policy_nm="${1}"
+   local -r policy_nm="${1}"
    local policy_arn=''
 
    policy_arn="$(aws iam list-policies --query "Policies[? PolicyName=='${policy_nm}' ].Arn" \
@@ -222,7 +222,7 @@ function check_permission_policy_exists()
    
    __RESULT=''
    local exit_code=0
-   declare -r policy_nm="${1}"
+   local -r policy_nm="${1}"
    local policy_arn=''
    local exists='false'
 
@@ -267,7 +267,7 @@ function delete_permission_policy()
 
    __RESULT=''
    local exit_code=0
-   declare -r policy_nm="${1}"
+   local -r policy_nm="${1}"
    local policy_arn=''
    local policy_exists='false'
    
@@ -333,9 +333,9 @@ function create_permission_policy()
 
    __RESULT=''
    local exit_code=0
-   declare -r policy_nm="${1}"
-   declare -r policy_desc="${2}"
-   declare -r policy_document="${3}"
+   local -r policy_nm="${1}"
+   local -r policy_desc="${2}"
+   local -r policy_document="${3}"
        
    aws iam create-policy \
       --policy-name "${policy_nm}" \
@@ -413,8 +413,8 @@ function attach_permission_policy_to_role()
 
    __RESULT=''
    local exit_code=0
-   declare -r role_nm="${1}"
-   declare -r policy_nm="${2}"
+   local -r role_nm="${1}"
+   local -r policy_nm="${2}"
    local policy_exists='false'
 
    check_permission_policy_exists "${policy_nm}"
@@ -477,8 +477,8 @@ function check_role_has_permission_policy_attached()
 
    __RESULT=''
    local exit_code=0
-   declare -r role_nm="${1}"
-   declare -r policy_nm="${2}"
+   local -r role_nm="${1}"
+   local -r policy_nm="${2}"
    local attached='false'
    local role_exists='false'
    local policy_exists='false'
@@ -561,8 +561,8 @@ function __detach_permission_policy_from_role()
 
    __RESULT=''
    local exit_code=0
-   declare -r role_nm="${1}"
-   declare -r policy_nm="${2}"
+   local -r role_nm="${1}"
+   local -r policy_nm="${2}"
    local policy_arn=''
    local role_exists='false'
    local policy_exists='false'
@@ -683,9 +683,9 @@ function create_role()
 
    __RESULT=''
    local exit_code=0
-   declare -r role_nm="${1}"
-   declare -r role_desc="${2}"
-   declare -r role_policy_document="${3}"
+   local -r role_nm="${1}"
+   local -r role_desc="${2}"
+   local -r role_policy_document="${3}"
 
    aws iam create-role --role-name "${role_nm}" --description "${role_desc}" \
        --assume-role-policy-document "${role_policy_document}" \
@@ -722,7 +722,7 @@ function delete_role()
    
    __RESULT=''
    local exit_code=0
-   declare -r role_nm="${1}"
+   local -r role_nm="${1}"
    local role_exists='false'
    
    check_role_exists "${role_nm}"
@@ -826,7 +826,7 @@ function check_role_exists()
    
    __RESULT=''
    local exit_code=0
-   declare -r role_nm="${1}"
+   local -r role_nm="${1}"
    local role_id=''
    local exists='false'
 
@@ -872,7 +872,7 @@ function get_role_arn()
    
    __RESULT=''
    local exit_code=0
-   declare -r role_nm="${1}"
+   local -r role_nm="${1}"
    local role_arn=''
 
    role_arn="$(aws iam list-roles --query "Roles[? RoleName=='${role_nm}'].Arn" --output text)"
@@ -914,7 +914,7 @@ function get_role_id()
 
    __RESULT=''
    local exit_code=0
-   declare -r role_nm="${1}"
+   local -r role_nm="${1}"
    local role_id=''
 
    role_id="$(aws iam list-roles \
@@ -953,7 +953,7 @@ function create_instance_profile()
 
    __RESULT=''
    local exit_code=0
-   declare -r profile_nm="${1}"
+   local -r profile_nm="${1}"
 
    aws iam create-instance-profile --instance-profile-name "${profile_nm}" \
        
@@ -988,7 +988,7 @@ function delete_instance_profile()
    
    __RESULT=''
    local exit_code=0
-   declare -r profile_nm="${1}"
+   local -r profile_nm="${1}"
    local role_nm=''
    
    # Retrieve role attached to the instance profiles.
@@ -1048,7 +1048,7 @@ function check_instance_profile_exists()
    
    __RESULT=''
    local exit_code=0
-   declare -r profile_nm="${1}"
+   local -r profile_nm="${1}"
    local profile_id=''
    local exists='false'
 
@@ -1094,7 +1094,7 @@ function get_instance_profile_id()
 
    __RESULT=''
    local exit_code=0
-   declare -r profile_nm="${1}"
+   local -r profile_nm="${1}"
    local profile_id=''
    
    profile_id="$(aws iam list-instance-profiles \
@@ -1135,8 +1135,8 @@ function check_instance_profile_has_role_associated()
     
    __RESULT=''
    local exit_code=0
-   declare -r profile_nm="${1}"
-   declare -r role_nm="${2}"
+   local -r profile_nm="${1}"
+   local -r role_nm="${2}"
    local associated='false'
    local role_exists=''
    local profile_exists=''
@@ -1220,8 +1220,8 @@ function associate_role_to_instance_profile()
 
    __RESULT=''
    local exit_code=0
-   declare -r profile_nm="${1}"
-   declare -r role_nm="${2}"
+   local -r profile_nm="${1}"
+   local -r role_nm="${2}"
    
    aws iam add-role-to-instance-profile --instance-profile-name "${profile_nm}" \
       --role-name "${role_nm}" 
@@ -1257,8 +1257,8 @@ function remove_role_from_instance_profile()
 
    __RESULT=''
    local exit_code=0
-   declare -r profile_nm="${1}"
-   declare -r role_nm="${2}"
+   local -r profile_nm="${1}"
+   local -r role_nm="${2}"
    
    aws iam remove-role-from-instance-profile --instance-profile-name "${profile_nm}" \
       --role-name "${role_nm}" 

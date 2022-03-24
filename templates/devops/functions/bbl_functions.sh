@@ -14,13 +14,13 @@ function bbl_plan_director()
    fi
    
    local exit_code=0
-   declare -r bbl_dir="${1}"
-   declare -r access_key_id="${2}"
-   declare -r secret_access_key="${3}"
-   declare -r region="${4}"
-   declare -r lbal_cert="${5}"
-   declare -r lbal_key="${6}"
-   declare -r lbal_domain="${7}"
+   local -r bbl_dir="${1}"
+   local -r access_key_id="${2}"
+   local -r secret_access_key="${3}"
+   local -r region="${4}"
+   local -r lbal_cert="${5}"
+   local -r lbal_key="${6}"
+   local -r lbal_domain="${7}"
    
    __bbl_run_cmd 'plan' "${bbl_dir}" "${access_key_id}" "${secret_access_key}" "${region}" \
        "${lbal_cert}" "${lbal_key}" "${lbal_domain}"
@@ -47,13 +47,13 @@ function bbl_bootstrap_director()
    fi
    
    local exit_code=0
-   declare -r bbl_dir="${1}"
-   declare -r access_key_id="${2}"
-   declare -r secret_access_key="${3}"
-   declare -r region="${4}"
-   declare -r lbal_cert="${5}"
-   declare -r lbal_key="${6}"
-   declare -r lbal_domain="${7}"
+   local -r bbl_dir="${1}"
+   local -r access_key_id="${2}"
+   local -r secret_access_key="${3}"
+   local -r region="${4}"
+   local -r lbal_cert="${5}"
+   local -r lbal_key="${6}"
+   local -r lbal_domain="${7}"
    
    __bbl_run_cmd 'up' "${bbl_dir}" "${access_key_id}" "${secret_access_key}" "${region}" \
        "${lbal_cert}" "${lbal_key}" "${lbal_domain}"
@@ -77,13 +77,13 @@ function bbl_delete_director()
    fi
    
    local exit_code=0
-   declare -r bbl_dir="${1}"
-   declare -r access_key_id="${2}"
-   declare -r secret_access_key="${3}"
-   declare -r region="${4}"
-   declare -r lbal_cert="${5}"
-   declare -r lbal_key="${6}"
-   declare -r lbal_domain="${7}"
+   local -r bbl_dir="${1}"
+   local -r access_key_id="${2}"
+   local -r secret_access_key="${3}"
+   local -r region="${4}"
+   local -r lbal_cert="${5}"
+   local -r lbal_key="${6}"
+   local -r lbal_domain="${7}"
    
    if [[ -d "${bbl_dir}" ]]
    then
@@ -111,14 +111,14 @@ function __bbl_run_cmd()
    fi
    
    local exit_code=0
-   declare -r cmd="${1}"
-   declare -r bbl_dir="${2}"
-   declare -r access_key_id="${3}"
-   declare -r secret_access_key="${4}"
-   declare -r region="${5}"
-   declare -r lbal_cert="${6}"
-   declare -r lbal_key="${7}"
-   declare -r lbal_domain="${8}"
+   local -r cmd="${1}"
+   local -r bbl_dir="${2}"
+   local -r access_key_id="${3}"
+   local -r secret_access_key="${4}"
+   local -r region="${5}"
+   local -r lbal_cert="${6}"
+   local -r lbal_key="${7}"
+   local -r lbal_domain="${8}"
    
    if [[ 'up' != "${cmd}" && 'down' != "${cmd}" && 'plan' != "${cmd}" ]]
    then
@@ -159,10 +159,10 @@ function bbl_cleanup_orphaned_resources()
    fi
    
    local exit_code=0
-   declare -r access_key_id="${1}"
-   declare -r secret_access_key="${2}"
-   declare -r filter_nm="${3}"
-   declare -r region="${4}"
+   local -r access_key_id="${1}"
+   local -r secret_access_key="${2}"
+   local -r filter_nm="${3}"
+   local -r region="${4}"
    
    if [[ -z "${filter_nm}" ]]
    then
@@ -199,7 +199,7 @@ function bbl_export_environment()
    fi
    
    local exit_code=0
-   declare -r bbl_dir="${1}"
+   local -r bbl_dir="${1}"
    
    eval "$(bbl --state-dir "${bbl_dir}" print-env)"
        

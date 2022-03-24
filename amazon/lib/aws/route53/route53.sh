@@ -6,6 +6,7 @@ set -o nounset
 set +o xtrace
 
 #===============================================================================
+#
 #          FILE: route53.sh
 #   DESCRIPTION: The script contains functions that use AWS client to make 
 #                calls to Amazon Elastic Compute Cloud (Amazon EC2).
@@ -44,7 +45,8 @@ set +o xtrace
 # +comment          -- any comments that you want to include about the hosted 
 #                      zone.
 # Returns:      
-#  the hosted zone identifier in the __RESULT global variable.  
+#  ID  that  you  use  when  performing  a GetChange action to get detailed 
+#  information about the change, in the __RESULT global variable.  
 #===============================================================================
 function create_hosted_zone()
 {
@@ -56,16 +58,16 @@ function create_hosted_zone()
    
    __RESULT=''
    local exit_code=0
-   declare -r hosted_zone_nm="${1}"
-   declare -r caller_reference="${2}"
-   declare -r comment="${3}"
-   local hosted_zone_id=''
+   local -r hosted_zone_nm="${1}"
+   local -r caller_reference="${2}"
+   local -r comment="${3}"
+   local changeinfo_id=''
 
-   hosted_zone_id="$(aws route53 create-hosted-zone \
+   changeinfo_id="$(aws route53 create-hosted-zone \
       --name "${hosted_zone_nm}" \
       --caller-reference "${caller_reference}" \
       --hosted-zone-config Comment="${comment}" \
-      --query 'HostedZone.Id' \
+      --query 'ChangeInfo.Id' \
       --output text)"
    
    exit_code=$?
@@ -73,11 +75,10 @@ function create_hosted_zone()
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: creating the hosted zone.' 
-      return "${exit_code}"
+   else
+      __RESULT="${changeinfo_id}"
    fi
    
-   __RESULT="${hosted_zone_id}" 
-
    return "${exit_code}"  
 }
 
@@ -107,7 +108,7 @@ function delete_hosted_zone()
    
    __RESULT=''
    local exit_code=0
-   declare -r hosted_zone_nm="${1}"
+   local -r hosted_zone_nm="${1}"
    local hosted_zone_id=''
    
    __get_hosted_zone_id "${hosted_zone_nm}"
@@ -135,7 +136,8 @@ function delete_hosted_zone()
 }
 
 #===============================================================================
-# Checks if a hosted zone exits.
+# Checks if a hosted zone exits with the name of the domain in app_consts.sh 
+# file.
 #
 # Globals:
 #  None
@@ -157,7 +159,7 @@ function check_hosted_zone_exists()
    
    __RESULT=''
    local exit_code=0
-   declare -r hosted_zone_nm="${1}"
+   local -r hosted_zone_nm="${1}"
    local exists='false'
    local hosted_zone_id=''
    
@@ -196,8 +198,7 @@ function check_hosted_zone_exists()
 # Returns:      
 #  a string representing the hosted zone name servers:
 #  ex: ns-128.awsdns-16.com ns-1930.awsdns-49.co.uk ns-752.awsdns-30.net 
-#      ns-1095.awsdns-08.org,
-#  or blanc if not found.
+#      ns-1095.awsdns-08.org, or blanc if not found.
 # Returns:      
 #  the list of the hosted zone's name servers, returns the value in the __RESULT 
 #  variable.
@@ -212,7 +213,7 @@ function get_hosted_zone_name_servers()
    
    __RESULT=''
    local exit_code=0
-   declare -r hosted_zone_nm="${1}"
+   local -r hosted_zone_nm="${1}"
    local name_servers=''
    local hosted_zone_id=''
    
@@ -235,9 +236,10 @@ function get_hosted_zone_name_servers()
    fi 
    
    name_servers="$(aws route53 get-hosted-zone \
-       --id "${hosted_zone_id}" \
-       --query DelegationSet.NameServers[*] \
-       --output text)"
+      --id "${hosted_zone_id}" \
+      --query DelegationSet.NameServers[*] \
+      --output text)"
+
    exit_code=$?
   
    if [[ 0 -ne "${exit_code}" ]]
@@ -275,12 +277,13 @@ function check_hosted_zone_has_record()
    
    __RESULT=''
    local exit_code=0
-   declare -r record_type="${1}"
-   declare -r domain_nm="${2}"
+   local -r record_type="${1}"
+   local -r domain_nm="${2}"
    local has_record='false'
    local record=''
       
    get_record_value "${record_type}" "${domain_nm}"
+
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -326,8 +329,8 @@ function get_record_value()
    
    __RESULT=''
    local exit_code=0
-   declare -r record_type="${1}"
-   declare -r domain_nm="${2}"
+   local -r record_type="${1}"
+   local -r domain_nm="${2}"
    local record=''
    local hosted_zone_nm=''
    local hosted_zone_id=''
@@ -362,15 +365,15 @@ function get_record_value()
    if [[ 'aws-alias' == "${record_type}" ]]
    then
       record="$(aws route53 list-resource-record-sets \
-           --hosted-zone-id "${hosted_zone_id}" \
-           --query "ResourceRecordSets[? Type == 'A' && Name == '${domain_nm}' ].AliasTarget.DNSName" \
-           --output text)"
+         --hosted-zone-id "${hosted_zone_id}" \
+         --query "ResourceRecordSets[? Type == 'A' && Name == '${domain_nm}' ].AliasTarget.DNSName" \
+         --output text)"
     
    else
       record="$(aws route53 list-resource-record-sets \
-           --hosted-zone-id "${hosted_zone_id}" \
-           --query "ResourceRecordSets[? Type == '${record_type}' && Name == '${domain_nm}' ].ResourceRecords[*].Value" \
-           --output text)"
+         --hosted-zone-id "${hosted_zone_id}" \
+         --query "ResourceRecordSets[? Type == '${record_type}' && Name == '${domain_nm}' ].ResourceRecords[*].Value" \
+         --output text)"
    fi  
    
    exit_code=$?
@@ -413,45 +416,45 @@ function __create_record_change_batch()
    fi
    
    __RESULT=''
-   declare -r action="${1}"
-   declare -r record_type="${2}"
-   declare -r domain_nm="${3}"
-   declare -r record_value="${4}"
-   declare -r comment="${5}"
+   local -r action="${1}"
+   local -r record_type="${2}"
+   local -r domain_nm="${3}"
+   local -r record_value="${4}"
+   local -r comment="${5}"
    local template=''
    local change_batch=''
    
    template=$(cat <<-'EOF'
-        {
-           "Comment":"SEDcommentSED",
-           "Changes":
-              [
-                 {
-                    "Action":"SEDactionSED",
-                    "ResourceRecordSet":
-                       {
-                          "Name":"SEDdomain_nameSED",
-                          "Type":"SEDrecord_typeSED",
-                          "TTL":120,
-                          "ResourceRecords":
-                             [
-                                {
-                                   "Value":"SEDrecord_valueSED"
-                                }
-                             ]
-                       }
-                 }
-              ]
-        }
+      {
+         "Comment":"SEDcommentSED",
+         "Changes":
+            [
+               {
+                  "Action":"SEDactionSED",
+                  "ResourceRecordSet":
+                     {
+                        "Name":"SEDdomain_nameSED",
+                        "Type":"SEDrecord_typeSED",
+                        "TTL":120,
+                        "ResourceRecords":
+                           [
+                              {
+                                 "Value":"SEDrecord_valueSED"
+                              }
+                           ]
+                     }
+               }
+            ]
+      }
 	EOF
    )
    
    change_batch="$(printf '%b\n' "${template}" \
-       | sed -e "s/SEDdomain_nameSED/${domain_nm}/g" \
-             -e "s/SEDrecord_valueSED/${record_value}/g" \
-             -e "s/SEDrecord_typeSED/${record_type}/g" \
-             -e "s/SEDcommentSED/${comment}/g" \
-             -e "s/SEDactionSED/${action}/g")" 
+      | sed -e "s/SEDdomain_nameSED/${domain_nm}/g" \
+            -e "s/SEDrecord_valueSED/${record_value}/g" \
+            -e "s/SEDrecord_typeSED/${record_type}/g" \
+            -e "s/SEDcommentSED/${comment}/g" \
+            -e "s/SEDactionSED/${action}/g")" 
    
    __RESULT="${change_batch}"
    
@@ -485,44 +488,44 @@ function __create_alias_record_change_batch()
    fi
    
    __RESULT=''
-   declare -r action="${1}"
-   declare -r domain_nm="${2}"
-   declare -r record_value="${3}"
-   declare -r target_hosted_zone_id="${4}"
-   declare -r comment="${5}"
+   local -r action="${1}"
+   local -r domain_nm="${2}"
+   local -r record_value="${3}"
+   local -r target_hosted_zone_id="${4}"
+   local -r comment="${5}"
    local template=''
    local change_batch=''
    
    template=$(cat <<-'EOF' 
-        {
-           "Comment":"SEDcommentSED",
-           "Changes":
-              [
-                 {
-                    "Action":"SEDactionSED",
-                    "ResourceRecordSet":
-                       {
-                          "Name":"SEDdomain_nmSED",
-                          "Type":"A",
-                          "AliasTarget":
-                             {
-                                "HostedZoneId":"SEDtarget_hosted_zone_idSED",
-                                "DNSName":"SEDrecord_valueSED",
-                                "EvaluateTargetHealth":false
-                             }
-                       }
-                 }
-             ]
-        }       
+      {
+         "Comment":"SEDcommentSED",
+         "Changes":
+            [
+               {
+                  "Action":"SEDactionSED",
+                  "ResourceRecordSet":
+                     {
+                        "Name":"SEDdomain_nmSED",
+                        "Type":"A",
+                        "AliasTarget":
+                           {
+                              "HostedZoneId":"SEDtarget_hosted_zone_idSED",
+                              "DNSName":"SEDrecord_valueSED",
+                              "EvaluateTargetHealth":false
+                           }
+                     }
+               }
+            ]
+      }       
 	EOF
    )
     
    change_batch="$(printf '%b\n' "${template}" \
-       | sed -e "s/SEDdomain_nmSED/${domain_nm}/g" \
-             -e "s/SEDrecord_valueSED/${record_value}/g" \
-             -e "s/SEDtarget_hosted_zone_idSED/$(escape ${target_hosted_zone_id})/g" \
-             -e "s/SEDcommentSED/${comment}/g" \
-             -e "s/SEDactionSED/${action}/g")" 
+      | sed -e "s/SEDdomain_nmSED/${domain_nm}/g" \
+            -e "s/SEDrecord_valueSED/${record_value}/g" \
+            -e "s/SEDtarget_hosted_zone_idSED/$(escape ${target_hosted_zone_id})/g" \
+            -e "s/SEDcommentSED/${comment}/g" \
+            -e "s/SEDactionSED/${action}/g")" 
    
    __RESULT="${change_batch}"
    
@@ -563,10 +566,10 @@ function __create_delete_record()
    
    __RESULT=''
    local exit_code=0
-   declare -r action="${1}"
-   declare -r record_type="${2}"
-   declare -r domain_nm="${3}"
-   declare -r record_value="${4}"
+   local -r action="${1}"
+   local -r record_type="${2}"
+   local -r domain_nm="${3}"
+   local -r record_value="${4}"
    local target_hosted_zone_id=''
       
    if [[ $# -eq 5 ]]
@@ -615,12 +618,14 @@ function __create_delete_record()
    then       
       # aws-alias record type.
       __create_alias_record_change_batch "${action}" "${domain_nm}" "${record_value}" \
-          "${target_hosted_zone_id}" "AWS alias record for ${domain_nm}"
+         "${target_hosted_zone_id}" "AWS alias record for ${domain_nm}"
+
       request_body="${__RESULT}"         
    else      
       # A or NS record type.
       __create_record_change_batch "${action}" "${record_type}" "${domain_nm}" \
-          "${record_value}" "Record for ${record_value}"
+         "${record_value}" "Record for ${record_value}"
+
       request_body="${__RESULT}"         
    fi
 
@@ -630,10 +635,12 @@ function __create_delete_record()
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: submitting request.' 
+
       return "${exit_code}"
    fi
    
    request_id="${__RESULT}"
+
    __RESULT="${request_id}"
 
    return "${exit_code}"           
@@ -666,12 +673,12 @@ function get_record_request_status()
    
    __RESULT=''
    local exit_code=0
-   declare -r request_id="${1}"
+   local -r request_id="${1}"
    local status=''
 
    # Returns an error if the request is not found.
    status="$(aws route53 get-change --id "${request_id}" \
-       --query ChangeInfo.Status --output text)"
+      --query ChangeInfo.Status --output text)"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -708,20 +715,22 @@ function __submit_change_batch()
    
    __RESULT=''
    local exit_code=0
-   declare -r hosted_zone_id="${1}"
-   declare -r request_body="${2}"
+   local -r hosted_zone_id="${1}"
+   local -r request_body="${2}"
    local request_id
 
    request_id="$(aws route53 change-resource-record-sets \
-       --hosted-zone-id "${hosted_zone_id}" \
-       --change-batch "${request_body}" \
-       --query ChangeInfo.Id \
-       --output text)"
+      --hosted-zone-id "${hosted_zone_id}" \
+      --change-batch "${request_body}" \
+      --query ChangeInfo.Id \
+      --output text)"
+
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: submitting the change batch request.' 
+
       return "${exit_code}"
    fi
 
@@ -754,17 +763,19 @@ function __get_hosted_zone_id()
    
    __RESULT=''
    local exit_code=0
-   declare -r hosted_zone_nm="${1}"
+   local -r hosted_zone_nm="${1}"
    local hosted_zone_id=''
 
    hosted_zone_id="$(aws route53 list-hosted-zones \
-       --query "HostedZones[? Name=='${hosted_zone_nm}'].{Id: Id}" \
-       --output text)"   
+      --query "HostedZones[? Name=='${hosted_zone_nm}'].{Id: Id}" \
+      --output text)"  
+
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving the hosted zone ID.' 
+
       return "${exit_code}"
    fi  
        
@@ -775,11 +786,13 @@ function __get_hosted_zone_id()
    fi 
    
    hosted_zone_id=$(echo "${hosted_zone_id}" | awk -F / '{printf("%s", $3)}')
+
    exit_code=$?   
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: parsing hosted zone ID.' 
+
       return "${exit_code}"
    fi   
              
@@ -810,7 +823,7 @@ function check_hosted_zone_has_loadbalancer_record()
    
    __RESULT=''
    local exit_code=0
-   declare -r domain_nm="${1}"
+   local -r domain_nm="${1}"
    local has_record='false'
    local record=''
       
@@ -863,18 +876,20 @@ function create_loadbalancer_record()
    
    __RESULT=''
    local exit_code=0
-   declare -r domain_nm="${1}"
-   declare -r record_value="${2}"
-   declare -r target_hosted_zone_id="${3}"
+   local -r domain_nm="${1}"
+   local -r record_value="${2}"
+   local -r target_hosted_zone_id="${3}"
    local request_id=''  
 
    __create_delete_record \
-       'CREATE' 'aws-alias' "${domain_nm}" "${record_value}" "${target_hosted_zone_id}"
+      'CREATE' 'aws-alias' "${domain_nm}" "${record_value}" "${target_hosted_zone_id}"
+
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: creating load balancer record.' 
+
       return "${exit_code}"
    fi
    
@@ -911,13 +926,13 @@ if [[ $# -lt 3 ]]
    
    __RESULT=''
    local exit_code=0
-   declare -r domain_nm="${1}"
-   declare -r record_value="${2}"
-   declare -r target_hosted_zone_id="${3}"
+   local -r domain_nm="${1}"
+   local -r record_value="${2}"
+   local -r target_hosted_zone_id="${3}"
    local request_id=''
    
    __create_delete_record \
-       'DELETE' 'aws-alias' "${domain_nm}" "${record_value}" "${target_hosted_zone_id}"
+      'DELETE' 'aws-alias' "${domain_nm}" "${record_value}" "${target_hosted_zone_id}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -957,7 +972,7 @@ function get_loadbalancer_record_hosted_zone_value()
    
    __RESULT=''
    local exit_code=0
-   declare -r domain_nm="${1}"
+   local -r domain_nm="${1}"
    local hosted_zone_nm=''
    local hosted_zone_id=''
    local target_hosted_zone_id=''
@@ -965,6 +980,7 @@ function get_loadbalancer_record_hosted_zone_value()
    hosted_zone_nm=$(echo "${domain_nm}" | awk -F . '{printf("%s.%s.", $2, $3)}')  
    
    __get_hosted_zone_id "${hosted_zone_nm}"
+
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -983,9 +999,9 @@ function get_loadbalancer_record_hosted_zone_value()
    fi
     
    target_hosted_zone_id="$(aws route53 list-resource-record-sets \
-       --hosted-zone-id "${hosted_zone_id}" \
-       --query "ResourceRecordSets[? contains(Name,'${domain_nm}')].AliasTarget.HostedZoneId" \
-       --output text)"
+      --hosted-zone-id "${hosted_zone_id}" \
+      --query "ResourceRecordSets[? contains(Name,'${domain_nm}')].AliasTarget.HostedZoneId" \
+      --output text)"
    exit_code=$?    
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -1023,7 +1039,7 @@ function get_loadbalancer_record_dns_name_value()
    
    __RESULT=''
    local exit_code=0
-   declare -r domain_nm="${1}"
+   local -r domain_nm="${1}"
    local record_value=''
    
    get_record_value 'aws-alias' "${domain_nm}"
@@ -1067,9 +1083,9 @@ function create_record()
    
    __RESULT=''
    local exit_code=0
-   declare -r record_type="${1}"
-   declare -r domain_nm="${2}"
-   declare -r record_value="${3}"
+   local -r record_type="${1}"
+   local -r domain_nm="${2}"
+   local -r record_value="${3}"
    local request_id=''
     
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" ]]
@@ -1118,9 +1134,9 @@ function delete_record()
    
    __RESULT=''
    local exit_code=0
-   declare -r record_type="${1}"
-   declare -r domain_nm="${2}"
-   declare -r record_value="${3}"
+   local -r record_type="${1}"
+   local -r domain_nm="${2}"
+   local -r record_value="${3}"
    local request_id=''
     
    if [[ 'A' != "${record_type}" && 'NS' != "${record_type}" ]]

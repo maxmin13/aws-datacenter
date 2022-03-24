@@ -1,0 +1,31 @@
+Hello Max,
+
+I've successfully transferred the following domain(s) to the account you specified:
+
+maxmin.it
+
+When we transfer domain registration between AWS accounts, Amazon Route 53 does not transfer the hosted zone for your domain. If domain registration is associated with one account and the corresponding hosted zone is associated with another account, neither domain registration nor DNS functionality is affected. The only effect is that you'll need to sign into the Amazon Route 53 console using one account to see the domain, and sign in using the other account to see the hosted zone.
+
+If you want to transfer the hosted zone to the other account, you must manually create the new hosted zone, create resource record sets in the new hosted zone, and update your domain with the name servers from the new hosted zone.
+
+Once you create a new hosted zone for your domain at the other account, the final step is to assign the nameservers from the newly created hosted zone to your domain. Here are the instructions to do just that:
+
+1) Navigate to the newly created Hosted Zone page for your domain at the other account's Route 53 console: https://console.aws.amazon.com/route53/ 
+2) Choose the newly created hosted zone for your domain. 
+3) Make a note (click to copy)  the four name servers (NS) from the "newly" created hosted zone.
+4) Navigate to the "Registered domains" details page for your domain at your Route 53 console (Click "Registered domains" at the left column)
+5) Click on the domain name in question 
+6) Click "Add or edit name servers" (highlighted in blue, at the far right of the page)
+7) Update name servers (NS) to match the four name servers (NS) in the newly created hosted zone (paste what you have copied in step 3). 
+8) Monitor the operation via a WHOIS lookup
+9) Allow up to 48 hours for the change to propagate
+10) Test to make sure your domain is resolving correctly per the record sets you have setup.
+11) After making sure the domain's DNS is resolving correctly, delete the hosted zone in the losing account (account where the domain was transferred from).
+
+Please feel free let us know if you need any additional assistance.
+
+We value your feedback. Please share your experience by rating this correspondence using the AWS Support Center link at the end of this correspondence. Each correspondence can also be rated by selecting the stars in top right corner of each correspondence within the AWS Support Center.
+
+Best regards,
+Kris V.
+Amazon Web Services

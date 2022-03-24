@@ -9,7 +9,7 @@ set +o xtrace
 _HOSTED_ZONE_ID="$(aws route53 list-hosted-zones \
     --query "HostedZones[?Name=='${MAXMIN_TLD}'].{Id: Id}" \
     --output text)" 
-   
+    
 HOSTED_ZONE_ID="$(echo "${_HOSTED_ZONE_ID}" | cut -d'/' -f 3)" 
  
 # This is the ID of the hosted zone created with the load balancer, it is not deleted when the load
@@ -34,9 +34,9 @@ function __helper_create_alias_record()
       return 1
    fi
 
-   declare -r domain_nm="${1}"
-   declare -r target_domain_nm="${2}"
-   declare -r target_hosted_zone_id="${3}"
+   local -r domain_nm="${1}"
+   local -r target_domain_nm="${2}"
+   local -r target_hosted_zone_id="${3}"
    local request_id=''
 
    if [[ -z "$(aws route53 list-resource-record-sets \
@@ -65,9 +65,9 @@ function __helper_delete_alias_record()
       return 1
    fi
 
-   declare -r domain_nm="${1}"
-   declare -r target_domain_nm="${2}"
-   declare -r target_hosted_zone_id="${3}"
+   local -r domain_nm="${1}"
+   local -r target_domain_nm="${2}"
+   local -r target_hosted_zone_id="${3}"
    local request_id=''
 
    if [[ -n "$(aws route53 list-resource-record-sets \
@@ -93,11 +93,11 @@ function __helper_create_delete_alias_record()
       return 1
    fi
 
-   declare -r action="${1}"
-   declare -r domain_nm="${2}"
-   declare -r target_domain_nm="${3}"
-   declare -r target_hosted_zone_id="${4}"
-   declare -r comment="${RECORD_COMMENT}"
+   local -r action="${1}"
+   local -r domain_nm="${2}"
+   local -r target_domain_nm="${3}"
+   local -r target_hosted_zone_id="${4}"
+   local -r comment="${RECORD_COMMENT}"
    local template=''
    local request_id=''
    local request_body=''
@@ -141,10 +141,10 @@ function __helper_create_delete_alias_record()
    return 0
 }
 
-#################################################
+####################################################
 # Creates A or NS records.
 # Throws an error if the records is already created.
-#################################################
+####################################################
 function __helper_create_record()
 {
    if [[ $# -lt 3 ]]
@@ -153,9 +153,9 @@ function __helper_create_record()
       return 1
    fi
 
-   declare -r domain_nm="${1}"
-   declare -r record_value="${2}"
-   declare -r record_type="${3}"
+   local -r domain_nm="${1}"
+   local -r record_value="${2}"
+   local -r record_type="${3}"
    local request_id=''
 
    if [[ -z "$(aws route53 list-resource-record-sets \
@@ -184,9 +184,9 @@ function __helper_delete_record()
       return 1
    fi
 
-   declare -r domain_nm="${1}"
-   declare -r record_value="${2}"
-   declare -r record_type="${3}"
+   local -r domain_nm="${1}"
+   local -r record_value="${2}"
+   local -r record_type="${3}"
    local request_id=''
 
    if [[ -n "$(aws route53 list-resource-record-sets \
@@ -211,11 +211,11 @@ function __helper_create_delete_record()
       return 1
    fi
    
-   declare -r action="${1}"
-   declare -r domain_nm="${2}"
-   declare -r record_value="${3}"
-   declare -r record_type="${4}"
-   declare -r comment="${RECORD_COMMENT}"
+   local -r action="${1}"
+   local -r domain_nm="${2}"
+   local -r record_value="${3}"
+   local -r record_type="${4}"
+   local -r comment="${RECORD_COMMENT}"
    local template=''
    local request_id=''
    local request_body=''
@@ -280,7 +280,11 @@ function __helper_clear_resources
    return 0
 }
 
-trap "__helper_clear_resources" EXIT
+if [[ -z "${_HOSTED_ZONE_ID}" ]]
+then
+  echo 'ERROR: hosted zone not found, skipping the tests ...'
+  exit
+fi
 
 ##
 ##
@@ -291,11 +295,13 @@ echo
 ##
 ##
 
+trap "__helper_clear_resources" EXIT
+
 ###########################################
 ## TEST: create_record
 ###########################################
 
-__helper_clear_resources ###> /dev/null 2>&1 
+__helper_clear_resources > /dev/null 2>&1 
 
 #
 # Missing parameter.

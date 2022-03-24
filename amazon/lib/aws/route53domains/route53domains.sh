@@ -10,14 +10,16 @@ set +o xtrace
 #===============================================================================
 # When you register a domain, Amazon route 53 does the following:
 #
-# creates a route 53 hosted zone that has the same name as the domain. 
-# Route 53 assigns four name servers to your hosted zone and automatically 
-# updates your domain registration with the names of these name servers.
-# Route 53 enables autorenew, so your domain registration will renew automatically  
-# each year. 
-# Optionally Route 53 enables privacy protection. If you don't enable privacy 
-# protection, WHOIS queries return the information that you entered for the  
-# registrant, admin, and tech contacts.
+# 1) creates a route 53 hosted zone that has the same name as the domain. 
+# 2) assigns four name servers to your hosted zone and automatically 
+#    updates your domain registration with the names of these name servers.
+# 3) enables autorenew, so your domain registration will renew automatically  
+#    each year. Auto renewal can be explicitly set to false passing 
+#    --auto-renew=false. 
+# 4) Optionally Route 53 enables privacy protection. If you don't enable privacy 
+#    protection, WHOIS queries return the information that you entered for the  
+#    registrant, admin, and tech contacts.
+#
 # If registration is successful, returns an operation ID that you can use to 
 # track the progress and completion of the action. If the request is not 
 # completed successfully, the domain registrant is notified by email.
@@ -53,25 +55,23 @@ function check_domain_availability()
 
    __RESULT=''
    local exit_code=0
-   declare -r domain_nm="${1}"
+   local -r domain_nm="${1}"
    local availability=''
    
    availability="$(aws route53domains check-domain-availability \
                      --region "${US_EAST_REGION}" \
                      --domain-name "${domain_nm}" \
                      --output text)"          
-     
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: retrieving domain availability.'
-      return "${exit_code}"
    fi
-                        
+      
    __RESULT="${availability}"
- 
-   return ${exit_code}
+                        
+   return "${exit_code}" 
 }
 
 #===============================================================================
@@ -95,16 +95,15 @@ function check_domain_is_registered_with_the_account()
 
    __RESULT=''
    local exit_code=0
-   declare -r domain_nm="${1}"
-   local domain=''
+   local -r domain_nm="${1}"
    local registered='false'
-   
+  
    set +e
-   domain="$(aws route53domains get-domain-detail \
+   # throws an error if the domain is not registered with the current account. 
+   aws route53domains get-domain-detail \
                --region "${US_EAST_REGION}" \
                --domain-name "${domain_nm}" \
-               --query 'DomainName' \
-               --output text)"
+               --query 'DomainName' 
    exit_code=$?
    set -e
 
@@ -114,20 +113,97 @@ function check_domain_is_registered_with_the_account()
    fi
                            
    __RESULT="${registered}"
- 
-   return 0
+   
+   return 0 
+}
+
+# Builds a request for the registration of an .it domain with no automatic renewal 
+# after a year and with privacy protection enabled.
+function build_register_domain_request()
+{
+   if [[ $# -lt 2 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT=''
+   local exit_code=0
+   local -r domain_nm="${1}"
+   local -r email_address="${2}"
+   local register_domain_request=''
+        
+   register_domain_request="$(sed -e "s/SEDdns_domainSED/${domain_nm}/g" \
+            -e "s/SEDemail_addressSED/${email_address}/g" \
+               "${TEMPLATE_DIR}"/common/dns/register_domain_request_it_template.json)"
+   exit_code=$?
+   
+   if [[ 0 -ne "${exit_code}" ]]
+   then
+      echo 'ERROR: building register domain request.'
+   else
+     __RESULT="${register_domain_request}"
+   fi
+                        
+   return ${exit_code}               
 }
 
 #===============================================================================
-# This function submits a request to the AWS registrar for the registration of 
-# the domain.
+# The function returns true if the domain is a valid DNS domain, false 
+# otherwise.
 #
 # Globals:
 #  None
 # Arguments:
-# +request_file -- the file (path) containing the details of the domain to 
-#                  register. See an example of a template file is 
-#                  register-domain.json in the templates directory.
+# +domain_nm -- DNS domain name.
+# Returns:      
+#  true/false string in the global __RESULT variable.
+#===============================================================================
+function validate_dns_domain()
+{
+   if [[ $# -lt 1 ]]
+   then
+      echo 'ERROR: missing mandatory arguments.'
+      return 128
+   fi
+
+   __RESULT=''
+   local exit_code=0
+   local -r domain_nm="${1}"
+   local valid='false'
+   
+   # .it DNS name
+   local -r domain_nm_regex='^(?!-)(?:[a-zA-Z0-9-]+\.)+it\.?$'
+
+   set +e
+   # throws an error if no match
+   echo "${domain_nm}" | grep -oP "${domain_nm_regex}" >> /dev/null
+   exit_code=$?
+   set -e
+
+   if [[ 0 -eq "${exit_code}" ]]
+   then
+      valid='true'
+   else
+      echo 'ERROR: validating DNS name, not a valid .it DNS domain.'
+   fi
+
+   __RESULT="${valid}"
+ 
+   return 0 
+}
+
+#===============================================================================
+# This function submits a request to the AWS registrar for the registration of 
+# the domain. 
+#
+# Globals:
+#  None
+# Arguments:
+# +register_domain_request -- a JSON request containing the details of the  
+#                             domain to register (see an example of a template 
+#                             file is register-domain.json in the templates 
+#                             directory).
 # Returns:      
 #  an operation identifier for tracking the progress of the request in the 
 #  global __RESULT variable. 
@@ -142,10 +218,10 @@ function register_domain()
 
    __RESULT=''
    local exit_code=0
-   declare -r request_file="${1}"
+   local -r register_domain_request="${1}"
    local operation_id=''
 
-   if [[ ! -f "${request_file}" ]]
+   if [[ ! -f "${register_domain_request}" ]]
    then
       echo 'ERROR: request file not found.'
       return 128
@@ -153,19 +229,17 @@ function register_domain()
 
    operation_id="$(aws route53domains register-domain \
                      --region "${US_EAST_REGION}" \
-                     --cli-input-json file://"${request_file}" \
+                     --cli-input-json file://"${register_domain_request}" \
                      --output text)"
-
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: registering the domain.'
-      return "${exit_code}"
+   else
+      __RESULT="${operation_id}"
    fi                  
   
-   __RESULT="${operation_id}"
-   
    return "${exit_code}"
 }   
 
@@ -196,13 +270,13 @@ function update_domain_registration_name_servers()
 
    __RESULT=''
    local exit_code=0
-   declare -r domain_nm="${1}"
-   declare -r name_servers="${2}"
+   local -r domain_nm="${1}"
+   local -r name_servers="${2}"
    local operation_id=''
-   local name_servers_json=''
+   local name_servers_list=''
    
-   __create_name_servers_json_list "${name_servers}"
-
+   # make the list into a Json list.
+   __create_name_servers_list "${name_servers}"
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
@@ -211,23 +285,24 @@ function update_domain_registration_name_servers()
       return "${exit_code}"
    fi
 
-   name_servers_json="${__RESULT}"
+   name_servers_list="${__RESULT}"
 
+   # assign the nameservers from the hosted zone to the domain.
+
+   __RESULT=''
    operation_id="$(aws route53domains update-domain-nameservers \
                      --region "${US_EAST_REGION}" \
                      --domain-name "${domain_nm}" \
-                     --nameservers "${name_servers_json}" \
+                     --nameservers "${name_servers_list}" \
                      --output text)"
-  
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: updating domain registration name servers 2.'
-      return "${exit_code}"
+   else
+      __RESULT="${operation_id}"
    fi                  
-  
-   __RESULT="${operation_id}"
    
    return "${exit_code}"
 }   
@@ -254,24 +329,22 @@ function get_request_status()
    
    __RESULT=''
    local exit_code=0
-   declare -r request_name="${1}"
+   local -r request_name="${1}"
    local request_status=''
    
    request_status="$(aws route53domains list-operations \
                      --region "${US_EAST_REGION}" \
                      --query "Operations[?Type==${request_name}].Status" \
                      --output text)"
-               
    exit_code=$?
    
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: getting request status.'
-      return "${exit_code}"
+   else
+      __RESULT="${request_status}"
    fi                  
   
-   __RESULT="${request_status}"
-   
    return "${exit_code}"
 } 
 
@@ -288,7 +361,7 @@ function get_request_status()
 #  a JSON list object containing the names of four name servers in the __RESULT 
 #  global variable.  
 #=============================================================================== 
-function __create_name_servers_json_list()
+function __create_name_servers_list()
 {
    if [[ $# -lt 1 ]]
    then
@@ -296,11 +369,11 @@ function __create_name_servers_json_list()
       return 128
    fi
    
-   declare -r name_servers="${1}"
+   local -r name_servers="${1}"
    local servers=''
    local template=''
    local size=''
-   local name_servers_json=''
+   local name_servers_list=''
 
    template=$(cat <<-'EOF'
       [
@@ -331,7 +404,7 @@ function __create_name_servers_json_list()
       return 128
    fi
    
-   name_servers_json="$(printf '%b\n' "${template}" \
+   name_servers_list="$(printf '%b\n' "${template}" \
                   | sed -e "s/SEDname_server1SED/${servers[0]}/g" \
                         -e "s/SEDname_server2SED/${servers[1]}/g" \
                         -e "s/SEDname_server3SED/${servers[2]}/g" \
@@ -342,10 +415,9 @@ function __create_name_servers_json_list()
    if [[ 0 -ne "${exit_code}" ]]
    then
       echo 'ERROR: creating the JSON list.'
-      return "${exit_code}"
+   else
+      __RESULT="${name_servers_list}"
    fi                  
   
-   __RESULT="${name_servers_json}"
-   
    return "${exit_code}"
 }

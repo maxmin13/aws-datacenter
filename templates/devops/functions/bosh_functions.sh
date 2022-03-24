@@ -51,7 +51,7 @@ function bosh_upload_stemcell()
    fi
 
    local exit_code=0
-   declare -r stemcell_url="${1}"
+   local -r stemcell_url="${1}"
    
    bosh upload-stemcell "${stemcell_url}"
    
@@ -74,9 +74,9 @@ function bosh_deploy_cloud_foundry()
    fi
 
    local exit_code=0
-   declare -r deployment_nm="${1}"
-   declare -r cf_lbal_domain="${2}"
-   declare -r cf_install_dir="${3}"
+   local -r deployment_nm="${1}"
+   local -r cf_lbal_domain="${2}"
+   local -r cf_install_dir="${3}"
    
    # the files: use-bionic-stemcell.yml and vars.yml are expected in the cf install dir.
    
@@ -105,7 +105,7 @@ function bosh_delete_cloud_foundry()
    fi
 
    local exit_code=0
-   declare -r deployment_nm="${1}"
+   local -r deployment_nm="${1}"
      
    bosh -n -d "${deployment_nm}" delete-deployment 
    

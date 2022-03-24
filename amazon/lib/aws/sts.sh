@@ -70,7 +70,7 @@ function get_temporary_access_keys_pair()
    
    __RESULT=''
    local exit_code=0
-   declare -r duration="${1}"
+   local -r duration="${1}"
    local key_pair=''
    
    key_pair="$(aws sts get-session-token --duration-seconds "${duration}" \

@@ -8,12 +8,12 @@ Apache/Monit Apache healt-check: 8082
 M/Monit website:                 8083/9445
 SSH:                             38142
 
-------------
-SSH Session:
-------------
+-----------
+SSH access:
+-----------
 
 # Enable security group access on port 38142
-rm -f ~/.ssh/known_hosts && ssh -i 'admin-key' -p 38142 admin-user@34.254.242.209
+rm -f ~/.ssh/known_hosts && ssh -i 'admin-key' -p 38142 admin-user@34.251.174.165
 
 ------------
 LogAnalyzer:
@@ -45,7 +45,7 @@ https://admin.maxmin.it:9445/admin/general
 Admin website:
 --------------
 
-# No Load Balancer, enable security group access on port 443
+# No Load Balancer, enable security group access on port 443/8060
 http://admin.maxmin.it:8060
 https://admin.maxmin.it
 (password is admin)

@@ -65,7 +65,7 @@ fi
   
 if [[ -n "${sgp_id}" ]]
 then  
-   echo 'Deleting security group'
+   echo 'Deleting security group ...'
 
    # shellcheck disable=SC2015
    delete_security_group "${sgp_id}" > /dev/null 2>&1 && echo 'Security group deleted.' || 

@@ -68,8 +68,8 @@ function __helper_create_permission_policy()
       return 1
    fi
 
-   declare -r policy_nm="${1}"
-   declare -r policy_desc='Create/delete Route 53 records.'
+   local -r policy_nm="${1}"
+   local -r policy_desc='Create/delete Route 53 records.'
    local policy_document=''
    local policy_arn=''
 

@@ -48,12 +48,12 @@ function scp_upload_file()
    fi
    
    local exit_code=0
-   declare -r key_pair_file="${1}"
-   declare -r server_ip="${2}"
-   declare -r ssh_port="${3}"
-   declare -r user="${4}"
-   declare -r remote_dir="${5}"
-   declare -r file="${6}"
+   local -r key_pair_file="${1}"
+   local -r server_ip="${2}"
+   local -r ssh_port="${3}"
+   local -r user="${4}"
+   local -r remote_dir="${5}"
+   local -r file="${6}"
    local file_name=''
 
    scp -q \
@@ -103,12 +103,12 @@ function scp_upload_files()
    fi
 
    local exit_code=0
-   declare -r key_pair_file="${1}"
-   declare -r server_ip="${2}"
-   declare -r ssh_port="${3}"
-   declare -r user="${4}"
-   declare -r remote_dir="${5}"
-   declare -r files=("${@:6:$#-5}")
+   local -r key_pair_file="${1}"
+   local -r server_ip="${2}"
+   local -r ssh_port="${3}"
+   local -r user="${4}"
+   local -r remote_dir="${5}"
+   local -r files=("${@:6:$#-5}")
    local file=''
 
    for file in "${files[@]}"
@@ -157,13 +157,13 @@ function scp_download_file()
    fi
    
    local exit_code=0
-   declare -r key_pair_file="${1}"
-   declare -r server_ip="${2}"
-   declare -r ssh_port="${3}"
-   declare -r user="${4}"
-   declare -r remote_dir="${5}"
-   declare -r local_dir="${6}"
-   declare -r file="${7}"
+   local -r key_pair_file="${1}"
+   local -r server_ip="${2}"
+   local -r ssh_port="${3}"
+   local -r user="${4}"
+   local -r remote_dir="${5}"
+   local -r local_dir="${6}"
+   local -r file="${7}"
    
    scp -q \
        -o StrictHostKeyChecking=no \
@@ -210,13 +210,13 @@ function scp_download_files()
    fi
 
    local exit_code=0
-   declare -r key_pair_file="${1}"
-   declare -r server_ip="${2}"
-   declare -r ssh_port="${3}"
-   declare -r user="${4}"
-   declare -r remote_dir="${5}"
-   declare -r local_dir="${6}"
-   declare -r files=("${@:7:$#-6}")
+   local -r key_pair_file="${1}"
+   local -r server_ip="${2}"
+   local -r ssh_port="${3}"
+   local -r user="${4}"
+   local -r remote_dir="${5}"
+   local -r local_dir="${6}"
+   local -r files=("${@:7:$#-6}")
    local file=''
 
    for file in "${files[@]}"
@@ -265,11 +265,11 @@ function ssh_run_remote_command()
    fi
 
    local exit_code=0
-   declare -r cmd="${1}"
-   declare -r key_pair_file="${2}"
-   declare -r server_ip="${3}"
-   declare -r ssh_port="${4}"
-   declare -r user="${5}"
+   local -r cmd="${1}"
+   local -r key_pair_file="${2}"
+   local -r server_ip="${3}"
+   local -r ssh_port="${4}"
+   local -r user="${5}"
       
    if [[ "${cmd}" == *sudo* ]]
    then
@@ -329,10 +329,10 @@ function ssh_run_remote_command_as_root()
    fi     
    
    local exit_code=0
-   declare -r key_pair_file="${2}"
-   declare -r server_ip="${3}"
-   declare -r ssh_port="${4}"
-   declare -r user="${5}"
+   local -r key_pair_file="${2}"
+   local -r server_ip="${3}"
+   local -r ssh_port="${4}"
+   local -r user="${5}"
    local password='-'
    
    if [[ "$#" -eq 6 ]]
@@ -403,10 +403,10 @@ function wait_ssh_started()
       return 128
    fi
 
-   declare -r private_key="${1}"
-   declare -r server_ip="${2}"
-   declare -r ssh_port="${3}"
-   declare -r user="${4}"
+   local -r private_key="${1}"
+   local -r server_ip="${2}"
+   local -r ssh_port="${3}"
+   local -r user="${4}"
    
    echo 'Waiting SSH started ...'
 
@@ -452,9 +452,9 @@ function get_ssh_port()
 
    local exit_code=0
    __RESULT=''
-   declare -r key_pair_file="${1}"
-   declare -r server_ip="${2}"
-   declare -r user="${3}"
+   local -r key_pair_file="${1}"
+   local -r server_ip="${2}"
+   local -r user="${3}"
    local port=''
    local ssh_port=''
 
@@ -512,9 +512,9 @@ function create_keypair()
    fi
 
    local exit_code=0
-   declare -r pkey_nm="${1}"
-   declare -r keypair_dir="${2}"
-   declare -r email_add="${3}"
+   local -r pkey_nm="${1}"
+   local -r keypair_dir="${2}"
+   local -r email_add="${3}"
    local pkey_file="${keypair_dir}"/"${pkey_nm}"
 
    if [[ ! -d "${keypair_dir}" ]]
@@ -572,8 +572,8 @@ function delete_keypair()
    fi
 
    local exit_code=0
-   declare -r pkey_nm="${1}"
-   declare -r keypair_dir="${2}"
+   local -r pkey_nm="${1}"
+   local -r keypair_dir="${2}"
    local pkey_file="${keypair_dir}"/"${pkey_nm}"
    
    if [[ ! -d "${keypair_dir}" ]]
@@ -635,8 +635,8 @@ function get_private_key()
 
    __RESULT=''
    local exit_code=0
-   declare -r pkey_nm="${1}"
-   declare -r keypair_dir="${2}"
+   local -r pkey_nm="${1}"
+   local -r keypair_dir="${2}"
    local pkey_file="${keypair_dir}"/"${pkey_nm}"
    local private_key=''
    
@@ -686,8 +686,8 @@ function get_public_key()
 
    __RESULT=''
    local exit_code=0
-   declare -r pkey_nm="${1}"
-   declare -r keypair_dir="${2}"
+   local -r pkey_nm="${1}"
+   local -r keypair_dir="${2}"
    local pkey_file="${keypair_dir}"/"${pkey_nm}"
    local public_key=''
    
@@ -738,8 +738,8 @@ function check_keypair_exists()
 
    __RESULT=''
    local exit_code=0
-   declare -r pkey_nm="${1}"
-   declare -r keypair_dir="${2}"
+   local -r pkey_nm="${1}"
+   local -r keypair_dir="${2}"
    local pkey_file="${keypair_dir}"/"${pkey_nm}"
    local keypair_exists='false'
 

@@ -39,10 +39,7 @@ echo
       echo '****************'
       echo 'Env: development'
       echo '****************' 
-   fi
-
-   . "${PROJECT_DIR}"/amazon/lib/aws/route53domains/test/make.sh
-   exit
+   fi 
    
    echo
    

@@ -39,19 +39,17 @@ echo
       echo '****************'
       echo 'Env: development'
       echo '****************' 
-   fi 
-   
-   echo 
+   fi  
 
    # Make a backup of the database.
    . "${PROJECT_DIR}"/amazon/database/data/backup/make.sh 
 
-   # Delete the application DNS hosted zone
-   . "${PROJECT_DIR}"/amazon/dns/hostedzone/delete.sh  
+   # Delete the application DNS records.
+   . "${PROJECT_DIR}"/amazon/dns/hostedzone/records/delete.sh
           
    # Delete the websites.
    . "${PROJECT_DIR}"/amazon/admin/instance/website/delete.sh      
-   . "${PROJECT_DIR}"/amazon/webphp/instance/website/delete.sh 1
+   #. "${PROJECT_DIR}"/amazon/webphp/instance/website/delete.sh 1
    . "${PROJECT_DIR}"/amazon/webphp/instance/website/delete.sh 2
 
    # Delete the database objects.
@@ -59,7 +57,7 @@ echo
       
    # Delete the server instances.
    . "${PROJECT_DIR}"/amazon/shared/instance/delete.sh  
-   . "${PROJECT_DIR}"/amazon/webphp/instance/delete.sh 1           
+   #. "${PROJECT_DIR}"/amazon/webphp/instance/delete.sh 1           
    . "${PROJECT_DIR}"/amazon/webphp/instance/delete.sh 2
    . "${PROJECT_DIR}"/amazon/admin/instance/delete.sh 
    

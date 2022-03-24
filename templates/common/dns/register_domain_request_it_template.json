@@ -1,16 +1,16 @@
 {
-              "DomainName": "maxmin.it",
+              "DomainName": "SEDdns_domainSED",
               "DurationInYears": 1,
-              "AutoRenew": true,
+              "AutoRenew": false,
               "AdminContact": {
                   "FirstName": "Max",
                   "LastName": "Min",
                   "ContactType": "PERSON",
-                  "AddressLine1": "XX XXXXXX Street",
-                  "City": "XXXXX",
-                  "CountryCode": "XX",
-                  "ZipCode": "XXX XXXX",
-                  "PhoneNumber": "+XXX.XXXXXXXXX",
+                  "AddressLine1": "Dub. Street",
+                  "City": "Dublin",
+                  "CountryCode": "IE",
+                  "ZipCode": "C07 T2F3",
+                  "PhoneNumber": "+353.081231234",
                   "ExtraParams": [ 
                      { 
                         "Name": "IT_NATIONALITY",
@@ -21,17 +21,17 @@
                         "Value": "NATIONAL ID CARD NUMBER"
                      }
                   ],                  
-                  "Email": "max.min@libero.it"
+                  "Email": "SEDemail_addressSED"
               },
               "RegistrantContact": {
                   "FirstName": "Max",
                   "LastName": "Min",
                   "ContactType": "PERSON",
-                  "AddressLine1": "XX XXXXXX Street",
-                  "City": "XXXXX",
-                  "CountryCode": "XX",
-                  "ZipCode": "XXX XXXX",
-                  "PhoneNumber": "+XXX.XXXXXXXXX",
+                  "AddressLine1": "Dub. Street",
+                  "City": "Dublin",
+                  "CountryCode": "IE",
+                  "ZipCode": "C07 T2F3",
+                  "PhoneNumber": "+353.081231234",
                   "ExtraParams": [ 
                      { 
                         "Name": "IT_NATIONALITY",
@@ -42,17 +42,17 @@
                         "Value": "NATIONAL ID CARD NUMBER"
                      }
                   ],                  
-                  "Email": "max.min@libero.it"
+                  "Email": "SEDemail_addressSED"
               },
               "TechContact": {
                   "FirstName": "Max",
                   "LastName": "Min",
                   "ContactType": "PERSON",
-                  "AddressLine1": "XX XXXXXX Street",
-                  "City": "XXXXX",
-                  "CountryCode": "XX",
-                  "ZipCode": "XXX XXXX",
-                  "PhoneNumber": "+XXX.XXXXXXXXX",
+                  "AddressLine1": "Dub. Street",
+                  "City": "Dublin",
+                  "CountryCode": "IE",
+                  "ZipCode": "C07 T2F3",
+                  "PhoneNumber": "+353.081231234",
                   "ExtraParams": [ 
                      { 
                         "Name": "IT_NATIONALITY",
@@ -63,7 +63,7 @@
                         "Value": "NATIONAL ID CARD NUMBER"
                      }
                   ],                  
-                  "Email": "max.min@libero.it"
+                  "Email": "SEDemail_addressSED"
               },
               "PrivacyProtectAdminContact": true,
               "PrivacyProtectRegistrantContact": true,

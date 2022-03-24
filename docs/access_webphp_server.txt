@@ -7,9 +7,9 @@ Apache/Load Balancer healt-check: 8080
 Monit website:                    2812
 SSH:                              38142
 
-----------------------
-Establish SSH Session:
-----------------------
+-----------
+SSH access:
+-----------
 
 # Enable security group access on port 38142
 rm -f ~/.ssh/known_hosts && ssh -i webphp1-keys.pem -p 38142 webphp-user@54.217.147.79

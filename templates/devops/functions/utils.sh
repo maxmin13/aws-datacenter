@@ -13,7 +13,7 @@ function wait()
       return 1
    fi
    
-   declare -r seconds="${1}"
+   local -r seconds="${1}"
    local count=0
    
    while [[ "${count}" -lt "${seconds}" ]]; do
@@ -36,8 +36,8 @@ function remove_last_character_if_present()
    fi
    
    __RESULT=''
-   declare -r string="${1}"
-   declare -r char="${2}"
+   local -r string="${1}"
+   local -r char="${2}"
 
    local last_character="${string: -1}"
    local new_string=''

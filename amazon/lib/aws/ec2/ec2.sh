@@ -35,7 +35,7 @@ function get_datacenter_id()
 
    __RESULT=''
    local exit_code=0
-   declare -r dtc_nm="${1}"
+   local -r dtc_nm="${1}"
    local dtc_id=''
  
    dtc_id="$(aws ec2 describe-vpcs \
@@ -76,11 +76,12 @@ function create_datacenter()
    fi
   
    local exit_code=0
-   declare -r dtc_nm="${1}"
+   local -r dtc_nm="${1}"
   
    aws ec2 create-vpc \
        --cidr-block "${DTC_CDIR}" \
-       --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value='${dtc_nm}'}]"
+       --tag-specifications "ResourceType=vpc,Tags=[{Key=Name,Value='${dtc_nm}'}]" \
+       > /dev/null
        
    exit_code=$?    
   
@@ -123,7 +124,7 @@ function delete_datacenter()
    fi
   
    local exit_code=0
-   declare -r dtc_id="${1}"
+   local -r dtc_id="${1}"
   
    aws ec2 delete-vpc --vpc-id "${dtc_id}"
   
@@ -167,7 +168,7 @@ function get_subnet_ids()
 
    __RESULT=''
    local exit_code=0
-   declare -r dtc_id="${1}"
+   local -r dtc_id="${1}"
    local subnet_ids=''
    
    subnet_ids="$(aws ec2 describe-subnets \
@@ -207,7 +208,7 @@ function get_subnet_id()
 
    __RESULT=''
    local exit_code=0
-   declare -r subnet_nm="${1}"
+   local -r subnet_nm="${1}"
    local subnet_id=''
   
    subnet_id="$(aws ec2 describe-subnets \
@@ -253,11 +254,11 @@ function create_subnet()
    fi
 
    local exit_code=0
-   declare -r subnet_nm="${1}"
-   declare -r subnet_cidr="${2}"
-   declare -r subnet_az="${3}"
-   declare -r dtc_id="${4}"
-   declare -r rtb_id="${5}"
+   local -r subnet_nm="${1}"
+   local -r subnet_cidr="${2}"
+   local -r subnet_az="${3}"
+   local -r dtc_id="${4}"
+   local -r rtb_id="${5}"
    local subnet_id=''
  
    subnet_id="$(aws ec2 create-subnet \
@@ -288,7 +289,8 @@ function create_subnet()
    fi        
   
    ## Associate this subnet with our route table 
-   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" 
+   aws ec2 associate-route-table --subnet-id "${subnet_id}" --route-table-id "${rtb_id}" \
+   > /dev/null
   
    exit_code=$?
    
@@ -319,7 +321,7 @@ function delete_subnet()
    fi
 
    local exit_code=0
-   declare -r subnet_id="${1}"
+   local -r subnet_id="${1}"
  
    aws ec2 delete-subnet --subnet-id "${subnet_id}"
  
@@ -352,7 +354,7 @@ function get_internet_gateway_id()
 
    __RESULT=''
    local exit_code=0
-   declare -r igw_nm="${1}"
+   local -r igw_nm="${1}"
    local igw_id=''
   
    igw_id="$(aws ec2 describe-internet-gateways \
@@ -397,8 +399,8 @@ function get_internet_gateway_attachment_status()
 
    __RESULT=''
    local exit_code=0
-   declare -r igw_nm="${1}"
-   declare -r dtc_id="${2}"
+   local -r igw_nm="${1}"
+   local -r dtc_id="${2}"
    local attachment_status=''
   
    attachment_status="$(aws ec2 describe-internet-gateways \
@@ -440,10 +442,11 @@ function create_internet_gateway()
    fi
   
    local exit_code=0
-   declare -r igw_nm="${1}"
+   local -r igw_nm="${1}"
   
    aws ec2 create-internet-gateway \
-       --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value='${igw_nm}'}]" 
+       --tag-specifications "ResourceType=internet-gateway,Tags=[{Key=Name,Value='${igw_nm}'}]" \
+       > /dev/null
   
    exit_code=$?
    
@@ -474,7 +477,7 @@ function delete_internet_gateway()
    fi
   
    local exit_code=0
-   declare -r igw_id="${1}"
+   local -r igw_id="${1}"
  
    aws ec2 delete-internet-gateway --internet-gateway-id "${igw_id}"
   
@@ -508,8 +511,8 @@ function attach_internet_gateway()
    fi
   
    local exit_code=0
-   declare -r igw_id="${1}"
-   declare -r dtc_id="${2}"
+   local -r igw_id="${1}"
+   local -r dtc_id="${2}"
   
    aws ec2 attach-internet-gateway --vpc-id "${dtc_id}" --internet-gateway-id "${igw_id}"
    
@@ -543,7 +546,7 @@ function get_route_table_id()
 
    __RESULT=''
    local exit_code=0
-   declare -r rtb_nm="${1}"
+   local -r rtb_nm="${1}"
    local rtb_id=''
   
    rtb_id="$(aws ec2 describe-route-tables \
@@ -585,12 +588,13 @@ function create_route_table()
    fi
 
    local exit_code=0
-   declare -r rtb_nm="${1}"
-   declare -r dtc_id="${2}"
+   local -r rtb_nm="${1}"
+   local -r dtc_id="${2}"
   
    aws ec2 create-route-table \
        --vpc-id "${dtc_id}" \
-       --tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value='${rtb_nm}'}]" 
+       --tag-specifications "ResourceType=route-table,Tags=[{Key=Name,Value='${rtb_nm}'}]" \
+        > /dev/null
  
    exit_code=$?
    
@@ -622,7 +626,7 @@ function delete_route_table()
    fi
 
    local exit_code=0
-   declare -r rtb_id="${1}"
+   local -r rtb_id="${1}"
   
    aws ec2 delete-route-table --route-table-id "${rtb_id}"
  
@@ -658,13 +662,14 @@ function set_route()
    fi
 
    local exit_code=0
-   declare -r rtb_id="${1}"
-   declare -r target_id="${2}"
-   declare -r destination_cidr="${3}"
+   local -r rtb_id="${1}"
+   local -r target_id="${2}"
+   local -r destination_cidr="${3}"
    
    aws ec2 create-route --route-table-id "${rtb_id}" \
        --destination-cidr-block "${destination_cidr}" \
-       --gateway-id "${target_id}" 
+       --gateway-id "${target_id}" \
+        > /dev/null
 
    exit_code=$?
    
@@ -696,7 +701,7 @@ function get_security_group_id()
 
    __RESULT=''
    local exit_code=0
-   declare -r sgp_nm="${1}"
+   local -r sgp_nm="${1}"
    local sgp_id=''
   
    sgp_id="$(aws ec2 describe-security-groups \
@@ -744,15 +749,16 @@ function create_security_group()
    fi
 
    local exit_code=0
-   declare -r dtc_id="${1}" 
-   declare -r sgp_nm="${2}"
-   declare -r sgp_desc="${3}"  
+   local -r dtc_id="${1}" 
+   local -r sgp_nm="${2}"
+   local -r sgp_desc="${3}"  
       
    aws ec2 create-security-group \
         --group-name "${sgp_nm}" \
         --description "${sgp_desc}" \
         --vpc-id "${dtc_id}" \
-        --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value='${sgp_nm}'}]" 
+        --tag-specifications "ResourceType=security-group,Tags=[{Key=Name,Value='${sgp_nm}'}]" \
+         > /dev/null
         
    exit_code=$?
    
@@ -783,7 +789,7 @@ function delete_security_group()
    fi
 
    local exit_code=0
-   declare -r sgp_id="${1}"
+   local -r sgp_id="${1}"
       
    aws ec2 delete-security-group --group-id "${sgp_id}" 
    
@@ -819,10 +825,10 @@ function allow_access_from_cidr()
    fi
 
    local exit_code=0
-   declare -r sgp_id="${1}"
-   declare -r port="${2}"
-   declare -r protocol="${3}"
-   declare -r from_cidr="${4}"
+   local -r sgp_id="${1}"
+   local -r port="${2}"
+   local -r protocol="${3}"
+   local -r from_cidr="${4}"
    
    aws ec2 authorize-security-group-ingress \
        --group-id "${sgp_id}" \
@@ -864,10 +870,10 @@ function allow_access_from_security_group()
    fi
 
    local exit_code=0
-   declare -r sgp_id="${1}"
-   declare -r port="${2}"
-   declare -r protocol="${3}"
-   declare -r from_sgp_id="${4}" 
+   local -r sgp_id="${1}"
+   local -r port="${2}"
+   local -r protocol="${3}"
+   local -r from_sgp_id="${4}" 
 
    aws ec2 authorize-security-group-ingress \
        --group-id "${sgp_id}" \
@@ -909,10 +915,10 @@ function revoke_access_from_security_group()
    fi
 
    local exit_code=0
-   declare -r sgp_id="${1}"
-   declare -r port="${2}"
-   declare -r protocol="${3}"
-   declare -r from_sgp_id="${4}"   
+   local -r sgp_id="${1}"
+   local -r port="${2}"
+   local -r protocol="${3}"
+   local -r from_sgp_id="${4}"   
 
    aws ec2 revoke-security-group-ingress \
        --group-id "${sgp_id}" \
@@ -952,10 +958,10 @@ function revoke_access_from_cidr()
    fi
 
    local exit_code=0
-   declare -r sgp_id="${1}"
-   declare -r port="${2}"
-   declare -r protocol="${3}"
-   declare -r from_cidr="${4}"
+   local -r sgp_id="${1}"
+   local -r port="${2}"
+   local -r protocol="${3}"
+   local -r from_cidr="${4}"
         
    aws ec2 revoke-security-group-ingress \
        --group-id "${sgp_id}" \
@@ -993,7 +999,7 @@ function get_instance_state()
 
    __RESULT=''
    local exit_code=0
-   declare -r instance_nm="${1}"
+   local -r instance_nm="${1}"
    local instance_st=''
   
    instance_st="$(aws ec2 describe-instances \
@@ -1035,7 +1041,7 @@ function get_public_ip_address_associated_with_instance()
 
    __RESULT=''
    local exit_code=0
-   declare -r instance_nm="${1}"
+   local -r instance_nm="${1}"
    local instance_ip=''
   
    instance_ip="$(aws ec2 describe-instances \
@@ -1077,7 +1083,7 @@ function get_private_ip_address_associated_with_instance()
 
    __RESULT=''
    local exit_code=0
-   declare -r instance_nm="${1}"
+   local -r instance_nm="${1}"
    local instance_ip=''
   
    instance_ip="$(aws ec2 describe-instances \
@@ -1119,7 +1125,7 @@ function get_instance_id()
 
    __RESULT=''
    local exit_code=0
-   declare -r instance_nm="${1}"
+   local -r instance_nm="${1}"
    local instance_id=''
 
    instance_id="$(aws ec2 describe-instances \
@@ -1165,12 +1171,12 @@ function run_instance()
    fi
    
    local exit_code=0
-   declare -r instance_nm="${1}"
-   declare -r sgp_id="${2}"
-   declare -r subnet_id="${3}"
-   declare -r private_ip="${4}"
-   declare -r image_id="${5}"
-   declare -r cloud_init_file="${6}"
+   local -r instance_nm="${1}"
+   local -r sgp_id="${2}"
+   local -r subnet_id="${3}"
+   local -r private_ip="${4}"
+   local -r image_id="${5}"
+   local -r cloud_init_file="${6}"
    local instance_id=''
      
    instance_id="$(aws ec2 run-instances \
@@ -1226,7 +1232,7 @@ function stop_instance()
    fi
 
    local exit_code=0
-   declare -r instance_id="${1}"
+   local -r instance_id="${1}"
 
    aws ec2 stop-instances --instance-ids "${instance_id}" 
    
@@ -1274,7 +1280,7 @@ function delete_instance()
    fi
 
    local exit_code=0
-   declare -r instance_id="${1}"
+   local -r instance_id="${1}"
    local wait_terminated=''
    
    if [[ $# -eq 2 ]]
@@ -1330,8 +1336,8 @@ function check_instance_has_instance_profile_associated()
    
    __RESULT=''
    local exit_code=0
-   declare -r instance_nm="${1}"
-   declare -r profile_nm="${2}"
+   local -r instance_nm="${1}"
+   local -r profile_nm="${2}"
    local instance_id=''
    local profile_id=''
    local association_id=''
@@ -1379,8 +1385,8 @@ function associate_instance_profile_to_instance()
    
    __RESULT=''
    local exit_code=0
-   declare -r instance_nm="${1}"
-   declare -r profile_nm="${2}"
+   local -r instance_nm="${1}"
+   local -r profile_nm="${2}"
    local instance_id=''
    local profile_id=''
    
@@ -1453,8 +1459,8 @@ function disassociate_instance_profile_from_instance()
    
    __RESULT=''
    local exit_code=0
-   declare -r instance_nm="${1}"
-   declare -r profile_nm="${2}"
+   local -r instance_nm="${1}"
+   local -r profile_nm="${2}"
    local instance_id=''
    local profile_id=''
    local association_id=''
@@ -1509,8 +1515,8 @@ function __get_association_id()
    
    __RESULT=''
    local exit_code=0
-   declare -r instance_nm="${1}"
-   declare -r profile_nm="${2}"
+   local -r instance_nm="${1}"
+   local -r profile_nm="${2}"
    local instance_id=''
    local profile_id=''
    local association_id=''
@@ -1588,9 +1594,9 @@ function create_image()
    fi
 
    local exit_code=0
-   declare -r instance_id="${1}"
-   declare -r img_nm="${2}"
-   declare -r img_desc="${3}"
+   local -r instance_id="${1}"
+   local -r img_nm="${2}"
+   local -r img_desc="${3}"
    local img_id=''
    
    img_id="$(aws ec2 create-image \
@@ -1639,7 +1645,7 @@ function get_image_id()
 
    __RESULT=''
    local exit_code=0
-   declare -r img_nm="${1}"
+   local -r img_nm="${1}"
    local img_id=''
 
    img_id="$(aws ec2 describe-images \
@@ -1679,7 +1685,7 @@ function get_image_state()
 
    __RESULT=''
    local exit_code=0
-   declare -r img_nm="${1}"
+   local -r img_nm="${1}"
    local img_st=''
 
    img_st="$(aws ec2 describe-images \
@@ -1721,7 +1727,7 @@ function get_image_snapshot_ids()
 
    __RESULT=''
    local exit_code=0
-   declare -r img_nm="${1}"
+   local -r img_nm="${1}"
 
    # AWS CLI provides built-in JSON-based output filtering capabilities with the --query option,
    # a JMESPATH expression is used as a filter. 
@@ -1764,7 +1770,7 @@ function delete_image()
    fi
 
    local exit_code=0
-   declare -r img_id="${1}"
+   local -r img_id="${1}"
 
    aws ec2 deregister-image --image-id "${img_id}"
 
@@ -1798,7 +1804,7 @@ function delete_image_snapshot()
    fi
 
    local exit_code=0
-   declare -r img_snapshot_id="${1}"
+   local -r img_snapshot_id="${1}"
 
    aws ec2 delete-snapshot --snapshot-id "${img_snapshot_id}" 
    
@@ -1833,7 +1839,7 @@ function get_allocation_id()
 
    __RESULT=''
    local exit_code=0
-   declare -r eip="${1}"
+   local -r eip="${1}"
    local allocation_id=''
           
    allocation_id="$(aws ec2 describe-addresses \
@@ -1983,7 +1989,7 @@ function release_public_ip_address()
    fi
 
    local exit_code=0
-   declare -r allocation_id="${1}"
+   local -r allocation_id="${1}"
 
    aws ec2 release-address --allocation-id "${allocation_id}"
    exit_code=$?
@@ -2018,7 +2024,7 @@ function release_all_public_ip_addresses()
    fi
    
    local exit_code=0
-   declare -r allocation_ids="${1}"
+   local -r allocation_ids="${1}"
           
    for id in ${allocation_ids}
    do
@@ -2055,7 +2061,7 @@ function check_aws_public_key_exists()
    
    __RESULT=''
    local exit_code=0
-   declare -r key_nm="${1}"
+   local -r key_nm="${1}"
    local exists='false'
    local key=''
    
@@ -2102,8 +2108,8 @@ function generate_aws_keypair()
    fi
    
    local exit_code=0
-   declare -r key_nm="${1}"
-   declare -r keypair_dir="${2}"
+   local -r key_nm="${1}"
+   local -r keypair_dir="${2}"
    local key="${keypair_dir}"/"${key_nm}"
    
    aws ec2 create-key-pair --key-name "${key_nm}" --query 'KeyMaterial' \
@@ -2143,8 +2149,8 @@ function delete_aws_keypair()
    fi
 
    local exit_code=0
-   declare -r key_nm="${1}"
-   declare -r keypair_dir="${2}"
+   local -r key_nm="${1}"
+   local -r keypair_dir="${2}"
    local key="${keypair_dir}"/"${key_nm}"
    
    # Delete the key on AWS EC2.
@@ -2193,8 +2199,8 @@ function upload_public_key_to_ec2()
    fi
 
    local exit_code=0
-   declare -r key_nm="${1}"
-   declare -r key_material="${2}"
+   local -r key_nm="${1}"
+   local -r key_material="${2}"
    
    aws ec2 import-key-pair --key-name "${key_nm}" \
        --public-key-material "${key_material}"

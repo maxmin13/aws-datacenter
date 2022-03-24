@@ -41,9 +41,7 @@ echo
       echo '****************'
       echo 'Env: development'
       echo '****************' 
-   fi 
-      
-   echo       
+   fi        
   
    # Create the datacenter.
    . "${PROJECT_DIR}"/amazon/datacenter/make.sh  
@@ -62,7 +60,7 @@ echo
 
    # Create the Admin and Webphp instances.      
    . "${PROJECT_DIR}"/amazon/admin/instance/make.sh   
-   . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1               
+   #. "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1               
    . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 2   
    
    # Deploy database objects.
@@ -70,19 +68,16 @@ echo
 
    # Deploy Admin and Webphp websites.
    . "${PROJECT_DIR}"/amazon/admin/instance/website/make.sh  
-   . "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 1    
+   #. "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 1    
    . "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 2
    
-   # Register 'maxmin.it' domain with the AWS DNS registrar.
-   . "${PROJECT_DIR}"/amazon/dns/domain/registration/make.sh 
-
-   # Create the application DNS hosted zone.
-   . "${PROJECT_DIR}"/amazon/dns/hostedzone/make.sh
+   # Create the application DNS records.
+   . "${PROJECT_DIR}"/amazon/dns/hostedzone/records/make.sh
    
    # Configure SSL in the Admin instance.
    . "${PROJECT_DIR}"/amazon/admin/instance/ssl/make.sh    
    
-   # Configure SSL in the load balancer in front of Webphp applications.
+   # Configure SSL in the load balancer that routes for the Webphp applications.
    . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh      
  
 } ### >> "${log_file}" 2>&1  

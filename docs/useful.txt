@@ -1,5 +1,5 @@
 
-find ./ -type f -exec sed -i 's/BOSH_DIRECTOR_DOWNLOAD_URL/BOSH_DIRECTOR_DOWNLOAD_URL/g' {} \;
+find ./ -type f -exec sed -i 's/local -r/local -r/g' {} \;
 
 scp -i admin-keys.pem -P 38142 admin-user@3.249.178.61:config.cfg .
 

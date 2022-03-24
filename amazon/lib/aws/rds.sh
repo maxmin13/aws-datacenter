@@ -48,7 +48,7 @@ function get_db_subnet_group_status()
 
    __RESULT=''
    local exit_code=0
-   declare -r dbsubnetg_nm="${1}"
+   local -r dbsubnetg_nm="${1}"
    local dbsubnetg_sts=''
   
    dbsubnetg_sts="$(aws rds describe-db-subnet-groups \
@@ -93,9 +93,9 @@ function create_db_subnet_group()
    fi
 
    local exit_code=0
-   declare -r dbsubnetg_nm="${1}"
-   declare -r dbsubnetg_desc="${2}"
-   declare -r subnet_ids="${3}"
+   local -r dbsubnetg_nm="${1}"
+   local -r dbsubnetg_desc="${2}"
+   local -r subnet_ids="${3}"
 
    aws rds create-db-subnet-group \
        --db-subnet-group-name "${dbsubnetg_nm}" \
@@ -132,7 +132,7 @@ function delete_db_subnet_group()
    fi
 
    local exit_code=0
-   declare -r dbsubnetg_nm="${1}"
+   local -r dbsubnetg_nm="${1}"
 
    aws rds delete-db-subnet-group --db-subnet-group-name "${dbsubnetg_nm}"
  
@@ -172,8 +172,8 @@ function create_log_slow_queries_db_parameter_group()
    fi
    
    local exit_code=0
-   declare -r db_pgp_nm="${1}"
-   declare -r db_pgp_desc="${2}"
+   local -r db_pgp_nm="${1}"
+   local -r db_pgp_desc="${2}"
    
    {
       aws rds create-db-parameter-group \
@@ -237,7 +237,7 @@ function delete_log_slow_queries_db_parameter_group()
    fi
    
    local exit_code=0
-   declare -r db_pgp_nm="${1}"
+   local -r db_pgp_nm="${1}"
    
    aws rds delete-db-parameter-group \
        --db-parameter-group-name "${db_pgp_nm}"
@@ -272,7 +272,7 @@ function check_db_parameter_group_exists()
    
    __RESULT=''
    local exit_code=0
-   declare -r db_pgp_nm="${1}"
+   local -r db_pgp_nm="${1}"
    local description=''
    local exists='false'
   
@@ -318,7 +318,7 @@ function get_database_state()
 
    __RESULT=''
    local exit_code=0
-   declare -r database_nm="${1}"
+   local -r database_nm="${1}"
    local db_status=''
 
    db_status="$(aws rds describe-db-instances \
@@ -358,7 +358,7 @@ function get_database_endpoint()
 
    __RESULT=''
    local exit_code=0
-   declare -r database_nm="${1}"
+   local -r database_nm="${1}"
    local db_endpoint=''
   
    db_endpoint="$(aws rds describe-db-instances \
@@ -399,9 +399,9 @@ function create_database()
 
    __RESULT=''
    local exit_code=0
-   declare -r database_nm="${1}"
-   declare -r sgp_id="${2}"
-   declare -r db_pgp_nm="${3}"
+   local -r database_nm="${1}"
+   local -r sgp_id="${2}"
+   local -r db_pgp_nm="${3}"
    local exists='false'
 
    check_db_parameter_group_exists "${db_pgp_nm}"
@@ -481,7 +481,7 @@ function delete_database()
    fi
 
    local exit_code=0
-   declare -r database_nm="${1}"
+   local -r database_nm="${1}"
 
    # terminate rds (with no final snapshot)
    aws rds delete-db-instance \
@@ -529,7 +529,7 @@ function get_database_snapshot_ids()
 
    __RESULT=''
    local exit_code=0
-   declare -r database_nm="${1}"
+   local -r database_nm="${1}"
    local db_snapshot_ids=''
 
    db_snapshot_ids="$(aws rds describe-db-snapshots \
@@ -568,7 +568,7 @@ function delete_database_snapshot()
    fi
 
    local exit_code=0
-   declare -r db_snapshot_id="${1}"
+   local -r db_snapshot_id="${1}"
 
    aws rds delete-db-snapshot \
        --db-snapshot-identifier "${db_snapshot_id}" >> /dev/null
