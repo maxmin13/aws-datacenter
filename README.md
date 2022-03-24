@@ -22,6 +22,7 @@ Workspace:
 - Python/3.10.0 
 
 ## Required local programs:
+Log into your Fedora workstation
 ```
 ## Install the required programs: 
 
