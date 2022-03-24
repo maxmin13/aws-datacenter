@@ -54,23 +54,17 @@ aws configure
 
 ```
 
-## Register a domain with AWS Route53 registrar:
-Register the domain in app_consts.sh maxmin.it. with the current account:
+## Register a domain with AWS Route 53 registrar:
+Register the domain in app_consts.sh maxmin.it. with the current account, creates a Route 53 hosted zone
+that has the same name as the domain.
 ```
 amazon/dns/domain/registration/make.sh 
 ```
 The registration of a domain take a few days.
 
 
-## Create the application DNS hosted zone.
-Create a new hosted zone for the domain in app_consts.sh maxmin.it:
-```
-amazon/dns/hostedzone/make.sh
-```
-
-
 ## Create the AWS datacenter:
-After domain and hosted zone have become operative, create the AWS datacenter (VPC) by running the script: 
+After domain and hosted zone have become operative, create the AWS datacenter (VPC). 
 ```
 cd aws-datacenter
 amazon/run/make.sh
