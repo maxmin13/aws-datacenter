@@ -21,7 +21,7 @@ Workspace:
 - AWS cli 2.4.3 
 - Python/3.10.0 
 
-## Required programs:
+## Required local programs:
 ```
 ## Install the required programs: 
 
