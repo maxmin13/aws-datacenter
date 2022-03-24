@@ -69,8 +69,8 @@ amazon/dns/hostedzone/make.sh
 ```
 
 
-## Create the AWS datacenter (VPC):
-After domain and hosted zone have become operative, create the AWS datacenter by running the script: 
+## Create the AWS datacenter:
+After domain and hosted zone have become operative, create the AWS datacenter (VPC) by running the script: 
 ```
 cd aws-datacenter
 amazon/run/make.sh
