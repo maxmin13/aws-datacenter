@@ -36,7 +36,7 @@ aws --version
 
 ```
 
-## Configure SSH:
+## Configure local SSH:
 
 edit: /etc/ssh/ssh_config, add the lines:
 
@@ -54,7 +54,7 @@ aws configure
 ```
 
 ## Register a domain with AWS Route53 registrar:
-To register the domain in app_consts.sh MAXMIN_TLD='maxmin.it.' with the current account run the script:
+Register the domain in app_consts.sh maxmin.it. with the current account:
 ```
 amazon/dns/domain/registration/make.sh 
 ```
@@ -62,14 +62,14 @@ The registration of a domain take a few days.
 
 
 ## Create the application DNS hosted zone.
-To create a new hosted zone for the domain in app_consts.sh MAXMIN_TLD='maxmin.it.' run the script:
+Create a new hosted zone for the domain in app_consts.sh maxmin.it:
 ```
 amazon/dns/hostedzone/make.sh
 ```
-The creation of a hosted zone take a few days.
+
 
 ## Create the AWS datacenter (VPC):
-After domain and hosted zone have become operative, to create the AWS datacenter run the script: 
+After domain and hosted zone have become operative, create the AWS datacenter by running the script: 
 ```
 cd aws-datacenter
 amazon/run/make.sh
@@ -86,7 +86,7 @@ amazon/run/delete.sh
 ## Configure reCaptcha:
 
 The reCaptcha keys are in: recaptcha.sh.
-Add the 'maxmin.it' domain to your Google account.
+Add the maxmin.it domain to your Google account.
 
 ## Access the website:
  
