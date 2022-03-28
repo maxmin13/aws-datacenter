@@ -11,9 +11,6 @@ _HOSTED_ZONE_ID="$(aws route53 list-hosted-zones \
     --output text)" 
     
 HOSTED_ZONE_ID="$(echo "${_HOSTED_ZONE_ID}" | cut -d'/' -f 3)" 
- 
-# This is the ID of the hosted zone created with the load balancer, it is not deleted when the load
-# balancer is deleted, so I use it for the tests.
 ALIAS_TARGET_HOSTED_ZONE_ID='Z32O12XQLNTSW2'
 RECORD_COMMENT="Test record"   
 counter=0

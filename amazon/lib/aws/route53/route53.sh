@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+# shellcheck disable=SC2034
+
 set -o errexit
 set -o pipefail
 set -o nounset
@@ -523,7 +525,7 @@ function __create_alias_record_change_batch()
    change_batch="$(printf '%b\n' "${template}" \
       | sed -e "s/SEDdomain_nmSED/${domain_nm}/g" \
             -e "s/SEDrecord_valueSED/${record_value}/g" \
-            -e "s/SEDtarget_hosted_zone_idSED/$(escape ${target_hosted_zone_id})/g" \
+            -e "s/SEDtarget_hosted_zone_idSED/$(escape "${target_hosted_zone_id}")/g" \
             -e "s/SEDcommentSED/${comment}/g" \
             -e "s/SEDactionSED/${action}/g")" 
    

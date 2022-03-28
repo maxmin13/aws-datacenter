@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+# shellcheck disable=SC2034
+
 set -o errexit
 ## turn on -e in subshells
 shopt -s inherit_errexit

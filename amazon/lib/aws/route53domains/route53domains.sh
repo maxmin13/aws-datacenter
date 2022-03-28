@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+# shellcheck disable=SC2034
+
 set -o errexit
 ## turn on -e in subshells
 shopt -s inherit_errexit
@@ -102,8 +104,7 @@ function check_domain_is_registered_with_the_account()
    # throws an error if the domain is not registered with the current account. 
    aws route53domains get-domain-detail \
                --region "${US_EAST_REGION}" \
-               --domain-name "${domain_nm}" \
-               --query 'DomainName' 
+               --domain-name "${domain_nm}" > /dev/null 
    exit_code=$?
    set -e
 
@@ -118,7 +119,8 @@ function check_domain_is_registered_with_the_account()
 }
 
 # Builds a request for the registration of an .it domain with no automatic renewal 
-# after a year and with privacy protection enabled.
+# after a year and with privacy protection enabled. The register_domain_request_it_template.json 
+# file murst first be completed with the correct data by hand. 
 function build_register_domain_request()
 {
    if [[ $# -lt 2 ]]
@@ -177,7 +179,7 @@ function validate_dns_domain()
 
    set +e
    # throws an error if no match
-   echo "${domain_nm}" | grep -oP "${domain_nm_regex}" >> /dev/null
+   echo "${domain_nm}" | grep -oP "${domain_nm_regex}" > /dev/null
    exit_code=$?
    set -e
 
@@ -286,10 +288,11 @@ function update_domain_registration_name_servers()
    fi
 
    name_servers_list="${__RESULT}"
+   __RESULT=''
+
+   echo "DEBUG: ${name_servers_list}"
 
    # assign the nameservers from the hosted zone to the domain.
-
-   __RESULT=''
    operation_id="$(aws route53domains update-domain-nameservers \
                      --region "${US_EAST_REGION}" \
                      --domain-name "${domain_nm}" \
@@ -347,6 +350,7 @@ function get_request_status()
   
    return "${exit_code}"
 } 
+
 
 #===============================================================================
 # Transforms a string containing four name server names separated by a white  
