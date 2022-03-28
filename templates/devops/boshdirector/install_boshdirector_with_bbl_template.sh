@@ -14,7 +14,6 @@ set -o nounset
 # Cloud Foundry can run your apps.
 # BOSH supports deploying to multiple IaaS providers.
 # BOSH focuses on defining your infrastructure as a piece of code.
-#
 ####################################################################
 
 BIN_DIR=$(dirname "${BASH_SOURCE[0]}")

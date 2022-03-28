@@ -6,14 +6,8 @@ set -o nounset
 #set -o xtrace
 
 ####################################################################
-# Remove BBL client and Terraform client.
+# Remove BBL client client.
 ####################################################################
-
-echo 'Removing Terraform client ...'
-
-rm -f /usr/bin/terraform
-
-echo 'Terraform client removed.'
 
 echo 'Removing Bosh bootloader client ...'
 

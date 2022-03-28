@@ -11,8 +11,6 @@ set -o nounset
 # BOSH (bosh outer shell) is a release-engineering tool chain that 
 # provides an easy mechanism to version, package, and deploy 
 # cloud based software.
-# BOSH supports deploying to multiple IaaS providers.
-# BOSH focuses on defining your infrastructure as a piece of code.
 ####################################################################
 
 BIN_DIR=$(dirname "${BASH_SOURCE[0]}")

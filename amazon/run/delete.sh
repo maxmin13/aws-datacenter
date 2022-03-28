@@ -48,18 +48,18 @@ echo
    . "${PROJECT_DIR}"/amazon/dns/hostedzone/records/delete.sh
           
    # Delete the websites.
-   . "${PROJECT_DIR}"/amazon/admin/instance/website/delete.sh      
-   #. "${PROJECT_DIR}"/amazon/webphp/instance/website/delete.sh 1
-   . "${PROJECT_DIR}"/amazon/webphp/instance/website/delete.sh 2
+   . "${PROJECT_DIR}"/amazon/instance/admin/website/delete.sh      
+   . "${PROJECT_DIR}"/amazon/instance/webphp/website/delete.sh 1
+   . "${PROJECT_DIR}"/amazon/instance/webphp/website/delete.sh 2
 
    # Delete the database objects.
    . "${PROJECT_DIR}"/amazon/database/data/delete.sh
       
    # Delete the server instances.
-   . "${PROJECT_DIR}"/amazon/shared/instance/delete.sh  
-   #. "${PROJECT_DIR}"/amazon/webphp/instance/delete.sh 1           
-   . "${PROJECT_DIR}"/amazon/webphp/instance/delete.sh 2
-   . "${PROJECT_DIR}"/amazon/admin/instance/delete.sh 
+   . "${PROJECT_DIR}"/amazon/instance/shared/delete.sh  
+   . "${PROJECT_DIR}"/amazon/instance/webphp/delete.sh 1           
+   . "${PROJECT_DIR}"/amazon/instance/webphp/delete.sh 2
+   . "${PROJECT_DIR}"/amazon/instance/admin/delete.sh 
    
    # Delete load balancer
    . "${PROJECT_DIR}"/amazon/loadbalancer/delete.sh     
@@ -67,8 +67,8 @@ echo
    # Delete the database.
    . "${PROJECT_DIR}"/amazon/database/delete.sh              
 
-   # Delete the Shared instance.
-   . "${PROJECT_DIR}"/amazon/shared/image/delete.sh            
+   # Delete the Shared image.
+   . "${PROJECT_DIR}"/amazon/image/shared/delete.sh            
 
    # Release the public IP addresses assigned to the account.
    . "${PROJECT_DIR}"/amazon/account/delete.sh  

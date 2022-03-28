@@ -7,7 +7,7 @@ set -o nounset
 
 ####################################################################
 # Remove Devops components:
-# BOSH client, Terraform client, BOSH bootloader client, BOSH 
+# BOSH client, BOSH bootloader client, BOSH 
 # director, Cloud Foundry.
 ####################################################################
 
@@ -47,14 +47,6 @@ chmod +x delete_bosh_cli.sh
 cd "${script_dir}" || exit
 chmod +x delete_bbl_cli.sh 
 ./delete_bbl_cli.sh >> "${devops_log_file}" 2>&1
-
-#
-# Bosh bootloader client.
-#
-
-cd "${script_dir}" || exit
-chmod +x delete_terraform_cli.sh 
-./delete_terraform_cli.sh >> "${devops_log_file}" 2>&1
 
 echo 'Devops components deleted.'
 

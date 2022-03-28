@@ -9,10 +9,6 @@ set -o nounset
 
 #####################################################################
 # Deletes Cloud Foundry deployment using BOSH client.
-# # If BOSH director has been installed using BOSH boot loader, then,
-# to login in the director, the boot loader environment obtained by
-# 'bbl print-env' is used.
-# 
 #####################################################################
 
 BIN_DIR=$(dirname "${BASH_SOURCE[0]}")

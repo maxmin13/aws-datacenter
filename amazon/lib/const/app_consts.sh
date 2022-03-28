@@ -3,9 +3,9 @@
 # shellcheck disable=SC2034
 
 # Development uses a self-signed certificate.
-#ENV='development'
+ENV='development'
 # Production uses a Let's Encrypt certificate.
-ENV='production'
+#ENV='production'
 
 ## Amazon EBS-backed image:
 ## By default, the root volume is deleted when the instance terminates.
@@ -44,8 +44,6 @@ DTC_ROUTE_TABLE_NM='route-tab'
 
 AWS_ROUTE53_ROLE_NM='Route53role'
 AWS_ROUTE53_POLICY_NM='Route53policy'
-AWS_BOSH_DIRECTOR_ROLE_NM='BoshDirectorRole'
-AWS_BOSH_DIRECTOR_POLICY_NM='AdministratorAccess'
 
 ## ******** ##
 ## Database ##
@@ -93,7 +91,7 @@ LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 ## Admin box ##
 ## ********* ##
 
-ADMIN_INST_NM='admin-box'
+ADMIN_INST_NM='admin-box1'
 ADMIN_INST_PRIVATE_IP='10.0.10.6'
 ADMIN_INST_HOSTNAME='admin.maxmin.it'
 ADMIN_INST_USER_NM='admin-user'

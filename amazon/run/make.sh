@@ -50,32 +50,32 @@ echo
    . "${PROJECT_DIR}"/amazon/user/make.sh             
 
    # Create a base shared image.
-   . "${PROJECT_DIR}"/amazon/shared/instance/make.sh              
-   . "${PROJECT_DIR}"/amazon/shared/image/make.sh            
-   . "${PROJECT_DIR}"/amazon/shared/instance/delete.sh  
+   . "${PROJECT_DIR}"/amazon/instance/shared/make.sh              
+   . "${PROJECT_DIR}"/amazon/image/shared/make.sh            
+   . "${PROJECT_DIR}"/amazon/instance/shared/delete.sh  
    
    # Create database and load balancer.
    . "${PROJECT_DIR}"/amazon/database/make.sh            
    . "${PROJECT_DIR}"/amazon/loadbalancer/make.sh             
 
    # Create the Admin and Webphp instances.      
-   . "${PROJECT_DIR}"/amazon/admin/instance/make.sh   
-   #. "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 1               
-   . "${PROJECT_DIR}"/amazon/webphp/instance/make.sh 2   
+   . "${PROJECT_DIR}"/amazon/instance/admin/make.sh   
+   . "${PROJECT_DIR}"/amazon/instance/webphp/make.sh 1               
+   #. "${PROJECT_DIR}"/amazon/instance/webphp/make.sh 2   
    
    # Deploy database objects.
    . "${PROJECT_DIR}"/amazon/database/data/make.sh       
 
    # Deploy Admin and Webphp websites.
-   . "${PROJECT_DIR}"/amazon/admin/instance/website/make.sh  
-   #. "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 1    
-   . "${PROJECT_DIR}"/amazon/webphp/instance/website/make.sh 2
+   . "${PROJECT_DIR}"/amazon/instance/admin/website/make.sh  
+   . "${PROJECT_DIR}"/amazon/instance/webphp/website/make.sh 1    
+   #. "${PROJECT_DIR}"/amazon/instance/webphp/website/make.sh 2
    
    # Create the application DNS records.
    . "${PROJECT_DIR}"/amazon/dns/hostedzone/records/make.sh
    
    # Configure SSL in the Admin instance.
-   . "${PROJECT_DIR}"/amazon/admin/instance/ssl/make.sh    
+   . "${PROJECT_DIR}"/amazon/instance/admin/ssl/make.sh    
    
    # Configure SSL in the load balancer that routes for the Webphp applications.
    . "${PROJECT_DIR}"/amazon/loadbalancer/ssl/make.sh      

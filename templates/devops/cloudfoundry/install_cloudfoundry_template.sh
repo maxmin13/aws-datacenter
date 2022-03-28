@@ -10,12 +10,8 @@ set -o nounset
 ####################################################################
 # The script clones cf-deployment.git repository and deploys Cloud
 # foundry using BOSH client. 
-# If BOSH director has been installed using BOSH boot loader, then,
-# to login in the director, the boot loader environment obtained by
-# 'bbl print-env' is used.
 # A Bionic stem-cell is used instead of
 # the Xenial stem-cell used in the deployment manifest file. 
-# 
 ####################################################################
 
 BIN_DIR=$(dirname "${BASH_SOURCE[0]}")

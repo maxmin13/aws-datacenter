@@ -6,7 +6,7 @@ set -o nounset
 #set -o xtrace
 
 ####################################################################
-# Install BBL client and Terraform and add them to the PATH.
+# Install BBL client and add it to the PATH.
 ####################################################################
 
 ADMIN_INST_USER_NM='SEDadmin_inst_user_nmSED'
