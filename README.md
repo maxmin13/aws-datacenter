@@ -1,4 +1,4 @@
-# aws-datacenter
+# Aws Datacenter
 
 Amazon Web Services datacenter built with AWS cli command line utility.
 
@@ -21,8 +21,9 @@ Workspace:
 - AWS cli 2.4.3 
 - Python/3.10.0 
 
-## Required local programs:
-Log into your Fedora workstation
+## Required local programs
+
+Log into your Fedora workstation:
 ```
 ## Install the required programs: 
 
@@ -37,7 +38,7 @@ aws --version
 
 ```
 
-## Configure local SSH:
+## Configure local SSH
 
 edit: /etc/ssh/ssh_config, add the lines:
 
@@ -47,68 +48,72 @@ ServerAliveInterval 100
 
 ```
 
-## Configure local AWS CLI:
-Configure aws client with the keys of a IAM user with admin rights.
+## Configure local AWS CLI
+
+Configure aws client with the keys of a IAM user with admin rights:
 ```
 aws configure
 
 ```
 
-## Register a domain with AWS Route 53 registrar:
+## Register a domain with AWS Route 53 registrar
+
 Register the domain in app_consts.sh maxmin.it. with the current account and create a Route 53 hosted zone
-that has the same name as the domain.
+that has the same name as the domain:
 ```
 amazon/dns/domain/registration/make.sh 
 ```
 The registration of a domain take a few days.
 
 
-## Create the AWS datacenter:
-After domain and hosted zone have become operative, create the AWS datacenter (VPC). 
+## Create the AWS datacenter
+
+After domain and hosted zone have become operative, create the AWS datacenter (VPC): 
 ```
 cd aws-datacenter
 amazon/run/make.sh
 
 ```
 
-## To delete the datacenter:
+## Delete the datacenter
+
 ```
 cd aws-datacenter
 amazon/run/delete.sh
 
 ```
 
-## Configure reCaptcha:
+## Configure reCaptcha
 
 The reCaptcha keys are in: recaptcha.sh.
 Add the maxmin.it domain to your Google account.
 
-## Access the website:
+## Access the website
  
 https://www.maxmin.it
 
-## Access the Admin website:
+## Access the Admin website
 
 Enable access to the Admin website's 443 port in the security group.
 
 https://admin.maxmin.it
 (password is admin)
 
-## Access the M/Monit website:
+## Access the M/Monit website
 
 Enable access to the M/Monit website's 8443 port in the security group.
 
 https://admin.maxmin.it:8443
 (admin/swordfish)
 
-## Access to PhpMyAdmin website:
+## Access to PhpMyAdmin website
 
 Enable access to the PhpMyAdmin website's 7443 port in the security group.
 
 https://admin.maxmin.it:7443/phpmyadmin/index.php
 (maxmin/fognamarcia11)
 
-## Access to Loganalyzer website:
+## Access to Loganalyzer website
 
 Enable access to the Loganalyzer website's 9443 port in the security group.
 
