@@ -20,6 +20,8 @@ echo 'Removing Devops components ...'
 # Cloud Foundry.
 #
 
+echo 'Cloud Foundry:'
+
 cd "${script_dir}" || exit
 chmod +x delete_cloudfoundry.sh 
 ./delete_cloudfoundry.sh >> "${devops_log_file}" 2>&1
@@ -27,6 +29,8 @@ chmod +x delete_cloudfoundry.sh
 #
 # Bosh director.
 #
+
+echo 'Bosh Director:'
 
 cd "${script_dir}" || exit
 chmod +x delete_boshdirector_with_bbl.sh 
@@ -36,6 +40,8 @@ chmod +x delete_boshdirector_with_bbl.sh
 # Bosh client.
 #
 
+echo 'Bosh Client:'
+
 cd "${script_dir}" || exit
 chmod +x delete_bosh_cli.sh 
 ./delete_bosh_cli.sh >> "${devops_log_file}" 2>&1
@@ -43,6 +49,8 @@ chmod +x delete_bosh_cli.sh
 #
 # Bosh bootloader client.
 #
+
+echo 'Bosh Bootloader Client:'
 
 cd "${script_dir}" || exit
 chmod +x delete_bbl_cli.sh 

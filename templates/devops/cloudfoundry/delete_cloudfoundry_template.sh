@@ -39,7 +39,7 @@ bbl_export_environment "${BBL_INSTALL_DIR}"
    
 echo 'BBL environment exported.'
   
-  #### TODO error if bosh director not installed, check. 
+#### TODO error if bosh director not installed, check. 
 bosh_login_director
 
 echo 'Logged into BOSH director.'

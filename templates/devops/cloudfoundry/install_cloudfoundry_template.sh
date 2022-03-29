@@ -65,12 +65,12 @@ echo 'Ubuntu bionic stemcell uploaded.'
 echo 'Deploying Cloud Foundry ...'
 
 remove_last_character_if_present "${CF_LBAL_DOMAIN}" '.'
+
 lbal_domain_nm="${__RESULT}"
 
 echo "Cloud Foundry load balancer name: ${lbal_domain_nm}"
 
 bosh_deploy_cloud_foundry "${CF_DEPLOYMENT_NM}" "${lbal_domain_nm}" "${CF_INSTALL_DIR}"   
-exit_code=$?
 
 echo 'Cloud Foundry deployed.'
 

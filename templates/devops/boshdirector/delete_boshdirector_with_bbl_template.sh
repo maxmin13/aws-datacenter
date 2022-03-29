@@ -37,7 +37,9 @@ lbal_key="${BBL_INSTALL_DIR}"/lbal_key.pem
 
 bbl_delete_director "${BBL_INSTALL_DIR}" "${ACCESS_KEY_ID}" "${SECRET_ACCESS_KEY}" "${REGION}" \
     "${lbal_file}" "${lbal_key}" "${CF_LBAL_DOMAIN}"
-   
+
+exit_code=$?
+
 echo 'BOSH director successfully removed.'
 
 if [[ 0 -eq "${exit_code}" ]]

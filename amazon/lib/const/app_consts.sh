@@ -3,9 +3,9 @@
 # shellcheck disable=SC2034
 
 # Development uses a self-signed certificate.
-ENV='development'
+#ENV='development'
 # Production uses a Let's Encrypt certificate.
-#ENV='production'
+ENV='production'
 
 ## Amazon EBS-backed image:
 ## By default, the root volume is deleted when the instance terminates.
@@ -91,7 +91,7 @@ LBAL_EMAIL_ADD='minardi.massimiliano@libero.it'
 ## Admin box ##
 ## ********* ##
 
-ADMIN_INST_NM='admin-box1'
+ADMIN_INST_NM='admin-box2'
 ADMIN_INST_PRIVATE_IP='10.0.10.6'
 ADMIN_INST_HOSTNAME='admin.maxmin.it'
 ADMIN_INST_USER_NM='admin-user'

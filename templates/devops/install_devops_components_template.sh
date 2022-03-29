@@ -7,7 +7,10 @@ set -o nounset
 
 ####################################################################
 # Install Devops components:
-# BOSH client, BOSH bootloader client, BOSH director, Cloud Foundry.
+# BOSH client, 
+# BOSH bootloader client, 
+# BOSH director, 
+# Cloud Foundry.
 ####################################################################
 
 ADMIN_INST_USER_NM='SEDadmin_inst_user_nmSED'
@@ -24,6 +27,8 @@ echo 'Installing devops components ...'
 # Bosh client.
 #
 
+echo 'Bosh Client:'
+
 cd "${script_dir}" || exit
 chmod +x install_bosh_cli.sh 
 ./install_bosh_cli.sh >> "${devops_log_file}" 2>&1
@@ -31,6 +36,8 @@ chmod +x install_bosh_cli.sh
 #
 # Bosh bootloader client.
 #
+
+echo 'Bosh Bootloader Client:'
 
 cd "${script_dir}" || exit
 chmod +x install_bbl_cli.sh 
@@ -40,6 +47,8 @@ chmod +x install_bbl_cli.sh
 # Bosh director.
 #
 
+echo 'Bosh Director:'
+
 cd "${script_dir}" || exit
 chmod +x install_boshdirector_with_bbl.sh
 ./install_boshdirector_with_bbl.sh >> "${devops_log_file}" 2>&1
@@ -47,6 +56,8 @@ chmod +x install_boshdirector_with_bbl.sh
 #
 # Cloud Foundry.
 #
+
+echo 'Cloud Foundry:'
 
 cd "${script_dir}" || exit
 chmod +x install_cloudfoundry.sh 

@@ -6,6 +6,8 @@ scp -i admin-keys.pem -P 38142 admin-user@3.249.178.61:config.cfg .
 find templates -type f -exec chmod 644 {} +
 
 ###################################################
+## force clean all bbl objects:
+
 bbl cleanup-leftovers \
        --filter "bbl" \
        --iaas aws \
