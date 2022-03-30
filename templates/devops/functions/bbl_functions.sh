@@ -1,5 +1,9 @@
 #!/bin/bash
 
+############################################################################
+# bosh-bootloader is a command line utility for standing up BOSH on an IaaS.
+############################################################################                  
+
 set -o errexit
 set -o pipefail
 set -o nounset

@@ -8,7 +8,7 @@ set -o nounset
 #set -o xtrace
 
 ####################################################################
-# BOSH (bosh outer shell) is a release-engineering tool chain that 
+# BOSH (Bosh outer shell) is a release-engineering tool chain that 
 # provides an easy mechanism to version, package, and deploy 
 # cloud based software: BOSH outer shell runs Clound Foundry so that
 # Cloud Foundry can run your apps.
