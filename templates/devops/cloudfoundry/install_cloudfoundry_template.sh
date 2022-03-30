@@ -79,6 +79,4 @@ bosh_logout_director
 echo 'Logged out from BOSH director.'
 
 echo
-   
-exit 0
 

@@ -22,12 +22,13 @@ export BOSH_LOG_PATH="${devops_log_file}"
 trap 'chown -R ${ADMIN_INST_USER_NM}:${ADMIN_INST_USER_NM} ${script_dir}' ERR EXIT
 
 echo 'Installing devops components ...'
+echo
 
 #
 # Bosh client.
 #
 
-echo 'Bosh Client:'
+echo 'Bosh Client'
 
 cd "${script_dir}" || exit
 chmod +x install_bosh_cli.sh 
@@ -37,7 +38,7 @@ chmod +x install_bosh_cli.sh
 # Bosh bootloader client.
 #
 
-echo 'Bosh Bootloader Client:'
+echo 'Bosh Bootloader Client'
 
 cd "${script_dir}" || exit
 chmod +x install_bbl_cli.sh 
@@ -47,7 +48,7 @@ chmod +x install_bbl_cli.sh
 # Bosh director.
 #
 
-echo 'Bosh Director:'
+echo 'Bosh Director'
 
 cd "${script_dir}" || exit
 chmod +x install_boshdirector_with_bbl.sh
@@ -57,7 +58,7 @@ chmod +x install_boshdirector_with_bbl.sh
 # Cloud Foundry.
 #
 
-echo 'Cloud Foundry:'
+echo 'Cloud Foundry'
 
 cd "${script_dir}" || exit
 chmod +x install_cloudfoundry.sh 
